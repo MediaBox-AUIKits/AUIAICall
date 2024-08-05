@@ -1,0 +1,62 @@
+<resources>
+    <string name="entry_title">AI Virtual Human Call</string>
+    <string name="room_entrance_text">Start Experience</string>
+
+    <string name="in_call_text">AI Audio Call</string>
+    <string name="pause_call">Pause Call</string>
+    <string name="resume_call">Resume Call</string>
+    <string name="mute_call">Mute</string>
+    <string name="unmute_call">Unmute</string>
+    <string name="stop_call">Hang Up</string>
+    <string name="speaker_on">Speaker On</string>
+    <string name="speaker_off">Speaker Off</string>
+
+    <string name="call_connection_tips">Connecting...</string>
+
+    <string name="call_error_default">An error occurred during the current call</string>
+    <string name="call_error_start_failed">Unable to start the call, service has an issue</string>
+    <string name="call_error_token_expired">Call failed, authorization has expired</string>
+    <string name="call_error_connection_failed">Call failed, there is a network connection issue</string>
+    <string name="call_error_kicked_by_user_replace">Call failed, the user might be using another device</string>
+    <string name="call_error_kicked_by_system">Call failed, ended by the system</string>
+    <string name="call_error_local_device_exception">Call failed, a local device error occurred</string>
+
+    <string name="user_mute_tips">You are muted</string>
+    <string name="robot_pause_tips">Call paused, tap to start</string>
+    <string name="robot_waiting_tips">Please start speaking</string>
+    <string name="robot_listening_tips">I\'m listening to you</string>
+    <string name="robot_thinking_tips">Thinking...</string>
+    <string name="robot_speaking_tips">I\'m replying, you can tap the screen or speak to interrupt me</string>
+
+    <string name="setting_title">Settings</string>
+    <string name="config_interrupt_title">Smart Interrupt</string>
+    <string name="config_interrupt_tips">Intelligently interrupt the AI robot based on sound and environment</string>
+    <string name="config_interrupt_title_open_toast">Intelligent interrupt turned on</string>
+    <string name="config_interrupt_title_close_toast">Intelligent interrupt turned off</string>
+
+    <string name="config_audio_tone_title">Choose Tone</string>
+    <string name="config_audio_tone_tips">After switching tones, the AI will use the new role in the next response</string>
+
+    <string name="layout_base_loading">Loading...</string>
+    <string name="layout_base_load_end">- Load Complete -</string>
+    <string name="layout_base_load_failed">- Load Failed -</string>
+    <string name="layout_base_load_complete">Tap me, more surprises below 👇</string>
+
+    <string name="audio_tone_selector">Use</string>
+
+    <string name="permission_tips">Please enable permissions and try again</string>
+
+    <string name="tips_exit">Press again to hang up</string>
+
+    <string name="tips_notice_before_connected">Please try after the connection is established</string>
+
+    <string name="dialog_robot_title">Settings</string>
+    <string name="dialog_robot_id_tips">Set the robot ID. If left blank, the default robot will be used.</string>
+    <string name="dialog_robot_confirm">Confirm</string>
+    <string name="dialog_robot_cancel">Cancel</string>
+
+    <string name="foreground_service_tips">AI audio call in progress...</string>
+
+    <string name="debug_mode_enable">Debug Mode Enable</string>
+    <string name="debug_mode_disable">Debug Mode Disable</string>
+</resources>

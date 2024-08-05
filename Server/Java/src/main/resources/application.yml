@@ -1,0 +1,24 @@
+server:
+  port: 8080
+
+spring:
+  jackson:
+    time-zone: GMT+8
+    date-format: yyyy-MM-dd'T'HH:mm:ss
+    default-property-inclusion: non_null
+
+# pop配置
+biz:
+  openapi:
+    access:
+      key: "xxxxxxx"
+      secret: "xxxxxxx"
+  live_mic:
+    app_id: "xxxxxxx"
+    app_key: "xxxxxxx"
+  ims:
+    robot_id: "xxxxxxx"
+    region: "cn-shanghai"
+http:
+  cors:
+    host: "*"

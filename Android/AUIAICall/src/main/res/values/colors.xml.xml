@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="layout_base_background">#1C1D22</color>
+    <color name="layout_base_white_default">#FCFCFD</color>
+    <color name="layout_base_gray">#747A8C</color>
+    <color name="layout_base_dialog_background">#23262F</color>
+    <color name="layout_base_iv_border">#3A3D48</color>
+    <color name="layout_base_divider">#23262F</color>
+    <color name="layout_base_default_background">#661C1D22</color>
+    <color name="layout_base_msg_author_color">#80DEEA</color>
+    <color name="layout_base_black_alpha_50">#80000000</color>
+    <color name="layout_base_white_alpha30">#4DFFFFFF</color>
+    <color name="layout_base_toast_background">#141416</color>
+    <color name="layout_base_light_blue">#00BCD4</color>
+    <color name="layout_base_light_white">#B2B7C4</color>
+</resources>

@@ -1,0 +1,41 @@
+buildscript {
+    repositories {
+        maven { url 'https://maven.aliyun.com/repository/google' }  // google
+        maven { url 'https://maven.aliyun.com/repository/public' }  // jcenter
+        gradlePluginPortal()
+        google()
+        mavenCentral()
+        mavenLocal()
+        if(Boolean.valueOf(IS_DEBUG)){
+            maven {
+                allowInsecureProtocol = true
+                url 'http://mvnrepo.alibaba-inc.com/mvn/repository'
+            }
+        }
+    }
+    apply from: './config.gradle'
+    dependencies {
+        classpath externalAndroidBuildGradlePlugin
+        classpath externalAndroidKotlinPlugin
+    }
+}
+
+allprojects {
+    repositories {
+        maven { url 'https://maven.aliyun.com/repository/google' }  // google
+        maven { url 'https://maven.aliyun.com/repository/public' }  // jcenter
+        google()
+        mavenCentral()
+        mavenLocal()
+        if(Boolean.valueOf(IS_DEBUG)){
+            maven {
+                allowInsecureProtocol = true
+                url 'http://mvnrepo.alibaba-inc.com/mvn/repository'
+            }
+        }
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}

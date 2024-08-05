@@ -1,0 +1,101 @@
+ext {
+    //==Android Third party,include Application Layer,SDK Layer==
+
+    //Build Gradle Plugin
+    externalAndroidBuildGradlePlugin = 'com.android.tools.build:gradle:4.1.3'
+    externalAndroidKotlinPlugin = 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.10'
+
+    //kotlin std lib
+    externalKotlinStdLibJdk = "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.6.10"
+    externalKotlinStdLib = "org.jetbrains.kotlin:kotlin-stdlib:1.6.10"
+
+    //Android support Libraries
+    externalAndroidXAppcompat = 'androidx.appcompat:appcompat:1.4.1'
+    externalAndroidXConstraintlayout = 'androidx.constraintlayout:constraintlayout:2.1.3'
+    externalAndroidDesign = 'com.google.android.material:material:1.6.0'
+    externalAndroidAnnotation = 'androidx.annotation:annotation:1.1.0'
+
+    //Test related third party libraries
+    externalAndroidTestEspressoCore = 'com.android.support.test.espresso:espresso-core:2.2.2'
+    externalAndroidTestRunner = 'com.android.support.test:runner:0.4.1'
+    externalJunit = 'junit:junit:4.+'
+    externalTestJunit = 'androidx.test.ext:junit:1.1.3'
+    externalEspresso = 'androidx.test.espresso:espresso-core:3.4.0'
+
+    //Application Layer
+    externalGlide = 'com.github.bumptech.glide:glide:4.13.0'
+    externalGlideAnnotation = 'com.github.bumptech.glide:annotations:4.13.0'
+    externalGlideProcessor = 'com.github.bumptech.glide:compiler:4.13.0'
+    externalGlideOkHttp = 'com.github.bumptech.glide:okhttp3-integration:4.12.0@aar'
+    externalLeakcanary = 'com.squareup.leakcanary:leakcanary-android:2.9.1'
+    externalPermissionX = 'com.guolindev.permissionx:permissionx:1.6.0'
+    externalFastJson = 'com.alibaba:fastjson:1.1.76.android'
+
+    //SDK Layer
+    externalRxJava = 'io.reactivex.rxjava3:rxjava:3.1.8'
+    externalRxAndroid = 'io.reactivex.rxjava3:rxandroid:3.0.2'
+    externalRxJavaRetrofit = 'com.squareup.retrofit2:adapter-rxjava3:2.9.0'
+    externalOKHTTP = 'com.squareup.okhttp3:okhttp:4.8.1'
+    externalOKHTTPLogInterceptor = 'com.squareup.okhttp3:logging-interceptor:4.8.1'
+    externalOKIO = 'com.squareup.okio:okio:1.12.0'
+    externalRetrofit = 'com.squareup.retrofit2:retrofit:2.9.0'
+    externalRetrofitGsonConverter = 'com.squareup.retrofit2:converter-gson:2.9.0'
+    externalGSON = 'com.google.code.gson:gson:2.8.0'
+    externalDialogPlus = 'com.orhanobut:dialogplus:1.11@aar'
+    externalCircleImageView = 'de.hdodenhof:circleimageview:3.1.0'
+    externalHawk = 'com.orhanobut:hawk:2.0.1'
+    externalRecyclerViewAdapterHelper = 'com.github.CymChad:BaseRecyclerViewAdapterHelper:3.0.4'
+    externalStatusBarUtil ='com.jaeger.statusbarutil:library:1.5.1'
+    externalStyleableToast = 'io.github.muddz:styleabletoast:2.4.0'
+    externalRipplebackground = 'com.skyfishjy.ripplebackground:library:1.0.1'
+    externalSmartRefreshLayutKernel = 'io.github.scwang90:refresh-layout-kernel:2.1.0'      //核心必须依赖
+    externalSmartRefreshLayutHeader = 'io.github.scwang90:refresh-header-classics:2.1.0'    //经典刷新头
+    externalSmartRefreshLayutFooter = 'io.github.scwang90:refresh-footer-classics:2.1.0'    //经典加载
+
+    externalARouter = 'com.alibaba:arouter-api:1.5.2'
+    externalARouterCompiler = 'com.alibaba:arouter-compiler:1.5.2'
+
+    //Aliyun SDK
+    externalFatAarPlugin = 'com.github.kezong:fat-aar:1.3.8'
+
+    externalAllInOne = 'com.aliyun.aio:AliVCSDK_ARTC:6.8.7'
+
+//    externalAUIRoomEngine = 'com.aliyun.auikits.android:roomengine:1.3.0'
+    externalAUIRoomEngine = externalAllInOne
+
+    //内部调试代码，发布删除 -- 注释勿动
+//    apply from: 'https://code.alibaba-inc.com/apsara-media-box/imp-android-gradle-config/raw/v6.7.0/aio/media_box_debug_config.gradle' //内部调试代码，发布删除 -- 注释勿动
+//    if(this.ext.has('is_source_debug') && this.ext.is_source_debug) {  //内部调试代码，发布删除 -- 注释勿动
+//        externalAllInOne = project(':all-in-one')      //内部调试代码，发布删除 -- 注释勿动
+//    }    //内部调试代码，发布删除 -- 注释勿动
+
+    if ("true".equalsIgnoreCase(allInOne)) {
+        externalAlivcFFmpeg = externalAllInOne
+        externalSvideopro = externalAllInOne
+        externalSvideostandard = externalAllInOne
+        externalSvideosnap = externalAllInOne
+        externalPlayerFull = externalAllInOne
+        externalPlayerPart = externalAllInOne
+        externalRtsSDK = externalAllInOne
+        externalARTC = externalAllInOne
+        externalAlivcConan = externalAllInOne
+        externalAlivcCore = externalAllInOne
+        externalLivePusherInteractive = externalAllInOne
+        externalLivePusher = externalAllInOne
+    }
+
+
+    androidMinSdkVersion = 21
+    androidTargetSdkVersion = 33
+    androidCompileSdkVersion = 33
+    androidBuildToolsVersion = "33.0.2"
+
+    //Android SDK/Tools Version
+    externalCompileSdkVersion = androidCompileSdkVersion
+    externalBuildToolsVersion = androidBuildToolsVersion
+    //The MinSdkVersion of the product you can add like this: externalSVideoMinSdkVersion 15
+    externalMinSdkVersion = androidMinSdkVersion
+    externalPlayerMinSdkVersion = androidMinSdkVersion
+    externalLiveMinSdkVersion = androidMinSdkVersion
+    externalTargetSdkVersion = androidTargetSdkVersion
+}

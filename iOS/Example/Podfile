@@ -1,0 +1,28 @@
+use_frameworks!
+source 'https://github.com/CocoaPods/Specs.git'
+
+platform :ios, '10.0'
+
+workspace 'AUIAICallExample'
+
+AlivcSDK='AliVCSDK_ARTC'
+
+target 'Example' do
+
+  pod "#{AlivcSDK}", '~> 6.8.0'
+
+  pod 'AUIFoundation/All', :path => '../AUIBaseKits/AUIFoundation/'
+  pod 'AUIAICall', :path => '../'
+  pod "AUIAICall/#{AlivcSDK}", :path => '../'
+
+end
+
+post_install do |installer|
+    installer.generated_projects.each do |project|
+          project.targets.each do |target|
+              target.build_configurations.each do |config|
+                  config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '10.0'
+               end
+          end
+   end
+end

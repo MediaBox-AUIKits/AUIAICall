@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingVertical="8dp"
+    android:paddingHorizontal="20dp"
+    android:background="@color/layout_base_dialog_background">
+
+    <ImageView
+        android:id="@+id/iv_audio_tone"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:src="@drawable/ic_audio_tone" />
+
+    <TextView
+        android:id="@+id/tv_audio_tone_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="sdfdasfadsfasdfas"
+        android:paddingLeft="12dp"
+        style="@style/layout_base_text_style_12"
+        android:layout_gravity="center_vertical"
+        />
+
+    <ImageView
+        android:id="@+id/iv_audio_tone_tag"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:src="@drawable/ic_audio_tone_using"
+        android:paddingHorizontal="15dp"
+        android:visibility="gone"
+        />
+
+    <TextView
+        android:id="@+id/tv_audio_tone_selector"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/audio_tone_selector"
+        style="@style/layout_base_text_style_12"
+        android:layout_gravity="center_vertical"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="2dp"
+        android:background="@drawable/btn_selector"
+        android:visibility="visible"
+        />
+
+</LinearLayout>

@@ -1,0 +1,23 @@
+
+"OK" = "确认";
+"Cancel" = "取消";
+"Setting" = "设置";
+"Go to Settings" = "前往";
+"Camera permission is required to use this feature." = "需要相机权限才能使用该功能";
+"Microphone permission is needed to enable live streaming features." = "需要麦克风权限以开启直播功能";
+"Network is good" = "网络良好";
+"Network is poor" = "网络不佳";
+"Network error" = "网络异常";
+"Muted" = "已禁言";
+"Say something~" = "说些什么吧~";
+"You have new messages" = "你有新消息";
+"Host" = "主播";
+"Myself" = "自己";
+"Account Login" = "账号登录";
+"Login" = "登录";
+"My Login ID" = "我的登录ID";
+"Please enter letters, numbers, or '_'" = "请输入字母、数字、下划线";
+"User ID only supports letters, numbers, and underscores" = "用户ID仅支持字母、数字和下划线";
+"Logging in..." = "登录中...";
+"Login failed" = "登录失败";
+

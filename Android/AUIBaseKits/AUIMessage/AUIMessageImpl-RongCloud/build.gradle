@@ -1,0 +1,43 @@
+apply plugin: 'com.android.library'
+
+repositories {
+    // 融云 maven 仓库地址
+    maven { url "https://maven.rongcloud.cn/repository/maven-releases/" }
+}
+
+android {
+    compileSdkVersion 31
+
+    defaultConfig {
+        minSdkVersion 21
+        targetSdkVersion 31
+        versionCode 1
+        versionName "1.0"
+
+        consumerProguardFiles "consumer-rules.pro"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    android {
+        lintOptions {
+            abortOnError false
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    api project(':AUIBaseKits:AUIMessage')
+    // 融云SDK依赖（v5.4.0再往上升级，会编译失败；）
+    // 因为融云官方SDK中的依赖im_libcore，包含非标libc++_shared.so，会和其它SDK内部的同名so发生冲突。
+    // 融云SDK同学基于5.4.5打出了一个hotfix版本5.4.5.100
+    // 通过exclude掉xlog里面的libc++_shared.so，改为依赖aliyun maven上的'com.ndk.r18:cpp_shared:0.0.1'库
+    implementation 'cn.rongcloud.sdk:im_lib:5.4.5.100'
+}

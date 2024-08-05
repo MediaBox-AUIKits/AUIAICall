@@ -1,0 +1,6 @@
+.idea
+.gradle
+local.properties
+build
+:none
+.DS_Store

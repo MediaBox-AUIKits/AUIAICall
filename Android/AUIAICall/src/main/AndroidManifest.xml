@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.aliyun.auikits.aicall">
+
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+
+    <application>
+        <activity
+            android:name=".AUIAICallInCallActivity"
+            android:screenOrientation="portrait"
+            android:launchMode="singleTop"
+            android:exported="false" />
+        <activity
+            android:name=".AUIAICallEntranceActivity"
+            android:screenOrientation="portrait"
+            android:exported="true" />
+
+        <service android:name=".service.ForegroundAliveService" />
+    </application>
+
+</manifest>

@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_horizontal"
+                >
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginRight="10dp"
+                    android:text="User ID:"
+                    />
+                <EditText
+                    android:id="@+id/user_id"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_horizontal"
+                >
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginRight="10dp"
+                    android:text="Invite:"
+                    />
+                <EditText
+                    android:id="@+id/invitee_user_id"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/init_action"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="init" />
+
+            <Button
+                android:id="@+id/create_room_action"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="create room" />
+
+            <Button
+                android:id="@+id/join_room_action"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="join room" />
+
+            <Button
+                android:id="@+id/leave_room_action"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="leave room" />
+
+            <Button
+                android:id="@+id/join_mic_action"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="join mic" />
+
+            <Button
+                android:id="@+id/dismiss_room_action"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="dismiss room" />
+
+            <Button
+                android:id="@+id/release_action"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="release" />
+
+            <Button
+                android:id="@+id/request_mic_action"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="request mic" />
+
+            <Button
+                android:id="@+id/cancel_request_mic_action"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="cancel request mic" />
+
+            <Button
+                android:id="@+id/leave_mic_action"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="leave mic" />
+
+            <Button
+                android:id="@+id/agree_request_mic_action"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="agree request mic" />
+
+            <Button
+                android:id="@+id/refuse_request_mic_action"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="refuse request mic" />
+
+            <Button
+                android:id="@+id/invite_mic_action"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="invite mic" />
+            <Button
+                android:id="@+id/cancel_invite_mic_action"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="cancel invite mic" />
+
+            <Button
+                android:id="@+id/accept_invite_mic_action"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="accept invite mic" />
+            <Button
+                android:id="@+id/refuse_invite_mic_action"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="refuse invite mic" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_horizontal"
+                >
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginRight="10dp"
+                    android:text="mute:"
+                    />
+                <EditText
+                    android:id="@+id/mute_user_id"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+            <Button
+                android:id="@+id/mute_action"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="mute" />
+
+            <Button
+                android:id="@+id/mute_all_action"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="mute all" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_horizontal"
+                >
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginRight="10dp"
+                    android:text="kickout:"
+                    />
+                <EditText
+                    android:id="@+id/kickout_user_id"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/kick_out_action"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="kick out" />
+        </LinearLayout>
+    </ScrollView>
+    <com.aliyun.auikits.aicall.demo.view.DebugDisplayListView
+        android:id="@+id/debug_info_list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_marginBottom="20dp"
+        android:layout_marginTop="20dp"
+        />
+</androidx.constraintlayout.widget.ConstraintLayout>

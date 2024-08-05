@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.alivc.auicommon">
+
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+
+    <application android:requestLegacyExternalStorage="true">
+        <provider
+            android:name="com.alivc.auicommon.common.base.provider.ContextProvider"
+            android:authorities="${applicationId}.base.contextprovider"
+            android:exported="false" />
+    </application>
+
+</manifest>

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="layout_base_text_style_24">
+        <item name="android:textSize">24sp</item>
+        <item name="android:textColor">@color/layout_base_white_default</item>
+    </style>
+
+    <style name="layout_base_text_style_16_light_blue">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/layout_base_light_blue</item>
+    </style>
+
+    <style name="layout_base_text_style_16">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/layout_base_white_default</item>
+    </style>
+
+    <style name="layout_base_text_style_14">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/layout_base_white_default</item>
+    </style>
+    <style name="layout_base_text_style_14_light_blue">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/layout_base_light_blue</item>
+    </style>
+
+    <style name="layout_base_text_style_12">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/layout_base_white_default</item>
+    </style>
+
+
+    <style name="layout_base_text_style_10">
+        <item name="android:textSize">10sp</item>
+        <item name="android:textColor">@color/layout_base_white_default</item>
+    </style>
+
+    <style name="layout_base_text_style_10_gray">
+        <item name="android:textSize">10sp</item>
+        <item name="android:textColor">@color/layout_base_gray</item>
+    </style>
+
+    <style name="layout_base_text_style_10_light_white">
+        <item name="android:textSize">10sp</item>
+        <item name="android:textColor">@color/layout_base_light_white</item>
+    </style>
+
+
+    <style name="layout_base_text_style_9_light_white">
+        <item name="android:textSize">9sp</item>
+        <item name="android:textColor">@color/layout_base_light_white</item>
+    </style>
+
+
+    <style name="layout_base_text_style_8_gray">
+        <item name="android:textSize">8sp</item>
+        <item name="android:textColor">@color/layout_base_gray</item>
+    </style>
+
+    <style name="layout_base_input_dialog">
+        <item name="android:windowFrame">@null</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:windowIsTranslucent">false</item>
+        <item name="android:windowFullscreen">false</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:background">#00000000</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:backgroundDimEnabled">false</item>
+    </style>
+
+    adapter
+</resources>
