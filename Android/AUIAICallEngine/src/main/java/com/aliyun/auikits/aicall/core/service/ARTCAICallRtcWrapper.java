@@ -90,6 +90,13 @@ public class ARTCAICallRtcWrapper {
         }
     }
 
+    public void destroy() {
+        if (null != mAliRtcEngine) {
+            mAliRtcEngine.destroy();
+            mAliRtcEngine = null;
+        }
+    }
+
     public void refreshRTCToken(String token) {
         if (null != mAliRtcEngine) {
             mAliRtcEngine.refreshAuthInfo(token);

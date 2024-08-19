@@ -9,10 +9,17 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.TextPaint;
 import android.text.TextUtils;
+import android.text.style.ForegroundColorSpan;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -25,14 +32,16 @@ import com.aliyun.auikits.aicall.util.ToastHelper;
 import com.aliyun.auikits.aicall.widget.AICallSettingDialog;
 import com.aliyun.auikits.aicall.widget.SpeechAnimationView;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class AUIAICallInCallActivity extends AppCompatActivity {
-    private static final boolean IS_SUBTITLE_ENABLE = false;
+    private static final boolean IS_SUBTITLE_ENABLE = true;
     private static String sUserId = null;
 
     private Handler mHandler = null;
-    private boolean mDurationUpdating = false;
+    private boolean mUIProgressing = false;
     private long mCallConnectedMillis = 0;
 
     private ARTCAICallEngine mARTCAICallEngine = null;
@@ -43,8 +52,7 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
     private boolean isUserSpeaking = false;
     private long mLastBackButtonExitMillis = 0;
 
-    private ImageView mIvSubtitle = null;
-    private TextView mTvSubtitle = null;
+    private SubtitleHolder mSubtitleHolder = new SubtitleHolder();
 
     private ARTCAICallEngine.IARTCAICallEngineCallback mARTCAIEngineCallback = new ARTCAICallEngine.IARTCAICallEngineCallback() {
         @Override
@@ -55,10 +63,10 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                 case Connecting:
                     break;
                 case Connected:
-                    startDurationUpdateProgress();
+                    startUIUpdateProgress();
                     break;
                 case Over:
-                    stopDurationUpdateProgress();
+                    stopUIUpdateProgress();
                     break;
                 case Error:
                     break;
@@ -97,22 +105,20 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             Log.i("AUIAICALL", "onUserAsrSubtitleNotify: [sentenceId: " + sentenceId + ", isSentenceEnd" + isSentenceEnd + ", text: " + text + "]");
 
             if (IS_SUBTITLE_ENABLE) {
-                if (isSentenceEnd) {
-                    updateSubtitle(true, text);
-                }
+                mSubtitleHolder.updateSubtitle(true, isSentenceEnd, text, sentenceId);
             } else {
-                setSubtitleLayoutVisibility(false);
+                mSubtitleHolder.setSubtitleLayoutVisibility(false);
             }
         }
 
         @Override
-        public void onRobotSubtitleNotify(String text, int userAsrSentenceId) {
-            Log.i("AUIAICALL", "onRobotSubtitleNotify: [userAsrSentenceId: " + userAsrSentenceId + ", text: " + text + "]");
+        public void onRobotSubtitleNotify(String text, boolean end, int userAsrSentenceId) {
+            Log.i("AUIAICALL", "onRobotSubtitleNotify: [userAsrSentenceId: " + userAsrSentenceId + ", end: " + end + ", text: " + text + "]");
 
             if (IS_SUBTITLE_ENABLE) {
-                updateSubtitle(false, text);
+                mSubtitleHolder.updateSubtitle(false, end, text, userAsrSentenceId);
             } else {
-                setSubtitleLayoutVisibility(false);
+                mSubtitleHolder.setSubtitleLayoutVisibility(false);
             }
         }
     };
@@ -217,32 +223,36 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         }
     }
 
-    private void startDurationUpdateProgress() {
-        mDurationUpdating = true;
+    private void startUIUpdateProgress() {
+        mUIProgressing = true;
         mCallConnectedMillis = SystemClock.elapsedRealtime();
         mHandler.post(new Runnable() {
             @Override
             public void run() {
-                updateCallDuration();
+                updateProgressUI();
             }
         });
     }
 
-    private void stopDurationUpdateProgress() {
-        mDurationUpdating = false;
+    private void stopUIUpdateProgress() {
+        mUIProgressing = false;
     }
 
-    private void updateCallDuration() {
-        if (mDurationUpdating) {
+    private void updateProgressUI() {
+        if (mUIProgressing) {
+            // 更新通话时长
             long duration = mCallConnectedMillis > 0 ? SystemClock.elapsedRealtime() - mCallConnectedMillis : 0;
             ((TextView)findViewById(R.id.tv_call_duration)).setText(TimeUtil.formatDuration(duration));
 
-            mHandler.post(new Runnable() {
+            // 更新实时字幕
+            mSubtitleHolder.refreshSubtitle();
+
+            mHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    updateCallDuration();
+                    updateProgressUI();
                 }
-            });
+            }, 100);
         }
     }
 
@@ -332,25 +342,226 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         }
     }
 
-    private void updateSubtitle(boolean isUser, String text) {
-        setSubtitleLayoutVisibility(true);
-        if (null == mIvSubtitle) {
-            mIvSubtitle = findViewById(R.id.iv_subtitle);
-        }
-        if (null == mTvSubtitle) {
-            mTvSubtitle = findViewById(R.id.tv_subtitle);
+    private class SubtitleHolder {
+        private ImageView mIvSubtitle = null;
+        private TextView mTvSubtitle = null;
+
+        private LinearLayout mLlFullScreenSubtitle = null;
+        private ImageView mBtnCloseFullScreenSubtitle = null;
+        private ScrollView mSvFullScreenSubtitle = null;
+        private TextView mTvFullScreenSubtitle = null;
+
+        private List<SubtitleTextPart> mSubtitlePartList = new ArrayList<>();
+        private Integer mAsrSentenceId = null;
+        private Boolean isLastSubtitleOfAsr = null;
+        private static final int INTERNATIONAL_WORD_INTERVAL = 30;
+        private static final int CHINESE_WORD_INTERVAL = 100;
+        private static final String SINGLE_WORD = "龍";
+        private static final String TARGET_WORD = " > ";
+
+        private class SubtitleTextPart {
+            long receiveTime = 0;
+            String text;
+            long displayEndTime = 0;
         }
 
-        mIvSubtitle.setImageResource(
-                isUser ?
-                R.drawable.ic_subtitle_user :
-                R.drawable.ic_subtitle_robot
-        );
+        private void updateSubtitle(boolean isAsrText, boolean end, String text, int asrSentenceId) {
+            Log.i("AUIAICall", "updateSubtitle [isAsrText" + isAsrText + ", end: " + end +
+                    ", text: " + text + ", asrSentenceId: " + asrSentenceId + "]");
+            boolean resetSubtitle = false;
+            if (isLastSubtitleOfAsr == null || isAsrText || isLastSubtitleOfAsr) { // asr字幕、robot字幕切换
+                resetSubtitle = true;
+            } else if (mAsrSentenceId == null || mAsrSentenceId != asrSentenceId) { // 新对话
+                resetSubtitle = true;
+            }
+            mAsrSentenceId = asrSentenceId;
+            isLastSubtitleOfAsr = isAsrText;
+            if (resetSubtitle) {
+                mSubtitlePartList.clear();
+            }
+            SubtitleTextPart subtitleTextPart = new SubtitleTextPart();
+            subtitleTextPart.text = text;
+            subtitleTextPart.receiveTime = SystemClock.elapsedRealtime();
+            mSubtitlePartList.add(subtitleTextPart);
 
-        mTvSubtitle.setText(text);
+            setSubtitleLayoutVisibility(true);
+
+            initUIComponent();
+
+            mIvSubtitle.setImageResource(
+                    isAsrText ? R.drawable.ic_subtitle_user : R.drawable.ic_subtitle_robot
+            );
+        }
+
+        private void setSubtitleLayoutVisibility(boolean isVisible) {
+            findViewById(R.id.ll_subtitle).setVisibility(isVisible ? View.VISIBLE : View.GONE);
+        }
+
+        private void refreshSubtitle() {
+            if (!mSubtitlePartList.isEmpty()) {
+                long now = SystemClock.elapsedRealtime();
+                StringBuilder displayTextBuilder = new StringBuilder();
+
+                long lastDisplayEndTime = 0;
+                for (SubtitleTextPart subtitleTextPart : mSubtitlePartList) {
+                    if (isLastSubtitleOfAsr) {
+                        displayTextBuilder.append(subtitleTextPart.text);
+                    } else {
+                        if (subtitleTextPart.displayEndTime != 0) {
+                            lastDisplayEndTime = subtitleTextPart.displayEndTime;
+                            displayTextBuilder.append(subtitleTextPart.text);
+                        } else {
+                            long displayStartMillis = Math.max(subtitleTextPart.receiveTime, lastDisplayEndTime);
+                            long progress = now - displayStartMillis;
+                            boolean containsChinese = containsChinese(subtitleTextPart.text);
+                            int oneWordInterval = containsChinese ? CHINESE_WORD_INTERVAL : INTERNATIONAL_WORD_INTERVAL;
+
+                            if (false) {
+                                Log.i("AUIAICall", "refreshSubtitle part [progress: " + progress +
+                                        ", lastDisplayEndTime: " + lastDisplayEndTime +
+                                        ", receiveTime" + subtitleTextPart.receiveTime +
+                                        ", now: " + now +
+                                        ", containChinese: " + containsChinese +
+                                        "]");
+                            }
+                            int displayCount = Math.min(subtitleTextPart.text.length(), (int)(progress/oneWordInterval));
+                            displayTextBuilder.append(subtitleTextPart.text.substring(0, displayCount));
+                            if (displayCount >= subtitleTextPart.text.length()) {
+                                subtitleTextPart.displayEndTime = now;
+                                lastDisplayEndTime = subtitleTextPart.displayEndTime;
+                            } else {
+                                break;
+                            }
+                        }
+                    }
+                }
+
+
+                if (false) {
+                    StringBuilder allTextBuilder = new StringBuilder();
+                    for (SubtitleTextPart subtitleTextPart : mSubtitlePartList) {
+                        allTextBuilder.append(subtitleTextPart.text);
+                    }
+                    Log.i("AUIAICall", "refreshSubtitle [isLastSubtitleOfAsr: " + isLastSubtitleOfAsr +
+                            ", displayCount: " + displayTextBuilder.length() + " / " + allTextBuilder.length() +
+                            ", displayTextBuilder: " + displayTextBuilder.toString() +
+                            ", allTextBuilder: " + allTextBuilder.toString() + "]");
+
+                }
+                String displayText = displayTextBuilder.toString();
+                { // 收缩字幕显示逻辑
+                    int maxDisplayCapacity = getCropDisplayIndex(displayText); //initMaxDisplayCapacity();
+                    if (displayText.length() <= maxDisplayCapacity) {
+                        mTvSubtitle.setText(displayText);
+                    } else {
+                        SpannableString spannableString = new SpannableString(displayText.substring(0, maxDisplayCapacity) + TARGET_WORD);
+
+                        spannableString.setSpan(
+                                new ForegroundColorSpan(getResources().getColor(R.color.layout_base_light_blue)),
+                                maxDisplayCapacity, spannableString.length(),
+                                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+                        mTvSubtitle.setText(spannableString);
+                    }
+                }
+                { // 展开字幕显示逻辑
+                    mTvFullScreenSubtitle.setText(displayText);
+                }
+            }
+        }
+
+        private int getCropDisplayIndex(String displayText) {
+            int cropIndex = 0;
+            if (!TextUtils.isEmpty(displayText)) {
+                TextPaint textPaint = mTvSubtitle.getPaint();
+
+                float targetWordMeasureWidth = textPaint.measureText(TARGET_WORD);
+                float maxWidth = mTvSubtitle.getWidth() * mTvSubtitle.getMaxLines() - targetWordMeasureWidth*3f;
+                float displayWidth = 0f;
+
+                char displayCharArray[] = displayText.toCharArray();
+                cropIndex = displayCharArray.length;
+                for (int i = 0; i < displayCharArray.length; i++) {
+                    String ch = String.valueOf(displayCharArray[i]);
+                    displayWidth += textPaint.measureText(ch);
+//                    Log.i("AUIAICall", "getCropDisplayIndex [index: " + i + ", str: " + ch + ", maxWidth: " + maxWidth + ", displayWidth" + displayWidth + "]");
+                    if (maxWidth <= displayWidth) {
+                        cropIndex = i - 1;
+                        break;
+                    }
+                }
+            }
+            return cropIndex;
+        }
+        
+        private void initUIComponent() {
+            if (null == mIvSubtitle) {
+                mIvSubtitle = findViewById(R.id.iv_subtitle);
+            }
+            if (null == mTvSubtitle) {
+                mTvSubtitle = findViewById(R.id.tv_subtitle);
+                mTvSubtitle.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        setFullScreenSubtitleVisibility(true);
+                    }
+                });
+            }
+            if (null == mLlFullScreenSubtitle) {
+                mLlFullScreenSubtitle = findViewById(R.id.ll_full_screen_subtitle);
+                mLlFullScreenSubtitle.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Log.i("AUIAICall", "mLlFullScreenSubtitle onClick");
+                        setFullScreenSubtitleVisibility(false);
+                    }
+                });
+            }
+            if (null == mBtnCloseFullScreenSubtitle) {
+                mBtnCloseFullScreenSubtitle = findViewById(R.id.btn_close_full_screen_subtitle);
+                mBtnCloseFullScreenSubtitle.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Log.i("AUIAICall", "mBtnCloseFullScreenSubtitle onClick");
+                        setFullScreenSubtitleVisibility(false);
+                    }
+                });
+            }
+            if (null == mSvFullScreenSubtitle) {
+                mSvFullScreenSubtitle = findViewById(R.id.sv_full_screen_subtitle);
+                mSvFullScreenSubtitle.setOnTouchListener(new View.OnTouchListener() {
+                    @Override
+                    public boolean onTouch(View v, MotionEvent event) {
+                        Log.i("AUIAICall", "mSvFullScreenSubtitle onTouch : " + event.getAction());
+                        if (event.getAction() == MotionEvent.ACTION_UP) {
+                            setFullScreenSubtitleVisibility(false);
+                        }
+                        return false;
+                    }
+                });
+            }
+            if (null == mTvFullScreenSubtitle) {
+                mTvFullScreenSubtitle = findViewById(R.id.tv_full_screen_subtitle);
+                mTvFullScreenSubtitle.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Log.i("AUIAICall", "mTvFullScreenSubtitle onClick");
+                    }
+                });
+            }
+        }
+
+        private void setFullScreenSubtitleVisibility(boolean visible) {
+            if (null != mLlFullScreenSubtitle) {
+                mLlFullScreenSubtitle.setVisibility(visible ? View.VISIBLE : View.GONE);
+            }
+        }
+
+        private boolean containsChinese(String str) {
+            // 中文字符的正则表达式
+            String regex = "[\u4e00-\u9fa5]";
+            return str.matches(".*" + regex + ".*");
+        }
     }
 
-    private void setSubtitleLayoutVisibility(boolean isVisible) {
-        findViewById(R.id.ll_subtitle).setVisibility(isVisible ? View.VISIBLE : View.GONE);
-    }
 }

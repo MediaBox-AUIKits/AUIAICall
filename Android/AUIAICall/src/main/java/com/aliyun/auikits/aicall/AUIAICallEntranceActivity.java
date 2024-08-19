@@ -13,11 +13,9 @@ import android.widget.Switch;
 import android.widget.Toast;
 
 import com.alibaba.android.arouter.facade.annotation.Route;
-import com.aliyun.auikits.aicall.util.DisplayUtil;
 import com.aliyun.auikits.aicall.util.PermissionUtils;
 import com.aliyun.auikits.aicall.util.SettingStorage;
 import com.aliyun.auikits.aicall.util.ToastHelper;
-import com.aliyun.auikits.aicall.widget.AICallSettingDialog;
 import com.orhanobut.dialogplus.DialogPlus;
 import com.orhanobut.dialogplus.OnDismissListener;
 import com.orhanobut.dialogplus.ViewHolder;
@@ -126,7 +124,7 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
 
     private void onSettingDialogTitleClicked() {
         long now = SystemClock.elapsedRealtime();
-        if (now - mLastSettingTapMillis > 200 || mLastSettingTapMillis == 0) {
+        if (now - mLastSettingTapMillis > 500 || mLastSettingTapMillis == 0) {
             mLastSettingTapCount = 1;
         } else {
             mLastSettingTapCount++;
@@ -134,6 +132,8 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
         mLastSettingTapMillis = now;
 
         if (mLastSettingTapCount >= 3) {
+            mLastSettingTapCount = 0;
+            mLastSettingTapMillis = 0;
             boolean showExtraConfig = !SettingStorage.getInstance().getBoolean(SettingStorage.KEY_SHOW_EXTRA_DEBUG_CONFIG);
 
             if (showExtraConfig) {

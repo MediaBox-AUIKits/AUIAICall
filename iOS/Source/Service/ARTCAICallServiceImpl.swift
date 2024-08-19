@@ -218,6 +218,7 @@ extension ARTCAICallServiceImpl: ARTCAICallRTCBridgeDelegate {
         
         let receive = ARTCAICallMessageReceiveModel()
         receive.type = type
+        receive.seqId = dataDict["seqId"] as? Int64
         receive.senderId = dataDict["senderId"] as? String
         receive.receiverId = dataDict["receiverId"] as? String
         receive.data = dataDict["data"] as? [String: Any]

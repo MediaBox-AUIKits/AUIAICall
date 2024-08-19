@@ -28,6 +28,21 @@ import UIKit
     @objc optional func onAICallEngineStateChanged()
     @objc optional func onAICallEngineRobotStateChanged()
     @objc optional func onAICallEngineActiveSpeakerVolumeChanged(userId: String, volume: Int32)
+    
+    /**
+     * 同步ASR识别用户的话
+     * @param text ASR识别出的具体文本
+     * @param isSentenceEnd 当前文本是否为这句话的最终结果
+     * @param sentenceId 当前文本属于的句子ID
+     */
+    @objc optional func onAICallEngineUserAsrSubtitleNotify(text: String, isSentenceEnd: Bool, sentenceId: Int)
+    
+    /**
+     * 同步机器人回应的话
+     * @param text 机器人的话
+     * @param userAsrSentenceId 表示回应对应sentenceId语音输入的的llm内容
+     */
+    @objc optional func onAICallEngineRobotSubtitleNotify(text: String, isSentenceEnd: Bool, userAsrSentenceId: Int)
 }
 
 
@@ -262,22 +277,31 @@ extension ARTCAICallEngine: ARTCAICallMessageDelegate {
             }
             return
         }
+        
+        let seqId = model.seqId ?? 0
 
         if model.type == .RobotStateChanged {
             if let state = model.data?["state"] as? Int32 {
                 if let robotState = RobotState(rawValue: state) {
                     self.robotState = robotState
+                    debugPrint("Received[\(seqId)] RobotState：\(robotState)")
                 }
             }
         }
         else if model.type == .RobotASRResult {
             if let text = model.data?["text"] as? String {
-                debugPrint("Received ASR Text：\(text)")
+                let end = model.data?["end"] as? Bool ?? true
+                let sentenceId = model.data?["sentenceId"] as? Int ?? 0
+                self.delegate?.onAICallEngineUserAsrSubtitleNotify?(text: text, isSentenceEnd: end, sentenceId: sentenceId)
+                debugPrint("Received[\(seqId)] ASR Text：\(text)  isSentenceEnd=\(end)  sentenceId=\(sentenceId)")
             }
         }
         else if model.type == .RobotLLMSpeaking {
             if let text = model.data?["text"] as? String {
-                debugPrint("Received LLM Text：\(text)")
+                let end = model.data?["end"] as? Bool ?? true
+                let sentenceId = model.data?["sentenceId"] as? Int ?? 0
+                self.delegate?.onAICallEngineRobotSubtitleNotify?(text: text, isSentenceEnd: end, userAsrSentenceId: sentenceId)
+                debugPrint("Received[\(seqId)] LLM Text：\(text)  isSentenceEnd=\(end)  sentenceId=\(sentenceId)")
             }
         }
     }

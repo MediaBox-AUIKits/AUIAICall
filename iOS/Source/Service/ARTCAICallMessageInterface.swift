@@ -28,6 +28,7 @@ import UIKit
 @objcMembers open class ARTCAICallMessageReceiveModel: NSObject {
     open var type: ARTCAICallMessageType = .None
     open var data: [AnyHashable: Any]? = nil
+    open var seqId: Int64? = nil
     open var senderId: String? = nil
     open var receiverId: String? = nil
 }

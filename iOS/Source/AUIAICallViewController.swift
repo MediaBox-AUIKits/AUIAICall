@@ -133,16 +133,39 @@ import AUIFoundation
     // 当前通话时间（单位：秒）
     public private(set) var callingSeconds = 0.0
     private lazy var countdownTimer: Timer = {
-        let timer = Timer(timeInterval: 1.0, repeats: true) {[weak self] timer in
+        let timer = Timer(timeInterval: 0.10, repeats: true) {[weak self] timer in
             if let self = self {
-                self.callingSeconds = self.callingSeconds + 1.0
+                self.callingSeconds = self.callingSeconds + 0.10
                 let time = AVStringFormat.format(withDuration: Float(self.callingSeconds))
                 self.bottomView.timeLabel.text = time
+                
+                self.printingRobotText()
             }
         }
         RunLoop.current.add(timer, forMode: .default)
         return timer
     }()
+    
+    private var lastRobotSentenceId: Int? = nil
+    private var currRobotSpeakingTokens: [String] = []
+    private var nextRobotSpeakingTokenIndex: Int = 0
+    private var isRobotPrintingText: Bool = false
+
+    
+    private func printingRobotText() {
+        if self.isRobotPrintingText == false {
+            return
+        }
+        
+        if self.currRobotSpeakingTokens.count > self.nextRobotSpeakingTokenIndex {
+            var currRobotPrintedText = ""
+            for i in 0...self.nextRobotSpeakingTokenIndex {
+                currRobotPrintedText.append(self.currRobotSpeakingTokens[i])
+            }
+            self.callContentView.updateSubTitle(enable: true, isLLM: true, text: currRobotPrintedText, clear: false)
+            self.self.nextRobotSpeakingTokenIndex += 1
+        }
+    }
 }
 
 extension AUIAICallViewController {
@@ -250,6 +273,8 @@ extension AUIAICallViewController: ARTCAICallEngineDelegate {
     public func onAICallEngineRobotStateChanged() {
         if self.engine.robotState == .Listening {
             self.callContentView.tipsLabel.text = AUIAICallBundle.getString("You Talk, I'm Listening...")
+            self.isRobotPrintingText = false
+            self.callContentView.updateSubTitle(enable: false, isLLM: false, text: "", clear: true)
         }
         else if self.engine.robotState == .Thinking {
             self.callContentView.tipsLabel.text = AUIAICallBundle.getString("Thinking...")
@@ -273,5 +298,29 @@ extension AUIAICallViewController: ARTCAICallEngineDelegate {
         else {
             self.callContentView.robotStateAni.listeningAniView.isSpeaking = false
         }
+    }
+    
+    public func onAICallEngineRobotSubtitleNotify(text: String, isSentenceEnd: Bool, userAsrSentenceId: Int) {
+        var tokens: [String] = []
+        let tagger = NSLinguisticTagger(tagSchemes: [.tokenType], options: 0)
+        tagger.string = text
+        tagger.enumerateTags(in: NSRange(location: 0, length: text.utf16.count), scheme: .tokenType, options: []) { tag, tokenRange, _, _  in
+            let word = (text as NSString).substring(with: tokenRange)
+            tokens.append(word)
+        }
+        if userAsrSentenceId != self.lastRobotSentenceId {
+            self.lastRobotSentenceId = userAsrSentenceId
+            self.nextRobotSpeakingTokenIndex = 0
+            self.currRobotSpeakingTokens.removeAll()
+        }
+        self.currRobotSpeakingTokens.append(contentsOf: tokens)
+
+        self.isRobotPrintingText = true
+    }
+    
+    public func onAICallEngineUserAsrSubtitleNotify(text: String, isSentenceEnd: Bool, sentenceId: Int) {
+        self.isRobotPrintingText = false
+        self.callContentView.updateSubTitle(enable: true, isLLM: false, text: text, clear: false)
+
     }
 }

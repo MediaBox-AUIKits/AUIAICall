@@ -38,7 +38,7 @@ public class ARTCAICallServiceImpl implements IARTCAICallService {
             if (!TextUtils.isEmpty(robotId)) {
                 jsonObject.put("robot_id", robotId);
             }
-            jsonObject.put("config", composeRobotConfigJson(null, null, null));
+            jsonObject.put("config", composeRobotConfigJson("zhixiaoxia", null, null));
         } catch (Exception ex) {
             ex.printStackTrace();
         }

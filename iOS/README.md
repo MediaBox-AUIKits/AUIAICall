@@ -40,7 +40,7 @@ AUI Kits AI智能体集成工具适用于网络客服、AI助理、撮合助手�
 ```swift
 // ARTCAICallAppServer.swift
 public class AUIAICallAppServer: NSObject {
-    public static let serverDomain = "你的应用服务器域名"
+    public static let AICallServerDomain = "你的应用服务器域名"
     ...
 }
 ```

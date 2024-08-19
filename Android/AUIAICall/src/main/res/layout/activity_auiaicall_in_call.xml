@@ -64,6 +64,7 @@
             android:layout_height="wrap_content"
             android:layout_marginLeft="10dp"
             android:text=""
+            android:maxLines="4"
             style="@style/layout_base_text_style_14"
             />
     </LinearLayout>
@@ -163,5 +164,39 @@
                 android:text="@string/speaker_on"/>
         </LinearLayout>
 
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/ll_full_screen_subtitle"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#CC000000"
+        android:orientation="vertical"
+        android:visibility="gone"
+        >
+        <ImageView
+            android:id="@+id/btn_close_full_screen_subtitle"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:padding="10dp"
+            android:src="@drawable/ic_voice_agent_close"
+            android:layout_gravity="right"/>
+        <ScrollView
+            android:id="@+id/sv_full_screen_subtitle"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingTop="15dp"
+            android:paddingBottom="88dp"
+            android:paddingLeft="25dp"
+            android:paddingRight="25dp">
+            <TextView
+                android:id="@+id/tv_full_screen_subtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                style="@style/layout_base_text_style_14"
+                android:paddingTop="10dp"
+                android:paddingBottom="10dp"
+                />
+        </ScrollView>
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -95,9 +95,10 @@ public abstract class ARTCAICallEngine {
         /**
          * 同步机器人回应的话
          * @param text 机器人的话
+         * @param end 当前回复是否结束
          * @param userAsrSentenceId 表示回应对应sentenceId语音输入的的llm内容
          */
-        void onRobotSubtitleNotify(String text, int userAsrSentenceId);
+        void onRobotSubtitleNotify(String text, boolean end, int userAsrSentenceId);
     }
 
     /**

@@ -8,9 +8,10 @@
 import UIKit
 
 
-public class AUIAICallAppServer: NSObject {
-    public static let serverDomain = "你的AppServer域名"
+@objcMembers public class AUIAICallAppServer: NSObject {
+    public static let AICallServerDomain = "你的AppServer域名"
     
+    public static var serverDomain = AICallServerDomain
     public static var serverAuth: String? = ""
     public static func request(path: String, body: [AnyHashable: Any]?, completed: @escaping (_ response: URLResponse?, _ data: [AnyHashable: Any]?, _ error: Error?) -> Void) -> Void {
         let urlString = "\(self.serverDomain)\(path)"

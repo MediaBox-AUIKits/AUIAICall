@@ -127,6 +127,7 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
                     String dataStr = new String(msg.data);
                     JSONObject jsonObject = new JSONObject(dataStr);
                     int msgType = jsonObject.optInt("type");
+                    int seqId = jsonObject.optInt("seqId");
                     String senderId = jsonObject.optString("senderId");
                     String receiverId = jsonObject.optString("receiverId");
                     JSONObject dataJson = jsonObject.optJSONObject("data");
@@ -153,8 +154,9 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
                              *   }
                              */
                             String text = dataJson.optString("text");
+                            boolean end = dataJson.optBoolean("end");
                             int sentenceId = dataJson.optInt("sentenceId");
-                            notifyRobotSubtitle(text, sentenceId);
+                            notifyRobotSubtitle(text, end, sentenceId);
                         } else if (msgType == IMsgTypeDef.MSG_TYPE_USER_ASR_TEXT) {
                             /**
                              *   "data": {
@@ -264,6 +266,10 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
             public void run() {
                 mIsHangUp = true;
                 mARTCAICallRtcWrapper.leave();
+                mARTCAICallRtcWrapper.destroy();
+
+                setCallState(AICallState.Over);
+
                 Log.i(TAG, "handup [mRobotInstanceId: " + mRobotInstanceId + "]");
                 // 调用关闭服务
                 if (!TextUtils.isEmpty(mRobotInstanceId)) {
@@ -526,13 +532,13 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
         }
     }
 
-    private void notifyRobotSubtitle(String text, int userAsrSentenceId) {
+    private void notifyRobotSubtitle(String text, boolean end, int userAsrSentenceId) {
         if (!TextUtils.isEmpty(text)) {
             mCallbackHandler.post(new Runnable() {
                 @Override
                 public void run() {
                     if (null != mEngineCallback) {
-                        mEngineCallback.onRobotSubtitleNotify(text, userAsrSentenceId);
+                        mEngineCallback.onRobotSubtitleNotify(text, end, userAsrSentenceId);
                     }
                 }
             });
