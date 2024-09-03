@@ -1,0 +1,10 @@
+#root {
+  max-width: 1280px;
+  width: 100%;
+  height: 100vh;
+  margin: 0 auto;
+  text-align: center;
+  overflow: hidden;
+  padding: 20px;
+  box-sizing: border-box;
+}

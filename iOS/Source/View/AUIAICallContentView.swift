@@ -7,14 +7,18 @@
 
 import UIKit
 import AUIFoundation
+import ARTCAICallKit
 
 @objcMembers open class AUIAICallContentView: UIView {
 
     public override init(frame: CGRect) {
         super.init(frame: frame)
-        self.layer.addSublayer(self.gradientlayer)
+        
+        self.addSubview(self.agentRenderView)
+        self.agentRenderView.layer.addSublayer(self.gradientlayer)
+        
         self.addSubview(self.tipsLabel)
-        self.addSubview(self.robotStateAni)
+        self.addSubview(self.callStateAni)
         
         self.addSubview(self.subtitleIcon)
         self.addSubview(self.subtitleLabel)
@@ -31,11 +35,15 @@ import AUIFoundation
     open override func layoutSubviews() {
         super.layoutSubviews()
         
-        self.gradientlayer.frame = CGRect(x: 0, y: self.av_height - 300, width: self.av_width, height: 300)
+        self.agentRenderView.frame = self.bounds
+        self.gradientlayer.frame = CGRect(x: 0, y: self.agentRenderView.av_height - 350, width: self.agentRenderView.av_width, height: 350)
         
-        let hei = self.av_bottom - 228 - 18
-        self.robotStateAni.frame = CGRect(x: 0, y: UIView.av_safeTop + 44, width: self.av_width, height: hei - UIView.av_safeTop - 44)
+        self.avatarAgentView?.frame = self.agentRenderView.bounds
         
+        let hei = self.agentRenderView.av_bottom - 228 - 18
+        self.voiceAgentAniView?.frame = CGRect(x: 0, y: UIView.av_safeTop + 44, width: self.agentRenderView.av_width, height: hei - UIView.av_safeTop - 44)
+
+        self.callStateAni.frame = CGRect(x: 0, y: UIView.av_safeTop + 44, width: self.av_width, height: hei - UIView.av_safeTop - 44)
         self.tipsLabel.frame = CGRect(x: 0, y: hei, width: self.av_width, height: 18)
         
         self.subtitleIcon.frame = CGRect(x: 50, y: 141, width: 14, height: 14)
@@ -74,19 +82,59 @@ import AUIFoundation
         icon.isUserInteractionEnabled = false
         return icon
     }()
+
+    open lazy var callStateAni: AUIAICallStateAnimation = {
+        let view = AUIAICallStateAnimation()
+        view.isHidden = false
+        return view
+    }()
     
-    open lazy var gradientlayer: CAGradientLayer = {
+    open var agentRenderView: UIView = {
+        let view = UIView()
+        return view
+    }()
+    
+    open var gradientlayer: CAGradientLayer = {
         let layer = CAGradientLayer()
         layer.startPoint = CGPoint(x: 0.5, y: 0.0)
         layer.endPoint = CGPoint(x: 0.5, y: 1.0)
         layer.colors = [UIColor.clear.cgColor, UIColor.black.withAlphaComponent(0.8).cgColor]
         return layer
     }()
+
     
-    open lazy var robotStateAni: AUIAICallRobotStateAnimation = {
-        let view = AUIAICallRobotStateAnimation()
-        return view
-    }()
+    open var voiceAgentAniView: AUIAICallAgentStateAnimation? = nil
+    open var avatarAgentView: UIView? = nil
+    
+    open func updateAgentType(agentType: ARTCAICallAgentType) {
+        self.voiceAgentAniView?.removeFromSuperview()
+        self.voiceAgentAniView = nil
+        
+        self.avatarAgentView?.removeFromSuperview()
+        self.avatarAgentView = nil
+        
+        if agentType == .VoiceAgent {
+            let view = AUIAICallAgentStateAnimation()
+            view.isHidden = true
+            self.insertSubview(view, at: 0)
+            self.voiceAgentAniView = view
+            
+            let hei = self.av_bottom - 228 - 18
+            self.voiceAgentAniView?.frame = CGRect(x: 0, y: UIView.av_safeTop + 44, width: self.av_width, height: hei - UIView.av_safeTop - 44)
+        }
+        else {
+            let view = UIView()
+            // view.backgroundColor = UIColor.white
+            view.isHidden = true
+            self.insertSubview(view, at: 0)
+            self.avatarAgentView = view
+            
+            self.avatarAgentView?.frame = self.bounds
+        }
+        
+        self.gradientlayer.removeFromSuperlayer()
+        self.agentRenderView.layer.addSublayer(self.gradientlayer)
+    }
     
     open func updateSubTitle(enable: Bool, isLLM: Bool, text: String, clear: Bool) {
         self.subtitleIcon.isHidden = !enable

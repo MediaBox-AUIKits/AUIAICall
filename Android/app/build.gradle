@@ -41,7 +41,4 @@ dependencies {
     androidTestImplementation externalEspresso
     implementation externalAndroidAnnotation
     implementation project(":AUIAICall")
-    implementation externalOKHTTP
-    implementation externalAllInOne
-    implementation externalAUIRoomEngine
 }

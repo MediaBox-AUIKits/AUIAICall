@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_enabled="true" android:color="@color/layout_base_white_default"/> <!-- 按下状态 -->
+    <item android:state_enabled="false" android:color="@color/layout_base_gray"/> <!-- 聚焦状态 -->
+    <item android:color="@color/layout_base_white_default"/> <!-- 默认状态 -->
+</selector>

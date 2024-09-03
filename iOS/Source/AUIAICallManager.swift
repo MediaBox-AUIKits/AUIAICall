@@ -7,6 +7,7 @@
 
 import UIKit
 import AUIFoundation
+import ARTCAICallKit
 
 @objcMembers open class AUIAICallManager: NSObject {
     
@@ -17,9 +18,17 @@ import AUIFoundation
     }
     
     public var userId: String? = nil
-    public var robotId: String? = nil
+    public var avatarId: String = ""
+
+#if AICALL_INTEGRATION_STANDARD && AICALL_INTEGRATION_CUSTOM
+    public enum IntegrationWay: Int32 {
+        case Standard
+        case Custom
+    }
+    public var currentIntegrationWay: IntegrationWay = .Standard
     
-    open func startCall(viewController: UIViewController? = nil) {
+    // 通过指定agentType（agentId为空时，由appserver配置的）发起通话，
+    open func startCall(agentType: ARTCAICallAgentType, agentId: String? = nil, limitSecond: UInt32 = 0, viewController: UIViewController? = nil) {
         
         if self.userId == nil {
             self.userId = NSString.av_random()
@@ -30,11 +39,80 @@ import AUIFoundation
                 return
             }
             
-            let engine = ARTCAICallEngine(userId: self.userId!)
-            engine.config.robotId = self.robotId
-            let vc = AUIAICallViewController(engine)
             let topVC = viewController ?? UIViewController.av_top()
-            topVC.av_presentFullScreenViewController(vc, animated: false)
+            if self.currentIntegrationWay == .Standard {
+                let controller = AUIAICallStandardController(userId: self.userId!)
+                controller.config.agentId = agentId
+                controller.config.agentType = agentType
+                controller.config.agentVoiceId = agentType == .VoiceAgent ? "zhixiaoxia" : ""
+                controller.config.agentAvatarId = self.avatarId
+                controller.config.limitSecond = limitSecond
+                let vc = AUIAICallViewController(controller)
+                topVC.av_presentFullScreenViewController(vc, animated: true)
+            }
+            else {
+                let controller = AUIAICallCustomController(userId: self.userId!)
+                controller.config.agentId = agentId
+                controller.config.agentType = agentType
+                controller.config.agentVoiceId = agentType == .VoiceAgent ? "zhixiaoxia" : ""
+                controller.config.agentAvatarId = self.avatarId
+                controller.config.limitSecond = limitSecond
+                let vc = AUIAICallViewController(controller)
+                topVC.av_presentFullScreenViewController(vc, animated: true)
+            }
         }
     }
+#endif
+    
+#if AICALL_INTEGRATION_STANDARD && !AICALL_INTEGRATION_CUSTOM
+    // 通过指定agentType（agentId为空时，由appserver配置的）发起通话，
+    open func startCall(agentType: ARTCAICallAgentType, agentId: String? = nil, limitSecond: UInt32 = 0, viewController: UIViewController? = nil) {
+        
+        if self.userId == nil {
+            self.userId = NSString.av_random()
+        }
+        
+        AVDeviceAuth.checkMicAuth { auth in
+            if auth == false {
+                return
+            }
+            
+            let topVC = viewController ?? UIViewController.av_top()
+            let controller = AUIAICallStandardController(userId: self.userId!)
+            controller.config.agentId = agentId
+            controller.config.agentType = agentType
+            controller.config.agentVoiceId = agentType == .VoiceAgent ? "zhixiaoxia" : ""
+            controller.config.agentAvatarId = self.avatarId
+            controller.config.limitSecond = limitSecond
+            let vc = AUIAICallViewController(controller)
+            topVC.av_presentFullScreenViewController(vc, animated: true)
+        }
+    }
+#endif
+    
+#if !AICALL_INTEGRATION_STANDARD && AICALL_INTEGRATION_CUSTOM
+    // 通过指定agentType（agentId为空时，由appserver配置的）发起通话，
+    open func startCall(agentType: ARTCAICallAgentType, agentId: String? = nil, limitSecond: UInt32 = 0, viewController: UIViewController? = nil) {
+        
+        if self.userId == nil {
+            self.userId = NSString.av_random()
+        }
+        
+        AVDeviceAuth.checkMicAuth { auth in
+            if auth == false {
+                return
+            }
+            
+            let topVC = viewController ?? UIViewController.av_top()
+            let controller = AUIAICallCustomController(userId: self.userId!)
+            controller.config.agentId = agentId
+            controller.config.agentType = agentType
+            controller.config.agentVoiceId = agentType == .VoiceAgent ? "zhixiaoxia" : ""
+            controller.config.agentAvatarId = self.avatarId
+            controller.config.limitSecond = limitSecond
+            let vc = AUIAICallViewController(controller)
+            topVC.av_presentFullScreenViewController(vc, animated: true)
+        }
+    }
+#endif
 }

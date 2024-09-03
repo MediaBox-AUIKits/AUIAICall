@@ -52,10 +52,31 @@ dependencies {
         exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
     }
     implementation externalStyleableToast
+    implementation externalSimpleZXing
 
     implementation externalARouter
     annotationProcessor externalARouterCompiler
 
-    implementation project(':AUIAICallEngine')
+
+    if(UseAiCallKitAAR()) {
+        println("USE_AICALLKIT_AAR yes")
+        implementation 'com.aliyun.auikits.android:ARTCAICallKit:1.0.0'
+    } else {
+        println("USE_AICALLKIT_AAR no")
+        implementation project(':AUIAICallEngine')
+        implementation project(':ARTCAICallKit')
+    }
+    implementation externalOKHTTP
+    implementation externalOKHTTPLogInterceptor
+    implementation externalAllInOne
     implementation project(':AUIBaseKits::AUICommon')
+}
+
+// 定义一个方法
+def UseAiCallKitAAR() {
+    if (findProperty('USE_AICALLKIT_AAR') == null) {
+        return false
+    } else {
+        return Boolean.valueOf(USE_AICALLKIT_AAR)
+    }
 }

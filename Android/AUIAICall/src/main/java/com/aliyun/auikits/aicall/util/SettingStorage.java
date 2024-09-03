@@ -16,6 +16,12 @@ public class SettingStorage {
     public static final String KEY_AUDIO_DUMP_SWITCH = "KEY_AUDIO_DUMP_SWITCH";
     public static final String KEY_SHOW_EXTRA_DEBUG_CONFIG = "KEY_SHOW_EXTRA_DEBUG_CONFIG";
     public static final String KEY_APP_SERVER_TYPE = "KEY_APP_SERVER_TYPE";
+    public static final String KEY_DEPOSIT_SWITCH = "KEY_DEPOSIT_SWITCH";
+
+    public static final boolean DEFAULT_DEPOSIT_SWITCH = true;
+    public static final boolean DEFAULT_EXTRA_DEBUG_CONFIG = false;
+    public static final boolean DEFAULT_APP_SERVER_TYPE = false;
+
     private SharedPreferences mSP = null;
 
     public static SettingStorage getInstance() {
@@ -43,10 +49,15 @@ public class SettingStorage {
         return value;
     }
 
-    public boolean getBoolean(String key) {
-        boolean value = mSP.getBoolean(key, false);
+
+    public boolean getBoolean(String key, boolean defaultValue) {
+        boolean value = mSP.getBoolean(key, defaultValue);
         Log.i("SettingStorage", "getBoolean " + key + ": " + value);
         return value;
+    }
+
+    public boolean getBoolean(String key) {
+        return getBoolean(key, false);
     }
 
     public void setBoolean(String key, boolean value) {

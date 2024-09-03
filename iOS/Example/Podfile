@@ -10,10 +10,11 @@ AlivcSDK='AliVCSDK_ARTC'
 target 'Example' do
 
   pod "#{AlivcSDK}", '~> 6.11.2'
+  pod "ARTCAICallKit", '~> 1.0.0'
+
 
   pod 'AUIFoundation/All', :path => '../AUIBaseKits/AUIFoundation/'
-  pod 'AUIAICall', :path => '../'
-  pod "AUIAICall/#{AlivcSDK}", :path => '../'
+  pod "AUIAICall/Demo", :path => '../'
 
 end
 

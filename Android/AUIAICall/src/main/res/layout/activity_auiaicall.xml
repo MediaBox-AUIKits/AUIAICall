@@ -8,13 +8,6 @@
     android:fitsSystemWindows="true"
     tools:context=".AUIAICallEntranceActivity">
 
-    <ImageView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:src="@drawable/bg_entrance"
-        android:scaleType="centerCrop"
-        />
-
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/top_bar"
         android:layout_width="match_parent"
@@ -51,6 +44,154 @@
             android:src="@drawable/ic_more"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
 
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/function_bar"
+        android:layout_width="match_parent"
+        app:layout_constraintTop_toBottomOf="@id/top_bar"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:layout_height="46dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginHorizontal="20dp"
+        android:background="@drawable/bg_function_selector">
+        <com.aliyun.auikits.aicall.widget.GradientTextView
+            android:id="@+id/tv_function_official"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:text="@string/official_agent"
+            android:textSize="14sp"
+            android:textColor="@color/layout_base_light_white"
+            android:background="@drawable/bg_function_selector_selected"
+            android:layout_margin="3dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toLeftOf="@id/tv_function_custom"
+            />
+        <com.aliyun.auikits.aicall.widget.GradientTextView
+            android:id="@+id/tv_function_custom"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:text="@string/custom_agent"
+            android:textSize="14sp"
+            android:textColor="@color/layout_base_light_white"
+            android:layout_margin="3dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toRightOf="@id/tv_function_official"
+            app:layout_constraintRight_toRightOf="parent"
+            />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/layer_function_detail"
+        android:layout_width="match_parent"
+        app:layout_constraintTop_toBottomOf="@id/function_bar"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/btn_create_room"
+        android:layout_height="0dp">
+
+        <ImageView
+            android:id="@+id/iv_entrance_bg"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:src="@drawable/bg_entrance_voice_agent"
+            android:layout_marginTop="76dp"
+            android:layout_marginBottom="44dp"
+            />
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/layer_function_detail_call_type"
+            android:layout_width="match_parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            android:layout_height="46dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginHorizontal="20dp"
+            android:visibility="gone">
+            <com.aliyun.auikits.aicall.widget.GradientTextView
+                android:id="@+id/tv_audio_call"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:text="@string/ai_audio_call"
+                android:textSize="14sp"
+                android:textColor="@color/layout_base_light_white"
+                android:background="@drawable/btn_function_detail_selector_selected"
+                android:layout_marginRight="5dp"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toLeftOf="@id/tv_digital_human_call"
+                />
+            <com.aliyun.auikits.aicall.widget.GradientTextView
+                android:id="@+id/tv_digital_human_call"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:text="@string/digital_human_call"
+                android:textSize="14sp"
+                android:textColor="@color/layout_base_light_white"
+                android:background="@drawable/btn_function_detail_selector"
+                android:layout_marginLeft="5dp"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintLeft_toRightOf="@id/tv_audio_call"
+                app:layout_constraintRight_toRightOf="parent"
+                />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/layer_function_detail_agent_id"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            android:layout_marginTop="32dp"
+            android:layout_marginHorizontal="20dp"
+            android:visibility="visible">
+            <TextView
+                android:id="@+id/tv_experience_token_hints"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/temporary_experience_token"
+                style="@style/layout_base_text_style_14"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintLeft_toLeftOf="parent"
+                />
+            <EditText
+                android:id="@+id/et_experience_token"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:hint="@string/dialog_robot_id_tips"
+                android:textColorHint="@color/layout_base_gray"
+                android:paddingTop="0dp"
+                android:paddingLeft="0dp"
+                android:paddingRight="20dp"
+                android:paddingBottom="6dp"
+                android:textSize="12sp"
+                android:inputType="text"
+                android:textColor="@color/layout_base_white_default"
+                android:maxLines="1"
+                app:layout_constraintTop_toBottomOf="@id/tv_experience_token_hints"
+                app:layout_constraintLeft_toLeftOf="parent"
+                android:backgroundTint="@color/layout_base_iv_border"
+                />
+
+            <ImageView
+                android:id="@+id/tv_experience_token_scan"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:paddingTop="0dp"
+                android:paddingLeft="0dp"
+                android:paddingRight="0dp"
+                android:paddingBottom="0dp"
+                app:layout_constraintTop_toTopOf="@id/et_experience_token"
+                app:layout_constraintRight_toRightOf="@id/et_experience_token"
+                android:src="@drawable/ic_scan"
+                />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <Button
         android:id="@+id/btn_create_room"

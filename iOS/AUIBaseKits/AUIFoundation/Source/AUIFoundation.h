@@ -59,6 +59,8 @@ FOUNDATION_EXPORT const unsigned char AUIFoundationVersionString[];
 #import <AUIFoundation/AVLoginViewController.h>
 #import <AUIFoundation/AVLoginManager.h>
 
+#import <AUIFoundation/AVQRCodeScanner.h>
+
 #import <AUIFoundation/AVTheme.h>
 #import <AUIFoundation/AVLocalization.h>
 

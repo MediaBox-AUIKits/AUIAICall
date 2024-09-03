@@ -1,8 +1,7 @@
 package com.aliyun.auikits.aicall;
 
-import static com.aliyun.auikits.aicall.core.ARTCAICallEngine.ARTCAICallRobotState.Listening;
-import static com.aliyun.auikits.aicall.core.ARTCAICallEngine.ARTCAICallRobotState.Speaking;
-import static com.aliyun.auikits.aicall.core.ARTCAICallEngine.ARTCAICallRobotState.Thinking;
+
+import static com.aliyun.auikits.aiagent.ARTCAICallEngine.AICallErrorCode.AgentConcurrentLimit;
 
 import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
@@ -17,26 +16,38 @@ import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.aliyun.auikits.aicall.core.ARTCAICallEngine;
-import com.aliyun.auikits.aicall.core.ARTCAICallEngineImpl;
+import com.aliyun.auikits.aicall.controller.ARTCAICallController;
+import com.aliyun.auikits.aicall.controller.ARTCAICustomController;
+import com.aliyun.auikits.aicall.controller.ARTCAICallDepositController;
 import com.aliyun.auikits.aicall.service.ForegroundAliveService;
 import com.aliyun.auikits.aicall.util.SettingStorage;
 import com.aliyun.auikits.aicall.util.TimeUtil;
 import com.aliyun.auikits.aicall.util.ToastHelper;
+import com.aliyun.auikits.aicall.widget.AICallNoticeDialog;
+import com.aliyun.auikits.aicall.widget.AICallRatingDialog;
 import com.aliyun.auikits.aicall.widget.AICallSettingDialog;
 import com.aliyun.auikits.aicall.widget.SpeechAnimationView;
+import com.aliyun.auikits.aiagent.ARTCAICallEngine;
+import com.aliyun.auikits.aicall.util.AppServiceConst;
+import com.orhanobut.dialogplus.DialogPlus;
+import com.orhanobut.dialogplus.OnDismissListener;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 public class AUIAICallInCallActivity extends AppCompatActivity {
+    public static final String BUNDLE_KEY_AI_AGENT_TYPE = "BUNDLE_KEY_AI_AGENT_TYPE";
+    public static final String BUNDLE_KEY_AI_AGENT_ID = "BUNDLE_KEY_AI_AGENT_ID";
+
     private static final boolean IS_SUBTITLE_ENABLE = true;
     private static String sUserId = null;
 
@@ -44,19 +55,21 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
     private boolean mUIProgressing = false;
     private long mCallConnectedMillis = 0;
 
+    private ARTCAICallController mARTCAICallController = null;
     private ARTCAICallEngine mARTCAICallEngine = null;
 
-    private ARTCAICallEngine.AICallState mCallState;
+    private ARTCAICallController.AICallState mCallState;
     private ARTCAICallEngine.AICallErrorCode mAICallErrorCode = ARTCAICallEngine.AICallErrorCode.None;
-    private ARTCAICallEngine.ARTCAICallRobotState mRobotState = Listening;
+    private ARTCAICallEngine.ARTCAICallRobotState mRobotState = ARTCAICallEngine.ARTCAICallRobotState.Listening;
     private boolean isUserSpeaking = false;
     private long mLastBackButtonExitMillis = 0;
+    private boolean mUseAvatar = false;
 
     private SubtitleHolder mSubtitleHolder = new SubtitleHolder();
 
-    private ARTCAICallEngine.IARTCAICallEngineCallback mARTCAIEngineCallback = new ARTCAICallEngine.IARTCAICallEngineCallback() {
+    private ARTCAICallController.IARTCAICallStateCallback mCallStateCallback = new ARTCAICallController.IARTCAICallStateCallback() {
         @Override
-        public void onAICallEngineStateChanged(ARTCAICallEngine.AICallState oldCallState, ARTCAICallEngine.AICallState newCallState, ARTCAICallEngine.AICallErrorCode errorCode) {
+        public void onAICallEngineStateChanged(ARTCAICallController.AICallState oldCallState, ARTCAICallController.AICallState newCallState, ARTCAICallEngine.AICallErrorCode errorCode) {
             switch (newCallState) {
                 case None:
                     break;
@@ -73,10 +86,15 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                 default:
                     break;
             }
+            mAICallErrorCode = errorCode;
             mCallState = newCallState;
             updateUIByEngineState();
             updateForegroundAliveService();
+            updateAvatarVisibility(mUseAvatar);
         }
+    };
+
+    private ARTCAICallEngine.IARTCAICallEngineCallback mARTCAIEngineCallback = new ARTCAICallEngine.IARTCAICallEngineCallback() {
 
         @Override
         public void onAICallEngineRobotStateChanged(ARTCAICallEngine.ARTCAICallRobotState oldRobotState, ARTCAICallEngine.ARTCAICallRobotState newRobotState) {
@@ -112,7 +130,7 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onRobotSubtitleNotify(String text, boolean end, int userAsrSentenceId) {
+        public void onAIAgentSubtitleNotify(String text, boolean end, int userAsrSentenceId) {
             Log.i("AUIAICALL", "onRobotSubtitleNotify: [userAsrSentenceId: " + userAsrSentenceId + ", end: " + end + ", text: " + text + "]");
 
             if (IS_SUBTITLE_ENABLE) {
@@ -120,6 +138,60 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             } else {
                 mSubtitleHolder.setSubtitleLayoutVisibility(false);
             }
+        }
+
+        @Override
+        public void onNetworkStatusChanged(String uid, ARTCAICallEngine.ARTCAICallNetworkQuality quality) {
+            Log.i("AUIAICALL", "onNetworkStatusChanged: [uid: " + uid + ", quality: " + quality + "]");
+        }
+
+        @Override
+        public void onVoiceIdChanged(String voiceId) {
+            Log.i("AUIAICALL", "onVoiceIdChanged: [voiceId: " + voiceId + "]");
+        }
+
+        @Override
+        public void onVoiceVolumeChanged(String uid, int volume) {
+            Log.i("AUIAICALL", "onVoiceVolumeChanged: [uid: " + uid + "volume: " + volume + "]");
+        }
+
+        @Override
+        public void onVoiceInterrupted(boolean enable) {
+            Log.i("AUIAICALL", "onVoiceInterrupted: [enable: " + enable + "]");
+        }
+
+        @Override
+        public void onCallBegin() {
+            Log.i("AUIAICALL", "onCallBegin");
+        }
+
+        @Override
+        public void onCallEnd() {
+            Log.i("AUIAICALL", "onCallEnd");
+        }
+
+        @Override
+        public void onErrorOccurs(ARTCAICallEngine.AICallErrorCode errorCode) {
+            Log.i("AUIAICALL", "onErrorOccurs: [errorCode: " + errorCode + "]");
+            if (errorCode == AgentConcurrentLimit) {
+                AICallNoticeDialog.showDialog(AUIAICallInCallActivity.this,
+                        0, false, R.string.token_resource_exhausted, true, new OnDismissListener() {
+                            @Override
+                            public void onDismiss(DialogPlus dialog) {
+                                finish();
+                            }
+                        });
+            }
+        }
+
+        @Override
+        public void onAgentAudioAvailable(boolean available) {
+            Log.i("AUIAICALL", "onAgentAudioAvailable: [available: " + available + "]");
+        }
+
+        @Override
+        public void onAgentVideoAvailable(boolean available) {
+            Log.i("AUIAICALL", "onAgentVideoAvailable: [available: " + available + "]");
         }
     };
 
@@ -132,14 +204,15 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         findViewById(R.id.btn_setting).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                AICallSettingDialog.show(AUIAICallInCallActivity.this, mARTCAICallEngine);
+                AICallSettingDialog.show(AUIAICallInCallActivity.this, mARTCAICallEngine, mUseAvatar);
             }
         });
         findViewById(R.id.btn_stop_call).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                mARTCAICallEngine.handup();
-                finish();
+                if (handUp(false)) {
+                    finish();
+                }
             }
         });
         findViewById(R.id.btn_mute_call).setOnClickListener(new View.OnClickListener() {
@@ -165,15 +238,42 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                 mARTCAICallEngine.interruptSpeaking();
             }
         });
+        findViewById(R.id.avatar_layer).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mARTCAICallEngine.interruptSpeaking();
+            }
+        });
 
-        mARTCAICallEngine = new ARTCAICallEngineImpl(this, generateUserId());
+        String aiAgentId = null;
+        ARTCAICallEngine.ARTCAICallAgentType aiAgentType = ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent;
+        if (null != getIntent() && null != getIntent().getExtras()) {
+            aiAgentId = getIntent().getExtras().getString(BUNDLE_KEY_AI_AGENT_ID, null);
+            aiAgentType = getIntent().getExtras().getBoolean(BUNDLE_KEY_AI_AGENT_TYPE) ?
+                    ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent : ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent;
+        }
+        mUseAvatar = aiAgentType == ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent;
+
+        boolean useDeposit = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_DEPOSIT_SWITCH, SettingStorage.DEFAULT_DEPOSIT_SWITCH);
         ARTCAICallEngine.ARTCAICallConfig artcaiCallConfig = new ARTCAICallEngine.ARTCAICallConfig();
-        artcaiCallConfig.robotId = SettingStorage.getInstance().get(SettingStorage.KEY_ROBOT_ID);
+        artcaiCallConfig.aiAgentId = aiAgentId;
         artcaiCallConfig.enableAudioDump = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_AUDIO_DUMP_SWITCH);
-        artcaiCallConfig.usePreHost = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_APP_SERVER_TYPE);
-        mARTCAICallEngine.init(artcaiCallConfig);
-        mARTCAICallEngine.setEngineCallback(mARTCAIEngineCallback);
-        mARTCAICallEngine.start();
+        boolean usePreHost = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_APP_SERVER_TYPE, SettingStorage.DEFAULT_APP_SERVER_TYPE);
+        artcaiCallConfig.appServerHost = usePreHost ? AppServiceConst.PRE_HOST : AppServiceConst.HOST;
+        artcaiCallConfig.useDeposit = useDeposit;
+
+        mARTCAICallController = useDeposit ? new ARTCAICallDepositController(this, generateUserId()) :
+                new ARTCAICustomController(this, generateUserId());
+        mARTCAICallController.setBizCallEngineCallback(mARTCAIEngineCallback);
+        mARTCAICallController.setCallStateCallback(mCallStateCallback);
+        mARTCAICallController.init(artcaiCallConfig);
+        mARTCAICallController.setAiAgentType(aiAgentType);
+
+        mARTCAICallEngine = mARTCAICallController.getARTCAICallEngine();
+        mARTCAICallEngine.setAvatarAgentView(findViewById(R.id.avatar_layer),
+                new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+                );
+        mARTCAICallController.start();
         updateSpeakerButtonUI();
     }
 
@@ -183,12 +283,52 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         long duration = nowMillis - mLastBackButtonExitMillis;
         final long DOUBLE_PRESS_THRESHOLD = 1000;
         if (duration <= DOUBLE_PRESS_THRESHOLD) {
-            mARTCAICallEngine.handup();
-            super.onBackPressed();
+            if (handUp(false)) {
+                super.onBackPressed();
+            }
         } else {
             ToastHelper.showToast(this, R.string.tips_exit, Toast.LENGTH_SHORT);
         }
         mLastBackButtonExitMillis = nowMillis;
+    }
+
+    /**
+     *
+     * @param keepActivity
+     * @return 是否可以直接关闭Activity
+     */
+    private boolean handUp(boolean keepActivity) {
+        mARTCAICallEngine.handup();
+
+        if (!keepActivity) {
+            AICallRatingDialog.show(this,
+                    new AICallRatingDialog.IRatingDialogDismissListener() {
+                        @Override
+                        public void onSubmit(int subRating, int callDelay, int noiseHandling, int recognition, int interaction, int realism) {
+                            mARTCAICallEngine.rating(subRating, callDelay, noiseHandling,
+                                    recognition, interaction, realism);
+                        }
+
+                        @Override
+                        public void onDismiss() {
+                            finish();
+                        }
+                    });
+        }
+        return false;
+    }
+
+    // 改为接通之后显示Avatar
+    private void updateAvatarVisibility(boolean useAvatar) {
+        if (mCallState == ARTCAICallController.AICallState.Connected) {
+            if (useAvatar) {
+                findViewById(R.id.avatar_layer).setVisibility(View.VISIBLE);
+                findViewById(R.id.speech_animation_view).setVisibility(View.GONE);
+            } else {
+                findViewById(R.id.avatar_layer).setVisibility(View.GONE);
+                findViewById(R.id.speech_animation_view).setVisibility(View.VISIBLE);
+            }
+        }
     }
 
     private static String generateUserId() {
@@ -240,6 +380,7 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
 
     private void updateProgressUI() {
         if (mUIProgressing) {
+            boolean hasNextRun = true;
             // 更新通话时长
             long duration = mCallConnectedMillis > 0 ? SystemClock.elapsedRealtime() - mCallConnectedMillis : 0;
             ((TextView)findViewById(R.id.tv_call_duration)).setText(TimeUtil.formatDuration(duration));
@@ -247,17 +388,32 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             // 更新实时字幕
             mSubtitleHolder.refreshSubtitle();
 
-            mHandler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    updateProgressUI();
-                }
-            }, 100);
+            // 数字人体验超过5分钟，自动结束
+            if (duration > 5 * 60 * 1000) {
+                AICallNoticeDialog.showDialog(AUIAICallInCallActivity.this,
+                        0, false, R.string.token_time_lit_tips, true, new OnDismissListener() {
+                            @Override
+                            public void onDismiss(DialogPlus dialog) {
+                                finish();
+                            }
+                        });
+                handUp(true);
+                hasNextRun = false;
+            }
+
+            if (hasNextRun) {
+                mHandler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        updateProgressUI();
+                    }
+                }, 100);
+            }
         }
     }
 
     private void updateForegroundAliveService() {
-        if ( mCallState == ARTCAICallEngine.AICallState.Connected) {
+        if ( mCallState == ARTCAICallController.AICallState.Connected) {
             // start
             Intent serviceIntent = new Intent(this, ForegroundAliveService.class);
             startService(serviceIntent);
@@ -276,22 +432,25 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
     private void updateCallTips() {
         int resId = 0;
         boolean needSetText = false;
+        boolean keepText = false;
 
-        if (mCallState == ARTCAICallEngine.AICallState.Connecting) {
+        if (mCallState == ARTCAICallController.AICallState.Over) {
+            keepText = true;
+        } else if (mCallState == ARTCAICallController.AICallState.Connecting) {
             resId = R.string.call_connection_tips;
             needSetText = true;
-        } else if (mCallState == ARTCAICallEngine.AICallState.Connected) {
-            if (mRobotState == Thinking) {
+        } else if (mCallState == ARTCAICallController.AICallState.Connected) {
+            if (mRobotState == ARTCAICallEngine.ARTCAICallRobotState.Thinking) {
                 resId = R.string.robot_thinking_tips;
                 needSetText = true;
-            } else if (mRobotState == Speaking) {
+            } else if (mRobotState == ARTCAICallEngine.ARTCAICallRobotState.Speaking) {
                 resId = R.string.robot_speaking_tips;
                 needSetText = true;
-            } else if (mRobotState == Listening) {
+            } else if (mRobotState == ARTCAICallEngine.ARTCAICallRobotState.Listening) {
                 resId = R.string.robot_listening_tips;
                 needSetText = true;
             }
-        } else if (mCallState == ARTCAICallEngine.AICallState.Error) {
+        } else if (mCallState == ARTCAICallController.AICallState.Error) {
             switch (mAICallErrorCode) {
                 case StartFailed:
                     resId = R.string.call_error_start_failed;
@@ -311,34 +470,56 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                 case LocalDeviceException:
                     resId = R.string.call_error_local_device_exception;
                     break;
+                case AgentLeaveChannel:
+                    resId = R.string.error_tips_avatar_leave_join;
+                    break;
+                case AgentAudioSubscribeFailed:
+                    resId = R.string.error_tips_avatar_subscribe_fail;
+                    break;
+                case AgentConcurrentLimit:
+                    resId = R.string.token_resource_exhausted;
+                    break;
+                case AiAgentAsrUnavailable:
+                    resId = R.string.error_tips_asr_unavailable;
+                    break;
+                case AvatarAgentUnavailable:
+                    resId = R.string.error_tips_avatar_agent_unavailable;
+                    break;
                 default:
                     resId = R.string.call_error_default;
                     break;
             }
+            handUp(true);
             needSetText = true;
         }
 
         TextView tvCallTips = (TextView) findViewById(R.id.tv_call_tips);
-        if (needSetText) {
-            tvCallTips.setText(resId);
-        } else {
-            tvCallTips.setText("");
+        if (!keepText) {
+            if (needSetText) {
+                tvCallTips.setText(resId);
+            } else {
+                tvCallTips.setText("");
+            }
         }
     }
 
     private void updateSpeechAnimationType() {
         Log.i("AUIAICALL", "updateSpeechAnimationType: [robotState: " + mRobotState + ", isUserSpeaking: " + isUserSpeaking + "]");
         SpeechAnimationView speechAnimationView = ((SpeechAnimationView)findViewById(R.id.speech_animation_view));
-        if (mRobotState == Thinking) {
-            speechAnimationView.setAnimationType(SpeechAnimationView.AnimationType.ROBOT_THINKING);
-        } else if (mRobotState == Speaking) {
-            speechAnimationView.setAnimationType(SpeechAnimationView.AnimationType.ROBOT_SPEAKING);
-        } else if (mRobotState == Listening) {
-            speechAnimationView.setAnimationType(
-                    isUserSpeaking ?
-                            SpeechAnimationView.AnimationType.LISTENING :
-                            SpeechAnimationView.AnimationType.WAITING
-            );
+        if (mCallState == ARTCAICallController.AICallState.Connecting) {
+            speechAnimationView.setAnimationType(SpeechAnimationView.AnimationType.Connecting);
+        } else {
+            if (mRobotState == ARTCAICallEngine.ARTCAICallRobotState.Thinking) {
+                speechAnimationView.setAnimationType(SpeechAnimationView.AnimationType.ROBOT_THINKING);
+            } else if (mRobotState == ARTCAICallEngine.ARTCAICallRobotState.Speaking) {
+                speechAnimationView.setAnimationType(SpeechAnimationView.AnimationType.ROBOT_SPEAKING);
+            } else if (mRobotState == ARTCAICallEngine.ARTCAICallRobotState.Listening) {
+                speechAnimationView.setAnimationType(
+                        isUserSpeaking ?
+                                SpeechAnimationView.AnimationType.LISTENING :
+                                SpeechAnimationView.AnimationType.WAITING
+                );
+            }
         }
     }
 

@@ -20,13 +20,16 @@ public typealias AUIAICallSettingInterruptBlock = (_ isOn: Bool) -> Void
         self.titleView.text = AUIAICallBundle.getString("Settings")
         
         self.contentView.addSubview(self.interruptSwitch)
-        self.contentView.addSubview(self.descriptionView)
+        self.contentView.addSubview(self.voiceIdSwitch)
 
         self.interruptSwitch.frame = CGRect(x: 0, y: 5, width: self.contentView.av_width, height: 74)
-        self.descriptionView.frame = CGRect(x: 0, y: self.interruptSwitch.av_bottom + 6, width: self.contentView.av_width, height: 50)
+        self.voiceIdSwitch.frame = CGRect(x: 0, y: self.interruptSwitch.av_bottom + 6, width: self.contentView.av_width, height: 50)
 
-        self.collectionView.frame = CGRect(x: 0, y: self.descriptionView.av_bottom + 6, width: self.contentView.av_width, height: self.contentView.av_height - self.descriptionView.av_bottom)
+        self.collectionView.frame = CGRect(x: 0, y: self.voiceIdSwitch.av_bottom + 6, width: self.contentView.av_width, height: self.contentView.av_height - self.voiceIdSwitch.av_bottom)
         self.collectionView.register(AUIAICallSoundCell.self, forCellWithReuseIdentifier: "cell")
+        
+        self.voiceIdSwitch.isHidden = !AUIAICallSettingPanel.enableVoiceIdSwitch
+        self.collectionView.isHidden = !AUIAICallSettingPanel.enableVoiceIdSwitch
     }
 
     public required init?(coder: NSCoder) {
@@ -34,8 +37,10 @@ public typealias AUIAICallSettingInterruptBlock = (_ isOn: Bool) -> Void
     }
     
     open override class func panelHeight() -> CGFloat {
-        return 448
+        return self.enableVoiceIdSwitch ? 448 : 160
     }
+    
+    public static var enableVoiceIdSwitch: Bool = true
         
     open lazy var interruptSwitch: AVSwitchBar = {
         let view = AVSwitchBar()
@@ -48,7 +53,7 @@ public typealias AUIAICallSettingInterruptBlock = (_ isOn: Bool) -> Void
         return view
     }()
     
-    open lazy var descriptionView: AVSwitchBar = {
+    open lazy var voiceIdSwitch: AVSwitchBar = {
         let view = AVSwitchBar()
         view.titleLabel.text = AUIAICallBundle.getString("Choose Voice Tone")
         view.infoLabel.text = AUIAICallBundle.getString("New Voice Tone Will Take Effect in Next Response")
@@ -56,7 +61,6 @@ public typealias AUIAICallSettingInterruptBlock = (_ isOn: Bool) -> Void
         view.lineView.isHidden = true
         return view
     }()
-    
     
     open lazy var itemList: [AUIAICallVoiceItem] = {
         var list = [AUIAICallVoiceItem]()
@@ -91,10 +95,10 @@ public typealias AUIAICallSettingInterruptBlock = (_ isOn: Bool) -> Void
     open var interruptBlock: AUIAICallSettingInterruptBlock? = nil
 
     
-    open func refreshUI(config: ARTCAICallConfig) {
+    open func refreshUI(config: AUIAICallConfig) {
         self.interruptSwitch.switchBtn.isOn = config.enableVoiceInterrupt
         self.selectItem = self.itemList.first { item in
-            return item.voiceId == config.robotVoiceId
+            return item.voiceId == config.agentVoiceId
         }
     }
 }

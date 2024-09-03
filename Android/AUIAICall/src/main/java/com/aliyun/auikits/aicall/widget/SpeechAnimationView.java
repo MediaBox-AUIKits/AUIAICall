@@ -31,6 +31,7 @@ public class SpeechAnimationView extends SurfaceView implements SurfaceHolder.Ca
     private AnimationType mAnimationType = AnimationType.WAITING;
 
     public enum AnimationType {
+        Connecting,
         PAUSED,
         WAITING,
         LISTENING,
@@ -106,6 +107,7 @@ public class SpeechAnimationView extends SurfaceView implements SurfaceHolder.Ca
                 mAnimationWaitingBmp = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.res_animation_waiting);
             }
             mAnimationDrawers = new HashMap<>();
+            mAnimationDrawers.put(AnimationType.Connecting, new ThinkingAnimationDrawer());
             mAnimationDrawers.put(AnimationType.PAUSED, new PausedAnimationDrawer(mAnimationWaitingBmp));
             mAnimationDrawers.put(AnimationType.WAITING, new WaitingAnimationDrawer(mAnimationWaitingBmp));
             mAnimationDrawers.put(AnimationType.LISTENING, new ListeningAnimationDrawer(mAnimationWaitingBmp));

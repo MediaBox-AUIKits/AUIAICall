@@ -13,12 +13,14 @@ public class PermissionUtils {
         Manifest.permission.RECORD_AUDIO,
         Manifest.permission.READ_PHONE_STATE,
         Manifest.permission.WRITE_EXTERNAL_STORAGE,
-        Manifest.permission.READ_EXTERNAL_STORAGE
+        Manifest.permission.READ_EXTERNAL_STORAGE,
+        Manifest.permission.CAMERA
     };
 
     public static final String[] PERMISSION_MANIFEST33 = {
             Manifest.permission.RECORD_AUDIO,
             Manifest.permission.READ_PHONE_STATE,
+            Manifest.permission.CAMERA
     };
 
     public static String[] getPermissions() {

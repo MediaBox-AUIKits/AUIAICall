@@ -1,0 +1,48 @@
+plugins {
+    id 'com.android.library'
+}
+apply plugin: 'com.kezong.fat-aar'
+ext{
+    versionCode = System.getProperty('versionCode')
+    isSnapshot = Boolean.parseBoolean(System.getProperty('isSnapshot'))
+    buildId = System.getProperty('buildId')
+    publishToRemote = Boolean.parseBoolean(System.getProperty('publishToRemote'))
+}
+android {
+    compileSdkVersion 32
+
+    defaultConfig {
+        minSdkVersion 21
+        targetSdkVersion 32
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles "consumer-rules.pro"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    implementation externalAndroidXAppcompat
+    implementation externalAndroidDesign
+    implementation externalAndroidXConstraintlayout
+    testImplementation externalJunit
+    androidTestImplementation externalTestJunit
+    androidTestImplementation externalEspresso
+    implementation externalAndroidAnnotation
+
+    if (publishToRemote == true) {
+        embed project(':AUIAICallEngine')
+    } else {
+        implementation project(':AUIAICallEngine')
+    }
+}

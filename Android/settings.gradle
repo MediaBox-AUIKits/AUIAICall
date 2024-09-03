@@ -14,3 +14,4 @@ project(':AUIBaseKits:AUIMessage:AUIMessageImpl-AliVCIM').projectDir = new File(
 
 include ':AUIAICall'
 include ':AUIAICallEngine'
+include ':ARTCAICallKit'

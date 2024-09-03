@@ -20,11 +20,11 @@ import com.aliyun.auikits.aicall.base.feed.BizParameter;
 import com.aliyun.auikits.aicall.base.feed.ContentViewModel;
 import com.aliyun.auikits.aicall.base.feed.IBizCallback;
 import com.aliyun.auikits.aicall.bean.AudioToneData;
-import com.aliyun.auikits.aicall.core.ARTCAICallEngine;
 import com.aliyun.auikits.aicall.util.DisplayUtil;
 import com.aliyun.auikits.aicall.util.ToastHelper;
 import com.aliyun.auikits.aicall.widget.card.AudioToneCard;
 import com.aliyun.auikits.aicall.widget.card.CardTypeDef;
+import com.aliyun.auikits.aiagent.ARTCAICallEngine;
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.listener.OnItemChildClickListener;
 import com.orhanobut.dialogplus.DialogPlus;
@@ -41,10 +41,11 @@ public class AICallSettingDialog {
     ContentViewModel mContentViewModel;
     BizParameter mBizParameter;
     ARTCAICallEngine mARTCAICallEngine;
+    boolean mIsAvatarAgent;
 
-    public static void show(Context context, ARTCAICallEngine aRTCAICallEngine) {
+    public static void show(Context context, ARTCAICallEngine aRTCAICallEngine, boolean isAvatarAgent) {
         View view = LayoutInflater.from(context).inflate(R.layout.dialog_aicall_setting, null, false);
-        AICallSettingDialog aiCallSettingDialog = new AICallSettingDialog(view, aRTCAICallEngine);
+        AICallSettingDialog aiCallSettingDialog = new AICallSettingDialog(view, aRTCAICallEngine, isAvatarAgent);
         view.setTag(aiCallSettingDialog);
 
         ViewHolder viewHolder = new ViewHolder(view);
@@ -117,8 +118,9 @@ public class AICallSettingDialog {
         }
     }
 
-    private AICallSettingDialog(View root, ARTCAICallEngine aRTCAICallEngine) {
+    private AICallSettingDialog(View root, ARTCAICallEngine aRTCAICallEngine, boolean isAvatarAgent) {
         mARTCAICallEngine = aRTCAICallEngine;
+        mIsAvatarAgent = isAvatarAgent;
 
         Switch svInterruptConfig = root.findViewById(R.id.sv_interrupt_config);
         svInterruptConfig.setChecked(mARTCAICallEngine.isVoiceInterruptEnable());
@@ -136,53 +138,61 @@ public class AICallSettingDialog {
             }
         });
 
-        SmartRefreshLayout srlAudioToneList = root.findViewById(R.id.srl_audio_tone_list);
-        srlAudioToneList.setEnableLoadMore(false);
-        srlAudioToneList.setEnableRefresh(false);
-        RecyclerView rvAudioToneList = root.findViewById(R.id.rv_audio_tone_list);
+        if (mIsAvatarAgent) {
+            root.findViewById(R.id.ll_audio_tone_config).setVisibility(View.GONE);
+            root.findViewById(R.id.ll_audio_tone_list).setVisibility(View.GONE);
+        } else {
+            root.findViewById(R.id.ll_audio_tone_config).setVisibility(View.VISIBLE);
+            root.findViewById(R.id.ll_audio_tone_list).setVisibility(View.VISIBLE);
 
-        DefaultCardViewFactory factory = new DefaultCardViewFactory();
-        factory.registerCardView(CardTypeDef.AUDIO_TONE_CARD, AudioToneCard.class);
-        mCardListAdapter = new CardListAdapter(factory);
-        rvAudioToneList.setLayoutManager(new LinearLayoutManager(root.getContext(), RecyclerView.VERTICAL, false));
-        rvAudioToneList.setAdapter(mCardListAdapter);
+            SmartRefreshLayout srlAudioToneList = root.findViewById(R.id.srl_audio_tone_list);
+            srlAudioToneList.setEnableLoadMore(false);
+            srlAudioToneList.setEnableRefresh(false);
+            RecyclerView rvAudioToneList = root.findViewById(R.id.rv_audio_tone_list);
 
-        mAudioToneContentModel = new AudioToneContentModel(mARTCAICallEngine);
-        mContentViewModel = new ContentViewModel.Builder()
-                .setContentModel(mAudioToneContentModel)
-                .setBizParameter(mBizParameter)
-                .setLoadMoreEnable(false)
-                .build();
+            DefaultCardViewFactory factory = new DefaultCardViewFactory();
+            factory.registerCardView(CardTypeDef.AUDIO_TONE_CARD, AudioToneCard.class);
+            mCardListAdapter = new CardListAdapter(factory);
+            rvAudioToneList.setLayoutManager(new LinearLayoutManager(root.getContext(), RecyclerView.VERTICAL, false));
+            rvAudioToneList.setAdapter(mCardListAdapter);
 
-        mCardListAdapter.addChildClickViewIds(R.id.tv_audio_tone_selector);
-        mCardListAdapter.setOnItemChildClickListener(new OnItemChildClickListener() {
-            @Override
-            public void onItemChildClick(BaseQuickAdapter adapter, View view, int position) {
+            mAudioToneContentModel = new AudioToneContentModel(mARTCAICallEngine);
+            mContentViewModel = new ContentViewModel.Builder()
+                    .setContentModel(mAudioToneContentModel)
+                    .setBizParameter(mBizParameter)
+                    .setLoadMoreEnable(false)
+                    .build();
 
-                CardEntity newCardEntity = (CardEntity)adapter.getItem(position);
-                AudioToneData newAudioToneData = (AudioToneData) newCardEntity.bizData;
-                if (!newAudioToneData.isUsing()) {
-                    boolean ret = mARTCAICallEngine.switchRobotVoice(newAudioToneData.getAudioToneId());
+            mCardListAdapter.addChildClickViewIds(R.id.tv_audio_tone_selector);
+            mCardListAdapter.setOnItemChildClickListener(new OnItemChildClickListener() {
+                @Override
+                public void onItemChildClick(BaseQuickAdapter adapter, View view, int position) {
 
-                    if (ret) {
-                        for (int i = 0; i < adapter.getItemCount(); i++) {
-                            CardEntity cardEntity = (CardEntity) adapter.getItem(i);
-                            AudioToneData audioToneData = (AudioToneData) cardEntity.bizData;
-                            if (audioToneData.isUsing()) {
-                                audioToneData.setUsing(false);
-                                mAudioToneContentModel.updateContent(cardEntity, i);
+                    CardEntity newCardEntity = (CardEntity) adapter.getItem(position);
+                    AudioToneData newAudioToneData = (AudioToneData) newCardEntity.bizData;
+                    if (!newAudioToneData.isUsing()) {
+                        boolean ret = mARTCAICallEngine.switchRobotVoice(newAudioToneData.getAudioToneId());
+
+                        if (ret) {
+                            for (int i = 0; i < adapter.getItemCount(); i++) {
+                                CardEntity cardEntity = (CardEntity) adapter.getItem(i);
+                                AudioToneData audioToneData = (AudioToneData) cardEntity.bizData;
+                                if (audioToneData.isUsing()) {
+                                    audioToneData.setUsing(false);
+                                    mAudioToneContentModel.updateContent(cardEntity, i);
+                                }
                             }
-                        }
 
-                        newAudioToneData.setUsing(true);
-                        mAudioToneContentModel.updateContent(newCardEntity, position);
-                    } else {
-                        ToastHelper.showToast(view.getContext(), R.string.tips_notice_before_connected, Toast.LENGTH_SHORT);
+                            newAudioToneData.setUsing(true);
+                            mAudioToneContentModel.updateContent(newCardEntity, position);
+                        } else {
+                            ToastHelper.showToast(view.getContext(), R.string.tips_notice_before_connected, Toast.LENGTH_SHORT);
+                        }
                     }
                 }
-            }
-        });
+            });
 
-        mContentViewModel.bindView(mCardListAdapter);
+            mContentViewModel.bindView(mCardListAdapter);
+        }
     }
 }

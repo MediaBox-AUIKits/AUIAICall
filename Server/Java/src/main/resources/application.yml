@@ -16,8 +16,9 @@ biz:
   live_mic:
     app_id: "xxxxxxx"
     app_key: "xxxxxxx"
-  ims:
-    robot_id: "xxxxxxx"
+  ai_aent:
+    voice_chat_ai_agent_id: "xxxxxxx"
+    avatar_ai_chat_3d_agent_id: "xxxxxxx"
     region: "cn-shanghai"
 http:
   cors:

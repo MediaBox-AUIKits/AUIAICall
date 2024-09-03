@@ -1,11 +1,11 @@
 package com.aliyuncs.aui.service;
 
-import com.aliyuncs.aui.dto.req.RobotStartRequestDto;
-import com.aliyuncs.aui.dto.req.RobotStopRequestDto;
-import com.aliyuncs.aui.dto.req.RobotUpdateRequestDto;
-import com.aliyuncs.aui.dto.req.RtcAuthTokenRequestDto;
-import com.aliyuncs.aui.dto.res.AiRobotStartResponse;
-import com.aliyuncs.aui.dto.res.RtcAuthTokenResponse;
+import com.aliyuncs.aui.dto.req.AIAgentStartRequestDto;
+import com.aliyuncs.aui.dto.req.AiAgentStopRequestDto;
+import com.aliyuncs.aui.dto.req.AiAgentUpdateRequestDto;
+import com.aliyuncs.aui.dto.req.GenerateAIAgentCallRequestDto;
+import com.aliyuncs.aui.dto.res.AiAgentStartResponse;
+import com.aliyuncs.aui.dto.res.GenerateAIAgentCallResponse;
 
 /**
  * IMS管理服务
@@ -14,12 +14,12 @@ import com.aliyuncs.aui.dto.res.RtcAuthTokenResponse;
  */
 public interface ImsService {
 
-    AiRobotStartResponse startRobot(RobotStartRequestDto robotStartRequestDto);
+    AiAgentStartResponse startAIAgentInstance(AIAgentStartRequestDto aiAgentStartRequestDto);
 
-    boolean stopRobot(RobotStopRequestDto robotStopRequestDto);
+    boolean stopAIAgentInstance(AiAgentStopRequestDto aiAgentStopRequestDto);
 
-    boolean updateRobot(RobotUpdateRequestDto robotUpdateRequestDto);
+    boolean updateAIAgentInstance(AiAgentUpdateRequestDto robotUpdateRequestDto);
 
-    RtcAuthTokenResponse getRtcAuthToken(RtcAuthTokenRequestDto rtcAuthTokenRequestDto);
+    GenerateAIAgentCallResponse generateAIAgentCall(GenerateAIAgentCallRequestDto generateAIAgentCallRequestDto);
 }
 

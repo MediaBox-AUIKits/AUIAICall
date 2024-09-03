@@ -31,25 +31,44 @@ TODO: Add long description of the pod here.
   s.ios.deployment_target = '10.0'
   s.static_framework = true
   s.swift_version = '5.0'
-  s.pod_target_xcconfig = {'GCC_PREPROCESSOR_DEFINITIONS' => '$(inherited) COCOAPODS=1'}
-  s.default_subspecs='default'
+#  s.pod_target_xcconfig = {'GCC_PREPROCESSOR_DEFINITIONS' => '$(inherited) COCOAPODS=1'}
+#  s.default_subspecs='Standard'
 
-  s.subspec 'default' do |ss|
+
+  
+  s.subspec 'Standard' do |ss|
+    ss.resource = 'Resources/AUIAICall.bundle'
+    ss.source_files = 'Source/**/*.{swift,h,m,mm}'
+    ss.exclude_files = 'Source/AUIAICallMainViewController.swift', 'Source/Controller/Custom/**/*.{swift,h,m,mm}'
+    ss.dependency 'AUIFoundation'
+    ss.dependency 'ARTCAICallKit'
+    ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => 'AICALL_INTEGRATION_STANDARD'}
+  end
+  
+  s.subspec 'Custom' do |ss|
+    ss.resource = 'Resources/AUIAICall.bundle'
+    ss.source_files = 'Source/**/*.{swift,h,m,mm}'
+    ss.exclude_files = 'Source/AUIAICallMainViewController.swift', 'Source/Controller/Standard/**/*.{swift,h,m,mm}'
+    ss.dependency 'AUIFoundation'
+    ss.dependency 'ARTCAICallKit'
+    ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => 'AICALL_INTEGRATION_CUSTOM'}
+  end
+  
+  s.subspec 'Demo' do |ss|
+    ss.resource = 'Resources/AUIAICall.bundle'
+    ss.source_files = 'Source/**/*.{swift,h,m,mm}'
+    ss.exclude_files = 'Source/Controller/Custom/**/*.{swift,h,m,mm}'
+    ss.dependency 'AUIFoundation'
+    ss.dependency 'ARTCAICallKit'
+    ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => 'AICALL_INTEGRATION_STANDARD '}
+  end
+  
+  s.subspec 'Demo_For_Debug' do |ss|
     ss.resource = 'Resources/AUIAICall.bundle'
     ss.source_files = 'Source/**/*.{swift,h,m,mm}'
     ss.dependency 'AUIFoundation'
-#    ss.dependency 'AUIMessage'
+    ss.dependency 'ARTCAICallKit'
+    ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => 'AICALL_INTEGRATION_STANDARD AICALL_INTEGRATION_CUSTOM '}
   end
   
-  s.subspec 'AliVCSDK_ARTC' do |ss|
-    ss.dependency 'AliVCSDK_ARTC'
-  end
-  
-  s.subspec 'AliVCSDK_Standard' do |ss|
-    ss.dependency 'AliVCSDK_Standard'
-  end
-  
-  s.subspec 'AliVCSDK_InteractiveLive' do |ss|
-    ss.dependency 'AliVCSDK_InteractiveLive'
-  end
 end

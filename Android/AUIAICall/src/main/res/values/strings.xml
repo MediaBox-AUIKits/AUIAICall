@@ -55,8 +55,32 @@
     <string name="dialog_robot_confirm">Confirm</string>
     <string name="dialog_robot_cancel">Cancel</string>
 
-    <string name="foreground_service_tips">AI audio call in progress...</string>
+    <string name="foreground_service_tips">AI call in progress...</string>
 
     <string name="debug_mode_enable">Debug Mode Enable</string>
     <string name="debug_mode_disable">Debug Mode Disable</string>
+
+    <string name="official_agent">Official Agent</string>
+    <string name="custom_agent">Custom Agent</string>
+    <string name="ai_audio_call">AI Audio Call</string>
+    <string name="digital_human_call">Digital Human Call</string>
+    <string name="temporary_experience_token">Entrusting authorized AI agents</string>
+    <string name="et_token_hints">Please scan the QR code to obtain authorized AI agents</string>
+    <string name="token_expired_tips">AI agent authorization has expired</string>
+    <string name="token_resource_exhausted">Avatar Agent are popular, please try later or enjoy the new experience of Voice Agent first</string>
+    <string name="token_time_lit_tips">The call has ended. The avatar agent call can only be experienced for 5 minutes</string>
+    <string name="error_tips_avatar_leave_join">Call failed, the avatar agent stopped the call</string>
+    <string name="error_tips_avatar_subscribe_fail">Call failed, avatar agent failed to pull audio stream</string>
+    <string name="error_tips_asr_unavailable">Third party ASR service unavailable</string>
+    <string name="error_tips_avatar_agent_unavailable">Avatar Agent service unavailable</string>
+
+    <string name="overall_rating">Overall Rating</string>
+    <string name="call_delay">Call Delay</string>
+    <string name="ambient_noise_handling">Ambient Noise Handling</string>
+    <string name="voice_recognition_accuracy">Voice Recognition Accuracy</string>
+    <string name="interaction_experience">Interaction Experience</string>
+    <string name="voice_quality_realism">Voice Quality Realism</string>
+    <string name="submit">Submit</string>
+    <string name="skip">Skip</string>
+    <string name="complete_rating_tips">Please complete all ratings first</string>
 </resources>

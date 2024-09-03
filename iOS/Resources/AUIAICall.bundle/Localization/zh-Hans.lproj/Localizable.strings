@@ -1,10 +1,20 @@
 
-"Intelligent Call" = "AI智能体";
+"Voice Agent" = "AI智能体";
+"Official Agent" = "官方智能体";
+"Custom Agent" = "自定义智能体";
+"AI Voice Call" = "AI音频通话";
+"AI Avatar Call" = "数字人通话";
+"Authorized AI Agent" = "授权AI智能体";
+"Please Scan Code to Get Authorized Token" = "请扫描二维码获取授权Token";
+"Invalid Token" = "请使用正确的Token";
+
 "Start" = "开始体验";
-"Please Enter the Robot ID" = "请输入机器人Id";
-"Leave Blank to Use the Default Robot" = "为空时使用默认机器人";
+"What integration way is used to start the call?" = "启动通话时使用哪种集成方式？";
+"Custom" = "自定义方式（自集成）";
+"Standard" = "标准方式（全托管）";
+"Cancel" = "取消";
+
 "Enable & Save" = "启用并保存";
-"AI Voice Call" = "AI语音通话";
 "Currently Not Connected" = "当前未接通";
 "Connecting..." = "接通中...";
 "Call Ended" = "已结束通话";
@@ -18,6 +28,11 @@
 "Call Failed, User May Be Logined Another Device" = "通话失败，当前用户可能登录了其他设备";
 "Call Failed, Ended by System" = "通话失败，被系统结束通话";
 "Call Failed, Local Device Error" = "通话失败，本地设备出现了错误";
+"Call Failed, Agent Stopped" = "通话失败，智能体停止通话了";
+"Call Failed, Agent Failed to Pull Stream" = "通话失败，智能体拉流失败";
+"Call Failed, The Third Party Service of ASR Failed to Start" = "第三方ASR服务不可用";
+"Call Failed, Avatar Agent Service Failed to Start" = "数字人服务不可用";
+"Call Failed, Unknow Error" = "通话失败，发生未知错误";
 "You Talk, I'm Listening..." = "你说，我在听";
 "Thinking..." = "思考中...";
 "I'm Replying, Tap Screen or Speak to Interrupt Me" = "我正在回复中，可以轻触屏幕或说话打断我";
@@ -29,10 +44,21 @@
 "Turn On Speaker" = "开扬声器";
 "Settings" = "设置";
 "Smart Interrupt" = "智能打断";
-"Interrupt AI Based on Sound and Environment" = "据声音和环境智能打断AI机器人";
+"Interrupt AI Based on Sound and Environment" = "据声音和环境智能打断AI智能体";
 "Choose Voice Tone" = "选择音色";
 "New Voice Tone Will Take Effect in Next Response" = "切换音色后，AI将在下一次回答中使用新的角色";
 "Zhi Xiaobai" = "智小白";
 "Zhi Xiaoxia" = "智小夏";
 "Abin" = "阿斌";
 "Use" = "使用";
+"Submmit" = "提交";
+"Skip" = "跳过";
+"Final Score" = "整体评分";
+"Call Delay" = "通话延时";
+"Environmental Noise" = "环境噪音处理";
+"Recognition Accuracy" = "人声识别准确度";
+"Interactive" = "交互体验";
+"Timbre Realism" = "音色拟真度";
+"The call has ended. The avatar agent call can only be experienced for 5 minutes." = "通话结束，数字人通话仅可以体验5分钟。";
+"AI avatar calling is in high demand, please try again later or enjoy the new experience of AI voice calling first." = "数字人通话火爆，请稍后尝试或先享AI音频通话新体验。";
+

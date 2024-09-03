@@ -17,6 +17,7 @@ buildscript {
     dependencies {
         classpath externalAndroidBuildGradlePlugin
         classpath externalAndroidKotlinPlugin
+        classpath externalFatAarPlugin
     }
 }
 

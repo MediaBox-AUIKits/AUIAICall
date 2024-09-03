@@ -45,10 +45,12 @@ biz:
   live_mic:
     app_id: "*******"
     app_key: "*******"
-  # IMS 机器人id
-  ims:
-    robot_id: "*******"
-    # 所在地域
+  #ai智能体配置
+  ai_aent:
+    # Ai语单智能体id
+    voice_chat_ai_agent_id: "*******"
+    # 3d数字人智能体id
+    avatar_ai_chat_3d_agent_id: "*******"
     region: "cn-shanghai"
 # 配置允许跨域的请求域名
 http:

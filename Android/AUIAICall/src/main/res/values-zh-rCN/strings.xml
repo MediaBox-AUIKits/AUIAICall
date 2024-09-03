@@ -55,8 +55,32 @@
     <string name="dialog_robot_confirm">确定</string>
     <string name="dialog_robot_cancel">取消</string>
 
-    <string name="foreground_service_tips">AI音频通话中...</string>
+    <string name="foreground_service_tips">AI通话中...</string>
 
     <string name="debug_mode_enable">调试模式已经打开</string>
     <string name="debug_mode_disable">调试模式已经关闭</string>
+
+    <string name="official_agent">官方智能体</string>
+    <string name="custom_agent">自定义智能体</string>
+    <string name="ai_audio_call">AI音频通话</string>
+    <string name="digital_human_call">数字人通话</string>
+    <string name="temporary_experience_token">授权AI智能体</string>
+    <string name="et_token_hints">请扫描二维码获取授权的AI智能体</string>
+    <string name="token_expired_tips">AI智能体授权已经过期</string>
+    <string name="token_resource_exhausted">数字人通话火爆，请稍后尝试或先享AI音频通话新体验</string>
+    <string name="token_time_lit_tips">通话结束，数字人通话仅可以体验5分钟</string>
+    <string name="error_tips_avatar_leave_join">通话失败，智能体停止通话了</string>
+    <string name="error_tips_avatar_subscribe_fail">通话失败，智能体拉流失败</string>
+    <string name="error_tips_asr_unavailable">第三方ASR服务不可用</string>
+    <string name="error_tips_avatar_agent_unavailable">数字人服务不可用</string>
+
+    <string name="overall_rating">整体评分</string>
+    <string name="call_delay">通话延时</string>
+    <string name="ambient_noise_handling">环境噪音处理</string>
+    <string name="voice_recognition_accuracy">人声识别准确度</string>
+    <string name="interaction_experience">交互体验</string>
+    <string name="voice_quality_realism">音色拟真度</string>
+    <string name="submit">提交</string>
+    <string name="skip">跳过</string>
+    <string name="complete_rating_tips">请先完成所有评分</string>
 </resources>

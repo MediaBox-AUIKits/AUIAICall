@@ -36,13 +36,10 @@ AUI Kits AI智能体集成工具适用于网络客服、AI助理、撮合助手�
 - 源码下载后，进入Example目录
 - 在Example目录里执行命令“pod install  --repo-update”，自动安装依赖SDK
 - 打开工程文件“AUIAICallExample.xcworkspace”，修改包Id
-- 完成前提条件后，进入文件ARTCAICallAppServer.swift，修改服务端域名
+- 完成前提条件后，进入文件AUIAICallAppServer.swift，修改服务端域名
 ```swift
-// ARTCAICallAppServer.swift
-public class AUIAICallAppServer: NSObject {
-    public static let AICallServerDomain = "你的应用服务器域名"
-    ...
-}
+// AUIAICallAppServer.swift
+public let AICallServerDomain = "你的应用服务器域名"
 ```
 
 - 选择”Example“Target 进行编译运行

@@ -7,11 +7,12 @@
 
 import UIKit
 import AUIFoundation
+import ARTCAICallKit
 
 @objcMembers open class AUIAICallViewController: UIViewController {
     
-    public init(_ engine: ARTCAICallEngine) {
-        self.engine = engine
+    public init(_ controller: AUIAICallControllerInterface) {
+        self.controller = controller
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -30,6 +31,7 @@ import AUIFoundation
         self.view.backgroundColor = AVTheme.bg_medium
         
         self.titleLabel.frame = CGRect(x: 0, y: UIView.av_safeTop, width: self.view.av_width, height: 44)
+        self.titleLabel.text = self.controller.config.agentType == .AvatarAgent ? AUIAICallBundle.getString("AI Avatar Call") : AUIAICallBundle.getString("AI Voice Call")
 
         self.callContentView.frame = self.view.bounds
         self.callContentView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(onContentViewClicked(recognizer:))))
@@ -40,21 +42,23 @@ import AUIFoundation
                 
         UIViewController.av_setIdleTimerDisabled(true)
         
-        self.engine.delegate = self
-        self.engine.start()
+        self.controller.delegate = self
+        self.controller.start()
         
         NotificationCenter.default.addObserver(self, selector: #selector(applicationWillResignActive), name: UIApplication.willResignActiveNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(applicationDidBecomeActive), name: UIApplication.didBecomeActiveNotification, object: nil)
 
-        self.callContentView.robotStateAni.start()
+        self.callContentView.callStateAni.start()
     }
     
     func applicationWillResignActive() {
-        self.callContentView.robotStateAni.stop()
+        self.callContentView.callStateAni.stop()
+        self.callContentView.voiceAgentAniView?.stop()
     }
     
     func applicationDidBecomeActive() {
-        self.callContentView.robotStateAni.start()
+        self.callContentView.callStateAni.start()
+        self.callContentView.voiceAgentAniView?.start()
     }
     
     
@@ -74,7 +78,7 @@ import AUIFoundation
         return .lightContent
     }
     
-    public let engine: ARTCAICallEngine
+    public let controller: AUIAICallControllerInterface
     
     open lazy var titleLabel: UILabel = {
         let label = UILabel()
@@ -103,28 +107,28 @@ import AUIFoundation
     
     open lazy var bottomView: AUIAICallBottomView = {
         let view = AUIAICallBottomView()
-        view.switchSpeakerBtn.isSelected = self.engine.config.enableSpeaker == false
-        view.muteAudioBtn.isSelected = self.engine.config.muteMicrophone == true
+        view.switchSpeakerBtn.isSelected = self.controller.config.enableSpeaker == false
+        view.muteAudioBtn.isSelected = self.controller.config.muteMicrophone == true
         view.handupBtn.tappedAction = { [weak self] btn in
-            self?.engine.handup()
+            self?.controller.handup()
         }
         view.switchSpeakerBtn.tappedAction = { [weak self] btn in
-            if self?.engine.state != .Connected {
+            if self?.controller.state != .Connected {
                 btn.isSelected = !btn.isSelected
-                self?.engine.config.enableSpeaker = !btn.isSelected
+                self?.controller.config.enableSpeaker = !btn.isSelected
                 return
             }
-            self?.engine.enableSpeaker(enable: btn.isSelected)
-            btn.isSelected = self?.engine.config.enableSpeaker == false
+            self?.controller.enableSpeaker(enable: btn.isSelected)
+            btn.isSelected = self?.controller.config.enableSpeaker == false
         }
         view.muteAudioBtn.tappedAction = { [weak self] btn in
-            if self?.engine.state != .Connected {
+            if self?.controller.state != .Connected {
                 btn.isSelected = !btn.isSelected
-                self?.engine.config.muteMicrophone = btn.isSelected
+                self?.controller.config.muteMicrophone = btn.isSelected
                 return
             }
-            self?.engine.switchMicrophone(off: !btn.isSelected)
-            btn.isSelected = self?.engine.config.muteMicrophone == true
+            self?.controller.switchMicrophone(off: !btn.isSelected)
+            btn.isSelected = self?.controller.config.muteMicrophone == true
         }
         self.view.addSubview(view)
         return view
@@ -139,31 +143,50 @@ import AUIFoundation
                 let time = AVStringFormat.format(withDuration: Float(self.callingSeconds))
                 self.bottomView.timeLabel.text = time
                 
-                self.printingRobotText()
+                self.printingAgentText()
+                
+                self.checkCallLimit()
             }
         }
         RunLoop.current.add(timer, forMode: .default)
         return timer
     }()
     
-    private var lastRobotSentenceId: Int? = nil
-    private var currRobotSpeakingTokens: [String] = []
-    private var nextRobotSpeakingTokenIndex: Int = 0
-    private var isRobotPrintingText: Bool = false
+    private var lastAgentSentenceId: Int? = nil
+    private var currAgentSpeakingTokens: [String] = []
+    private var nextAgentSpeakingTokenIndex: Int = 0
+    private var isAgentPrintingText: Bool = false
 
     
-    private func printingRobotText() {
-        if self.isRobotPrintingText == false {
+    private func printingAgentText() {
+        if self.isAgentPrintingText == false {
             return
         }
         
-        if self.currRobotSpeakingTokens.count > self.nextRobotSpeakingTokenIndex {
-            var currRobotPrintedText = ""
-            for i in 0...self.nextRobotSpeakingTokenIndex {
-                currRobotPrintedText.append(self.currRobotSpeakingTokens[i])
+        if self.currAgentSpeakingTokens.count > self.nextAgentSpeakingTokenIndex {
+            var currAgentPrintedText = ""
+            for i in 0...self.nextAgentSpeakingTokenIndex {
+                currAgentPrintedText.append(self.currAgentSpeakingTokens[i])
             }
-            self.callContentView.updateSubTitle(enable: true, isLLM: true, text: currRobotPrintedText, clear: false)
-            self.self.nextRobotSpeakingTokenIndex += 1
+            self.callContentView.updateSubTitle(enable: true, isLLM: true, text: currAgentPrintedText, clear: false)
+            self.self.nextAgentSpeakingTokenIndex += 1
+        }
+    }
+    
+    private func checkCallLimit() {
+        let limitSecond = self.controller.config.limitSecond
+        if limitSecond == 0 {
+            return
+        }
+        
+        if Double(limitSecond) <= self.callingSeconds {
+            self.controller.currentEngine.handup()
+            self.countdownTimer.invalidate()
+            self.callContentView.callStateAni.stop()
+            self.callContentView.voiceAgentAniView?.stop()
+            AVAlertController.show(withTitle: nil, message: AUIAICallBundle.getString("The call has ended. The avatar agent call can only be experienced for 5 minutes."), needCancel: false) { isCancel in
+                self.controller.handup()
+            }
         }
     }
 }
@@ -171,27 +194,27 @@ import AUIFoundation
 extension AUIAICallViewController {
     
     @objc open func onSettingBtnClicked() {
-        if self.engine.state != .Connected {
+        if self.controller.state != .Connected {
             AVToastView.show(AUIAICallBundle.getString("Currently Not Connected"), view: self.view, position: .mid)
             return
         }
-        
+        AUIAICallSettingPanel.enableVoiceIdSwitch = self.controller.config.agentType != .AvatarAgent
         let panel = AUIAICallSettingPanel(frame: CGRect(x: 0, y: 0, width: self.view.av_width, height: 0))
-        panel.refreshUI(config: self.engine.config)
+        panel.refreshUI(config: self.controller.config)
         panel.applyPlayBlock = { [weak self] item in
-            self?.engine.switchRobotVoice(voiceId: item.voiceId, completed: { error in
+            self?.controller.switchVoiceId(voiceId: item.voiceId, completed: { error in
                 
             })
         }
         panel.interruptBlock = { [weak self, weak panel] isOn in
-            self?.engine.enableVoiceInterrupt(enable: isOn, completed: { error in
+            self?.controller.enableVoiceInterrupt(enable: isOn, completed: { error in
                 if let self = self {
                     if error != nil {
-                        panel?.interruptSwitch.switchBtn.isOn = self.engine.config.enableVoiceInterrupt
+                        panel?.interruptSwitch.switchBtn.isOn = self.controller.config.enableVoiceInterrupt
                         AVToastView.show(AUIAICallBundle.getString("Failed to Switch Smart Interruption"), view: self.view, position: .mid)
                         return
                     }
-                    if self.engine.config.enableVoiceInterrupt {
+                    if self.controller.config.enableVoiceInterrupt {
                         AVToastView.show(AUIAICallBundle.getString("Smart Interruption is Turned On"), view: self.view, position: .mid)
                     }
                     else {
@@ -204,38 +227,58 @@ extension AUIAICallViewController {
     }
     
     @objc open func onContentViewClicked(recognizer: UIGestureRecognizer) {
-        self.engine.interruptSpeaking(completed: nil)
+        self.controller.interruptSpeaking()
     }
 }
 
-extension AUIAICallViewController: ARTCAICallEngineDelegate {
+extension AUIAICallViewController: AUIAICallControllerDelegate {
     
-    public func onAICallEngineStateChanged() {
-        // 启动计时
-        if self.engine.state == .Connected {
+    public func onAICallAIAgentStarted() {
+        self.callContentView.updateAgentType(agentType: self.controller.config.agentType)
+        if self.controller.config.agentType == .AvatarAgent {
+            self.controller.setAgentView(view: self.callContentView.avatarAgentView, mode: .Auto)
+        }
+        self.titleLabel.text = self.controller.config.agentType == .AvatarAgent ? AUIAICallBundle.getString("AI Avatar Call") : AUIAICallBundle.getString("AI Voice Call")
+    }
+    
+    public func onAICallStateChanged() {
+        ARTCAICallEngineDebuger.PrintLog("Call State Changed: \(self.controller.state)")
+        self.callContentView.callStateAni.updateState(newState: self.controller.state)
+        
+        if self.controller.state == .Connected {
+            self.callContentView.callStateAni.isHidden = true
+            self.callContentView.callStateAni.stop()
+            self.callContentView.voiceAgentAniView?.isHidden = false
+            self.callContentView.voiceAgentAniView?.start()
+            self.callContentView.avatarAgentView?.isHidden = false
+            
+            // 启动计时
             self.countdownTimer.fire()
         }
-        else if self.engine.state == .Over {
+        else if self.controller.state == .Over {
             self.countdownTimer.invalidate()
+            self.callContentView.callStateAni.stop()
+            self.callContentView.voiceAgentAniView?.stop()
         }
         
         // 更新提示语
-        if self.engine.state == .None {
+        if self.controller.state == .None {
             self.callContentView.tipsLabel.text = nil
         }
-        else if self.engine.state == .Connecting {
+        else if self.controller.state == .Connecting {
             self.callContentView.tipsLabel.text = AUIAICallBundle.getString("Connecting...")
         }
-        else if self.engine.state == .Connected {
-            self.onAICallEngineRobotStateChanged()
+        else if self.controller.state == .Connected {
+            self.onAICallAgentStateChanged()
         }
-        else if self.engine.state == .Over {
+        else if self.controller.state == .Over {
             self.callContentView.tipsLabel.text = AUIAICallBundle.getString("Call Ended")
         }
-        else if self.engine.state == .Error {
+        else if self.controller.state == .Error {
+            ARTCAICallEngineDebuger.PrintLog("Call Error: \(self.controller.errorCode)")
             var msg = AUIAICallBundle.getString("An Error Occurred During the Call")
-            switch self.engine.errorCode {
-            case .StartFailed:
+            switch self.controller.errorCode {
+            case .BeginCallFailed:
                 msg = AUIAICallBundle.getString("Cannot Start Call, Service Issue Detected")
                 break
             case .TokenExpired:
@@ -244,43 +287,89 @@ extension AUIAICallViewController: ARTCAICallEngineDelegate {
             case .ConnectionFailed:
                 msg = AUIAICallBundle.getString("Call Failed, Network Connection Issue")
                 break
-            case .kickedByUserReplace:
+            case .PublishFailed:
+                msg = AUIAICallBundle.getString("Call Failed, Network Connection Issue")
+                break
+            case .SubscribeFailed:
+                msg = AUIAICallBundle.getString("Call Failed, Network Connection Issue")
+                break
+            case .KickedByUserReplace:
                 msg = AUIAICallBundle.getString("Call Failed, User May Be Logined Another Device")
                 break
-            case .kickedBySystem:
+            case .KickedBySystem:
+                msg = AUIAICallBundle.getString("Call Failed, Ended by System")
+                break
+            case .KickedByChannelTerminated:
                 msg = AUIAICallBundle.getString("Call Failed, Ended by System")
                 break
             case .LocalDeviceException:
                 msg = AUIAICallBundle.getString("Call Failed, Local Device Error")
                 break
-            case .none:
+            case .AgentLeaveChannel:
+                msg = AUIAICallBundle.getString("Call Failed, Agent Stopped")
+                break
+            case .AgentPullFailed:
+                msg = AUIAICallBundle.getString("Call Failed, Agent Failed to Pull Stream")
+                break
+            case .AgentASRFailed:
+                msg = AUIAICallBundle.getString("Call Failed, The Third Party Service of ASR Failed to Start")
+                break
+            case .AvatarServiceFailed:
+                msg = AUIAICallBundle.getString("Call Failed, Avatar Agent Service Failed to Start")
+                break
+            case .AvatarRoutesExhausted:
+                msg = AUIAICallBundle.getString("Call Ended")
+                break
+            case .UnknowError:
+                msg = AUIAICallBundle.getString("Call Failed, Unknow Error")
+                break
+            default:
                 break
             }
             self.callContentView.tipsLabel.text = msg
-        }
-        
-        // 挂断处理
-        if self.engine.state == .Over {
-            DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + DispatchTimeInterval.milliseconds(100)) {
-                self.dismiss(animated: true)
-                if let window = UIView.av_keyWindow {
-                    AVToastView.show(AUIAICallBundle.getString("Call Ended"), view: window, position: .mid)
+            self.countdownTimer.invalidate()
+            self.callContentView.callStateAni.stop()
+            self.callContentView.voiceAgentAniView?.stop()
+            
+            if self.controller.errorCode == .AvatarRoutesExhausted {
+                AVAlertController.show(withTitle: nil, message: AUIAICallBundle.getString("AI avatar calling is in high demand, please try again later or enjoy the new experience of AI voice calling first."), needCancel: false) { isCancel in
+                    self.controller.handup()
+                    
                 }
             }
         }
+        
+        // 挂断处理
+        if self.controller.state == .Over {
+            #if AICALL_ENABLE_FEEDBACK
+            if self.controller.errorCode == .AvatarRoutesExhausted {
+                self.dismiss(animated: true)
+            }
+            else {
+                DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + DispatchTimeInterval.milliseconds(100)) {
+                    self.dismiss(animated: true) {
+                        
+                        AUIAICallFeedback.shared.tryToShowFeedback(controller: self.controller, vc: UIViewController.av_top())
+                    }
+                }
+            }
+            #else
+            self.dismiss(animated: true)
+            #endif
+        }
     }
     
-    public func onAICallEngineRobotStateChanged() {
-        if self.engine.robotState == .Listening {
+    public func onAICallAgentStateChanged() {
+        if self.controller.agentState == .Listening {
             self.callContentView.tipsLabel.text = AUIAICallBundle.getString("You Talk, I'm Listening...")
-            self.isRobotPrintingText = false
+            self.isAgentPrintingText = false
             self.callContentView.updateSubTitle(enable: false, isLLM: false, text: "", clear: true)
         }
-        else if self.engine.robotState == .Thinking {
+        else if self.controller.agentState == .Thinking {
             self.callContentView.tipsLabel.text = AUIAICallBundle.getString("Thinking...")
         }
-        else if self.engine.robotState == .Speaking {
-            if self.engine.config.enableVoiceInterrupt {
+        else if self.controller.agentState == .Speaking {
+            if self.controller.config.enableVoiceInterrupt {
                 self.callContentView.tipsLabel.text = AUIAICallBundle.getString("I'm Replying, Tap Screen or Speak to Interrupt Me")
             }
             else {
@@ -288,19 +377,19 @@ extension AUIAICallViewController: ARTCAICallEngineDelegate {
             }
         }
         
-        self.callContentView.robotStateAni.updateRobotState(newState: self.engine.robotState)
+        self.callContentView.voiceAgentAniView?.updateAgentState(newState: self.controller.agentState)
     }
     
-    public func onAICallEngineActiveSpeakerVolumeChanged(userId: String, volume: Int32) {
-        if userId == self.engine.userId {
-            self.callContentView.robotStateAni.listeningAniView.isSpeaking = volume > 10
+    public func onAICallActiveSpeakerVolumeChanged(userId: String, volume: Int32) {
+        if userId == self.controller.userId {
+            self.callContentView.voiceAgentAniView?.listeningAniView.isSpeaking = volume > 10
         }
         else {
-            self.callContentView.robotStateAni.listeningAniView.isSpeaking = false
+            self.callContentView.voiceAgentAniView?.listeningAniView.isSpeaking = false
         }
     }
     
-    public func onAICallEngineRobotSubtitleNotify(text: String, isSentenceEnd: Bool, userAsrSentenceId: Int) {
+    public func onAICallAgentSubtitleNotify(text: String, isSentenceEnd: Bool, userAsrSentenceId: Int) {
         var tokens: [String] = []
         let tagger = NSLinguisticTagger(tagSchemes: [.tokenType], options: 0)
         tagger.string = text
@@ -308,18 +397,18 @@ extension AUIAICallViewController: ARTCAICallEngineDelegate {
             let word = (text as NSString).substring(with: tokenRange)
             tokens.append(word)
         }
-        if userAsrSentenceId != self.lastRobotSentenceId {
-            self.lastRobotSentenceId = userAsrSentenceId
-            self.nextRobotSpeakingTokenIndex = 0
-            self.currRobotSpeakingTokens.removeAll()
+        if userAsrSentenceId != self.lastAgentSentenceId {
+            self.lastAgentSentenceId = userAsrSentenceId
+            self.nextAgentSpeakingTokenIndex = 0
+            self.currAgentSpeakingTokens.removeAll()
         }
-        self.currRobotSpeakingTokens.append(contentsOf: tokens)
+        self.currAgentSpeakingTokens.append(contentsOf: tokens)
 
-        self.isRobotPrintingText = true
+        self.isAgentPrintingText = true
     }
     
-    public func onAICallEngineUserAsrSubtitleNotify(text: String, isSentenceEnd: Bool, sentenceId: Int) {
-        self.isRobotPrintingText = false
+    public func onAICallUserSubtitleNotify(text: String, isSentenceEnd: Bool, sentenceId: Int) {
+        self.isAgentPrintingText = false
         self.callContentView.updateSubTitle(enable: true, isLLM: false, text: text, clear: false)
 
     }

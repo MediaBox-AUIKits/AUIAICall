@@ -2,15 +2,14 @@ package com.aliyuncs.aui.service.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.aliyuncs.aui.dto.req.RobotStartRequestDto;
-import com.aliyuncs.aui.dto.req.RobotStopRequestDto;
-import com.aliyuncs.aui.dto.req.RobotUpdateRequestDto;
-import com.aliyuncs.aui.dto.req.RtcAuthTokenRequestDto;
-import com.aliyuncs.aui.dto.res.AiRobotStartResponse;
-import com.aliyuncs.aui.dto.res.RtcAuthTokenResponse;
-import com.aliyuncs.aui.service.AiRobotService;
+import com.aliyuncs.aui.dto.req.AIAgentStartRequestDto;
+import com.aliyuncs.aui.dto.req.AiAgentStopRequestDto;
+import com.aliyuncs.aui.dto.req.AiAgentUpdateRequestDto;
+import com.aliyuncs.aui.dto.req.GenerateAIAgentCallRequestDto;
+import com.aliyuncs.aui.dto.res.AiAgentStartResponse;
+import com.aliyuncs.aui.dto.res.GenerateAIAgentCallResponse;
+import com.aliyuncs.aui.service.AiAgentService;
 import com.aliyuncs.aui.service.ImsService;
-import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.time.DateUtils;
 import org.apache.shiro.codec.Base64;
@@ -39,48 +38,39 @@ public class ImsServiceImpl implements ImsService {
     private String liveMicAppKey;
 
     @Resource
-    private AiRobotService aiRobotService;
+    private AiAgentService aiAgentService;
 
     @Override
-    public AiRobotStartResponse startRobot(RobotStartRequestDto robotStartRequestDto) {
-        String channelId = robotStartRequestDto.getChannelId();
-        if (Strings.isNullOrEmpty(channelId)) {
-            channelId = UUID.randomUUID().toString().replaceAll("-", "");
-        }
+    public AiAgentStartResponse startAIAgentInstance(AIAgentStartRequestDto aiAgentStartRequestDto) {
+        String channelId = UUID.randomUUID().toString().replaceAll("-", "");
         // 生成客户端的rtcAuthToken，基于客户端传的userid
-        String rtcAuthToken = createBase64Token(channelId, robotStartRequestDto.getUserId(), getClientTimestamp());
+        String rtcAuthToken = createBase64Token(channelId, aiAgentStartRequestDto.getUserId(), getClientTimestamp());
 
         String robotUserId = UUID.randomUUID().toString().replaceAll("-", "");
         // 生成aigc的rtcAuthToken，基于机器人的userid
         String robotRtcAuthToken = createBase64Token(channelId, robotUserId, getAigcTimestamp());
 
-        String instanceId = aiRobotService.startRobot(channelId, robotUserId, robotRtcAuthToken, robotStartRequestDto.getConfig(), robotStartRequestDto.getRobotId());
+        String instanceId = aiAgentService.startAiAgent(channelId, robotUserId, robotRtcAuthToken,
+                aiAgentStartRequestDto.getTemplateConfig(), aiAgentStartRequestDto.getWorkflowType());
 
-        return AiRobotStartResponse.builder().robotInstanceId(instanceId).rtcAuthToken(rtcAuthToken)
-                .robotUserId(robotUserId).channelId(channelId).build();
+        return AiAgentStartResponse.builder().aiAgentInstanceId(instanceId).rtcAuthToken(rtcAuthToken)
+                .aiAgentUserId(robotUserId).channelId(channelId).build();
     }
 
     @Override
-    public boolean stopRobot(RobotStopRequestDto robotStopRequestDto) {
-        return aiRobotService.stopRobot(robotStopRequestDto.getRobotInstanceId());
+    public boolean stopAIAgentInstance(AiAgentStopRequestDto aiAgentStopRequestDto) {
+        return aiAgentService.stopAiAgent(aiAgentStopRequestDto.getAiAgentInstanceId());
     }
 
     @Override
-    public boolean updateRobot(RobotUpdateRequestDto robotUpdateRequestDto) {
-        return aiRobotService.updateRobot(robotUpdateRequestDto.getRobotInstanceId(), robotUpdateRequestDto.getConfig());
+    public boolean updateAIAgentInstance(AiAgentUpdateRequestDto aiAgentUpdateRequestDto) {
+        return aiAgentService.updateAiAgent(aiAgentUpdateRequestDto.getAiAgentInstanceId(), aiAgentUpdateRequestDto.getTemplateConfig());
     }
 
     @Override
-    public RtcAuthTokenResponse getRtcAuthToken(RtcAuthTokenRequestDto rtcAuthTokenRequestDto) {
-        String channelId = rtcAuthTokenRequestDto.getChannelId();
-        if (Strings.isNullOrEmpty(channelId)) {
-            channelId = UUID.randomUUID().toString().replaceAll("-", "");
-        }
-        long timestamp = getClientTimestamp();
-        // 生成客户端的rtcAuthToken，基于客户端传的userid
-        String rtcAuthToken = createBase64Token(channelId, rtcAuthTokenRequestDto.getUserId(), timestamp);
-
-        return RtcAuthTokenResponse.builder().authToken(rtcAuthToken).timestamp(timestamp).build();
+    public GenerateAIAgentCallResponse generateAIAgentCall(GenerateAIAgentCallRequestDto requestDto) {
+        return aiAgentService.generateAIAgentCall(requestDto.getAiAgentId(),requestDto.getUserId(), requestDto.getExpire(),
+                requestDto.getTemplateConfig(), requestDto.getWorkflowType());
     }
 
     private long getClientTimestamp() {
