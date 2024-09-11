@@ -71,7 +71,7 @@ import UIKit
     
     public func setAgentView(view: UIView?, mode: ARTCAICallAgentViewMode) {
         
-        self.stopPublish()
+        self.stopPullAgentVideo()
         
         if let view = view {
             let renderMode = AliRtcRenderMode(rawValue: UInt(mode.rawValue)) ?? .auto
@@ -246,7 +246,7 @@ extension ARTCAICallEngine {
     }
     
     private func resetPullAgentVideo() {
-        self.stopPublish()
+        self.stopPullAgentVideo()
         self.agentCanvas = nil
         self.agentCanvasUid = nil
     }
@@ -420,7 +420,7 @@ extension ARTCAICallEngine: AliRtcEngineDelegate {
             
             if videoTrack == .no {
                 if uid == self.agentCanvasUid {
-                    self.stopPublish()
+                    self.stopPullAgentVideo()
                     self.agentCanvasUid = nil
                 }
             }
@@ -479,14 +479,14 @@ extension ARTCAICallEngine: AliRtcEngineDelegate {
     }
     
     public func onLocalDeviceException(_ deviceType: AliRtcLocalDeviceType, exceptionType: AliRtcLocalDeviceExceptionType, message msg: String?) {
-        ARTCAICallEngineDebuger.PrintLog("ARTCAICallEngine onLocalDeviceException:\(deviceType) exceptionType:\(exceptionType) message\(msg ?? "unknown")")
+        ARTCAICallEngineDebuger.PrintLog("ARTCAICallEngine onLocalDeviceException:\(deviceType) exceptionType:\(exceptionType) message:\(msg ?? "unknown")")
         DispatchQueue.main.async {
             self.delegate?.onErrorOccurs?(code: .LocalDeviceException)
         }
     }
     
     public func onBye(_ code: Int32) {
-        ARTCAICallEngineDebuger.PrintLog("ARTCAICallEngine onBye\(code)")
+        ARTCAICallEngineDebuger.PrintLog("ARTCAICallEngine onBye:\(code)")
         DispatchQueue.main.async {
             if code == AliRtcOnByeType.userReplaced.rawValue {
                 self.delegate?.onErrorOccurs?(code: .KickedByUserReplace)

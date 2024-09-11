@@ -72,7 +72,6 @@ dependencies {
     implementation project(':AUIBaseKits::AUICommon')
 }
 
-// 定义一个方法
 def UseAiCallKitAAR() {
     if (findProperty('USE_AICALLKIT_AAR') == null) {
         return false

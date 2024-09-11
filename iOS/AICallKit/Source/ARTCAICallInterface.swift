@@ -78,7 +78,7 @@ import UIKit
     case Good = 1
     
     /**
-     * 网络较差，音视频流畅度清晰度有瑕疵，不影响沟通
+     * 网络有点差，音视频流畅度清晰度有瑕疵，不影响沟通
      */
     case Poor = 2
     
@@ -234,7 +234,7 @@ import UIKit
     @objc optional func onAgentStateChanged(state: ARTCAICallAgentState)
     
     /**
-     * 网络状态
+     * 网络状态改变
      * @param uid 当前讲话人的Id
      * @param quality 网络质量
      */
@@ -242,8 +242,8 @@ import UIKit
     
     
     /**
-     * 音量变化
-     * @param uid 当前讲话人的Id
+     * 音量变化通知
+     * @param uid 当前讲话人的uid
      * @param volume 音量[0-255]
      */
     @objc optional func onVoiceVolumeChanged(uid: String, volume: Int32)
@@ -273,7 +273,7 @@ import UIKit
     @objc optional func onVoiceIdChanged(voiceId: String)
     
     /**
-     * 当前通话的语音打断设置改变
+     * 当前通话的语音打断是否启用
      * @param enable 是否启用
      */
     @objc optional func onVoiceInterrupted(enable: Bool)
