@@ -78,9 +78,9 @@ public class AICallSettingDialog {
         @Override
         public void initData(BizParameter parameter, IBizCallback<CardEntity> callback) {
             String currentAudioId = mARTCAiCallEngine.getRobotVoiceId();
-            if (currentAudioId.isEmpty()) {
-                currentAudioId = "zhixiaoxia";
-            }
+//            if (currentAudioId.isEmpty()) {
+//                currentAudioId = "zhixiaoxia";
+//            }
 
             List<AudioToneData> cardDataList = new ArrayList<>();
             AudioToneData audioToneData1 = new AudioToneData("zhixiaobai", "Zhi Xiao Bai");

@@ -139,6 +139,20 @@ public abstract class ARTCAICallController {
                 mBizCallEngineCallback.onAgentAudioAvailable(available);
             }
         }
+
+        @Override
+        public void onAgentAvatarFirstFrameDrawn() {
+            if (null != mBizCallEngineCallback) {
+                mBizCallEngineCallback.onAgentAvatarFirstFrameDrawn();
+            }
+        }
+
+        @Override
+        public void onUserOnLine(String uid) {
+            if (null != mBizCallEngineCallback) {
+                mBizCallEngineCallback.onUserOnLine(uid);
+            }
+        }
     };
     protected ARTCAICallController(Context context, String userId) {
         mContext = context;

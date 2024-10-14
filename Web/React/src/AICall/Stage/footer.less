@@ -1,0 +1,79 @@
+.call-footer {
+  position: relative;
+  padding-top: 48px;
+}
+
+.is-avatar .call-footer {
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 2%, rgba(0, 0, 0, 0.62) 91%);
+}
+
+.call-tip {
+  margin-bottom: -10px;
+  text-align: center;
+  ._time {
+    margin-top: 30px;
+    color: #000;
+    color: var(--biz-ant-color-text-base, #000);
+    opacity: 0.6;
+  }
+}
+
+.is-avatar .call-tip {
+  color: #fff;
+  ._time {
+    color: #fff;
+  }
+}
+
+.call-actions {
+  flex: 0 0 auto;
+  ul {
+    justify-content: center;
+    display: flex;
+    list-style: none;
+    padding: 20px 0;
+    margin: 0;
+  }
+}
+
+.call-btn {
+  margin: 0 45px;
+  text-align: center;
+}
+
+.is-avatar .call-btn {
+  opacity: 0.8;
+}
+
+.call-btn ._label {
+  position: relative;
+  width: 60px;
+  margin: 16px 0 8px;
+  height: 22px;
+  word-break: keep-all;
+}
+
+.call-btn ._text {
+  position: absolute;
+  left: 50%;
+  display: inline-block;
+  transform: translate3d(-50%, 0, 0);
+  color: #000;
+  color: var(--biz-ant-color-text-base, #000);
+  opacity: 0.6;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.call-btn .ant-btn {
+  width: 60px;
+  height: 60px;
+  font-size: 24px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-color: var(--biz-ant-color-border-secondary, rgba(0, 0, 0, 0.2));
+  border-radius: 50%;
+}
+
+.is-avatar .call-btn ._text {
+  color: #fff;
+}

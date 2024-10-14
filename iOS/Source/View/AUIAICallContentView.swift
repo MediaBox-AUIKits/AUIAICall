@@ -15,7 +15,6 @@ import ARTCAICallKit
         super.init(frame: frame)
         
         self.addSubview(self.agentRenderView)
-        self.agentRenderView.layer.addSublayer(self.gradientlayer)
         
         self.addSubview(self.tipsLabel)
         self.addSubview(self.callStateAni)
@@ -36,7 +35,7 @@ import ARTCAICallKit
         super.layoutSubviews()
         
         self.agentRenderView.frame = self.bounds
-        self.gradientlayer.frame = CGRect(x: 0, y: self.agentRenderView.av_height - 350, width: self.agentRenderView.av_width, height: 350)
+        self.gradientlayer.frame = CGRect(x: 0, y: self.agentRenderView.av_height - 308, width: self.agentRenderView.av_width, height: 308)
         
         self.avatarAgentView?.frame = self.agentRenderView.bounds
         
@@ -96,9 +95,10 @@ import ARTCAICallKit
     
     open var gradientlayer: CAGradientLayer = {
         let layer = CAGradientLayer()
-        layer.startPoint = CGPoint(x: 0.5, y: 0.0)
-        layer.endPoint = CGPoint(x: 0.5, y: 1.0)
-        layer.colors = [UIColor.clear.cgColor, UIColor.black.withAlphaComponent(0.8).cgColor]
+        layer.locations = [0.27, 0.99]
+        layer.startPoint = CGPoint(x: 0.5, y: 0.06)
+        layer.endPoint = CGPoint(x: 0.5, y: 0.4)
+        layer.colors = [UIColor.av_color(withHexString: "#001146", alpha: 0.0).cgColor, UIColor.av_color(withHexString: "#00040F", alpha: 1.0).cgColor]
         return layer
     }()
 
@@ -133,7 +133,9 @@ import ARTCAICallKit
         }
         
         self.gradientlayer.removeFromSuperlayer()
-        self.agentRenderView.layer.addSublayer(self.gradientlayer)
+        if agentType == .AvatarAgent {
+            self.agentRenderView.layer.addSublayer(self.gradientlayer)
+        }
     }
     
     open func updateSubTitle(enable: Bool, isLLM: Bool, text: String, clear: Bool) {

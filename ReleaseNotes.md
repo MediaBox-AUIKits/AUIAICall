@@ -15,3 +15,10 @@
 * Android&iOS：通过AICallKit SDK集成，快速实现业务功能
 * Web：支持语音通话
 * Server：支持AI智能体OpenAPI
+
+## v1.3.0
+发布时间：2024-10-10
+* Android&iOS：修复问题，体验优化
+* Web：支持数字人
+* Web：通过AICallKit SDK集成，快速实现业务功能
+* Server：升级到v2

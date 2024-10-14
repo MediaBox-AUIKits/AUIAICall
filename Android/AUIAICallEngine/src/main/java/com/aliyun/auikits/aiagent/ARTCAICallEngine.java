@@ -75,6 +75,8 @@ public abstract class ARTCAICallEngine {
     }
 
     public static class ARTCAICallConfig {
+        public String loginUserId;
+        public String loginAuthrization;
         public String aiAgentId = "";
         public boolean enableVoiceInterrupt = true;
         public String aiAgentVoiceId = "";
@@ -181,7 +183,15 @@ public abstract class ARTCAICallEngine {
          * 智能体音频是否可用（推流）
          */
         void onAgentAudioAvailable(boolean available);
+        /**
+         * 智能体数字人首帧渲染
+         */
+        void onAgentAvatarFirstFrameDrawn();
 
+        /**
+         * 用户入会回调
+         */
+        void onUserOnLine(String uid);
     }
 
     /**

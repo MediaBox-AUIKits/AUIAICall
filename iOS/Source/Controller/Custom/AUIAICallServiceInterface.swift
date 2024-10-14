@@ -13,9 +13,9 @@ import ARTCAICallKit
     
     @objc func startAIAgent(userId: String, config: AUIAICallConfig, completed: ((_ rsp: ARTCAICallAgentInfo?, _ token: String?, _ error: Error?) -> Void)?)
     
-    @objc func stopAIAgent(instanceId: String, completed: ((_ error: Error?) -> Void)?)
+    @objc func stopAIAgent(userId: String, instanceId: String, completed: ((_ error: Error?) -> Void)?)
     
-    @objc func updateAIAgent(instanceId: String, agentType: ARTCAICallAgentType, voiceId: String, completed: ((_ error: Error?) -> Void)?)
+    @objc func updateAIAgent(userId: String, instanceId: String, agentType: ARTCAICallAgentType, voiceId: String, completed: ((_ error: Error?) -> Void)?)
     
-    @objc func updateAIAgent(instanceId: String, agentType: ARTCAICallAgentType, enable: Bool, completed: ((_ error: Error?) -> Void)?)
+    @objc func updateAIAgent(userId: String, instanceId: String, agentType: ARTCAICallAgentType, enable: Bool, completed: ((_ error: Error?) -> Void)?)
 }

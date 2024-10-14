@@ -13,6 +13,7 @@ FOUNDATION_EXPORT double AUIFoundationVersionNumber;
 //! Project version string for AUIFoundation.
 FOUNDATION_EXPORT const unsigned char AUIFoundationVersionString[];
 
+#import <AUIFoundation/AVDeviceAuth.h>
 #import <AUIFoundation/AVGlobalTimer.h>
 #import <AUIFoundation/AVStringFormat.h>
 #import <AUIFoundation/NSString+AVHelper.h>

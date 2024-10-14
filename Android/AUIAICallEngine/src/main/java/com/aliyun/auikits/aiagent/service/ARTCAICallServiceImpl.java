@@ -30,10 +30,13 @@ public class ARTCAICallServiceImpl implements IARTCAICallService {
     protected IARTCAICallIMService mAiCallIMService = null;
     private AppServerService mAppServerService = null;
     protected Map<Integer, IARTCAICallServiceCallback> mCallbackMap = new HashMap<>();
-    protected String mAppServerHost = null;
+    protected String mLoginUserId;
+    protected String mLoginAuthorization;
 
-    public ARTCAICallServiceImpl(String appServerHost) {
+    public ARTCAICallServiceImpl(String appServerHost, String loginUserId, String loginAuthorization) {
         mAppServerService = new AppServerService(appServerHost);
+        mLoginUserId = loginUserId;
+        mLoginAuthorization = loginAuthorization;
     }
 
     private String agentTypeId(ARTCAICallEngine.ARTCAICallAgentType aiAgentType) {
@@ -51,11 +54,12 @@ public class ARTCAICallServiceImpl implements IARTCAICallService {
     }
 
     private String defaultVoiceId(ARTCAICallEngine.ARTCAICallAgentType aiAgentType) {
-        if (aiAgentType == ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent) {
-            return null;
-        } else {
-            return "zhixiaoxia";
-        }
+//        if (aiAgentType == ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent) {
+//            return null;
+//        } else {
+//            return "zhixiaoxia";
+//        }
+        return null;
     }
 
     @Override
@@ -72,10 +76,11 @@ public class ARTCAICallServiceImpl implements IARTCAICallService {
             jsonObject.put("template_config",
                     composeAiAgentConfigJson(aiAgentType, defaultVoiceId(aiAgentType), null, null, null, null)
             );
+            jsonObject.put("user_id", mLoginUserId);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-        mAppServerService.postAsync(AppServerService.API_GENERATE_AI_AGENT_CALL_PATH, jsonObject, callback);
+        mAppServerService.postAsync(AppServerService.API_GENERATE_AI_AGENT_CALL_PATH, mLoginAuthorization, jsonObject, callback);
     }
 
     @Override
@@ -87,21 +92,24 @@ public class ARTCAICallServiceImpl implements IARTCAICallService {
             jsonObject.put("template_config",
                     composeAiAgentConfigJson(aiAgentType, defaultVoiceId(aiAgentType), null, null, null, null)
             );
+            jsonObject.put("user_id", mLoginUserId);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-        mAppServerService.postAsync(AppServerService.API_START_AI_AGENT_PATH, jsonObject, callback);
+        mAppServerService.postAsync(AppServerService.API_START_AI_AGENT_PATH, mLoginAuthorization, jsonObject, callback);
     }
 
     @Override
-    public void stopAIAgentService(String aiAgentInstanceId, IARTCAICallServiceCallback callback) {
+    public boolean stopAIAgentService(String aiAgentInstanceId, IARTCAICallServiceCallback callback) {
         JSONObject jsonObject = new JSONObject();
         try {
             jsonObject.put("ai_agent_instance_id", aiAgentInstanceId);
+            jsonObject.put("user_id", mLoginUserId);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-        mAppServerService.postAsync(AppServerService.API_STOP_AI_AGENT_PATH, jsonObject, callback);
+        mAppServerService.postAsync(AppServerService.API_STOP_AI_AGENT_PATH, mLoginAuthorization, jsonObject, callback);
+        return false;
     }
 
     @Override
@@ -136,10 +144,11 @@ public class ARTCAICallServiceImpl implements IARTCAICallService {
             jsonObject.put("ai_agent_instance_id", aiAgentInstanceId);
             jsonObject.put("template_config", composeAiAgentConfigJson(aiAgentType, null, null,
                     enable, null, null));
+            jsonObject.put("user_id", mLoginUserId);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-        mAppServerService.postAsync(AppServerService.API_UPDATE_AI_AGENT_PATH, jsonObject, callback);
+        mAppServerService.postAsync(AppServerService.API_UPDATE_AI_AGENT_PATH, mLoginAuthorization, jsonObject, callback);
     }
 
     @Override
@@ -149,10 +158,11 @@ public class ARTCAICallServiceImpl implements IARTCAICallService {
             jsonObject.put("ai_agent_instance_id", robotInstanceId);
             jsonObject.put("template_config", composeAiAgentConfigJson(aiAgentType, soundId, null,
                     null, null, null));
+            jsonObject.put("user_id", mLoginUserId);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-        mAppServerService.postAsync(AppServerService.API_UPDATE_AI_AGENT_PATH, jsonObject, callback);
+        mAppServerService.postAsync(AppServerService.API_UPDATE_AI_AGENT_PATH, mLoginAuthorization, jsonObject, callback);
     }
 
     @Override
@@ -234,11 +244,11 @@ public class ARTCAICallServiceImpl implements IARTCAICallService {
     public static class AppServerService {
         private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
 
-        private static String API_GENERATE_AI_AGENT_CALL_PATH = "/api/v1/aiagent/generateAIAgentCall";
-        private static String API_START_AI_AGENT_PATH = "/api/v1/aiagent/startAIAgentInstance";
-        private static String API_STOP_AI_AGENT_PATH = "/api/v1/aiagent/stopAIAgentInstance";
-        private static String API_UPDATE_AI_AGENT_PATH = "/api/v1/aiagent/updateAIAgentInstance";
-        private static String API_REFRESH_TOKEN_PATH = "/api/v1/aiagent/getRtcAuthToken";
+        private static String API_GENERATE_AI_AGENT_CALL_PATH = "/api/v2/aiagent/generateAIAgentCall";
+        private static String API_START_AI_AGENT_PATH = "/api/v2/aiagent/startAIAgentInstance";
+        private static String API_STOP_AI_AGENT_PATH = "/api/v2/aiagent/stopAIAgentInstance";
+        private static String API_UPDATE_AI_AGENT_PATH = "/api/v2/aiagent/updateAIAgentInstance";
+//        private static String API_REFRESH_TOKEN_PATH = "/api/v1/aiagent/getRtcAuthToken";
 
         private String mHost = "";
 
@@ -250,12 +260,13 @@ public class ARTCAICallServiceImpl implements IARTCAICallService {
             return mHost + path;
         }
 
-        private void postAsync(String path, JSONObject json, IARTCAICallServiceCallback callback) {
+        private void postAsync(String path, String authorization, JSONObject json, IARTCAICallServiceCallback callback) {
             RequestBody body = RequestBody.create(
                     null != json ? json.toString() : "",
                     JSON);
             Request request = new Request.Builder()
                     .url(getRequestUrl(path))
+                    .header("Authorization", authorization)
                     .post(body)
                     .build();
 

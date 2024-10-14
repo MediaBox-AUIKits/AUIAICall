@@ -18,6 +18,7 @@ import UIKit
     case VoiceIdChanged = 1005
     case RTCTokenResponsed = 1006
     
+    case StopAIAgent = 1100
     case InterruptSpeaking = 1101
     case EnableVoiceInterrupt = 1102
     case SwitchVoiceId = 1103

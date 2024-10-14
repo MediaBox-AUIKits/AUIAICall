@@ -32,7 +32,7 @@ TODO: Add long description of the pod here.
   s.static_framework = true
   s.swift_version = '5.0'
 #  s.pod_target_xcconfig = {'GCC_PREPROCESSOR_DEFINITIONS' => '$(inherited) COCOAPODS=1'}
-#  s.default_subspecs='Standard'
+  s.default_subspecs='Standard'
 
 
   
@@ -63,12 +63,22 @@ TODO: Add long description of the pod here.
     ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => 'AICALL_INTEGRATION_STANDARD '}
   end
   
+  s.subspec 'Demo_For_Custom' do |ss|
+    ss.resource = 'Resources/AUIAICall.bundle'
+    ss.source_files = 'Source/**/*.{swift,h,m,mm}'
+    ss.exclude_files = 'Source/Controller/Standard/**/*.{swift,h,m,mm}'
+    ss.dependency 'AUIFoundation'
+    ss.dependency 'ARTCAICallKit'
+    ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => 'AICALL_INTEGRATION_CUSTOM '}
+  end
+  
+  
   s.subspec 'Demo_For_Debug' do |ss|
     ss.resource = 'Resources/AUIAICall.bundle'
     ss.source_files = 'Source/**/*.{swift,h,m,mm}'
     ss.dependency 'AUIFoundation'
     ss.dependency 'ARTCAICallKit'
-    ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => 'AICALL_INTEGRATION_STANDARD AICALL_INTEGRATION_CUSTOM '}
+    ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => 'DEMO_FOR_DEBUG '}
   end
   
 end

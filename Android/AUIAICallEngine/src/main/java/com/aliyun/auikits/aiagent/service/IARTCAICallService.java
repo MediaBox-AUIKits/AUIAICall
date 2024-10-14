@@ -20,7 +20,13 @@ public interface IARTCAICallService extends IARTCAICallIMCallback {
 
     void startAIAgentService(String userId, ARTCAICallEngine.ARTCAICallAgentType aiAgentType, IARTCAICallServiceCallback callback);
 
-    void stopAIAgentService(String robotInstanceId, IARTCAICallServiceCallback callback);
+    /**
+     *
+     * @param robotInstanceId
+     * @param callback
+     * @return 是否需要等待
+     */
+    boolean stopAIAgentService(String robotInstanceId, IARTCAICallServiceCallback callback);
 
     void refreshRTCToken(String channelId, String userId, IARTCAICallServiceCallback callback);
 

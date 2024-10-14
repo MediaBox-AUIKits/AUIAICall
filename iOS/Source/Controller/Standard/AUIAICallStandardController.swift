@@ -25,7 +25,7 @@ import ARTCAICallKit
     // ****************************Private members**************************
 
     private var appserver: AUIAICallAppServer = {
-        let appserver = AUIAICallAppServer(serverDomain: AICallServerDomain)
+        let appserver = AUIAICallAppServer()
         return appserver
     }()
     private var engine: ARTCAICallEngineInterface = {
@@ -85,12 +85,12 @@ import ARTCAICallKit
             if let agent = agent, let token = token {
                 
                 self.config.agentType = agent.agentType
-                self.delegate?.onAICallAIAgentStarted?()
+                self.delegate?.onAICallAIAgentStarted?(agentInfo: agent)
 
                 ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "ChannelId", value: agent.channelId)
                 ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "UserId", value: agent.uid)
                 ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "InstanceId", value: agent.instanceId)
-
+                
                 self.engine.call(userId: self.userId, token: token, agentInfo: agent) { [weak self] error in
                     guard let self = self else { return }
                     if self.state == .Over {
@@ -107,8 +107,15 @@ import ARTCAICallKit
                 }
             }
             else {
-                self.errorCode = .BeginCallFailed
-                self.state = .Error
+                if (error as? NSError)?.code == 403 {
+                    self.errorCode = .TokenExpired
+                    self.state = .Error
+                    self.delegate?.onAICallUserTokenExpired?()
+                }
+                else {
+                    self.errorCode = .BeginCallFailed
+                    self.state = .Error
+                }
             }
         }
     }
@@ -116,7 +123,7 @@ import ARTCAICallKit
     // 挂断
     open func handup() {
         if self.state != .None {
-            self.engine.handup()
+            self.engine.handup(true)
             self.state = .Over
         }
     }
@@ -176,7 +183,7 @@ import ARTCAICallKit
 extension AUIAICallStandardController: ARTCAICallEngineDelegate {
     
     public func onErrorOccurs(code: ARTCAICallErrorCode) {
-        self.engine.handup()
+        self.engine.handup(true)
         self.errorCode = code
         self.state = .Error
     }
@@ -194,6 +201,13 @@ extension AUIAICallStandardController: ARTCAICallEngineDelegate {
     
     public func onCallEnd() {
         debugPrint("AUIAICallStandardController onCallEnd")
+    }
+    
+    public func onAgentAvatarFirstFrameDrawn() {
+        debugPrint("AUIAICallStandardController onAgentAvatarFirstFrameDrawn")
+        if self.config.agentType == .AvatarAgent {
+            self.delegate?.onAICallAvatarFirstFrameDrawn?()
+        }
     }
     
     public func onAgentVideoAvailable(available: Bool) {
@@ -261,11 +275,6 @@ extension AUIAICallStandardController {
     
     public func generateAIAgentCall(userId: String, config: AUIAICallConfig, completed: ((_ rsp: ARTCAICallAgentInfo?, _ token: String?, _ error: Error?) -> Void)?) {
         
-//        if !AUIAICallAppServer.serverAuthValid() {
-//            completed?(nil, NSError.aicall_create(code: -1, message: "lack of auth token"))
-//            return
-//        }
-        
         var template_config: [String : Any] = [:]
         var configDict: [String : Any] = [
             "EnableVoiceInterrupt": config.enableVoiceInterrupt,
@@ -303,7 +312,7 @@ extension AUIAICallStandardController {
             ]
         }
 
-        self.appserver.request(path: "/api/v1/aiagent/generateAIAgentCall", body: body) { response, data, error in
+        self.appserver.request(path: "/api/v2/aiagent/generateAIAgentCall", body: body) { response, data, error in
             if error == nil {
                 debugPrint("generateAIAgentCall response: success")
                 let rtc_auth_token = data?["rtc_auth_token"] as? String

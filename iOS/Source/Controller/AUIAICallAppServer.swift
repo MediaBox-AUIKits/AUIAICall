@@ -7,19 +7,23 @@
 
 import UIKit
 
-public let AICallServerDomain = "你的AppServer域名"
-//public let AICallServerDomain = "你的AppServer域名"
+public let AICallServerDomain = "你的AppServer线上域名"
+public let AICallServerDomainPre = "你的AppServer预发域名"
 
 @objcMembers public class AUIAICallAppServer: NSObject {
 
-    public init(serverDomain: String = AICallServerDomain, serverAuth: String? = nil) {
+    public init(serverDomain: String = AUIAICallAppServer.serverDomain) {
         self.serverDomain = serverDomain
-        self.serverAuth = serverAuth
     }
     
     public private(set) var serverDomain = AICallServerDomain
-    public private(set) var serverAuth: String? = ""
     public func request(path: String, body: [AnyHashable: Any]?, completed: @escaping (_ response: URLResponse?, _ data: [AnyHashable: Any]?, _ error: Error?) -> Void) -> Void {
+        
+        if !AUIAICallAppServer.serverAuthValid() {
+            completed(nil, nil, NSError.aicall_create(code: -1, message: "lack of auth token"))
+            return
+        }
+        
         let urlString = "\(self.serverDomain)\(path)"
         let url = URL(string: urlString)
         guard let url = url else {
@@ -33,8 +37,12 @@ public let AICallServerDomain = "你的AppServer域名"
         var urlRequest = URLRequest(url: url)
         urlRequest.setValue("application/json", forHTTPHeaderField: "accept")
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        if self.serverAuth != nil {
-            urlRequest.setValue("Bearer \(self.serverAuth!)", forHTTPHeaderField: "Authorization")
+        let clientTime = "\(Int64(NSDate().timeIntervalSince1970 * 1000))"
+        debugPrint(clientTime)
+        urlRequest.setValue(clientTime, forHTTPHeaderField: "ct")
+        if let serverAuth = AUIAICallAppServer.serverAuth {
+            urlRequest.setValue(serverAuth, forHTTPHeaderField: "Authorization")
+            debugPrint("AUIAICallAppServer serverAuth: \(serverAuth)")
         }
         urlRequest.httpMethod = "POST"
         if let body = body {
@@ -55,6 +63,13 @@ public let AICallServerDomain = "你的AppServer域名"
                     return
                 }
                 
+                if let httpRsp = rsp as? HTTPURLResponse {
+                    if httpRsp.statusCode != 200 {
+                        completed(rsp, nil, NSError(domain: "auiaicall", code: httpRsp.statusCode, userInfo: [NSLocalizedDescriptionKey: "network error"]))
+                        return
+                    }
+                }
+                
                 if let data = data {
                     debugPrint("AUIAICallAppServer rsp: \(String(data: data, encoding: .utf8) ?? "")")
                     let obj = try? JSONSerialization.jsonObject(with: data, options: .allowFragments)
@@ -68,13 +83,22 @@ public let AICallServerDomain = "你的AppServer域名"
                     }
                     return
                 }
+                
+                
+                
                 completed(rsp, nil, NSError(domain: "auiaicall", code: -1, userInfo: [NSLocalizedDescriptionKey: "network error"]))
             }
         }
         task.resume()
     }
+}
+
+extension AUIAICallAppServer {
     
-    public func serverAuthValid() -> Bool {
-        return self.serverAuth != nil && !(self.serverAuth!.isEmpty)
+    public static var serverDomain = AICallServerDomain
+    public static var disableServerAuth: Bool = true
+    public static var serverAuth: String? = ""
+    public static func serverAuthValid() -> Bool {
+        return self.disableServerAuth || (self.serverAuth != nil && !(self.serverAuth!.isEmpty))
     }
 }

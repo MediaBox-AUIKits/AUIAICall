@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+  xmlns:xlink="http://www.w3.org/1999/xlink" fill="none" version="1.1" width="61.5" height="61.5" viewBox="0 0 61.5 61.5">
+  <g>
+    <g>
+      <ellipse cx="30.75" cy="30.75" rx="30" ry="30" fill-opacity="0" stroke="currentColor" fill="none" stroke-width="1.5"/>
+    </g>
+    <g>
+      <g>
+        <g>
+          <rect x="15.821428298950195" y="27.380953073501587" width="3.1142849922180176" height="11.440474510192871" rx="1.5571424961090088" fill-opacity="0" stroke="currentColor" fill="none" stroke-width="1"/>
+        </g>
+        <g>
+          <rect x="22.50714349746704" y="29.416667461395264" width="3.1142849922180176" height="9.40476131439209" rx="1.5571424961090088" fill-opacity="0" stroke="currentColor" fill="none" stroke-width="1"/>
+        </g>
+        <g>
+          <rect x="29.192855834960938" y="29.416667461395264" width="3.1142849922180176" height="9.40476131439209" rx="1.5571424961090088" fill-opacity="0" stroke="currentColor" fill="none" stroke-width="1"/>
+        </g>
+        <g>
+          <rect x="35.878570556640625" y="32.130953788757324" width="3.1142849922180176" height="6.690475940704346" rx="1.5571424961090088" fill-opacity="0" stroke="currentColor" fill="none" stroke-width="1"/>
+        </g>
+        <g>
+          <rect x="42.564287185668945" y="23.535715103149414" width="3.1142849922180176" height="15.285713195800781" rx="1.5571424961090088" fill-opacity="0" stroke="currentColor" fill="none" stroke-width="1"/>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

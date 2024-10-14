@@ -79,7 +79,7 @@ import ARTCAICallKit
             
             if self.state == .Over {
                 if let instanceId = agent?.instanceId {
-                    self.callService.stopAIAgent(instanceId: instanceId, completed: nil)
+                    self.callService.stopAIAgent(userId: self.userId, instanceId: instanceId, completed: nil)
                 }
                 return
             }
@@ -87,7 +87,7 @@ import ARTCAICallKit
             if let agent = agent, let token = token {
                 
                 self.config.agentType = agent.agentType // 修改为最终的agentType
-                self.delegate?.onAICallAIAgentStarted?()
+                self.delegate?.onAICallAIAgentStarted?(agentInfo: agent)
                 
                 ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "ChannelId", value: agent.channelId)
                 ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "UserId", value: agent.uid)
@@ -102,7 +102,7 @@ import ARTCAICallKit
                     if let error = error {
                         self.errorCode = ARTCAICallErrorCode(rawValue: Int32(error.code)) ?? .BeginCallFailed
                         self.state = .Error
-                        self.callService.stopAIAgent(instanceId: agent.instanceId, completed: nil)
+                        self.callService.stopAIAgent(userId: self.userId, instanceId: agent.instanceId, completed: nil)
                     }
                     else {
                         _ = self.engine.muteMicrophone(mute: true)
@@ -110,8 +110,15 @@ import ARTCAICallKit
                 }
             }
             else {
-                self.errorCode = .BeginCallFailed
-                self.state = .Error
+                if (error as? NSError)?.code == 403 {
+                    self.errorCode = .TokenExpired
+                    self.state = .Error
+                    self.delegate?.onAICallUserTokenExpired?()
+                }
+                else {
+                    self.errorCode = .BeginCallFailed
+                    self.state = .Error
+                }
             }
         }
     }
@@ -120,9 +127,9 @@ import ARTCAICallKit
     open func handup() {
         if self.state != .None {
             if let agent = self.engine.agentInfo {
-                self.callService.stopAIAgent(instanceId: agent.instanceId, completed: nil)
+                self.callService.stopAIAgent(userId: self.userId, instanceId: agent.instanceId, completed: nil)
             }
-            self.engine.handup()
+            self.engine.handup(false)
             self.state = .Over
         }
     }
@@ -143,7 +150,7 @@ import ARTCAICallKit
     open func enableVoiceInterrupt(enable: Bool, completed: ((_ error: Error?) -> Void)?) {
         if self.state == .Connected {
             if let agent = self.engine.agentInfo {
-                self.callService.updateAIAgent(instanceId: agent.instanceId, agentType: self.config.agentType, enable: enable) { [weak self] error in
+                self.callService.updateAIAgent(userId: self.userId, instanceId: agent.instanceId, agentType: self.config.agentType, enable: enable) { [weak self] error in
                     if error == nil {
                         self?.config.enableVoiceInterrupt = enable
                     }
@@ -159,7 +166,7 @@ import ARTCAICallKit
     open func switchVoiceId(voiceId: String, completed: ((_ error: Error?) -> Void)?) {
         if self.state == .Connected {
             if let agent = self.engine.agentInfo {
-                self.callService.updateAIAgent(instanceId: agent.instanceId, agentType: self.config.agentType, voiceId: voiceId) { [weak self] error in
+                self.callService.updateAIAgent(userId: self.userId, instanceId: agent.instanceId, agentType: self.config.agentType, voiceId: voiceId) { [weak self] error in
                     if error == nil {
                         self?.config.agentVoiceId = voiceId
                     }
@@ -191,7 +198,7 @@ import ARTCAICallKit
 extension AUIAICallCustomController: ARTCAICallEngineDelegate {
     
     public func onErrorOccurs(code: ARTCAICallErrorCode) {
-        self.engine.handup()
+        self.engine.handup(false)
         self.errorCode = code
         self.state = .Error
     }
@@ -209,6 +216,12 @@ extension AUIAICallCustomController: ARTCAICallEngineDelegate {
     
     public func onCallEnd() {
         ARTCAICallEngineDebuger.PrintLog("onCallEnd")
+    }
+    
+    public func onAgentAvatarFirstFrameDrawn() {
+        if self.config.agentType == .AvatarAgent {
+            self.delegate?.onAICallAvatarFirstFrameDrawn?()
+        }
     }
     
     public func onAgentVideoAvailable(availab: Bool) {

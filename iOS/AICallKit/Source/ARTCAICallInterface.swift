@@ -228,6 +228,11 @@ import UIKit
     @objc optional func onAgentAudioAvailable(available: Bool)
     
     /**
+     * 智能体数字人首帧渲染
+     */
+    @objc optional func onAgentAvatarFirstFrameDrawn()
+    
+    /**
      * 智能体状态改变
      * @param state 当前智能体状态
      */
@@ -343,7 +348,7 @@ import UIKit
      * 获取当前智能体信息
      */
     var agentInfo: ARTCAICallAgentInfo? { get }
-    
+        
     /**
      * 获取当前智能体状态
      */
@@ -362,13 +367,13 @@ import UIKit
     /**
      * 挂断
      */
-    func handup()
+    func handup(_ stopAIAgent: Bool)
     
     /**
      * 设置智能体渲染视图，及缩放模式
      */
     func setAgentView(view: UIView?, mode: ARTCAICallAgentViewMode)
-    
+        
     /**
      * 打断智能体讲话
      */

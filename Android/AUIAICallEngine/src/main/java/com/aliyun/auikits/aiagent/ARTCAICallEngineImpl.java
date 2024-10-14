@@ -148,8 +148,9 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
         @Override
         public void onRemoteUserOnLineNotify(final String uid, final int elapsed) {
             super.onRemoteUserOnLineNotify(uid, elapsed);
-            Log.i(TAG, "onRemoteUserOffLineNotify: [uid: " + uid +
+            Log.i(TAG, "onRemoteUserOnLineNotify: [uid: " + uid +
                     ", elapsed: " + elapsed + "]");
+            notifyUserOnline(uid);
         }
 
         @Override
@@ -157,7 +158,9 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
             super.onRemoteUserOffLineNotify(uid, reason);
             Log.i(TAG, "onRemoteUserOffLineNotify: [uid: " + uid +
                     ", reason: " + reason + "]");
-            if (!TextUtils.isEmpty(mAIAgentAvatarUserId) && TextUtils.equals(mAIAgentAvatarUserId, uid)) {
+            // 关闭智能体离会通知
+            if ((!TextUtils.isEmpty(mAIAgentAvatarUserId) && TextUtils.equals(mAIAgentAvatarUserId, uid)) ||
+                    (!TextUtils.isEmpty(mAIAgentUserId) && TextUtils.equals(mAIAgentUserId, uid))) {
                 notifyErrorOccurs(AICallErrorCode.AgentLeaveChannel);
             }
         }
@@ -200,6 +203,13 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
         public void onFirstVideoFrameReceived(String uid, AliRtcEngine.AliRtcVideoTrack aliRtcVideoTrack, int timeCost) {
             Log.i(TAG, "onFirstVideoFrameReceived [uid: " + uid + ", aliRtcVideoTrack: " + aliRtcVideoTrack + ", timeCost: " + timeCost + "]");
             super.onFirstVideoFrameReceived(uid, aliRtcVideoTrack, timeCost);
+        }
+
+        @Override
+        public void onFirstRemoteVideoFrameDrawn(String uid, AliRtcEngine.AliRtcVideoTrack videoTrack, int width, int height, int elapsed) {
+            Log.i(TAG, "onFirstRemoteVideoFrameDrawn [uid: " + uid + ", videoTrack: " + videoTrack + "width: " + width + ", height: " + height + ", elapsed: " + elapsed + "]");
+            super.onFirstLocalVideoFrameDrawn(width, height, elapsed);
+            notifyAgentAvatarFirstFrameDrawn();
         }
 
         @Override
@@ -394,15 +404,26 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
             @Override
             public void run() {
                 if (mIsHangUp.compareAndSet(false, true)) {
-                    mARTCAICallRtcWrapper.leave();
-                    mARTCAICallRtcWrapper.destroy();
+                    Log.i(TAG, "handup begin");
+                    Runnable rtcLeaveRunnable = new Runnable() {
+                        @Override
+                        public void run() {
 
-                    notifyOnCallEnd();
+                            mARTCAICallRtcWrapper.leave();
+                            mARTCAICallRtcWrapper.destroy();
 
-                    Log.i(TAG, "handup [mRobotInstanceId: " + mAIAgentInstanceId + "]");
+                            notifyOnCallEnd();
+
+                            Log.i(TAG, "handup end");
+                        }
+                    };
+
+                    String loopDelay = mARTCAICallRtcWrapper.getLoopDelay();
+                    Log.i(TAG, "handup [mRobotInstanceId: " + mAIAgentInstanceId + ", loopDelay: " + loopDelay + "]");
+                    boolean needCallLeaveRunnableNextLoop = false;
                     // 调用关闭服务
                     if (!TextUtils.isEmpty(mAIAgentInstanceId)) {
-                        mARTCAICallService.stopAIAgentService(mAIAgentInstanceId, new IARTCAICallService.IARTCAICallServiceCallback() {
+                        needCallLeaveRunnableNextLoop = mARTCAICallService.stopAIAgentService(mAIAgentInstanceId, new IARTCAICallService.IARTCAICallServiceCallback() {
                             @Override
                             public void onSuccess(JSONObject jsonObject) {
                                 Log.i(TAG, "stopAIGCRobotService succ");
@@ -413,6 +434,12 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
                                 Log.i(TAG, "stopAIGCRobotService fail [errorCode: " + errorCode + ", errorMsg: " + errorMsg + "]");
                             }
                         });
+                    }
+
+                    if (!needCallLeaveRunnableNextLoop) {
+                        rtcLeaveRunnable.run();
+                    } else {
+                        mCallbackHandler.postDelayed(rtcLeaveRunnable, 100);
                     }
                 }
             }
@@ -620,7 +647,7 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
     }
 
     protected IARTCAICallService generateAICallService(ARTCAICallConfig artcAiCallConfig) {
-        return new ARTCAICallServiceImpl(artcAiCallConfig.appServerHost);
+        return new ARTCAICallServiceImpl(artcAiCallConfig.appServerHost, artcAiCallConfig.loginUserId, artcAiCallConfig.loginAuthrization);
     }
 
     private void setARTCAICallRobotState(ARTCAICallRobotState aRTCAICallRobotState) {
@@ -832,6 +859,28 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
             public void run() {
                 if (null != mEngineCallback) {
                     mEngineCallback.onAgentAudioAvailable(available);
+                }
+            }
+        });
+    }
+
+    protected void notifyAgentAvatarFirstFrameDrawn() {
+        mCallbackHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                if (null != mEngineCallback) {
+                    mEngineCallback.onAgentAvatarFirstFrameDrawn();
+                }
+            }
+        });
+    }
+
+    protected void notifyUserOnline(String uid) {
+        mCallbackHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                if (null != mEngineCallback) {
+                    mEngineCallback.onUserOnLine(uid);
                 }
             }
         });

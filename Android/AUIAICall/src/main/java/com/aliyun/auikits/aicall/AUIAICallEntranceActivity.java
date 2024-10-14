@@ -36,6 +36,8 @@ import java.util.TimeZone;
 
 @Route(path = "/aicall/AUIAICallEntranceActivity")
 public class AUIAICallEntranceActivity extends AppCompatActivity {
+    private String mLoginUserId = null;
+    private String mLoginAuthorization = null;
 
     private long mLastSettingTapMillis = 0;
     private long mLastSettingTapCount = 0;
@@ -44,6 +46,12 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if (!validateToken()) {
+            ToastHelper.showToast(this, R.string.tips_authorization_invalidate, Toast.LENGTH_LONG);
+            finish();
+        }
+
         SettingStorage.getInstance().init(this);
 
         setContentView(R.layout.activity_auiaicall);
@@ -85,9 +93,25 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
                 });
     }
 
+    private boolean validateToken() {
+
+        if (getIntent() != null && null != getIntent().getExtras()) {
+            mLoginUserId = getIntent().getStringExtra("login_user_id");
+            mLoginAuthorization = getIntent().getStringExtra("authorization");
+        }
+        Log.i("AUIAICALL", "validateToken: [user_id: " + mLoginUserId + ", authorization: " + mLoginAuthorization + "]");
+        if (TextUtils.isEmpty(mLoginUserId) || TextUtils.isEmpty(mLoginAuthorization)) {
+            return false;
+        }
+
+        return true;
+    }
+
     private void jumpToInCallActivity() {
         boolean canJump = true;
         Intent intent = new Intent(AUIAICallEntranceActivity.this, AUIAICallInCallActivity.class);
+        intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_LOGIN_USER_ID, mLoginUserId);
+        intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_LOGIN_AUTHORIZATION, mLoginAuthorization);
         if (mLayoutHolder.isOfficial()) {
             intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_AI_AGENT_TYPE, mLayoutHolder.isAudioCall());
         } else {

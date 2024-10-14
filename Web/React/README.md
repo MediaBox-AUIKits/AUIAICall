@@ -31,13 +31,14 @@ AUI Kits AI 智能体集成工具适用于网络客服、AI 助理、撮合助�
 
 - 源码下载后，进入 React 目录
 - 在 React 目录里执行命令 `npm intall` ，自动安装依赖
-- 打开文件 api/service.ts，修改服务端域名
+- 打开文件 src/controller/service/interface.ts，修改服务端域名
 
 ```typescript
-// api/service.ts
-const APP_SERVER = '你的应用服务器域名';
+// src/controller/service/interface.ts
+export const APP_SERVER = '你的应用服务器域名';
 ```
 
+- 根据业务情况，完善获取 UserId / Token（用于 AppServer 接口鉴权） 的逻辑
 - 执行命令 `npm run dev` 启动本地服务
 
 ## 常见问题

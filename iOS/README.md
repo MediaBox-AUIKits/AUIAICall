@@ -62,13 +62,13 @@ platform :ios, '10.0'
 
 target '你的App target' do
     # 根据自己的业务场景，集成合适的音视频终端SDK，支持：AliVCSDK_ARTC、AliVCSDK_Standard、AliVCSDK_InteractiveLive
-    pod 'AliVCSDK_ARTC', '~> 6.10.0'
+    pod 'AliVCSDK_ARTC', '~> 6.11.3'
 
     # AI实时互动通话场景SDK
-    pod "ARTCAICallKit", '~> 1.0.0'
+    pod "ARTCAICallKit", '~> 1.1.0'
 
     # 基础UI组件源码
-    pod 'AUIFoundation', :path => "./AUIVoiceRoom/AUIBaseKits/AUIFoundation/"
+    pod 'AUIFoundation', :path => "./AUIAICall/AUIBaseKits/AUIFoundation/", :modular_headers => true
 
     # AI通话场景UI组件源码
     pod 'AUIAICall',  :path => "./AUIAICall/"
@@ -93,6 +93,11 @@ public let AICallServerDomain = "你的应用服务器域名"
 前面工作完成后，接下来可以根据自身的业务场景和交互，可以在你APP其他模块或主页上通过组件接口启动AI通话，也可以根据自身的需求修改源码。
 
 ``` Swift
+
+// 引入组件
+import AUIAICall
+import AUIFoundation
+
 
 // 检查是否开启麦克风权限
 AVDeviceAuth.checkMicAuth { auth in

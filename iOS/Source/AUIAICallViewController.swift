@@ -30,12 +30,12 @@ import ARTCAICallKit
         
         self.view.backgroundColor = AVTheme.bg_medium
         
-        self.titleLabel.frame = CGRect(x: 0, y: UIView.av_safeTop, width: self.view.av_width, height: 44)
-        self.titleLabel.text = self.controller.config.agentType == .AvatarAgent ? AUIAICallBundle.getString("AI Avatar Call") : AUIAICallBundle.getString("AI Voice Call")
-
         self.callContentView.frame = self.view.bounds
         self.callContentView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(onContentViewClicked(recognizer:))))
         
+        self.titleLabel.frame = CGRect(x: 0, y: UIView.av_safeTop, width: self.view.av_width, height: 44)
+        self.updateTitle(instanceId: nil)
+
         self.settingBtn.frame = CGRect(x: self.view.av_width - 6 - 44, y: UIView.av_safeTop, width: 44, height: 44)
         self.bottomView.frame = CGRect(x: 0, y: self.view.av_height - UIView.av_safeBottom - 160, width: self.view.av_width, height: 160)
         self.bottomView.isHidden = false
@@ -51,12 +51,14 @@ import ARTCAICallKit
         self.callContentView.callStateAni.start()
     }
     
-    func applicationWillResignActive() {
+    public var onUserTokenExpiredBlcok: (()->Void)? = nil
+    
+    @objc private func applicationWillResignActive() {
         self.callContentView.callStateAni.stop()
         self.callContentView.voiceAgentAniView?.stop()
     }
     
-    func applicationDidBecomeActive() {
+    @objc private func applicationDidBecomeActive() {
         self.callContentView.callStateAni.start()
         self.callContentView.voiceAgentAniView?.start()
     }
@@ -85,7 +87,7 @@ import ARTCAICallKit
         label.textColor = AVTheme.text_strong
         label.textAlignment = .center
         label.font = AVTheme.mediumFont(16)
-        label.text = AUIAICallBundle.getString("AI Voice Call")
+        label.numberOfLines = 0
         self.view.addSubview(label)
         return label
     }()
@@ -134,6 +136,27 @@ import ARTCAICallKit
         return view
     }()
     
+    private func updateTitle(instanceId: String?) {
+        let title = self.controller.config.agentType == .AvatarAgent ? AUIAICallBundle.getString("AI Avatar Call") : AUIAICallBundle.getString("AI Voice Call")
+        let attributedString = NSMutableAttributedString()
+        let firstLine = NSAttributedString(string: title, attributes: [
+            NSAttributedString.Key.font: AVTheme.mediumFont(16),
+        ])
+        attributedString.append(firstLine)
+        
+#if DEMO_FOR_DEBUG
+        if let instanceId = instanceId {
+            attributedString.append(NSAttributedString(string: "\n"))
+            let secondLine = NSAttributedString(string: "ID: \(instanceId)", attributes: [
+                NSAttributedString.Key.font: AVTheme.regularFont(12),
+            ])
+            attributedString.append(secondLine)
+        }
+#endif
+        
+        self.titleLabel.attributedText = attributedString
+    }
+    
     // 当前通话时间（单位：秒）
     public private(set) var callingSeconds = 0.0
     private lazy var countdownTimer: Timer = {
@@ -156,10 +179,10 @@ import ARTCAICallKit
     private var currAgentSpeakingTokens: [String] = []
     private var nextAgentSpeakingTokenIndex: Int = 0
     private var isAgentPrintingText: Bool = false
-
+    private var isTimeToShowSubTitle: Bool = false
     
     private func printingAgentText() {
-        if self.isAgentPrintingText == false {
+        if self.isTimeToShowSubTitle == false || self.isAgentPrintingText == false {
             return
         }
         
@@ -180,7 +203,7 @@ import ARTCAICallKit
         }
         
         if Double(limitSecond) <= self.callingSeconds {
-            self.controller.currentEngine.handup()
+            self.controller.currentEngine.handup(true)
             self.countdownTimer.invalidate()
             self.callContentView.callStateAni.stop()
             self.callContentView.voiceAgentAniView?.stop()
@@ -233,12 +256,12 @@ extension AUIAICallViewController {
 
 extension AUIAICallViewController: AUIAICallControllerDelegate {
     
-    public func onAICallAIAgentStarted() {
+    public func onAICallAIAgentStarted(agentInfo: ARTCAICallAgentInfo) {
         self.callContentView.updateAgentType(agentType: self.controller.config.agentType)
         if self.controller.config.agentType == .AvatarAgent {
             self.controller.setAgentView(view: self.callContentView.avatarAgentView, mode: .Auto)
         }
-        self.titleLabel.text = self.controller.config.agentType == .AvatarAgent ? AUIAICallBundle.getString("AI Avatar Call") : AUIAICallBundle.getString("AI Voice Call")
+        self.updateTitle(instanceId: agentInfo.instanceId)
     }
     
     public func onAICallStateChanged() {
@@ -254,6 +277,10 @@ extension AUIAICallViewController: AUIAICallControllerDelegate {
             
             // 启动计时
             self.countdownTimer.fire()
+            
+            if self.controller.config.agentType == .VoiceAgent {
+                self.isTimeToShowSubTitle = true
+            }
         }
         else if self.controller.state == .Over {
             self.countdownTimer.invalidate()
@@ -342,7 +369,9 @@ extension AUIAICallViewController: AUIAICallControllerDelegate {
         // 挂断处理
         if self.controller.state == .Over {
             #if AICALL_ENABLE_FEEDBACK
-            if self.controller.errorCode == .AvatarRoutesExhausted {
+            if self.controller.errorCode == .AvatarRoutesExhausted ||
+                self.controller.errorCode == .BeginCallFailed ||
+                self.controller.errorCode == .TokenExpired{
                 self.dismiss(animated: true)
             }
             else {
@@ -362,8 +391,6 @@ extension AUIAICallViewController: AUIAICallControllerDelegate {
     public func onAICallAgentStateChanged() {
         if self.controller.agentState == .Listening {
             self.callContentView.tipsLabel.text = AUIAICallBundle.getString("You Talk, I'm Listening...")
-            self.isAgentPrintingText = false
-            self.callContentView.updateSubTitle(enable: false, isLLM: false, text: "", clear: true)
         }
         else if self.controller.agentState == .Thinking {
             self.callContentView.tipsLabel.text = AUIAICallBundle.getString("Thinking...")
@@ -408,8 +435,22 @@ extension AUIAICallViewController: AUIAICallControllerDelegate {
     }
     
     public func onAICallUserSubtitleNotify(text: String, isSentenceEnd: Bool, sentenceId: Int) {
+        if self.isTimeToShowSubTitle == false {
+            return
+        }
+        
         self.isAgentPrintingText = false
         self.callContentView.updateSubTitle(enable: true, isLLM: false, text: text, clear: false)
-
+    }
+    
+    public func onAICallUserTokenExpired() {
+        AVAlertController.show(withTitle: nil, message: AUIAICallBundle.getString("Log in token expired, please try log in."), needCancel: false) { isCancel in
+            self.controller.handup()
+            self.onUserTokenExpiredBlcok?()
+        }
+    }
+    
+    public func onAICallAvatarFirstFrameDrawn() {
+        self.isTimeToShowSubTitle = true
     }
 }

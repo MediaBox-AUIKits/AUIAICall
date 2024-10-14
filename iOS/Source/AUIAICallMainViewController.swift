@@ -21,12 +21,15 @@ import ARTCAICallKit
         // Do any additional setup after loading the view.
         self.view.backgroundColor = AVTheme.bg_medium
         self.titleView.text = AUIAICallBundle.getString("Voice Agent")
-#if AICALL_INTEGRATION_STANDARD && AICALL_INTEGRATION_CUSTOM
+#if DEMO_FOR_DEBUG
         self.hiddenMenuButton = false
         self.menuButton.addTarget(self, action: #selector(onMenuBtnClick), for: .touchUpInside)
         
         let value = UserDefaults.standard.object(forKey: "aui_current_integration") as? Int32
         AUIAICallManager.defaultManager.currentIntegrationWay = AUIAICallManager.IntegrationWay(rawValue: value ?? 0) ?? .Standard
+        
+        let domain = UserDefaults.standard.object(forKey: "aui_current_domain") as? String
+        AUIAICallAppServer.serverDomain = domain == AICallServerDomainPre ? AICallServerDomainPre : AICallServerDomain
 #else
         self.hiddenMenuButton = true
 #endif
@@ -180,7 +183,7 @@ import ARTCAICallKit
         return view
     }()
 
-#if AICALL_INTEGRATION_STANDARD && AICALL_INTEGRATION_CUSTOM
+#if DEMO_FOR_DEBUG
     @objc open func onMenuBtnClick() {
         let alert = UIAlertController(title: AUIAICallBundle.getString("环境配置"), message: nil, preferredStyle: .actionSheet)
         AVTheme.updateRootViewControllerInterfaceStyle(alert)
@@ -194,6 +197,23 @@ import ARTCAICallKit
             UserDefaults.standard.set(AUIAICallManager.defaultManager.currentIntegrationWay.rawValue, forKey: "aui_current_integration")
         }
         alert.addAction(action2)
+        
+        let product = UIAlertAction(title: AUIAICallBundle.getString("线上域名"), style: AUIAICallAppServer.serverDomain == AICallServerDomain ? .destructive : .default) { action in
+            AUIAICallAppServer.serverDomain = AICallServerDomain
+            UserDefaults.standard.set(AICallServerDomain, forKey: "aui_current_domain")
+        }
+        alert.addAction(product)
+        let pre = UIAlertAction(title: AUIAICallBundle.getString("预发域名"), style: AUIAICallAppServer.serverDomain == AICallServerDomainPre ? .destructive : .default) { action in
+            AUIAICallAppServer.serverDomain = AICallServerDomainPre
+            UserDefaults.standard.set(AICallServerDomainPre, forKey: "aui_current_domain")
+        }
+        alert.addAction(pre)
+        
+        let actionLogout = UIAlertAction(title: AUIAICallBundle.getString("Force to Log Out"), style: .default) { action in
+            AUIAICallManager.defaultManager.onUserTokenExpiredBlcok?()
+        }
+        alert.addAction(actionLogout)
+        
         let cancel = UIAlertAction(title: AUIAICallBundle.getString("Cancel"), style: .cancel)
         alert.addAction(cancel)
         self.present(alert, animated: true)

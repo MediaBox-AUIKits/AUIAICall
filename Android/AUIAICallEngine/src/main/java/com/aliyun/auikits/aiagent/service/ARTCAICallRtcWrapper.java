@@ -4,6 +4,7 @@ import static com.alivc.rtc.AliRtcEngine.AliRtcDataMsgType.AliEngineDataMsgCusto
 import static com.alivc.rtc.AliRtcEngine.AliRtcVideoTrack.AliRtcVideoTrackCamera;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.SurfaceView;
 import android.view.ViewGroup;
 
@@ -36,10 +37,14 @@ public class ARTCAICallRtcWrapper {
     private String composeParams() {
         JSONObject jsonParam = new JSONObject();
         JSONObject jsonData = new JSONObject();
+        JSONObject jsonAudio = new JSONObject();
         try {
             jsonData.put("enablePubDataChannel", true);
             jsonData.put("enableSubDataChannel", true);
             jsonParam.put("data", jsonData);
+
+            jsonAudio.put("user_specified_loop_delay", true);
+            jsonParam.put("audio", jsonAudio);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -74,6 +79,7 @@ public class ARTCAICallRtcWrapper {
             aliRtcEngine.setChannelProfile(AliRtcEngine.AliRTCSdkChannelProfile.AliRTCSdkInteractiveLive);
             aliRtcEngine.setAudioOnlyMode(!mRtcConfig.useVideo);
             aliRtcEngine.setAudioProfile(AliRtcEngine.AliRtcAudioProfile.AliRtcEngineHighQualityMode, AliRtcEngine.AliRtcAudioScenario.AliRtcSceneChatroomMode);
+            aliRtcEngine.startAudioPlayer();
 
             aliRtcEngine.setRtcEngineEventListener(aliRtcEngineEventListener);
             aliRtcEngine.setRtcEngineNotify(aliRtcEngineNotify);
@@ -201,5 +207,13 @@ public class ARTCAICallRtcWrapper {
 
     public AliRtcEngine getAliRtcEngine() {
         return mAliRtcEngine;
+    }
+
+    public String getLoopDelay() {
+        String ret = "";
+        if (null != mAliRtcEngine) {
+            ret = mAliRtcEngine.getParameter("{\"audio\":{\"user_specified_loop_delay\":0}}");
+        }
+        return ret;
     }
 }

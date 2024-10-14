@@ -19,8 +19,15 @@ import ARTCAICallKit
     
     public var userId: String? = nil
     public var avatarId: String = ""
+    public var userToken: String? {
+        didSet {
+            AUIAICallAppServer.serverAuth = self.userToken
+        }
+    }
+    
+    public var onUserTokenExpiredBlcok: (()->Void)? = nil
 
-#if AICALL_INTEGRATION_STANDARD && AICALL_INTEGRATION_CUSTOM
+#if DEMO_FOR_DEBUG
     public enum IntegrationWay: Int32 {
         case Standard
         case Custom
@@ -44,20 +51,22 @@ import ARTCAICallKit
                 let controller = AUIAICallStandardController(userId: self.userId!)
                 controller.config.agentId = agentId
                 controller.config.agentType = agentType
-                controller.config.agentVoiceId = agentType == .VoiceAgent ? "zhixiaoxia" : ""
+                controller.config.agentVoiceId = ""
                 controller.config.agentAvatarId = self.avatarId
                 controller.config.limitSecond = limitSecond
                 let vc = AUIAICallViewController(controller)
+                vc.onUserTokenExpiredBlcok = self.onUserTokenExpiredBlcok
                 topVC.av_presentFullScreenViewController(vc, animated: true)
             }
             else {
                 let controller = AUIAICallCustomController(userId: self.userId!)
                 controller.config.agentId = agentId
                 controller.config.agentType = agentType
-                controller.config.agentVoiceId = agentType == .VoiceAgent ? "zhixiaoxia" : ""
+                controller.config.agentVoiceId = ""
                 controller.config.agentAvatarId = self.avatarId
                 controller.config.limitSecond = limitSecond
                 let vc = AUIAICallViewController(controller)
+                vc.onUserTokenExpiredBlcok = self.onUserTokenExpiredBlcok
                 topVC.av_presentFullScreenViewController(vc, animated: true)
             }
         }
@@ -81,10 +90,11 @@ import ARTCAICallKit
             let controller = AUIAICallStandardController(userId: self.userId!)
             controller.config.agentId = agentId
             controller.config.agentType = agentType
-            controller.config.agentVoiceId = agentType == .VoiceAgent ? "zhixiaoxia" : ""
+            controller.config.agentVoiceId = ""
             controller.config.agentAvatarId = self.avatarId
             controller.config.limitSecond = limitSecond
             let vc = AUIAICallViewController(controller)
+            vc.onUserTokenExpiredBlcok = self.onUserTokenExpiredBlcok
             topVC.av_presentFullScreenViewController(vc, animated: true)
         }
     }
@@ -107,10 +117,11 @@ import ARTCAICallKit
             let controller = AUIAICallCustomController(userId: self.userId!)
             controller.config.agentId = agentId
             controller.config.agentType = agentType
-            controller.config.agentVoiceId = agentType == .VoiceAgent ? "zhixiaoxia" : ""
+            controller.config.agentVoiceId = ""
             controller.config.agentAvatarId = self.avatarId
             controller.config.limitSecond = limitSecond
             let vc = AUIAICallViewController(controller)
+            vc.onUserTokenExpiredBlcok = self.onUserTokenExpiredBlcok
             topVC.av_presentFullScreenViewController(vc, animated: true)
         }
     }

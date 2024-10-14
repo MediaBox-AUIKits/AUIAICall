@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.library'
 }
+
 apply plugin: 'com.kezong.fat-aar'
 ext{
     versionCode = System.getProperty('versionCode')

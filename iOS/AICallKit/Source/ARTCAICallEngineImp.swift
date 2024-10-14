@@ -29,7 +29,7 @@ import UIKit
     
     public var userId: String? = nil
     public var agentInfo: ARTCAICallAgentInfo? = nil
-
+    
     public weak var delegate: ARTCAICallEngineDelegate? = nil
     
     public func call(userId: String, token: String, agentInfo: ARTCAICallAgentInfo, completed: ((NSError?) -> Void)?) {
@@ -43,6 +43,9 @@ import UIKit
         self.agentInfo = agentInfo
         self.agentState = .Listening
         self.setupRtcEngine()
+        if self.enableAIDelayDetection {
+            self.rtcEngine?.setParameter("{\"audio\":{\"user_specified_loop_delay\":true}}")
+        }
         self.rtcEngine?.joinChannel(token, channelId: nil, userId: nil, name: nil) { [weak self] errCode, channel, userId, elapsed in
             var err : NSError? = nil
             if errCode != 0 {
@@ -58,10 +61,29 @@ import UIKit
         }
     }
     
-    public func handup() {
+    public func handup(_ stopAIAgent: Bool) {
+        if stopAIAgent {
+            let model = ARTCAICallMessageSendModel()
+            model.type = .StopAIAgent
+            model.senderId = self.userId
+            model.receiverId = self.agentInfo?.uid
+            model.data = nil
+            _ = self.sendMsgToDataChannel(model: model)
+            
+            DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 0.2) {
+                self.handup(false)
+            }
+            return
+        }
+
         self.resetPullAgentVideo()
         self.stopPublish()
         if self.isJoined || self.isJoining {
+            if self.enableAIDelayDetection {
+                let delay = self.rtcEngine?.getParameter("{\"audio\":{\"user_specified_loop_delay\":0}}")
+                print("get aigc delay: \(delay ?? "null")")
+                ARTCAICallEngineDebuger.PrintLog("ARTCAICallEngine get aigc delay: \(delay ?? "null")")
+            }
             self.rtcEngine?.leaveChannel()
         }
         self.isJoining = false
@@ -140,11 +162,12 @@ import UIKit
     }
     
     public func destroy() {
-        self.handup()
+        self.handup(false)
         self.destroyRtcEngine()
     }
     
     private var rtcEngine: AliRtcEngine? = nil
+    private var enableAIDelayDetection: Bool = false  // //回环延迟检测开关
     private var agentCanvas: AliVideoCanvas? = nil
     private var agentCanvasUid: String? = nil
     
@@ -185,7 +208,7 @@ extension ARTCAICallEngine {
         // 设置频道模式
         engine.setChannelProfile(AliRtcChannelProfile.interactivelive)
         // 设置角色
-        engine.setClientRole(AliRtcClientRole.rolelive)
+        engine.setClientRole(AliRtcClientRole.roleInteractive)
         
         
         // 音频配置
@@ -204,7 +227,10 @@ extension ARTCAICallEngine {
         if self.agentInfo!.agentType == .AvatarAgent {
             engine.subscribeAllRemoteVideoStreams(true)
         }
-        
+        else {
+            engine.setAudioOnlyMode(true)
+        }
+
         if let debugView = ARTCAICallEngineDebuger.Debug_TipsView {
             engine.showDebugView(debugView, show: .typeAll, userId: "")
         }
@@ -223,13 +249,11 @@ extension ARTCAICallEngine {
             return
         }
         self.rtcEngine?.startAudioCapture()
-        self.rtcEngine?.setClientRole(AliRtcClientRole.roleInteractive)
         self.rtcEngine?.publishLocalAudioStream(true)
     }
     
     private func stopPublish() {
         self.rtcEngine?.publishLocalAudioStream(false)
-        self.rtcEngine?.setClientRole(AliRtcClientRole.rolelive)
         self.rtcEngine?.stopAudioCapture()
     }
     
@@ -402,13 +426,8 @@ extension ARTCAICallEngine: AliRtcEngineDelegate {
     
     public func onRemoteUserOffLineNotify(_ uid: String, offlineReason reason: AliRtcUserOfflineReason) {
         ARTCAICallEngineDebuger.PrintLog("ARTCAICallEngine onRemoteUserOffLineNotify:\(uid)")
-        if self.agentInfo?.agentType == .AvatarAgent {
-            if uid == self.agentCanvasUid {
-                self.delegate?.onErrorOccurs?(code: .AgentLeaveChannel)
-            }
-        }
-        else {
-            if uid == self.agentInfo?.uid {
+        DispatchQueue.main.async {
+            if uid == self.agentCanvasUid || uid == self.agentInfo?.uid {
                 self.delegate?.onErrorOccurs?(code: .AgentLeaveChannel)
             }
         }
@@ -590,5 +609,10 @@ extension ARTCAICallEngine: AliRtcEngineDelegate {
     
     func onFirstRemoteVideoFrameDrawn(_ uid: String, videoTrack: AliRtcVideoTrack, width: Int32, height: Int32, elapsed: Int32) {
         ARTCAICallEngineDebuger.PrintLog("ARTCAICallEngine onFirstRemoteVideoFrameDrawn:\(uid)")
+        DispatchQueue.main.async {
+            if uid == self.agentCanvasUid {
+                self.delegate?.onAgentAvatarFirstFrameDrawn?()
+            }
+        }
     }
 }

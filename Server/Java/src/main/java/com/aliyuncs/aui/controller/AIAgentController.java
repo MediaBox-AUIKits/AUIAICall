@@ -24,7 +24,7 @@ import java.util.Map;
  * @author chunlei.zcl
  */
 @RestController
-@RequestMapping("/api/v1/aiagent")
+@RequestMapping("/api/v2/aiagent")
 @Slf4j
 public class AIAgentController {
 

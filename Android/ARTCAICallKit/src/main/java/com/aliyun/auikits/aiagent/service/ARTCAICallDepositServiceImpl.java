@@ -7,8 +7,8 @@ import org.json.JSONObject;
 
 public class ARTCAICallDepositServiceImpl extends ARTCAICallServiceImpl {
 
-    public ARTCAICallDepositServiceImpl(String appServerHost) {
-        super(appServerHost);
+    public ARTCAICallDepositServiceImpl(String appServerHost, String loginUserId, String loginAuthorization) {
+        super(appServerHost, loginUserId, loginAuthorization);
     }
 
     @Override
@@ -46,7 +46,11 @@ public class ARTCAICallDepositServiceImpl extends ARTCAICallServiceImpl {
     }
 
     @Override
-    public void stopAIAgentService(String aiAgentInstanceId, IARTCAICallServiceCallback callback) {
+    public boolean stopAIAgentService(String aiAgentInstanceId, IARTCAICallServiceCallback callback) {
+        if (null != mAiCallIMService) {
+            mAiCallIMService.sendMessage(IMsgTypeDef.MSG_TYPE_STOP_AI_AGENT, null);
+        }
         callback.onSuccess(new JSONObject());
+        return true;
     }
 }

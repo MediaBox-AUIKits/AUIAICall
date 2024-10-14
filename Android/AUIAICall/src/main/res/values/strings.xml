@@ -83,4 +83,6 @@
     <string name="submit">Submit</string>
     <string name="skip">Skip</string>
     <string name="complete_rating_tips">Please complete all ratings first</string>
+
+    <string name="tips_authorization_invalidate">Authentication information is missing, please log in and try again!</string>
 </resources>

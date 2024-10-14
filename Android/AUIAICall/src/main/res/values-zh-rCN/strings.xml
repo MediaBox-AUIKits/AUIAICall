@@ -83,4 +83,6 @@
     <string name="submit">提交</string>
     <string name="skip">跳过</string>
     <string name="complete_rating_tips">请先完成所有评分</string>
+
+    <string name="tips_authorization_invalidate">鉴权信息缺失，请登录后重试</string>
 </resources>

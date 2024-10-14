@@ -47,6 +47,8 @@ import java.util.UUID;
 public class AUIAICallInCallActivity extends AppCompatActivity {
     public static final String BUNDLE_KEY_AI_AGENT_TYPE = "BUNDLE_KEY_AI_AGENT_TYPE";
     public static final String BUNDLE_KEY_AI_AGENT_ID = "BUNDLE_KEY_AI_AGENT_ID";
+    public static final String BUNDLE_KEY_LOGIN_USER_ID = "BUNDLE_KEY_LOGIN_USER_ID";
+    public static final String BUNDLE_KEY_LOGIN_AUTHORIZATION = "BUNDLE_KEY_LOGIN_AUTHORIZATION";
 
     private static final boolean IS_SUBTITLE_ENABLE = true;
     private static String sUserId = null;
@@ -64,6 +66,7 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
     private boolean isUserSpeaking = false;
     private long mLastBackButtonExitMillis = 0;
     private boolean mUseAvatar = false;
+    private boolean mFirstAvatarFrameDrawn = false;
 
     private SubtitleHolder mSubtitleHolder = new SubtitleHolder();
 
@@ -193,6 +196,18 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         public void onAgentVideoAvailable(boolean available) {
             Log.i("AUIAICALL", "onAgentVideoAvailable: [available: " + available + "]");
         }
+
+        @Override
+        public void onAgentAvatarFirstFrameDrawn() {
+            Log.i("AUIAICALL", "onAgentAvatarFirstFrameDrawn");
+            mFirstAvatarFrameDrawn = true;
+            mSubtitleHolder.updateSubtitleVisibility();
+        }
+
+        @Override
+        public void onUserOnLine(String uid) {
+            Log.i("AUIAICALL", "onUserOnLine: " + uid);
+        }
     };
 
     @Override
@@ -247,10 +262,15 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
 
         String aiAgentId = null;
         ARTCAICallEngine.ARTCAICallAgentType aiAgentType = ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent;
+        String loginUserId = null;
+        String loginAuthorization = null;
         if (null != getIntent() && null != getIntent().getExtras()) {
             aiAgentId = getIntent().getExtras().getString(BUNDLE_KEY_AI_AGENT_ID, null);
             aiAgentType = getIntent().getExtras().getBoolean(BUNDLE_KEY_AI_AGENT_TYPE) ?
                     ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent : ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent;
+
+            loginUserId = getIntent().getExtras().getString(BUNDLE_KEY_LOGIN_USER_ID, null);
+            loginAuthorization = getIntent().getExtras().getString(BUNDLE_KEY_LOGIN_AUTHORIZATION, null);
         }
         mUseAvatar = aiAgentType == ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent;
 
@@ -261,9 +281,11 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         boolean usePreHost = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_APP_SERVER_TYPE, SettingStorage.DEFAULT_APP_SERVER_TYPE);
         artcaiCallConfig.appServerHost = usePreHost ? AppServiceConst.PRE_HOST : AppServiceConst.HOST;
         artcaiCallConfig.useDeposit = useDeposit;
+        artcaiCallConfig.loginUserId = loginUserId;
+        artcaiCallConfig.loginAuthrization = loginAuthorization;
 
-        mARTCAICallController = useDeposit ? new ARTCAICallDepositController(this, generateUserId()) :
-                new ARTCAICustomController(this, generateUserId());
+        mARTCAICallController = useDeposit ? new ARTCAICallDepositController(this, loginUserId) :
+                new ARTCAICustomController(this, loginUserId);
         mARTCAICallController.setBizCallEngineCallback(mARTCAIEngineCallback);
         mARTCAICallController.setCallStateCallback(mCallStateCallback);
         mARTCAICallController.init(artcaiCallConfig);
@@ -389,7 +411,7 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             mSubtitleHolder.refreshSubtitle();
 
             // 数字人体验超过5分钟，自动结束
-            if (duration > 5 * 60 * 1000) {
+            if (mUseAvatar && duration > 5 * 60 * 1000) {
                 AICallNoticeDialog.showDialog(AUIAICallInCallActivity.this,
                         0, false, R.string.token_time_lit_tips, true, new OnDismissListener() {
                             @Override
@@ -546,6 +568,16 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             long displayEndTime = 0;
         }
 
+        private void updateSubtitleVisibility() {
+            if (!mUseAvatar || mFirstAvatarFrameDrawn) {
+                Log.i("AUIAICall", "updateSubtitleVisibility setSubtitleLayoutVisibility true");
+                setSubtitleLayoutVisibility(true);
+            } else {
+                Log.i("AUIAICall", "updateSubtitleVisibility setSubtitleLayoutVisibility false");
+                setSubtitleLayoutVisibility(false);
+            }
+        }
+
         private void updateSubtitle(boolean isAsrText, boolean end, String text, int asrSentenceId) {
             Log.i("AUIAICall", "updateSubtitle [isAsrText" + isAsrText + ", end: " + end +
                     ", text: " + text + ", asrSentenceId: " + asrSentenceId + "]");
@@ -565,7 +597,7 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             subtitleTextPart.receiveTime = SystemClock.elapsedRealtime();
             mSubtitlePartList.add(subtitleTextPart);
 
-            setSubtitleLayoutVisibility(true);
+            updateSubtitleVisibility();
 
             initUIComponent();
 

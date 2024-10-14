@@ -33,12 +33,17 @@ import ARTCAICallKit
     /**
      * AI智能体已被启动
      */
-    @objc optional func onAICallAIAgentStarted()
+    @objc optional func onAICallAIAgentStarted(agentInfo: ARTCAICallAgentInfo)
     
     /**
      * AI智能体开始通话
      */
     @objc optional func onAICallBegin()
+    
+    /**
+     * AI智能体开始通话
+     */
+    @objc optional func onAICallAvatarFirstFrameDrawn()
     
     /**
      * 当前通话状态改变
@@ -66,6 +71,9 @@ import ARTCAICallKit
      * 智能体回答结果通知
      */
     @objc optional func onAICallAgentSubtitleNotify(text: String, isSentenceEnd: Bool, userAsrSentenceId: Int)
+    
+    
+    @objc optional func onAICallUserTokenExpired()
 }
 
 @objc public protocol AUIAICallControllerInterface {

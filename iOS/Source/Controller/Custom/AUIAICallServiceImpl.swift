@@ -10,7 +10,7 @@ import ARTCAICallKit
 
 @objcMembers open class AUIAICallServiceImpl: AUIAICallServiceInterface {
     
-    var appserver = AUIAICallAppServer(serverDomain: AICallServerDomain)
+    var appserver = AUIAICallAppServer()
     
     public func startAIAgent(userId: String, config: AUIAICallConfig, completed: ((ARTCAICallAgentInfo?, String?, Error?) -> Void)?) {
         if config.agentId == nil {
@@ -22,11 +22,6 @@ import ARTCAICallKit
     }
     
     private func generateAIAgentCall(userId: String, config: AUIAICallConfig, completed: ((_ rsp: ARTCAICallAgentInfo?, _ token: String?, _ error: Error?) -> Void)?) {
-        
-//        if !AUIAICallAppServer.serverAuthValid() {
-//            completed?(nil, NSError.aicall_create(code: -1, message: "lack of auth token"))
-//            return
-//        }
         
         guard let agentId = config.agentId else {
             completed?(nil, nil, NSError.aicall_create(code: .InvalidParames, message: "lack off agentId"))
@@ -58,7 +53,7 @@ import ARTCAICallKit
             "template_config": template_config.aicall_jsonString
         ]
 
-        self.appserver.request(path: "/api/v1/aiagent/generateAIAgentCall", body: body) { response, data, error in
+        self.appserver.request(path: "/api/v2/aiagent/generateAIAgentCall", body: body) { response, data, error in
             if error == nil {
                 debugPrint("generateAIAgentCall response: success")
                 let rtc_auth_token = data?["rtc_auth_token"] as? String
@@ -73,12 +68,7 @@ import ARTCAICallKit
     }
     
     private func startAIAgentInstance(userId: String, config: AUIAICallConfig, completed: ((_ rsp: ARTCAICallAgentInfo?, _ token: String?, _ error: Error?) -> Void)?) {
-        
-//        if !AUIAICallAppServer.serverAuthValid() {
-//            completed?(nil, NSError.aicall_create(code: -1, message: "lack of auth token"))
-//            return
-//        }
-        
+
         var template_config: [String : Any] = [:]
         var configDict: [String : Any] = [
             "EnableVoiceInterrupt": config.enableVoiceInterrupt,
@@ -103,7 +93,7 @@ import ARTCAICallKit
             "template_config": template_config.aicall_jsonString
         ]
         
-        self.appserver.request(path: "/api/v1/aiagent/startAIAgentInstance", body: body) { response, data, error in
+        self.appserver.request(path: "/api/v2/aiagent/startAIAgentInstance", body: body) { response, data, error in
             if error == nil {
                 debugPrint("startAIAgentInstance response: success")
                 let rtc_auth_token = data?["rtc_auth_token"] as? String
@@ -120,19 +110,17 @@ import ARTCAICallKit
         }
     }
     
-    public func stopAIAgent(instanceId: String, completed: ((_ error: Error?) -> Void)?) {
-        self.stopAIAgentInstance(instanceId: instanceId, completed: completed)
+    public func stopAIAgent(userId: String, instanceId: String, completed: ((_ error: Error?) -> Void)?) {
+        self.stopAIAgentInstance(userId: userId, instanceId: instanceId, completed: completed)
     }
     
-    private func stopAIAgentInstance(instanceId: String, completed: ((_ error: Error?) -> Void)?) {
+    private func stopAIAgentInstance(userId: String, instanceId: String, completed: ((_ error: Error?) -> Void)?) {
         
-//        if !AUIAICallAppServer.serverAuthValid() {
-//            completed?(nil, NSError.aicall_create(code: -1, message: "lack of auth token"))
-//            return
-//        }
-        
-        let body = ["ai_agent_instance_id": instanceId]
-        self.appserver.request(path: "/api/v1/aiagent/stopAIAgentInstance", body: body) { response, data, error in
+        let body = [
+            "user_id": userId,
+            "ai_agent_instance_id": instanceId
+        ]
+        self.appserver.request(path: "/api/v2/aiagent/stopAIAgentInstance", body: body) { response, data, error in
             if error == nil {
                 if data?["result"] as? Bool == true {
                     debugPrint("stopAIAgentInstance response: success")
@@ -150,7 +138,7 @@ import ARTCAICallKit
         }
     }
     
-    public func updateAIAgent(instanceId: String, agentType: ARTCAICallAgentType, voiceId: String, completed: ((_ error: Error?) -> Void)?) {
+    public func updateAIAgent(userId: String, instanceId: String, agentType: ARTCAICallAgentType, voiceId: String, completed: ((_ error: Error?) -> Void)?) {
         
         var key = "VoiceChat"
         if agentType == .AvatarAgent {
@@ -162,13 +150,14 @@ import ARTCAICallKit
             ]
         ]
         let body = [
+            "user_id": userId,
             "ai_agent_instance_id": instanceId,
             "template_config": configDict.aicall_jsonString
         ]
         self.updateAIAgentInstance(body: body, completed: completed)
     }
     
-    public func updateAIAgent(instanceId: String, agentType: ARTCAICallAgentType, enable: Bool, completed: ((_ error: Error?) -> Void)?) {
+    public func updateAIAgent(userId: String, instanceId: String, agentType: ARTCAICallAgentType, enable: Bool, completed: ((_ error: Error?) -> Void)?) {
         
         var key = "VoiceChat"
         if agentType == .AvatarAgent {
@@ -180,6 +169,7 @@ import ARTCAICallKit
             ]
         ]
         let body = [
+            "user_id": userId,
             "ai_agent_instance_id": instanceId,
             "template_config": configDict.aicall_jsonString
         ]
@@ -188,12 +178,7 @@ import ARTCAICallKit
     
     private func updateAIAgentInstance(body: [String: Any], completed: ((_ error: Error?) -> Void)?) {
         
-//        if !AUIAICallAppServer.serverAuthValid() {
-//            completed?(nil, NSError.aicall_create(code: -1, message: "lack of auth token"))
-//            return
-//        }
-
-        self.appserver.request(path: "/api/v1/aiagent/updateAIAgentInstance", body: body) { response, data, error in
+        self.appserver.request(path: "/api/v2/aiagent/updateAIAgentInstance", body: body) { response, data, error in
             if error == nil {
                 if data?["result"] as? Bool == true {
                     debugPrint("updateAIAgentInstance response: success")
