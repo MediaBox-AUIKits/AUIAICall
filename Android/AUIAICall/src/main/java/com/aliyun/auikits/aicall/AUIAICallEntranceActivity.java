@@ -99,6 +99,14 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
             mLoginUserId = getIntent().getStringExtra("login_user_id");
             mLoginAuthorization = getIntent().getStringExtra("authorization");
         }
+        if (TextUtils.isEmpty(mLoginUserId)) {
+            // 建议绑定为业务的登录用户id
+            mLoginUserId = "mock_user_id";
+        }
+        if (TextUtils.isEmpty(mLoginAuthorization)) {
+            // 默认关闭appServer鉴权校验
+            mLoginAuthorization = "mock_authorization";
+        }
         Log.i("AUIAICALL", "validateToken: [user_id: " + mLoginUserId + ", authorization: " + mLoginAuthorization + "]");
         if (TextUtils.isEmpty(mLoginUserId) || TextUtils.isEmpty(mLoginAuthorization)) {
             return false;
