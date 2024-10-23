@@ -19,8 +19,14 @@
         <item name="android:textSize">14sp</item>
         <item name="android:textColor">@color/layout_base_white_default</item>
     </style>
+
     <style name="layout_base_text_style_14_light_blue">
         <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/layout_base_light_blue</item>
+    </style>
+
+    <style name="layout_base_text_style_12_light_blue">
+        <item name="android:textSize">12sp</item>
         <item name="android:textColor">@color/layout_base_light_blue</item>
     </style>
 

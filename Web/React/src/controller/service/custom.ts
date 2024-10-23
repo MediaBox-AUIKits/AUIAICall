@@ -1,7 +1,7 @@
-import { AICallAgentType } from '../../core/interface';
+import { AICallAgentInfo, AICallAgentType } from 'aliyun-auikit-aicall';
 import AUIAICallConfig from '../AUIAICallConfig';
 
-import { AICallAgentInfo, APP_SERVER, JSONData, ServiceAuthError, TemplateConfig, WorkflowType } from './interface';
+import { APP_SERVER, JSONData, ServiceAuthError, TemplateConfig, WorkflowType } from './interface';
 
 class AppServerService {
   private _userId?: string;

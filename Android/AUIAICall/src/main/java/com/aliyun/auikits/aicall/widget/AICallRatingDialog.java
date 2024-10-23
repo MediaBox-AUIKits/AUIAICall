@@ -5,6 +5,7 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -13,6 +14,7 @@ import android.widget.Toast;
 import com.aliyun.auikits.aicall.R;
 import com.aliyun.auikits.aicall.util.ToastHelper;
 import com.orhanobut.dialogplus.DialogPlus;
+import com.orhanobut.dialogplus.DialogPlusBuilder;
 import com.orhanobut.dialogplus.OnDismissListener;
 import com.orhanobut.dialogplus.ViewHolder;
 
@@ -65,7 +67,7 @@ public class AICallRatingDialog {
         layoutParams.topMargin = statusBarHeight;
         
         ViewHolder viewHolder = new ViewHolder(view);
-        DialogPlus dialog = DialogPlus.newDialog(context)
+        DialogPlusBuilder builder = DialogPlus.newDialog(context)
                 .setContentHolder(viewHolder)
                 .setGravity(Gravity.BOTTOM)
                 .setOverlayBackgroundResource(android.R.color.transparent)
@@ -109,8 +111,8 @@ public class AICallRatingDialog {
                         }
                         sCanSkip = true;
                     }
-                })
-                .create();
+                });
+        DialogPlus dialog = builder.create();
         dialog.show();
     }
 

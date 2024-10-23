@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'AUIAICall'
-  s.version          = '1.0.0'
+  s.version          = '1.4.0'
   s.summary          = 'A short description of AUIAICall.'
 
 # This description is used to generate tags and improve search results.
@@ -42,7 +42,7 @@ TODO: Add long description of the pod here.
     ss.exclude_files = 'Source/AUIAICallMainViewController.swift', 'Source/Controller/Custom/**/*.{swift,h,m,mm}'
     ss.dependency 'AUIFoundation'
     ss.dependency 'ARTCAICallKit'
-    ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => 'AICALL_INTEGRATION_STANDARD'}
+    ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => '$(inherited) AICALL_INTEGRATION_STANDARD'}
   end
   
   s.subspec 'Custom' do |ss|
@@ -51,7 +51,7 @@ TODO: Add long description of the pod here.
     ss.exclude_files = 'Source/AUIAICallMainViewController.swift', 'Source/Controller/Standard/**/*.{swift,h,m,mm}'
     ss.dependency 'AUIFoundation'
     ss.dependency 'ARTCAICallKit'
-    ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => 'AICALL_INTEGRATION_CUSTOM'}
+    ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => '$(inherited) AICALL_INTEGRATION_CUSTOM'}
   end
   
   s.subspec 'Demo' do |ss|
@@ -60,7 +60,7 @@ TODO: Add long description of the pod here.
     ss.exclude_files = 'Source/Controller/Custom/**/*.{swift,h,m,mm}'
     ss.dependency 'AUIFoundation'
     ss.dependency 'ARTCAICallKit'
-    ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => 'AICALL_INTEGRATION_STANDARD '}
+    ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => '$(inherited) AICALL_INTEGRATION_STANDARD '}
   end
   
   s.subspec 'Demo_For_Custom' do |ss|
@@ -69,7 +69,7 @@ TODO: Add long description of the pod here.
     ss.exclude_files = 'Source/Controller/Standard/**/*.{swift,h,m,mm}'
     ss.dependency 'AUIFoundation'
     ss.dependency 'ARTCAICallKit'
-    ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => 'AICALL_INTEGRATION_CUSTOM '}
+    ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => '$(inherited) AICALL_INTEGRATION_CUSTOM '}
   end
   
   
@@ -78,7 +78,7 @@ TODO: Add long description of the pod here.
     ss.source_files = 'Source/**/*.{swift,h,m,mm}'
     ss.dependency 'AUIFoundation'
     ss.dependency 'ARTCAICallKit'
-    ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => 'DEMO_FOR_DEBUG '}
+    ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => '$(inherited) DEMO_FOR_DEBUG '}
   end
   
 end

@@ -30,6 +30,18 @@ import UIKit
     public var userId: String? = nil
     public var agentInfo: ARTCAICallAgentInfo? = nil
     
+    private var visionConfigPrivate: ARTCAICallVisionConfig = ARTCAICallVisionConfig()
+    public var visionConfig: ARTCAICallVisionConfig {
+        set {
+            if !(self.isJoined || self.isJoining) {
+                self.visionConfigPrivate = newValue
+            }
+        }
+        get {
+            return self.visionConfigPrivate
+        }
+    }
+
     public weak var delegate: ARTCAICallEngineDelegate? = nil
     
     public func call(userId: String, token: String, agentInfo: ARTCAICallAgentInfo, completed: ((NSError?) -> Void)?) {
@@ -43,13 +55,15 @@ import UIKit
         self.agentInfo = agentInfo
         self.agentState = .Listening
         self.setupRtcEngine()
+        // 开启低延迟
+        self.rtcEngine?.setParameter("{\"net\":{\"enable_ai_low_latency_channel_mode\":true}}")
         if self.enableAIDelayDetection {
             self.rtcEngine?.setParameter("{\"audio\":{\"user_specified_loop_delay\":true}}")
         }
         self.rtcEngine?.joinChannel(token, channelId: nil, userId: nil, name: nil) { [weak self] errCode, channel, userId, elapsed in
             var err : NSError? = nil
             if errCode != 0 {
-                ARTCAICallEngineDebuger.PrintLog("ARTCAICallEngine joinChannel failed:\(errCode)")
+                ARTCAICallEngineLog.WriteLog("ARTCAICallEngine joinChannel failed:\(errCode)")
                 err = NSError.aicall_create(code: .BeginCallFailed, message: "Join channel failed(\(errCode)")
             }
             else {
@@ -70,19 +84,20 @@ import UIKit
             model.data = nil
             _ = self.sendMsgToDataChannel(model: model)
             
-            DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 0.2) {
+            DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 0.1) {
                 self.handup(false)
             }
             return
         }
-
+        
         self.resetPullAgentVideo()
         self.stopPublish()
+        self.stopPreview()
         if self.isJoined || self.isJoining {
             if self.enableAIDelayDetection {
                 let delay = self.rtcEngine?.getParameter("{\"audio\":{\"user_specified_loop_delay\":0}}")
                 print("get aigc delay: \(delay ?? "null")")
-                ARTCAICallEngineDebuger.PrintLog("ARTCAICallEngine get aigc delay: \(delay ?? "null")")
+                ARTCAICallEngineLog.WriteLog("ARTCAICallEngine get aigc delay: \(delay ?? "null")")
             }
             self.rtcEngine?.leaveChannel()
         }
@@ -108,7 +123,7 @@ import UIKit
             self.agentCanvas = nil
         }
     }
-    
+
     public func interruptSpeaking() -> Bool {
         if self.isJoined == false {
             return false
@@ -153,8 +168,41 @@ import UIKit
     }
     
     public func muteMicrophone(mute: Bool) -> Bool {
+        guard let rtcEngine = self.rtcEngine else {
+            self.isMuteLocalMic = mute
+            return true
+        }
+        if rtcEngine.muteLocalMic(mute, mode: .allAudioMode) == 0 {
+            self.isMuteLocalMic = mute
+            return true
+        }
+        
+        return false
+    }
+    
+    public func muteLocalCamera(mute: Bool) -> Bool {
+        guard let rtcEngine = self.rtcEngine else {
+            self.isMuteLocalCamera = mute
+            return true
+        }
+        if (rtcEngine.muteLocalCamera(mute, for: .camera) == 0) {
+            self.isMuteLocalCamera = mute
+            if mute {
+                self.stopPreview()
+                self.rtcEngine?.publishLocalVideoStream(false)
+            }
+            else {
+                self.startPreview()
+                self.rtcEngine?.publishLocalVideoStream(true)
+            }
+            return true
+        }
+        return false
+    }
+    
+    public func switchCamera() -> Bool {
         guard let rtcEngine = self.rtcEngine else { return false }
-        return rtcEngine.muteLocalMic(mute, mode: .allAudioMode) == 0
+        return rtcEngine.switchCamera() == 0
     }
     
     public func getRTCInstance() -> AnyObject? {
@@ -167,10 +215,18 @@ import UIKit
     }
     
     private var rtcEngine: AliRtcEngine? = nil
-    private var enableAIDelayDetection: Bool = false  // //回环延迟检测开关
+    
+    #if DEBUG
+    private var enableAIDelayDetection: Bool = true  // 回环延迟检测开关
+    #else
+    private var enableAIDelayDetection: Bool = false  // 回环延迟检测开关
+    #endif
+    
     private var agentCanvas: AliVideoCanvas? = nil
     private var agentCanvasUid: String? = nil
-    
+    private var isMuteLocalCamera: Bool = false
+    private var isMuteLocalMic: Bool = false
+
     private var isJoining: Bool = false  // 入会中
     private var isJoined: Bool = false  // 入会中
     private var activeSpeakerId: String? = nil
@@ -191,6 +247,9 @@ extension ARTCAICallEngine {
         }
         if ARTCAICallEngineDebuger.Debug_IsEnableTipsData {
             extras.updateValue("TRUE", forKey: "user_specified_audio_tips")
+        }
+        if ARTCAICallEngineDebuger.Debug_IsEnablePreRelease {
+            extras.updateValue("PRE_RELEASE", forKey: "user_specified_environment")
         }
         let engine = AliRtcEngine.sharedInstance(self, extras:extras.aicall_jsonString)
         
@@ -219,23 +278,39 @@ extension ARTCAICallEngine {
         engine.setDefaultSubscribeAllRemoteAudioStreams(true)
         engine.subscribeAllRemoteAudioStreams(true)
         
-        // 推流配置
-        engine.publishLocalVideoStream(false)
-        engine.publishLocalAudioStream(false)
-        
         // 视频配置
-        if self.agentInfo!.agentType == .AvatarAgent {
+        if self.agentInfo?.agentType == .AvatarAgent {
             engine.subscribeAllRemoteVideoStreams(true)
+        }
+        else if self.agentInfo?.agentType == .VisionAgent {
+            let config = AliRtcVideoEncoderConfiguration()
+            config.dimensions = self.visionConfigPrivate.dimensions
+            config.frameRate = self.visionConfigPrivate.frameRate
+            config.bitrate = self.visionConfigPrivate.bitrate
+            config.keyFrameInterval = self.visionConfigPrivate.keyFrameInterval
+            config.orientationMode = AliRtcVideoEncoderOrientationMode.fixedPortrait
+            engine.setVideoEncoderConfiguration(config)
+            
+            let captureConfig = AliRtcCameraCapturerConfiguration()
+            captureConfig.preference = .auto
+            captureConfig.cameraDirection = .back
+            engine.setCameraCapturerConfiguration(captureConfig)
         }
         else {
             engine.setAudioOnlyMode(true)
         }
-
+        
         if let debugView = ARTCAICallEngineDebuger.Debug_TipsView {
             engine.showDebugView(debugView, show: .typeAll, userId: "")
         }
         
         self.rtcEngine = engine
+        // 推流配置
+        self.rtcEngine?.publishLocalAudioStream(true)
+        self.rtcEngine?.publishLocalVideoStream(false)
+
+        _ = self.muteMicrophone(mute: self.isMuteLocalMic)
+        _ = self.muteLocalCamera(mute: self.isMuteLocalCamera)
     }
     
     private func destroyRtcEngine() {
@@ -244,17 +319,39 @@ extension ARTCAICallEngine {
         self.rtcEngine = nil
     }
     
+    private func startPreview() {
+        guard let preview = self.visionConfigPrivate.preview else { return }
+        let renderMode = AliRtcRenderMode(rawValue: UInt(self.visionConfigPrivate.viewMode.rawValue)) ?? .auto
+        let canvas = AliVideoCanvas()
+        canvas.view = preview
+        canvas.renderMode = renderMode
+        
+        self.rtcEngine?.setLocalViewConfig(canvas, for: AliRtcVideoTrack.camera)
+        self.rtcEngine?.startPreview()
+    }
+    
+    private func stopPreview() {
+        self.rtcEngine?.stopPreview()
+        self.rtcEngine?.setLocalViewConfig(nil, for: AliRtcVideoTrack.camera)
+    }
+    
     private func startPublish() {
         if self.isJoined == false {
             return
         }
         self.rtcEngine?.startAudioCapture()
         self.rtcEngine?.publishLocalAudioStream(true)
+        
+        if self.agentInfo?.agentType == .VisionAgent && self.isMuteLocalCamera == false {
+            self.rtcEngine?.publishLocalVideoStream(true)
+        }
     }
     
     private func stopPublish() {
         self.rtcEngine?.publishLocalAudioStream(false)
         self.rtcEngine?.stopAudioCapture()
+        
+        self.rtcEngine?.publishLocalVideoStream(false)
     }
     
     private func startPullAgentVideo() {
@@ -294,7 +391,7 @@ extension ARTCAICallEngine {
         }
 
         let sendJsonString = sendDict.aicall_jsonString
-        ARTCAICallEngineDebuger.PrintLog("ARTCAICallEngine WillSend: \(sendJsonString)")
+        ARTCAICallEngineLog.WriteLog("ARTCAICallEngine WillSend: \(sendJsonString)")
         if let sendData = sendJsonString.data(using: .utf8) {
             let rtcMsg = AliRtcDataChannelMsg()
             rtcMsg.type = .custom
@@ -308,7 +405,7 @@ extension ARTCAICallEngine {
         let seqId = model.seqId ?? 0
         if model.type == .AgentErrorOccurs {
             if let code = model.data?["code"] as? Int32 {
-                ARTCAICallEngineDebuger.PrintLog("ARTCAICallEngine Received[\(seqId)] AgentErrorOccurs：\(code)")
+                ARTCAICallEngineLog.WriteLog("ARTCAICallEngine Received[\(seqId)] AgentErrorOccurs：\(code)")
                 var err: ARTCAICallErrorCode? = nil
                 if code == 4001 {
                     err = .AvatarRoutesExhausted
@@ -330,7 +427,7 @@ extension ARTCAICallEngine {
         else if model.type == .AgentStateChanged {
             if let state = model.data?["state"] as? Int32 {
                 if let agentState = ARTCAICallAgentState(rawValue: state) {
-                    ARTCAICallEngineDebuger.PrintLog("ARTCAICallEngine Received[\(seqId)] AgentState：\(agentState)")
+                    ARTCAICallEngineLog.WriteLog("ARTCAICallEngine Received[\(seqId)] AgentState：\(agentState)")
                     self.agentState = agentState
                     self.delegate?.onAgentStateChanged?(state: agentState)
                 }
@@ -340,7 +437,7 @@ extension ARTCAICallEngine {
             if let text = model.data?["text"] as? String {
                 let end = model.data?["end"] as? Bool ?? true
                 let sentenceId = model.data?["sentenceId"] as? Int ?? 0
-                ARTCAICallEngineDebuger.PrintLog("ARTCAICallEngine Received[\(seqId)] AgentSubtitleNotify：\(text)  isSentenceEnd=\(end)  sentenceId=\(sentenceId)")
+                ARTCAICallEngineLog.WriteLog("ARTCAICallEngine Received[\(seqId)] AgentSubtitleNotify：\(text)  isSentenceEnd=\(end)  sentenceId=\(sentenceId)")
                 self.delegate?.onVoiceAgentSubtitleNotify?(text: text, isSentenceEnd: end, userAsrSentenceId: sentenceId)
             }
         }
@@ -348,25 +445,25 @@ extension ARTCAICallEngine {
             if let text = model.data?["text"] as? String {
                 let end = model.data?["end"] as? Bool ?? true
                 let sentenceId = model.data?["sentenceId"] as? Int ?? 0
-                ARTCAICallEngineDebuger.PrintLog("ARTCAICallEngine Received[\(seqId)] UserSubtitleNotify：\(text)  isSentenceEnd=\(end)  sentenceId=\(sentenceId)")
+                ARTCAICallEngineLog.WriteLog("ARTCAICallEngine Received[\(seqId)] UserSubtitleNotify：\(text)  isSentenceEnd=\(end)  sentenceId=\(sentenceId)")
                 self.delegate?.onUserSubtitleNotify?(text: text, isSentenceEnd: end, sentenceId: sentenceId)
             }
         }
         else if model.type == .VoiceInterruptChanged {
             if let enable = model.data?["enable"] as? Bool {
-                ARTCAICallEngineDebuger.PrintLog("ARTCAICallEngine Received[\(seqId)] VoiceInterruptChanged：\(enable)")
+                ARTCAICallEngineLog.WriteLog("ARTCAICallEngine Received[\(seqId)] VoiceInterruptChanged：\(enable)")
                 self.delegate?.onVoiceInterrupted?(enable: enable)
             }
         }
         else if model.type == .VoiceIdChanged {
             if let voiceId = model.data?["voiceId"] as? String {
-                ARTCAICallEngineDebuger.PrintLog("ARTCAICallEngine Received[\(seqId)] VoiceIdChanged：\(voiceId)")
+                ARTCAICallEngineLog.WriteLog("ARTCAICallEngine Received[\(seqId)] VoiceIdChanged：\(voiceId)")
                 self.delegate?.onVoiceIdChanged?(voiceId: voiceId)
             }
         }
         else if model.type == .RTCTokenResponsed {
             if let token = model.data?["token"] as? String {
-                ARTCAICallEngineDebuger.PrintLog("ARTCAICallEngine Received[\(seqId)] RTCTokenResponsed：\(token)")
+                ARTCAICallEngineLog.WriteLog("ARTCAICallEngine Received[\(seqId)] RTCTokenResponsed：\(token)")
                 self.rtcEngine?.refreshAuthInfo(withToken: token)
             }
         }
@@ -384,7 +481,7 @@ extension ARTCAICallEngine: AliRtcEngineDelegate {
         guard let dataDict = dataDict else {
             return
         }
-        ARTCAICallEngineDebuger.PrintLog("ARTCAICallEngine onDataChannelMessage:\(dataDict)")
+        ARTCAICallEngineLog.WriteLog("ARTCAICallEngine onDataChannelMessage:\(dataDict)")
         guard let type = dataDict["type"] as? Int32 else {
             return
         }
@@ -404,15 +501,15 @@ extension ARTCAICallEngine: AliRtcEngineDelegate {
     }
     
     public func onJoinChannelResult(_ result: Int32, channel: String, userId: String, elapsed: Int32) {
-        ARTCAICallEngineDebuger.PrintLog("ARTCAICallEngine onJoinChannelResult:\(result) channel:\(channel) userId:\(userId)")
+        ARTCAICallEngineLog.WriteLog("ARTCAICallEngine onJoinChannelResult:\(result) channel:\(channel) userId:\(userId)")
     }
     
     public func onJoinChannelResult(_ result: Int32, channel: String, elapsed: Int32) {
-        ARTCAICallEngineDebuger.PrintLog("ARTCAICallEngine onJoinChannelResult:\(result) channel:\(channel)")
+        ARTCAICallEngineLog.WriteLog("ARTCAICallEngine onJoinChannelResult:\(result) channel:\(channel)")
     }
     
     public func onLeaveChannelResult(_ result: Int32, stats: AliRtcStats) {
-        ARTCAICallEngineDebuger.PrintLog("ARTCAICallEngine onLeaveChannelResult:\(result)")
+        ARTCAICallEngineLog.WriteLog("ARTCAICallEngine onLeaveChannelResult:\(result)")
         if result == 0 {
             DispatchQueue.main.async {
                 self.delegate?.onCallEnd?()
@@ -421,11 +518,11 @@ extension ARTCAICallEngine: AliRtcEngineDelegate {
     }
     
     public func onRemoteUser(onLineNotify uid: String, elapsed: Int32) {
-        ARTCAICallEngineDebuger.PrintLog("ARTCAICallEngine onRemoteUserOnLineNotify:\(uid)")
+        ARTCAICallEngineLog.WriteLog("ARTCAICallEngine onRemoteUserOnLineNotify:\(uid)")
     }
     
     public func onRemoteUserOffLineNotify(_ uid: String, offlineReason reason: AliRtcUserOfflineReason) {
-        ARTCAICallEngineDebuger.PrintLog("ARTCAICallEngine onRemoteUserOffLineNotify:\(uid)")
+        ARTCAICallEngineLog.WriteLog("ARTCAICallEngine onRemoteUserOffLineNotify:\(uid)")
         DispatchQueue.main.async {
             if uid == self.agentCanvasUid || uid == self.agentInfo?.uid {
                 self.delegate?.onErrorOccurs?(code: .AgentLeaveChannel)
@@ -434,7 +531,7 @@ extension ARTCAICallEngine: AliRtcEngineDelegate {
     }
     
     public func onRemoteTrackAvailableNotify(_ uid: String, audioTrack: AliRtcAudioTrack, videoTrack: AliRtcVideoTrack) {
-        ARTCAICallEngineDebuger.PrintLog("ARTCAICallEngine onRemoteTrackAvailableNotify:\(uid)  audioTrack:\(audioTrack)  videoTrack:\(videoTrack)")
+        ARTCAICallEngineLog.WriteLog("ARTCAICallEngine onRemoteTrackAvailableNotify:\(uid)  audioTrack:\(audioTrack)  videoTrack:\(videoTrack)")
         DispatchQueue.main.async {
             
             if videoTrack == .no {
@@ -456,11 +553,11 @@ extension ARTCAICallEngine: AliRtcEngineDelegate {
     }
 
     public func onUserAudioMuted(_ uid: String, audioMuted isMute: Bool) {
-        ARTCAICallEngineDebuger.PrintLog("ARTCAICallEngine onUserAudioMuted:\(uid) isMute:\(isMute)")
+        ARTCAICallEngineLog.WriteLog("ARTCAICallEngine onUserAudioMuted:\(uid) isMute:\(isMute)")
     }
     
     public func onNetworkQualityChanged(_ uid: String, up upQuality: AliRtcNetworkQuality, downNetworkQuality downQuality: AliRtcNetworkQuality) {
-        ARTCAICallEngineDebuger.PrintLog("ARTCAICallEngine onNetworkQualityChanged:\(uid) upQuality:\(upQuality.rawValue)  downQuality:\(downQuality.rawValue)")
+        ARTCAICallEngineLog.WriteLog("ARTCAICallEngine onNetworkQualityChanged:\(uid) upQuality:\(upQuality.rawValue)  downQuality:\(downQuality.rawValue)")
         DispatchQueue.main.async {
             if let quality = ARTCAICallNetworkQuality(rawValue: Int32(downQuality.rawValue)) {
                 self.delegate?.onNetworkStatusChanged?(uid: uid, quality: quality)
@@ -470,7 +567,7 @@ extension ARTCAICallEngine: AliRtcEngineDelegate {
     
 
     public func onConnectionStatusChange(_ status: AliRtcConnectionStatus, reason: AliRtcConnectionStatusChangeReason) {
-        ARTCAICallEngineDebuger.PrintLog("ARTCAICallEngine onConnectionStatusChange:\(status.rawValue) reason:\(reason.rawValue)")
+        ARTCAICallEngineLog.WriteLog("ARTCAICallEngine onConnectionStatusChange:\(status.rawValue) reason:\(reason.rawValue)")
         DispatchQueue.main.async {
             if status == AliRtcConnectionStatus.failed {
                 self.delegate?.onErrorOccurs?(code: .ConnectionFailed)
@@ -479,7 +576,7 @@ extension ARTCAICallEngine: AliRtcEngineDelegate {
     }
     
     public func onOccurError(_ error: Int32, message: String) {
-        ARTCAICallEngineDebuger.PrintLog("ARTCAICallEngine onOccurError:\(error) message:\(message)")
+        ARTCAICallEngineLog.WriteLog("ARTCAICallEngine onOccurError:\(error) message:\(message)")
         DispatchQueue.main.async {
 //            if error == AliRtcErrorCode.errPublishInvaild.rawValue ||
 //                error == AliRtcErrorCode.errPublishAudioStreamFailed.rawValue {
@@ -493,19 +590,19 @@ extension ARTCAICallEngine: AliRtcEngineDelegate {
     }
     
     public func onOccurWarning(_ warn: Int32, message: String) {
-        ARTCAICallEngineDebuger.PrintLog("ARTCAICallEngine onOccurWarning:\(warn) message:\(message)")
+        ARTCAICallEngineLog.WriteLog("ARTCAICallEngine onOccurWarning:\(warn) message:\(message)")
         
     }
     
     public func onLocalDeviceException(_ deviceType: AliRtcLocalDeviceType, exceptionType: AliRtcLocalDeviceExceptionType, message msg: String?) {
-        ARTCAICallEngineDebuger.PrintLog("ARTCAICallEngine onLocalDeviceException:\(deviceType) exceptionType:\(exceptionType) message:\(msg ?? "unknown")")
+        ARTCAICallEngineLog.WriteLog("ARTCAICallEngine onLocalDeviceException:\(deviceType) exceptionType:\(exceptionType) message:\(msg ?? "unknown")")
         DispatchQueue.main.async {
             self.delegate?.onErrorOccurs?(code: .LocalDeviceException)
         }
     }
     
     public func onBye(_ code: Int32) {
-        ARTCAICallEngineDebuger.PrintLog("ARTCAICallEngine onBye:\(code)")
+        ARTCAICallEngineLog.WriteLog("ARTCAICallEngine onBye:\(code)")
         DispatchQueue.main.async {
             if code == AliRtcOnByeType.userReplaced.rawValue {
                 self.delegate?.onErrorOccurs?(code: .KickedByUserReplace)
@@ -520,7 +617,7 @@ extension ARTCAICallEngine: AliRtcEngineDelegate {
     }
     
     public func onAuthInfoWillExpire() {
-        ARTCAICallEngineDebuger.PrintLog("ARTCAICallEngine onAuthInfoWillExpire")
+        ARTCAICallEngineLog.WriteLog("ARTCAICallEngine onAuthInfoWillExpire")
         let model = ARTCAICallMessageSendModel()
         model.type = .RequestRTCToken
         model.senderId = self.userId
@@ -530,14 +627,14 @@ extension ARTCAICallEngine: AliRtcEngineDelegate {
     }
     
     public func onAuthInfoExpired() {
-        ARTCAICallEngineDebuger.PrintLog("ARTCAICallEngine onAuthInfoExpired")
+        ARTCAICallEngineLog.WriteLog("ARTCAICallEngine onAuthInfoExpired")
         DispatchQueue.main.async {
             self.delegate?.onErrorOccurs?(code: .TokenExpired)
         }
     }
     
     public func onActiveSpeaker(_ uid: String) {
-        ARTCAICallEngineDebuger.PrintLog("ARTCAICallEngine onActiveSpeaker:\(uid)")
+        ARTCAICallEngineLog.WriteLog("ARTCAICallEngine onActiveSpeaker:\(uid)")
         DispatchQueue.main.async {
             self.activeSpeakerId = uid
         }
@@ -585,7 +682,7 @@ extension ARTCAICallEngine: AliRtcEngineDelegate {
     }
     
     func onFirstAudioPacketReceived(withUid uid: String, track: AliRtcAudioTrack, timeCost: Int32) {
-        ARTCAICallEngineDebuger.PrintLog("ARTCAICallEngine onFirstAudioPacketReceived:\(uid)")
+        ARTCAICallEngineLog.WriteLog("ARTCAICallEngine onFirstAudioPacketReceived:\(uid)")
         
         DispatchQueue.main.async {
             if self.isOnCall == false && self.isJoined {
@@ -596,23 +693,27 @@ extension ARTCAICallEngine: AliRtcEngineDelegate {
     }
     
     func onFirstRemoteAudioDecoded(withUid uid: String, track: AliRtcAudioTrack, elapsed: Int32) {
-        ARTCAICallEngineDebuger.PrintLog("ARTCAICallEngine onFirstRemoteAudioDecoded:\(uid)")
+        ARTCAICallEngineLog.WriteLog("ARTCAICallEngine onFirstRemoteAudioDecoded:\(uid)")
     }
     
     func onFirstVideoPacketReceived(withUid uid: String, videoTrack: AliRtcVideoTrack, timeCost: Int32) {
-        ARTCAICallEngineDebuger.PrintLog("ARTCAICallEngine onFirstVideoPacketReceived:\(uid)")
+        ARTCAICallEngineLog.WriteLog("ARTCAICallEngine onFirstVideoPacketReceived:\(uid)")
     }
     
     func onFirstVideoFrameReceived(withUid uid: String, videoTrack: AliRtcVideoTrack, timeCost: Int32) {
-        ARTCAICallEngineDebuger.PrintLog("ARTCAICallEngine onFirstVideoFrameReceived:\(uid)")
+        ARTCAICallEngineLog.WriteLog("ARTCAICallEngine onFirstVideoFrameReceived:\(uid)")
     }
     
     func onFirstRemoteVideoFrameDrawn(_ uid: String, videoTrack: AliRtcVideoTrack, width: Int32, height: Int32, elapsed: Int32) {
-        ARTCAICallEngineDebuger.PrintLog("ARTCAICallEngine onFirstRemoteVideoFrameDrawn:\(uid)")
+        ARTCAICallEngineLog.WriteLog("ARTCAICallEngine onFirstRemoteVideoFrameDrawn:\(uid)")
         DispatchQueue.main.async {
             if uid == self.agentCanvasUid {
                 self.delegate?.onAgentAvatarFirstFrameDrawn?()
             }
         }
+    }
+    
+    func onFirstLocalVideoFrameDrawn(_ width: Int32, height: Int32, elapsed: Int32) {
+        ARTCAICallEngineLog.WriteLog("ARTCAICallEngine onFirstLocalVideoFrameDrawn")
     }
 }

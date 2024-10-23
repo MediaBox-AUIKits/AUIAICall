@@ -1,8 +1,8 @@
-import { AICallAgentType, AICallState } from '../core/interface';
 import AUIAICallController from './AUIAICallController';
-import { AICallAgentInfo, TemplateConfig } from './service/interface';
+import { TemplateConfig } from './service/interface';
 
 import customService from './service/custom';
+import { AICallAgentInfo, AICallAgentType, AICallState } from 'aliyun-auikit-aicall';
 class AUIAICallCustomController extends AUIAICallController {
   constructor(userId: string, token: string) {
     super(userId, token);

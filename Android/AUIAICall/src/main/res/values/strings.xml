@@ -10,6 +10,8 @@
     <string name="stop_call">Hang Up</string>
     <string name="speaker_on">Speaker On</string>
     <string name="speaker_off">Speaker Off</string>
+    <string name="camera_on">Camera On</string>
+    <string name="camera_off">Camera Off</string>
 
     <string name="call_connection_tips">Connecting...</string>
 
@@ -64,6 +66,7 @@
     <string name="custom_agent">Custom Agent</string>
     <string name="ai_audio_call">AI Audio Call</string>
     <string name="digital_human_call">Digital Human Call</string>
+    <string name="vision_agent_call">Vision Agent Call</string>
     <string name="temporary_experience_token">Entrusting authorized AI agents</string>
     <string name="et_token_hints">Please scan the QR code to obtain authorized AI agents</string>
     <string name="token_expired_tips">AI agent authorization has expired</string>

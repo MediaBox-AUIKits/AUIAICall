@@ -69,12 +69,13 @@ import ARTCAICallKit
         }
         self.state = .Connecting
         
-        ARTCAICallEngineDebuger.PrintLog("Start Call")
+        ARTCAICallEngineLog.shared?.startLog(fileName: UUID().uuidString)
+        ARTCAICallEngineLog.WriteLog("Start Call")
         ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "AgentId", value: self.config.agentId ?? "")
 
         self.callService.startAIAgent(userId: self.userId, config: self.config) {[weak self] agent, token, error in
             
-            ARTCAICallEngineDebuger.PrintLog("Start Call Result: \(error == nil ? "Success" : "Failed")")
+            ARTCAICallEngineLog.WriteLog("Start Call Result: \(error == nil ? "Success" : "Failed")")
             guard let self = self else { return }
             
             if self.state == .Over {
@@ -93,6 +94,8 @@ import ARTCAICallKit
                 ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "UserId", value: agent.uid)
                 ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "InstanceId", value: agent.instanceId)
                 
+                _ = self.engine.muteLocalCamera(mute: self.config.muteLocalCamera)
+                _ = self.engine.muteMicrophone(mute: self.config.muteMicrophone)
                 self.engine.call(userId: self.userId, token: token, agentInfo: agent) { [weak self] error in
                     guard let self = self else { return }
                     if self.state == .Over {
@@ -103,9 +106,6 @@ import ARTCAICallKit
                         self.errorCode = ARTCAICallErrorCode(rawValue: Int32(error.code)) ?? .BeginCallFailed
                         self.state = .Error
                         self.callService.stopAIAgent(userId: self.userId, instanceId: agent.instanceId, completed: nil)
-                    }
-                    else {
-                        _ = self.engine.muteMicrophone(mute: true)
                     }
                 }
             }
@@ -185,13 +185,23 @@ import ARTCAICallKit
     }
     
     // 开启/关闭麦克风
-    open func switchMicrophone(off: Bool) {
-        self.config.muteMicrophone = off
-        if self.state == .Connected {
-            _ = self.engine.muteMicrophone(mute: off)
+    open func muteMicrophone(mute: Bool) {
+        if self.engine.muteMicrophone(mute: mute) {
+            self.config.muteMicrophone = mute
         }
     }
     
+    // 开启/关闭摄像头
+    open func muteLocalCamera(mute: Bool) {
+        if self.engine.muteLocalCamera(mute: mute) {
+            self.config.muteLocalCamera = mute
+        }
+    }
+    
+    // 切换前后摄像头
+    open func switchCamera() {
+        _ = self.engine.switchCamera()
+    }
 }
 
 
@@ -204,18 +214,17 @@ extension AUIAICallCustomController: ARTCAICallEngineDelegate {
     }
     
     public func onCallBegin() {
-        ARTCAICallEngineDebuger.PrintLog("onCallBegin")
+        ARTCAICallEngineLog.WriteLog("onCallBegin")
         if self.state != .Connecting {
             return
         }
         self.state = .Connected
-        _ = self.engine.muteMicrophone(mute: self.config.muteMicrophone)
         _ = self.engine.enableSpeaker(enable: self.config.enableSpeaker)
         self.delegate?.onAICallBegin?()
     }
     
     public func onCallEnd() {
-        ARTCAICallEngineDebuger.PrintLog("onCallEnd")
+        ARTCAICallEngineLog.WriteLog("onCallEnd")
     }
     
     public func onAgentAvatarFirstFrameDrawn() {

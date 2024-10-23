@@ -65,7 +65,7 @@ target '你的App target' do
     pod 'AliVCSDK_ARTC', '~> 6.11.3'
 
     # AI实时互动通话场景SDK
-    pod "ARTCAICallKit", '~> 1.1.0'
+    pod "ARTCAICallKit", '~> 1.2.0'
 
     # 基础UI组件源码
     pod 'AUIFoundation', :path => "./AUIAICall/AUIBaseKits/AUIFoundation/", :modular_headers => true

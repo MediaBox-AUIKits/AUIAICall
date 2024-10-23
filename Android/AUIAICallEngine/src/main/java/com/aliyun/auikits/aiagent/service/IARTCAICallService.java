@@ -10,6 +10,7 @@ import org.json.JSONObject;
 public interface IARTCAICallService extends IARTCAICallIMCallback {
     String AI_AGENT_TYPE_AVATAR = "AvatarChat3D";
     String AI_AGENT_TYPE_VOICE = "VoiceChat";
+    String AI_AGENT_TYPE_VISION = "VisionChat";
 
     interface IARTCAICallServiceCallback {
         void onSuccess(JSONObject jsonObject);

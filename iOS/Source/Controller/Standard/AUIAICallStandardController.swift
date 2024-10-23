@@ -70,12 +70,13 @@ import ARTCAICallKit
         }
         self.state = .Connecting
         
-        ARTCAICallEngineDebuger.PrintLog("Start Call")
+        ARTCAICallEngineLog.shared?.startLog(fileName: UUID().uuidString)
+        ARTCAICallEngineLog.WriteLog("Start Call")
         ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "AgentId", value: self.config.agentId ?? "")
         
         self.generateAIAgentCall(userId: self.userId, config: self.config) {[weak self] agent, token, error in
             
-            ARTCAICallEngineDebuger.PrintLog("Start Call Result: \(error == nil ? "Success" : "Failed")")
+            ARTCAICallEngineLog.WriteLog("Start Call Result: \(error == nil ? "Success" : "Failed")")
             guard let self = self else { return }
             
             if self.state == .Over {
@@ -91,6 +92,8 @@ import ARTCAICallKit
                 ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "UserId", value: agent.uid)
                 ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "InstanceId", value: agent.instanceId)
                 
+                _ = self.engine.muteLocalCamera(mute: self.config.muteLocalCamera)
+                _ = self.engine.muteMicrophone(mute: self.config.muteMicrophone)
                 self.engine.call(userId: self.userId, token: token, agentInfo: agent) { [weak self] error in
                     guard let self = self else { return }
                     if self.state == .Over {
@@ -100,9 +103,6 @@ import ARTCAICallKit
                     if let error = error {
                         self.errorCode = ARTCAICallErrorCode(rawValue: Int32(error.code)) ?? .BeginCallFailed
                         self.state = .Error
-                    }
-                    else {
-                        _ = self.engine.muteMicrophone(mute: true)
                     }
                 }
             }
@@ -171,13 +171,23 @@ import ARTCAICallKit
     }
     
     // 开启/关闭麦克风
-    open func switchMicrophone(off: Bool) {
-        self.config.muteMicrophone = off
-        if self.state == .Connected {
-            _ = self.engine.muteMicrophone(mute: off)
+    open func muteMicrophone(mute: Bool) {
+        if self.engine.muteMicrophone(mute: mute) {
+            self.config.muteMicrophone = mute
         }
     }
     
+    // 开启/关闭摄像头
+    open func muteLocalCamera(mute: Bool) {
+        if self.engine.muteLocalCamera(mute: mute) {
+            self.config.muteLocalCamera = mute
+        }
+    }
+    
+    // 切换前后摄像头
+    open func switchCamera() {
+        _ = self.engine.switchCamera()
+    }
 }
 
 extension AUIAICallStandardController: ARTCAICallEngineDelegate {
@@ -194,7 +204,6 @@ extension AUIAICallStandardController: ARTCAICallEngineDelegate {
             return
         }
         self.state = .Connected
-        _ = self.engine.muteMicrophone(mute: self.config.muteMicrophone)
         _ = self.engine.enableSpeaker(enable: self.config.enableSpeaker)
         self.delegate?.onAICallBegin?()
     }
@@ -273,6 +282,16 @@ extension AUIAICallStandardController: ARTCAICallEngineDelegate {
 
 extension AUIAICallStandardController {
     
+    private func agentTypeToString(_ agentType: ARTCAICallAgentType) -> String {
+        if agentType == .AvatarAgent {
+            return "AvatarChat3D"
+        }
+        else if agentType == .VisionAgent {
+            return "VisionChat"
+        }
+        return "VoiceChat"
+    }
+    
     public func generateAIAgentCall(userId: String, config: AUIAICallConfig, completed: ((_ rsp: ARTCAICallAgentInfo?, _ token: String?, _ error: Error?) -> Void)?) {
         
         var template_config: [String : Any] = [:]
@@ -286,11 +305,10 @@ extension AUIAICallStandardController {
             if config.agentAvatarId.isEmpty == false {
                 configDict.updateValue(config.agentAvatarId, forKey: "AvatarId")
             }
-            template_config.updateValue(configDict, forKey: "AvatarChat3D")
         }
-        else {
-            template_config.updateValue(configDict, forKey: "VoiceChat")
-        }
+        let workflow_type = self.agentTypeToString(config.agentType)
+        template_config.updateValue(configDict, forKey: workflow_type)
+
         
         var body: [String: Any] = [:]
         let expire: Int = 24 * 60 * 60
@@ -303,7 +321,6 @@ extension AUIAICallStandardController {
             ]
         }
         else {
-            let workflow_type = config.agentType == .AvatarAgent ? "AvatarChat3D" : "VoiceChat"
             body = [
                 "workflow_type": workflow_type,
                 "user_id": userId,

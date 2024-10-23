@@ -34,10 +34,10 @@ import ARTCAICallKit
         self.callContentView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(onContentViewClicked(recognizer:))))
         
         self.titleLabel.frame = CGRect(x: 0, y: UIView.av_safeTop, width: self.view.av_width, height: 44)
-        self.updateTitle(instanceId: nil)
+        self.updateTitle()
 
         self.settingBtn.frame = CGRect(x: self.view.av_width - 6 - 44, y: UIView.av_safeTop, width: 44, height: 44)
-        self.bottomView.frame = CGRect(x: 0, y: self.view.av_height - UIView.av_safeBottom - 160, width: self.view.av_width, height: 160)
+        self.bottomView.frame = CGRect(x: 0, y: self.view.av_height - 308, width: self.view.av_width, height: 308)
         self.bottomView.isHidden = false
                 
         UIViewController.av_setIdleTimerDisabled(true)
@@ -88,6 +88,8 @@ import ARTCAICallKit
         label.textAlignment = .center
         label.font = AVTheme.mediumFont(16)
         label.numberOfLines = 0
+        label.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(onTitleLabelTap)))
+        label.isUserInteractionEnabled = true
         self.view.addSubview(label)
         return label
     }()
@@ -102,15 +104,17 @@ import ARTCAICallKit
         let btn = UIButton()
         btn.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
         btn.setImage(AUIAICallBundle.getCommonImage("ic_setting"), for: .normal)
+        btn.setImage(AUIAICallBundle.getCommonImage("ic_setting_selected"), for: .selected)
         btn.addTarget(self, action: #selector(onSettingBtnClicked), for: .touchUpInside)
         self.view.addSubview(btn)
         return btn
     }()
     
     open lazy var bottomView: AUIAICallBottomView = {
-        let view = AUIAICallBottomView()
+        let view = AUIAICallBottomView(agentType: self.controller.config.agentType)
         view.switchSpeakerBtn.isSelected = self.controller.config.enableSpeaker == false
         view.muteAudioBtn.isSelected = self.controller.config.muteMicrophone == true
+        view.muteCameraBtn.isSelected = self.controller.config.muteLocalCamera == true
         view.handupBtn.tappedAction = { [weak self] btn in
             self?.controller.handup()
         }
@@ -124,35 +128,35 @@ import ARTCAICallKit
             btn.isSelected = self?.controller.config.enableSpeaker == false
         }
         view.muteAudioBtn.tappedAction = { [weak self] btn in
-            if self?.controller.state != .Connected {
-                btn.isSelected = !btn.isSelected
-                self?.controller.config.muteMicrophone = btn.isSelected
-                return
-            }
-            self?.controller.switchMicrophone(off: !btn.isSelected)
+            self?.controller.muteMicrophone(mute: !btn.isSelected)
             btn.isSelected = self?.controller.config.muteMicrophone == true
+        }
+        view.muteCameraBtn.tappedAction = { [weak self] btn in
+            self?.controller.muteLocalCamera(mute: !btn.isSelected)
+            btn.isSelected = self?.controller.config.muteLocalCamera == true
+            self?.callContentView.visionAgentView?.isHidden = !btn.isSelected
+            self?.updateSubTitleStyle()
+        }
+        view.switchCameraBtn.clickBlock = { [weak self] btn in
+            self?.controller.switchCamera()
         }
         self.view.addSubview(view)
         return view
     }()
     
-    private func updateTitle(instanceId: String?) {
-        let title = self.controller.config.agentType == .AvatarAgent ? AUIAICallBundle.getString("AI Avatar Call") : AUIAICallBundle.getString("AI Voice Call")
+    private func updateTitle() {
+        var title = AUIAICallBundle.getString("AI Voice Call")
+        if self.controller.config.agentType == .AvatarAgent {
+            title = AUIAICallBundle.getString("AI Avatar Call")
+        }
+        else if self.controller.config.agentType == .VisionAgent {
+            title = AUIAICallBundle.getString("AI Vision Call")
+        }
         let attributedString = NSMutableAttributedString()
         let firstLine = NSAttributedString(string: title, attributes: [
             NSAttributedString.Key.font: AVTheme.mediumFont(16),
         ])
         attributedString.append(firstLine)
-        
-#if DEMO_FOR_DEBUG
-        if let instanceId = instanceId {
-            attributedString.append(NSAttributedString(string: "\n"))
-            let secondLine = NSAttributedString(string: "ID: \(instanceId)", attributes: [
-                NSAttributedString.Key.font: AVTheme.regularFont(12),
-            ])
-            attributedString.append(secondLine)
-        }
-#endif
         
         self.titleLabel.attributedText = attributedString
     }
@@ -193,6 +197,19 @@ import ARTCAICallKit
             }
             self.callContentView.updateSubTitle(enable: true, isLLM: true, text: currAgentPrintedText, clear: false)
             self.self.nextAgentSpeakingTokenIndex += 1
+        }
+    }
+    
+    private func updateSubTitleStyle() {
+        if self.controller.config.agentType == .VisionAgent && self.bottomView.muteCameraBtn.isSelected == false && self.controller.state == .Connected {
+            self.callContentView.subtitleLabel.textColor = AVTheme.text_ultraweak
+            self.titleLabel.textColor = UIColor.av_color(withHexString: "#3A3D48FF")
+            self.settingBtn.isSelected = true
+        }
+        else {
+            self.callContentView.subtitleLabel.textColor = AVTheme.text_weak
+            self.titleLabel.textColor = AVTheme.text_strong
+            self.settingBtn.isSelected = false
         }
     }
     
@@ -252,6 +269,12 @@ extension AUIAICallViewController {
     @objc open func onContentViewClicked(recognizer: UIGestureRecognizer) {
         self.controller.interruptSpeaking()
     }
+    
+    @objc func onTitleLabelTap() {
+#if DEMO_FOR_DEBUG
+        self.showDebugInfo()
+#endif
+    }
 }
 
 extension AUIAICallViewController: AUIAICallControllerDelegate {
@@ -261,11 +284,15 @@ extension AUIAICallViewController: AUIAICallControllerDelegate {
         if self.controller.config.agentType == .AvatarAgent {
             self.controller.setAgentView(view: self.callContentView.avatarAgentView, mode: .Auto)
         }
-        self.updateTitle(instanceId: agentInfo.instanceId)
+        else if self.controller.config.agentType == .VisionAgent {
+            let visionConfig = ARTCAICallVisionConfig(preview: self.callContentView.visionCameraView, viewMode: .Auto)
+            self.controller.currentEngine.visionConfig = visionConfig
+        }
+        self.updateTitle()
     }
     
     public func onAICallStateChanged() {
-        ARTCAICallEngineDebuger.PrintLog("Call State Changed: \(self.controller.state)")
+        ARTCAICallEngineLog.WriteLog("Call State Changed: \(self.controller.state)")
         self.callContentView.callStateAni.updateState(newState: self.controller.state)
         
         if self.controller.state == .Connected {
@@ -274,11 +301,14 @@ extension AUIAICallViewController: AUIAICallControllerDelegate {
             self.callContentView.voiceAgentAniView?.isHidden = false
             self.callContentView.voiceAgentAniView?.start()
             self.callContentView.avatarAgentView?.isHidden = false
+            self.callContentView.visionCameraView?.isHidden = false
+            self.callContentView.visionAgentView?.isHidden = !self.controller.config.muteLocalCamera
+            self.updateSubTitleStyle()
             
             // 启动计时
             self.countdownTimer.fire()
             
-            if self.controller.config.agentType == .VoiceAgent {
+            if self.controller.config.agentType == .VoiceAgent || self.self.controller.config.agentType == .VisionAgent {
                 self.isTimeToShowSubTitle = true
             }
         }
@@ -302,7 +332,7 @@ extension AUIAICallViewController: AUIAICallControllerDelegate {
             self.callContentView.tipsLabel.text = AUIAICallBundle.getString("Call Ended")
         }
         else if self.controller.state == .Error {
-            ARTCAICallEngineDebuger.PrintLog("Call Error: \(self.controller.errorCode)")
+            ARTCAICallEngineLog.WriteLog("Call Error: \(self.controller.errorCode)")
             var msg = AUIAICallBundle.getString("An Error Occurred During the Call")
             switch self.controller.errorCode {
             case .BeginCallFailed:
@@ -454,3 +484,23 @@ extension AUIAICallViewController: AUIAICallControllerDelegate {
         self.isTimeToShowSubTitle = true
     }
 }
+
+#if DEMO_FOR_DEBUG
+
+extension AUIAICallViewController {
+    
+    func showDebugInfo() {
+        var info = "instanceId:\(self.controller.agentInfo?.instanceId ?? "")\n"
+        info.append("channelId:\(self.controller.agentInfo?.channelId ?? "")\n")
+        info.append("agentUid:\(self.controller.agentInfo?.uid ?? "")\n")
+        info.append("agentType:\(self.controller.agentInfo?.agentType.rawValue ?? 0)\n")
+        info.append("userId:\(self.controller.userId)\n")
+        
+        AVAlertController.show(withTitle: "Debug", message: info, cancelTitle: "Close", okTitle: "Copy") { isCancel in
+            if !isCancel {
+                UIPasteboard.general.string = info
+            }
+        }
+    }
+}
+#endif

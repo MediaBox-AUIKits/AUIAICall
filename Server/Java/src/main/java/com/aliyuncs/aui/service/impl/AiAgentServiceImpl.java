@@ -36,6 +36,9 @@ public class AiAgentServiceImpl implements AiAgentService {
     @Value("${biz.ai_aent.avatar_ai_chat_3d_agent_id}")
     private String avatarChat3DAiAgentId;
 
+    @Value("${biz.ai_aent.vision_chat_ai_agent_id}")
+    private String visionChatAiAgentId;
+
     @Value("${biz.openapi.access.key}")
     private String accessKeyId;
     @Value("${biz.openapi.access.secret}")
@@ -73,17 +76,29 @@ public class AiAgentServiceImpl implements AiAgentService {
         boolean isAvatarChat3D = isAvatarChat3D(workflowType);
 
         java.util.Map<String, Object> queries = new java.util.HashMap<>();
-        queries.put("AIAgentId", isAvatarChat3D ? avatarChat3DAiAgentId : voiceChatAiAgentId);
+        if(isAvatarChat3D(workflowType)){
+            queries.put("AIAgentId", avatarChat3DAiAgentId);
+        } else if(isVoiceChat(workflowType)){
+            queries.put("AIAgentId", voiceChatAiAgentId);
+        } else if(isVisionChat(workflowType)){
+            queries.put("AIAgentId", visionChatAiAgentId);
+        } else {
+            throw new RuntimeException("workflowType is not support");
+        }
 
         JSONObject runtimeConfig = new JSONObject();
         JSONObject chatJsonObj = new JSONObject();
         chatJsonObj.put("AgentUserId", userId);
         chatJsonObj.put("ChannelId", ChannelId);
         chatJsonObj.put("AuthToken", rtcAuthToken);
-        if (isAvatarChat3D) {
+        if (isAvatarChat3D(workflowType)) {
             runtimeConfig.put("AvatarChat3D", chatJsonObj.toJSONString());
-        } else {
+        } else if (isVoiceChat(workflowType)) {
             runtimeConfig.put("VoiceChat", chatJsonObj.toJSONString());
+        } else if (isVisionChat(workflowType)) {
+            runtimeConfig.put("VisionChat", chatJsonObj.toJSONString());
+        } else {
+            throw new RuntimeException("workflowType is not support");
         }
         queries.put("RuntimeConfig", runtimeConfig.toJSONString());
 
@@ -94,10 +109,11 @@ public class AiAgentServiceImpl implements AiAgentService {
         try {
             OpenApiRequest request = new OpenApiRequest().setQuery(com.aliyun.openapiutil.Client.query(queries));
             long start = System.currentTimeMillis();
+            log.info("startAiAgent, queries：{}", JSONObject.toJSONString(queries));
             // 复制代码运行请自行打印 API 的返回值
             // 返回值为 Map 类型，可从 Map 中获得三类数据：响应体 body、响应头 headers、HTTP 返回的状态码 statusCode。
             Map<String, ?> response = client.callApi(params, request, runtime);
-            log.info("startAiAgent, queries：{}， response:{}", JSONObject.toJSONString(queries), JSONObject.toJSONString(response));
+            log.info("startAiAgent, response:{}", JSONObject.toJSONString(response));
             if (response != null) {
                 if (response.containsKey("statusCode")) {
                     Integer statusCode = (Integer)response.get("statusCode");
@@ -119,6 +135,14 @@ public class AiAgentServiceImpl implements AiAgentService {
     private static boolean isAvatarChat3D(String workflowType) {
         boolean isAvatarChat3D = "AvatarChat3D".equalsIgnoreCase(workflowType);
         return isAvatarChat3D;
+    }
+
+    private static boolean isVoiceChat(String workflowType){
+        return "VoiceChat".equalsIgnoreCase(workflowType);
+    }
+
+    private static boolean isVisionChat(String workflowType) {
+        return "VisionChat".equalsIgnoreCase(workflowType);
     }
 
     @Override
@@ -149,8 +173,9 @@ public class AiAgentServiceImpl implements AiAgentService {
             com.aliyun.teaopenapi.models.OpenApiRequest request = new com.aliyun.teaopenapi.models.OpenApiRequest()
                     .setQuery(com.aliyun.openapiutil.Client.query(queries));
             long start = System.currentTimeMillis();
+            log.info("stopAiAgent, instanceId:{}", aiAgentInstanceId);
             Map<String, ?> response = client.callApi(params, request, runtime);
-            log.info("stopAiAgent, instanceId:{}, response:{}", aiAgentInstanceId, JSONObject.toJSONString(response));
+            log.info("stopAiAgent, response:{}", JSONObject.toJSONString(response));
             if (response != null) {
                 if (response.containsKey("statusCode")) {
                     Integer statusCode = (Integer)response.get("statusCode");
@@ -194,8 +219,9 @@ public class AiAgentServiceImpl implements AiAgentService {
             com.aliyun.teaopenapi.models.OpenApiRequest request = new com.aliyun.teaopenapi.models.OpenApiRequest()
                     .setQuery(com.aliyun.openapiutil.Client.query(queries));
             long start = System.currentTimeMillis();
+            log.info("updateAiAgent, aiAgentInstanceId:{}", aiAgentInstanceId);
             Map<String, ?> response = client.callApi(params, request, runtime);
-            log.info("updateAiAgent, aiAgentInstanceId:{}, response:{}", aiAgentInstanceId, JSONObject.toJSONString(response));
+            log.info("updateAiAgent, response:{}", JSONObject.toJSONString(response));
             if (response != null) {
                 if (response.containsKey("statusCode")) {
                     Integer statusCode = (Integer)response.get("statusCode");
@@ -234,8 +260,12 @@ public class AiAgentServiceImpl implements AiAgentService {
         if (StringUtils.isEmpty(aiAgentId)) {
             if (isAvatarChat3D(workflowType)) {
                 aiAgentId = avatarChat3DAiAgentId;
-            } else {
+            } else if (isVisionChat(workflowType)) {
+                aiAgentId = visionChatAiAgentId;
+            } else if (isVoiceChat(workflowType)) {
                 aiAgentId = voiceChatAiAgentId;
+            } else{
+                throw new RuntimeException("workflowType is not support");
             }
         }
 
@@ -250,8 +280,9 @@ public class AiAgentServiceImpl implements AiAgentService {
             com.aliyun.teaopenapi.models.OpenApiRequest request = new com.aliyun.teaopenapi.models.OpenApiRequest()
                     .setQuery(com.aliyun.openapiutil.Client.query(queries));
             long start = System.currentTimeMillis();
+            log.info("generateAIAgentCall, aIAgentId:{}", aiAgentId);
             Map<String, ?> response = client.callApi(params, request, runtime);
-            log.info("updateAiAgent, aIAgentId:{}, response:{}", aiAgentId, JSONObject.toJSONString(response));
+            log.info("generateAIAgentCall, response:{}", JSONObject.toJSONString(response));
             if (response != null) {
                 if (response.containsKey("statusCode")) {
                     Integer statusCode = (Integer)response.get("statusCode");
@@ -275,7 +306,7 @@ public class AiAgentServiceImpl implements AiAgentService {
                 }
             }
         } catch (Exception e) {
-            log.error("updateRobot error. e:{}", e.getMessage());
+            log.error("generateAIAgentCall error. e:{}", e.getMessage());
         }
         return null;
     }

@@ -8,20 +8,30 @@
 import UIKit
 
 
+/**
+ * 智能体类型
+ */
 @objc public enum ARTCAICallAgentType: Int32 {
     
     /**
      * 纯语音
      */
-    case VoiceAgent
+    case VoiceAgent = 0
     
     /**
      * 数字人
      */
     case AvatarAgent
+    
+    /**
+     * 视觉理解
+     */
+    case VisionAgent
 }
 
-
+/**
+ * 智能体状态
+ */
 @objc public enum ARTCAICallAgentState: Int32 {
     
     /**
@@ -40,7 +50,9 @@ import UIKit
     case Speaking = 3
 }
 
-
+/**
+ * 智能体视图渲染模式
+ */
 @objc public enum ARTCAICallAgentViewMode: Int32 {
     
     /**
@@ -64,7 +76,9 @@ import UIKit
     case Crop = 3
 }
 
-
+/**
+ * 网络状态
+ */
 @objc public enum ARTCAICallNetworkQuality: Int32 {
     
     /**
@@ -103,7 +117,9 @@ import UIKit
     case Unknow = 6
 }
 
-
+/**
+ * 错误码
+ */
 @objc public enum ARTCAICallErrorCode: Int32 {
     /**
      * 成功
@@ -196,7 +212,9 @@ import UIKit
     case UnknowError = -40000
 }
 
-
+/**
+ * 回调
+ */
 @objc public protocol ARTCAICallEngineDelegate {
     
     /**
@@ -284,6 +302,9 @@ import UIKit
     @objc optional func onVoiceInterrupted(enable: Bool)
 }
 
+/**
+ * 智能体运行时信息
+ */
 @objcMembers open class ARTCAICallAgentInfo: NSObject {
     
     /**
@@ -307,6 +328,9 @@ import UIKit
         var type = ARTCAICallAgentType.VoiceAgent
         if data?["workflow_type"] as? String == "AvatarChat3D" {
             type = ARTCAICallAgentType.AvatarAgent
+        }
+        else if data?["workflow_type"] as? String == "VisionChat" {
+            type = ARTCAICallAgentType.VisionAgent
         }
         self.init(agentType: type, channelId: channel_id ?? "", uid: ai_agent_user_id ?? "", instanceId: agent_instance_id ?? "")
     }
@@ -332,6 +356,62 @@ import UIKit
     public let instanceId: String
 }
 
+/**
+ * 视频理解智能体运行配置
+ */
+@objcMembers open class ARTCAICallVisionConfig: NSObject {
+    
+    /**
+     * 初始化
+     */
+    public init(preview: UIView? = nil,
+         viewMode: ARTCAICallAgentViewMode = .Auto,
+         dimensions: CGSize = CGSize(width: 360, height: 640),
+         frameRate: Int = 15,
+         bitrate: Int = 512,
+         keyFrameInterval: Int = 1000) {
+        self.preview = preview
+        self.viewMode = viewMode
+        self.dimensions = dimensions
+        self.frameRate = frameRate
+        self.bitrate = bitrate
+        self.keyFrameInterval = keyFrameInterval
+    }
+    
+    /**
+     * 预览，为空表示不预览只推流
+     */
+    public let preview: UIView?
+    
+    /**
+     * 预览画面渲染模式
+     */
+    public let viewMode: ARTCAICallAgentViewMode
+    
+    /**
+     * 分辨率
+     */
+    public let dimensions: CGSize
+    
+    /**
+     * 帧率
+     */
+    public let frameRate: Int
+    
+    /**
+     * 帧率
+     */
+    public let bitrate: Int
+    
+    /**
+     * 关键帧间隔（毫秒）
+     */
+    public let keyFrameInterval: Int
+}
+
+/**
+ * 引擎接口
+ */
 @objc public protocol ARTCAICallEngineInterface {
     
     /**
@@ -348,7 +428,12 @@ import UIKit
      * 获取当前智能体信息
      */
     var agentInfo: ARTCAICallAgentInfo? { get }
-        
+
+    /**
+     * 视觉配置，通话前设置才能生效
+     */
+    var visionConfig: ARTCAICallVisionConfig { set get }
+    
     /**
      * 获取当前智能体状态
      */
@@ -400,6 +485,16 @@ import UIKit
     func muteMicrophone(mute: Bool) -> Bool
     
     /**
+     * 关闭/取消关闭摄像头
+     */
+    func muteLocalCamera(mute: Bool) -> Bool
+    
+    /**
+     * 切换前后摄像头
+     */
+    func switchCamera() -> Bool
+    
+    /**
      * 获取RTC引擎
      */
     func getRTCInstance() -> AnyObject?
@@ -410,6 +505,9 @@ import UIKit
     func destroy()
 }
 
+/**
+ * 引擎工厂
+ */
 @objcMembers open class ARTCAICallEngineFactory: NSObject {
     
     /**
@@ -419,86 +517,4 @@ import UIKit
         let engine = ARTCAICallEngine()
         return engine
     }
-}
-
-// 开发者相关
-@objcMembers open class ARTCAICallEngineDebuger: NSObject {
-    
-    /**
-     * 是否开启Dump音频数据
-     */
-    public static var Debug_IsEnableDumpData: Bool = false
-    
-    /**
-     * 是否开启运行数据实时输出
-     */
-    public static var Debug_IsEnableTipsData: Bool = false
-    
-    /**
-     * 设置实时数据输出视图
-     */
-    public static var Debug_TipsView: UITextView? = nil
-
-    /**
-     * 是否开启扩展数据，开启的话，可以通过NotificationCenter添加“DebugExtentInfoUpdate”的监听
-     */
-    public static var Debug_IsEnableExtendData: Bool = false {
-        didSet {
-            if self.Debug_IsEnableExtendData == false {
-                self.Debug_ExtendInfo.removeAll()
-                NotificationCenter.default.post(name: NSNotification.Name("DebugExtentInfoUpdate"), object: nil, userInfo: self.Debug_ExtendInfo)
-            }
-        }
-    }
-    
-    /**
-     * 本地记录的扩展数据
-     */
-    public static var Debug_ExtendInfo: [String: String] = [:]
-    
-    /**
-     * 更新扩展数据
-     */
-    public static func Debug_UpdateExtendInfo(key: String, value: Any) {
-        if Debug_IsEnableExtendData == false {
-            self.Debug_ExtendInfo.removeAll()
-            return
-        }
-        
-        var post = false
-        if let value = value as? String {
-            self.Debug_ExtendInfo.updateValue(value, forKey: key)
-            post = true
-        }
-        else if let value = value as? [String: String] {
-            self.Debug_ExtendInfo.merge(value)  { (_, new) in new }
-            post = true
-        }
-        
-        if post == true {
-//            debugPrint("Debug Extent Info:\(self.Debug_ExtendInfo)")
-            NotificationCenter.default.post(name: NSNotification.Name("DebugExtentInfoUpdate"), object: nil, userInfo: self.Debug_ExtendInfo)
-        }
-    }
-    
-    internal static func Debug_ClearTipsData() {
-        self.Debug_TipsView?.text = nil
-        self.Debug_ExtendInfo.removeAll()
-        NotificationCenter.default.post(name: NSNotification.Name("DebugExtentInfoUpdate"), object: nil, userInfo: self.Debug_ExtendInfo)
-    }
-    
-    public static func PrintLog(_ items: Any...) {
-        let timestamp = getCurrentTimeString()
-        let itemsWithTimestamp = ["[\(timestamp)]"] + items.map { "\($0)" }
-        let message = itemsWithTimestamp.joined(separator: " ")
-        debugPrint(message)
-    }
-    
-    // 获取当前时间并格式化为字符串
-    private static func getCurrentTimeString() -> String {
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSS"
-        return dateFormatter.string(from: Date())
-    }
-
 }

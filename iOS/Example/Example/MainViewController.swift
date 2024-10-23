@@ -13,7 +13,12 @@ class MainViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
-                
+        
+#if DEBUG
+        
+        
+#endif
+        
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             self.showListViewController(ani: false)
         }

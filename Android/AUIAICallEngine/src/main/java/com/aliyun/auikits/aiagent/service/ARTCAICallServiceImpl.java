@@ -45,6 +45,9 @@ public class ARTCAICallServiceImpl implements IARTCAICallService {
             case AvatarAgent:
                 agentTypeStr = AI_AGENT_TYPE_AVATAR;
                 break;
+            case VisionAgent:
+                agentTypeStr = AI_AGENT_TYPE_VISION;
+                break;
             case VoiceAgent:
             default:
                 agentTypeStr = AI_AGENT_TYPE_VOICE;
@@ -223,12 +226,15 @@ public class ARTCAICallServiceImpl implements IARTCAICallService {
 
                 for (ARTCAICallEngine.ARTCAICallAgentType agentType: agentTypeList) {
                     switch (agentType) {
+                        case VisionAgent:
+                            agentTypeKey = AI_AGENT_TYPE_VISION;
+                            break;
                         case AvatarAgent:
-                            agentTypeKey = "AvatarChat3D";
+                            agentTypeKey = AI_AGENT_TYPE_AVATAR;
                             break;
                         case VoiceAgent:
                         default:
-                            agentTypeKey = "VoiceChat";
+                            agentTypeKey = AI_AGENT_TYPE_VOICE;
                             break;
                     }
                     jsonObject.put(agentTypeKey, configJsonObject);

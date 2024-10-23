@@ -12,6 +12,16 @@ import ARTCAICallKit
     
     var appserver = AUIAICallAppServer()
     
+    private func agentTypeToString(_ agentType: ARTCAICallAgentType) -> String {
+        if agentType == .AvatarAgent {
+            return "AvatarChat3D"
+        }
+        else if agentType == .VisionAgent {
+            return "VisionChat"
+        }
+        return "VoiceChat"
+    }
+    
     public func startAIAgent(userId: String, config: AUIAICallConfig, completed: ((ARTCAICallAgentInfo?, String?, Error?) -> Void)?) {
         if config.agentId == nil {
             self.startAIAgentInstance(userId: userId, config: config, completed: completed)
@@ -35,15 +45,15 @@ import ARTCAICallKit
         if !config.agentVoiceId.isEmpty {
             configDict.updateValue(config.agentVoiceId, forKey: "VoiceId")
         }
+        
         if config.agentType == .AvatarAgent {
             if config.agentAvatarId.isEmpty == false {
                 configDict.updateValue(config.agentAvatarId, forKey: "AvatarId")
             }
-            template_config.updateValue(configDict, forKey: "AvatarChat3D")
         }
-        else {
-            template_config.updateValue(configDict, forKey: "VoiceChat")
-        }
+        let workflow_type = self.agentTypeToString(config.agentType)
+        template_config.updateValue(configDict, forKey: workflow_type)
+
         
         let expire: Int = 24 * 60 * 60
         let body: [String: Any] = [
@@ -80,13 +90,10 @@ import ARTCAICallKit
             if config.agentAvatarId.isEmpty == false {
                 configDict.updateValue(config.agentAvatarId, forKey: "AvatarId")
             }
-            template_config.updateValue(configDict, forKey: "AvatarChat3D")
         }
-        else {
-            template_config.updateValue(configDict, forKey: "VoiceChat")
-        }
-        
-        let workflow_type = config.agentType == .AvatarAgent ? "AvatarChat3D" : "VoiceChat"
+        let workflow_type = self.agentTypeToString(config.agentType)
+        template_config.updateValue(configDict, forKey: workflow_type)
+
         let body: [String : Any] = [
             "user_id": userId,
             "workflow_type": workflow_type,
@@ -140,12 +147,9 @@ import ARTCAICallKit
     
     public func updateAIAgent(userId: String, instanceId: String, agentType: ARTCAICallAgentType, voiceId: String, completed: ((_ error: Error?) -> Void)?) {
         
-        var key = "VoiceChat"
-        if agentType == .AvatarAgent {
-            key = "AvatarChat3D"
-        }
+        let workflow_type = self.agentTypeToString(agentType)
         let configDict: [String : Any] = [
-            key: [
+            workflow_type: [
                 "VoiceId": voiceId,
             ]
         ]
@@ -159,10 +163,7 @@ import ARTCAICallKit
     
     public func updateAIAgent(userId: String, instanceId: String, agentType: ARTCAICallAgentType, enable: Bool, completed: ((_ error: Error?) -> Void)?) {
         
-        var key = "VoiceChat"
-        if agentType == .AvatarAgent {
-            key = "AvatarChat3D"
-        }
+        let key = self.agentTypeToString(agentType)
         let configDict: [String : Any] = [
             key: [
                 "EnableVoiceInterrupt":enable,

@@ -71,7 +71,9 @@ public abstract class ARTCAICallEngine {
         /** 纯语音 */
         VoiceAgent,
         /** 数字人 */
-        AvatarAgent
+        AvatarAgent,
+        /** 视觉理解 */
+        VisionAgent
     }
 
     public static class ARTCAICallConfig {
@@ -82,24 +84,30 @@ public abstract class ARTCAICallEngine {
         public String aiAgentVoiceId = "";
         public boolean enableSpeaker = true;
         public boolean isMicrophoneOn = true;
+        public boolean isCameraMute = false;
         public boolean enableAudioDump = false;
         public String appServerHost = "";
         /**
          * 是否使用全托管方案
          */
         public boolean useDeposit = false;
+        public boolean useRtcPreEnv = false;
 
         @Override
         public String toString() {
             return "ARTCAICallConfig{" +
-                    "aiAgentId='" + aiAgentId + '\'' +
+                    "loginUserId='" + loginUserId + '\'' +
+                    ", loginAuthrization='" + loginAuthrization + '\'' +
+                    ", aiAgentId='" + aiAgentId + '\'' +
                     ", enableVoiceInterrupt=" + enableVoiceInterrupt +
-                    ", robotVoiceId='" + aiAgentVoiceId + '\'' +
+                    ", aiAgentVoiceId='" + aiAgentVoiceId + '\'' +
                     ", enableSpeaker=" + enableSpeaker +
                     ", isMicrophoneOn=" + isMicrophoneOn +
+                    ", isCameraMute=" + isCameraMute +
                     ", enableAudioDump=" + enableAudioDump +
                     ", appServerHost='" + appServerHost + '\'' +
                     ", useDeposit=" + useDeposit +
+                    ", useRtcPreEnv=" + useRtcPreEnv +
                     '}';
         }
     }
@@ -278,6 +286,29 @@ public abstract class ARTCAICallEngine {
      * @param avatarLayoutParams
      */
     public abstract void setAvatarAgentView(ViewGroup viewGroup, ViewGroup.LayoutParams avatarLayoutParams);
+
+    /**
+     * 设置数字人视图载体
+     * @param viewGroup
+     * @param visionLayoutParams
+     */
+    public abstract void setVisionPreviewView(ViewGroup viewGroup, ViewGroup.LayoutParams visionLayoutParams);
+
+    /**
+     * 关闭/取消关闭摄像头
+     */
+    public abstract boolean muteLocalCamera(boolean mute);
+
+    /**
+     * 摄像头是否关闭
+     * @return
+     */
+    public abstract boolean isLocalCameraMute();
+
+    /**
+     * 切换前后摄像头
+     */
+    public abstract boolean switchCamera();
 
     /**
      * 评分

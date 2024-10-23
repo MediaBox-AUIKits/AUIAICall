@@ -1,7 +1,7 @@
 plugins {
     id 'com.android.library'
 }
-
+apply plugin: 'maven-publish'
 apply plugin: 'com.kezong.fat-aar'
 ext{
     versionCode = System.getProperty('versionCode')
@@ -45,5 +45,48 @@ dependencies {
         embed project(':AUIAICallEngine')
     } else {
         implementation project(':AUIAICallEngine')
+    }
+}
+
+
+publishing {
+    publications {
+        roomengineAAR(MavenPublication) {
+            groupId = 'com.aliyun.auikits.android'
+            artifactId = 'ARTCAICallKit'
+            def suffix = ''
+            if(isSnapshot == true){
+                suffix = "-${buildId}-SNAPSHOT"
+            }
+            version = "${versionCode}${suffix}"
+            artifact("${project.buildDir}/outputs/aar/ARTCAICallKit-release.aar")
+        }
+    }
+    repositories {
+        if(publishToRemote == true){
+            if(isSnapshot == false){
+                println "publish to release"
+                maven {
+                    url "https://maven.aliyun.com/nexus/content/repositories/releases"
+                    credentials {
+                        username = ""
+                        password = ""
+                    }
+                }
+            }else{
+                println "publish to snapshot"
+                maven {
+                    url "http://mvnrepo.alibaba-inc.com/nexus/content/repositories/snapshots"
+                    credentials {
+                        println("credentials")
+                        username = ""
+                        password = ""
+                    }
+                    allowInsecureProtocol true
+                }
+            }
+        }else{
+            mavenLocal()
+        }
     }
 }

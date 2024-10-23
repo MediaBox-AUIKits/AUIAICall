@@ -17,6 +17,7 @@ import ARTCAICallKit
     open var enableVoiceInterrupt = true           // 是否开启智能打断
     open var enableSpeaker = true                  // 是否开启扬声器
     open var muteMicrophone = false                // 是否关闭麦克风（静音）
+    open var muteLocalCamera = false               // 是否关闭摄像头
     open var limitSecond: UInt32 = 0               // 通话限制时间，为0表示不限制，否则通话时间到达秒数后，会自动结束通话
 }
 
@@ -124,5 +125,11 @@ import ARTCAICallKit
     func enableSpeaker(enable: Bool)
     
     // 开启/关闭麦克风
-    func switchMicrophone(off: Bool)
+    func muteMicrophone(mute: Bool)
+
+    // 开启/关闭摄像头
+    func muteLocalCamera(mute: Bool)
+    
+    // 切换前后摄像头
+    func switchCamera()
 }

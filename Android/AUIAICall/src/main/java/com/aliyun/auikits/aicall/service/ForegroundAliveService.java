@@ -100,8 +100,9 @@ public class ForegroundAliveService extends Service {
             NotificationChannel serviceChannel = new NotificationChannel(
                     CHANNEL_ID,
                     "Audio Recording Service Channel",
-                    NotificationManager.IMPORTANCE_DEFAULT
+                    NotificationManager.IMPORTANCE_LOW
             );
+            serviceChannel.setSound(null, null); // 关闭声音
 
             NotificationManager manager = getSystemService(NotificationManager.class);
             if (manager != null) {

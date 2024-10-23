@@ -19,72 +19,59 @@ import ARTCAICallKit
     
     public var userId: String? = nil
     public var avatarId: String = ""
-    public var userToken: String? {
+    public var userToken: String? = nil {
         didSet {
             AUIAICallAppServer.serverAuth = self.userToken
         }
     }
     
     public var onUserTokenExpiredBlcok: (()->Void)? = nil
+    
+    public func checkDeviceAuth(agentType: ARTCAICallAgentType, success: @escaping () -> Void) {
+        
+        AVDeviceAuth.checkMicAuth { micAuth in
+            if micAuth {
+                if agentType == .VisionAgent {
+                    AVDeviceAuth.checkCameraAuth { cameraAuth in
+                        if cameraAuth {
+                            success()
+                        }
+                    }
+                }
+                else {
+                    success()
+                }
+            }
+        }
+    }
 
+    // 通过指定agentType（agentId为空时，由appserver配置的）发起通话，
+    open func startCall(agentType: ARTCAICallAgentType, agentId: String? = nil, limitSecond: UInt32 = 0, viewController: UIViewController? = nil) {
+        
+        if self.userId == nil {
+            self.userId = NSString.av_random()
+        }
+        
 #if DEMO_FOR_DEBUG
-    public enum IntegrationWay: Int32 {
-        case Standard
-        case Custom
-    }
-    public var currentIntegrationWay: IntegrationWay = .Standard
-    
-    // 通过指定agentType（agentId为空时，由appserver配置的）发起通话，
-    open func startCall(agentType: ARTCAICallAgentType, agentId: String? = nil, limitSecond: UInt32 = 0, viewController: UIViewController? = nil) {
-        
-        if self.userId == nil {
-            self.userId = NSString.av_random()
-        }
-        
-        AVDeviceAuth.checkMicAuth { auth in
-            if auth == false {
-                return
-            }
-            
-            let topVC = viewController ?? UIViewController.av_top()
-            if self.currentIntegrationWay == .Standard {
-                let controller = AUIAICallStandardController(userId: self.userId!)
-                controller.config.agentId = agentId
-                controller.config.agentType = agentType
-                controller.config.agentVoiceId = ""
-                controller.config.agentAvatarId = self.avatarId
-                controller.config.limitSecond = limitSecond
-                let vc = AUIAICallViewController(controller)
-                vc.onUserTokenExpiredBlcok = self.onUserTokenExpiredBlcok
-                topVC.av_presentFullScreenViewController(vc, animated: true)
-            }
-            else {
-                let controller = AUIAICallCustomController(userId: self.userId!)
-                controller.config.agentId = agentId
-                controller.config.agentType = agentType
-                controller.config.agentVoiceId = ""
-                controller.config.agentAvatarId = self.avatarId
-                controller.config.limitSecond = limitSecond
-                let vc = AUIAICallViewController(controller)
-                vc.onUserTokenExpiredBlcok = self.onUserTokenExpiredBlcok
-                topVC.av_presentFullScreenViewController(vc, animated: true)
-            }
-        }
-    }
+        AUIAICallDebugManager.shared.startCall(agentType: agentType, agentId: agentId, limitSecond: limitSecond, viewController: viewController)
+#elseif AICALL_INTEGRATION_STANDARD
+        self.startCallWithStandard(agentType: agentType, agentId: agentId, limitSecond: limitSecond, viewController: viewController)
+#elseif AICALL_INTEGRATION_CUSTOM
+        self.startCallWithCustom(agentType: agentType, agentId: agentId, limitSecond: limitSecond, viewController: viewController)
 #endif
+    }
     
-#if AICALL_INTEGRATION_STANDARD && !AICALL_INTEGRATION_CUSTOM
-    // 通过指定agentType（agentId为空时，由appserver配置的）发起通话，
-    open func startCall(agentType: ARTCAICallAgentType, agentId: String? = nil, limitSecond: UInt32 = 0, viewController: UIViewController? = nil) {
+    
+#if AICALL_INTEGRATION_STANDARD
+    // 全托管方式发起通话，通过指定agentType（agentId为空时，由appserver配置的）发起通话，
+    open func startCallWithStandard(agentType: ARTCAICallAgentType, agentId: String? = nil, limitSecond: UInt32 = 0, viewController: UIViewController? = nil) {
         
         if self.userId == nil {
             self.userId = NSString.av_random()
         }
         
-        AVDeviceAuth.checkMicAuth { auth in
-            if auth == false {
-                return
-            }
+        self.checkDeviceAuth(agentType: agentType) { [weak self] in
+            guard let self = self else {return}
             
             let topVC = viewController ?? UIViewController.av_top()
             let controller = AUIAICallStandardController(userId: self.userId!)
@@ -100,18 +87,17 @@ import ARTCAICallKit
     }
 #endif
     
-#if !AICALL_INTEGRATION_STANDARD && AICALL_INTEGRATION_CUSTOM
-    // 通过指定agentType（agentId为空时，由appserver配置的）发起通话，
-    open func startCall(agentType: ARTCAICallAgentType, agentId: String? = nil, limitSecond: UInt32 = 0, viewController: UIViewController? = nil) {
+    
+#if AICALL_INTEGRATION_CUSTOM
+    // 自集成方式发起通话，通过指定agentType（agentId为空时，由appserver配置的）发起通话，
+    open func startCallWithCustom(agentType: ARTCAICallAgentType, agentId: String? = nil, limitSecond: UInt32 = 0, viewController: UIViewController? = nil) {
         
         if self.userId == nil {
             self.userId = NSString.av_random()
         }
         
-        AVDeviceAuth.checkMicAuth { auth in
-            if auth == false {
-                return
-            }
+        self.checkDeviceAuth(agentType: agentType) { [weak self] in
+            guard let self = self else {return}
             
             let topVC = viewController ?? UIViewController.av_top()
             let controller = AUIAICallCustomController(userId: self.userId!)

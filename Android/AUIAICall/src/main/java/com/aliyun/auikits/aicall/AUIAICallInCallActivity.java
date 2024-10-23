@@ -4,9 +4,15 @@ package com.aliyun.auikits.aicall;
 import static com.aliyun.auikits.aiagent.ARTCAICallEngine.AICallErrorCode.AgentConcurrentLimit;
 
 import androidx.appcompat.app.AppCompatActivity;
+import android.view.WindowManager;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
+import android.graphics.PointF;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.SystemClock;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -28,6 +34,7 @@ import com.aliyun.auikits.aicall.controller.ARTCAICallController;
 import com.aliyun.auikits.aicall.controller.ARTCAICustomController;
 import com.aliyun.auikits.aicall.controller.ARTCAICallDepositController;
 import com.aliyun.auikits.aicall.service.ForegroundAliveService;
+import com.aliyun.auikits.aicall.util.DisplayUtil;
 import com.aliyun.auikits.aicall.util.SettingStorage;
 import com.aliyun.auikits.aicall.util.TimeUtil;
 import com.aliyun.auikits.aicall.util.ToastHelper;
@@ -65,10 +72,12 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
     private ARTCAICallEngine.ARTCAICallRobotState mRobotState = ARTCAICallEngine.ARTCAICallRobotState.Listening;
     private boolean isUserSpeaking = false;
     private long mLastBackButtonExitMillis = 0;
-    private boolean mUseAvatar = false;
+    private ARTCAICallEngine.ARTCAICallAgentType mAiAgentType = ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent;
     private boolean mFirstAvatarFrameDrawn = false;
 
     private SubtitleHolder mSubtitleHolder = new SubtitleHolder();
+    private ActionLayerHolder mActionLayerHolder = null;
+    private SmallVideoViewHolder mSmallVideoViewHolder = new SmallVideoViewHolder();
 
     private ARTCAICallController.IARTCAICallStateCallback mCallStateCallback = new ARTCAICallController.IARTCAICallStateCallback() {
         @Override
@@ -93,7 +102,7 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             mCallState = newCallState;
             updateUIByEngineState();
             updateForegroundAliveService();
-            updateAvatarVisibility(mUseAvatar);
+            updateAvatarVisibility(mAiAgentType);
         }
     };
 
@@ -211,40 +220,27 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
     };
 
     @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        // 去掉屏幕常亮
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_auiaicall_in_call);
+
+        // 设置屏幕常亮
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
         mHandler = new Handler();
 
         findViewById(R.id.btn_setting).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                AICallSettingDialog.show(AUIAICallInCallActivity.this, mARTCAICallEngine, mUseAvatar);
-            }
-        });
-        findViewById(R.id.btn_stop_call).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (handUp(false)) {
-                    finish();
-                }
-            }
-        });
-        findViewById(R.id.btn_mute_call).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                boolean isMicrophoneOn = !mARTCAICallEngine.isMicrophoneOn();
-                mARTCAICallEngine.switchMicrophone(isMicrophoneOn);
-                updateMuteButtonUI(isMicrophoneOn);
-                updateUIByEngineState();
-            }
-        });
-        findViewById(R.id.btn_speaker).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                boolean isSpeakerOn = mARTCAICallEngine.isSpeakerOn();
-                mARTCAICallEngine.enableSpeaker(!isSpeakerOn);
-                updateSpeakerButtonUI();
+                AICallSettingDialog.show(AUIAICallInCallActivity.this, mARTCAICallEngine, mAiAgentType== ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent);
             }
         });
         findViewById(R.id.speech_animation_view).setOnClickListener(new View.OnClickListener() {
@@ -259,25 +255,50 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                 mARTCAICallEngine.interruptSpeaking();
             }
         });
+        findViewById(R.id.ll_ai_agent_logo).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mARTCAICallEngine.interruptSpeaking();
+            }
+        });
 
         String aiAgentId = null;
-        ARTCAICallEngine.ARTCAICallAgentType aiAgentType = ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent;
+        mAiAgentType = ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent;
         String loginUserId = null;
         String loginAuthorization = null;
         if (null != getIntent() && null != getIntent().getExtras()) {
             aiAgentId = getIntent().getExtras().getString(BUNDLE_KEY_AI_AGENT_ID, null);
-            aiAgentType = getIntent().getExtras().getBoolean(BUNDLE_KEY_AI_AGENT_TYPE) ?
-                    ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent : ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent;
+            mAiAgentType = (ARTCAICallEngine.ARTCAICallAgentType) getIntent().getExtras().getSerializable(BUNDLE_KEY_AI_AGENT_TYPE);
 
             loginUserId = getIntent().getExtras().getString(BUNDLE_KEY_LOGIN_USER_ID, null);
             loginAuthorization = getIntent().getExtras().getString(BUNDLE_KEY_LOGIN_AUTHORIZATION, null);
         }
-        mUseAvatar = aiAgentType == ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent;
+
+        TextView tvAICallTitle = findViewById(R.id.tv_ai_call_title);
+        int titleResId = R.string.ai_audio_call;
+        if (mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VisionAgent) {
+            titleResId = R.string.vision_agent_call;
+        } else if (mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent) {
+            titleResId = R.string.digital_human_call;
+        }
+        tvAICallTitle.setText(titleResId);
+        tvAICallTitle.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (null != mARTCAICallController) {
+                    String titleClickTips = "userId: " + mARTCAICallController.getUserId() +
+                            "\nchannelId: " + mARTCAICallController.getChannelId();
+                    Toast.makeText(AUIAICallInCallActivity.this, titleClickTips, Toast.LENGTH_LONG).show();
+                    copyToClipboard(AUIAICallInCallActivity.this, titleClickTips);
+                }
+            }
+        });
 
         boolean useDeposit = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_DEPOSIT_SWITCH, SettingStorage.DEFAULT_DEPOSIT_SWITCH);
         ARTCAICallEngine.ARTCAICallConfig artcaiCallConfig = new ARTCAICallEngine.ARTCAICallConfig();
         artcaiCallConfig.aiAgentId = aiAgentId;
         artcaiCallConfig.enableAudioDump = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_AUDIO_DUMP_SWITCH);
+        artcaiCallConfig.useRtcPreEnv = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_USE_RTC_PRE_ENV_SWITCH);
         boolean usePreHost = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_APP_SERVER_TYPE, SettingStorage.DEFAULT_APP_SERVER_TYPE);
         artcaiCallConfig.appServerHost = usePreHost ? AppServiceConst.PRE_HOST : AppServiceConst.HOST;
         artcaiCallConfig.useDeposit = useDeposit;
@@ -289,14 +310,22 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         mARTCAICallController.setBizCallEngineCallback(mARTCAIEngineCallback);
         mARTCAICallController.setCallStateCallback(mCallStateCallback);
         mARTCAICallController.init(artcaiCallConfig);
-        mARTCAICallController.setAiAgentType(aiAgentType);
+        mARTCAICallController.setAiAgentType(mAiAgentType);
 
         mARTCAICallEngine = mARTCAICallController.getARTCAICallEngine();
-        mARTCAICallEngine.setAvatarAgentView(findViewById(R.id.avatar_layer),
-                new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-                );
+        if (mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent) {
+            mARTCAICallEngine.setAvatarAgentView(findViewById(R.id.avatar_layer),
+                    new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+            );
+        } else if (mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VisionAgent) {
+            mARTCAICallEngine.setVisionPreviewView(findViewById(R.id.avatar_layer),
+                    new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+            );
+        }
         mARTCAICallController.start();
-        updateSpeakerButtonUI();
+
+        mSmallVideoViewHolder.init(this);
+        initActionLayerHolder();
     }
 
     @Override
@@ -320,8 +349,6 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
      * @return 是否可以直接关闭Activity
      */
     private boolean handUp(boolean keepActivity) {
-        mARTCAICallEngine.handup();
-
         if (!keepActivity) {
             AICallRatingDialog.show(this,
                     new AICallRatingDialog.IRatingDialogDismissListener() {
@@ -336,17 +363,33 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                             finish();
                         }
                     });
+            new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    mARTCAICallEngine.handup();
+                }
+            }, 300);
+        } else {
+            mARTCAICallEngine.handup();
         }
         return false;
     }
 
     // 改为接通之后显示Avatar
-    private void updateAvatarVisibility(boolean useAvatar) {
+    private void updateAvatarVisibility(ARTCAICallEngine.ARTCAICallAgentType aiAgentType) {
         if (mCallState == ARTCAICallController.AICallState.Connected) {
-            if (useAvatar) {
-                findViewById(R.id.avatar_layer).setVisibility(View.VISIBLE);
-                findViewById(R.id.speech_animation_view).setVisibility(View.GONE);
+            if (useVideo()) {
+                if (mARTCAICallEngine.isLocalCameraMute()) {
+                    findViewById(R.id.ll_ai_agent_logo).setVisibility(View.VISIBLE);
+                    findViewById(R.id.avatar_layer).setVisibility(View.GONE);
+                    findViewById(R.id.speech_animation_view).setVisibility(View.GONE);
+                } else {
+                    findViewById(R.id.ll_ai_agent_logo).setVisibility(View.GONE);
+                    findViewById(R.id.avatar_layer).setVisibility(View.VISIBLE);
+                    findViewById(R.id.speech_animation_view).setVisibility(View.GONE);
+                }
             } else {
+                findViewById(R.id.ll_ai_agent_logo).setVisibility(View.GONE);
                 findViewById(R.id.avatar_layer).setVisibility(View.GONE);
                 findViewById(R.id.speech_animation_view).setVisibility(View.VISIBLE);
             }
@@ -358,31 +401,6 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             sUserId = UUID.randomUUID().toString();
         }
         return sUserId;
-    }
-
-    private void updateMuteButtonUI(boolean isMuted) {
-        ImageView ivMuteCall = (ImageView) findViewById(R.id.iv_mute_call);
-        TextView tvMuteCall = (TextView) findViewById(R.id.tv_mute_call);
-        if (isMuted) {
-            ivMuteCall.setImageResource(R.drawable.ic_voice_mute);
-            tvMuteCall.setText(R.string.mute_call);
-        } else {
-            ivMuteCall.setImageResource(R.drawable.ic_voice_open);
-            tvMuteCall.setText(R.string.unmute_call);
-        }
-    }
-
-    private void updateSpeakerButtonUI() {
-        boolean isSpeakerOn = null != mARTCAICallEngine ? mARTCAICallEngine.isSpeakerOn() : true;
-        ImageView ivSpeaker = (ImageView) findViewById(R.id.iv_speaker);
-        TextView tvSpeaker = (TextView) findViewById(R.id.tv_speaker);
-        if (isSpeakerOn) {
-            ivSpeaker.setImageResource(R.drawable.ic_speaker_on);
-            tvSpeaker.setText(R.string.speaker_off);
-        } else {
-            ivSpeaker.setImageResource(R.drawable.ic_speaker_off);
-            tvSpeaker.setText(R.string.speaker_on);
-        }
     }
 
     private void startUIUpdateProgress() {
@@ -400,6 +418,15 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         mUIProgressing = false;
     }
 
+    private boolean useAvatar() {
+        return mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent;
+    }
+
+    private boolean useVideo() {
+        return mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent ||
+                mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VisionAgent;
+    }
+
     private void updateProgressUI() {
         if (mUIProgressing) {
             boolean hasNextRun = true;
@@ -411,7 +438,7 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             mSubtitleHolder.refreshSubtitle();
 
             // 数字人体验超过5分钟，自动结束
-            if (mUseAvatar && duration > 5 * 60 * 1000) {
+            if (useAvatar() && duration > 5 * 60 * 1000) {
                 AICallNoticeDialog.showDialog(AUIAICallInCallActivity.this,
                         0, false, R.string.token_time_lit_tips, true, new OnDismissListener() {
                             @Override
@@ -449,6 +476,17 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
     private void updateUIByEngineState() {
         updateCallTips();
         updateSpeechAnimationType();
+    }
+
+    private void initActionLayerHolder() {
+        if (null == mActionLayerHolder) {
+            if (mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VisionAgent) {
+                mActionLayerHolder = new VisionActionLayerHolder();
+            } else {
+                mActionLayerHolder = new AudioActionLayerHolder();
+            }
+            mActionLayerHolder.init();
+        }
     }
 
     private void updateCallTips() {
@@ -569,7 +607,7 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         }
 
         private void updateSubtitleVisibility() {
-            if (!mUseAvatar || mFirstAvatarFrameDrawn) {
+            if (!useAvatar() || mFirstAvatarFrameDrawn) {
                 Log.i("AUIAICall", "updateSubtitleVisibility setSubtitleLayoutVisibility true");
                 setSubtitleLayoutVisibility(true);
             } else {
@@ -604,6 +642,11 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             mIvSubtitle.setImageResource(
                     isAsrText ? R.drawable.ic_subtitle_user : R.drawable.ic_subtitle_robot
             );
+            if (mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VisionAgent) {
+                mTvSubtitle.setTextColor(mARTCAICallEngine.isLocalCameraMute() ?
+                        getResources().getColor(R.color.layout_base_light_white) :
+                        getResources().getColor(R.color.layout_base_gray));
+            }
         }
 
         private void setSubtitleLayoutVisibility(boolean isVisible) {
@@ -683,20 +726,29 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             }
         }
 
+        private float measureText(TextPaint textPaint, String ch, float lineWidth) {
+            if ("\n".equals(ch)) {
+                return lineWidth;
+            } else {
+                return textPaint.measureText(ch);
+            }
+        }
+
         private int getCropDisplayIndex(String displayText) {
             int cropIndex = 0;
             if (!TextUtils.isEmpty(displayText)) {
                 TextPaint textPaint = mTvSubtitle.getPaint();
 
                 float targetWordMeasureWidth = textPaint.measureText(TARGET_WORD);
-                float maxWidth = mTvSubtitle.getWidth() * mTvSubtitle.getMaxLines() - targetWordMeasureWidth*3f;
+                float lineWidth = mTvSubtitle.getWidth();
+                float maxWidth = lineWidth * mTvSubtitle.getMaxLines() - targetWordMeasureWidth*3f;
                 float displayWidth = 0f;
 
                 char displayCharArray[] = displayText.toCharArray();
                 cropIndex = displayCharArray.length;
                 for (int i = 0; i < displayCharArray.length; i++) {
                     String ch = String.valueOf(displayCharArray[i]);
-                    displayWidth += textPaint.measureText(ch);
+                    displayWidth += measureText(textPaint, ch, lineWidth);
 //                    Log.i("AUIAICall", "getCropDisplayIndex [index: " + i + ", str: " + ch + ", maxWidth: " + maxWidth + ", displayWidth" + displayWidth + "]");
                     if (maxWidth <= displayWidth) {
                         cropIndex = i - 1;
@@ -777,4 +829,161 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         }
     }
 
+    private abstract class ActionLayerHolder {
+        protected View mActionLayer = null;
+        protected ActionLayerHolder(View actionLayer) {
+            findViewById(R.id.action_layer_voice).setVisibility(View.GONE);
+            findViewById(R.id.action_layer_video).setVisibility(View.GONE);
+            mActionLayer = actionLayer;
+            mActionLayer.setVisibility(View.VISIBLE);
+        }
+        protected void init() {
+            mActionLayer.findViewById(R.id.btn_stop_call).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if (handUp(false)) {
+                        finish();
+                    }
+                }
+            });
+            mActionLayer.findViewById(R.id.btn_mute_call).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    boolean isMicrophoneOn = !mARTCAICallEngine.isMicrophoneOn();
+                    mARTCAICallEngine.switchMicrophone(isMicrophoneOn);
+                    updateMuteButtonUI(isMicrophoneOn);
+                    updateUIByEngineState();
+                }
+            });
+            mActionLayer.findViewById(R.id.btn_speaker).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    boolean isSpeakerOn = mARTCAICallEngine.isSpeakerOn();
+                    mARTCAICallEngine.enableSpeaker(!isSpeakerOn);
+                    updateSpeakerButtonUI();
+                }
+            });
+            updateSpeakerButtonUI();
+        }
+
+        private void updateMuteButtonUI(boolean isMuted) {
+            ImageView ivMuteCall = (ImageView) mActionLayer.findViewById(R.id.iv_mute_call);
+            TextView tvMuteCall = (TextView) mActionLayer.findViewById(R.id.tv_mute_call);
+            if (isMuted) {
+                ivMuteCall.setImageResource(R.drawable.ic_voice_mute);
+                tvMuteCall.setText(R.string.mute_call);
+            } else {
+                ivMuteCall.setImageResource(R.drawable.ic_voice_open);
+                tvMuteCall.setText(R.string.unmute_call);
+            }
+        }
+
+        private void updateSpeakerButtonUI() {
+            boolean isSpeakerOn = null != mARTCAICallEngine ? mARTCAICallEngine.isSpeakerOn() : true;
+            ImageView ivSpeaker = (ImageView) mActionLayer.findViewById(R.id.iv_speaker);
+            TextView tvSpeaker = (TextView) mActionLayer.findViewById(R.id.tv_speaker);
+            if (isSpeakerOn) {
+                ivSpeaker.setImageResource(R.drawable.ic_speaker_on);
+                tvSpeaker.setText(R.string.speaker_on);
+            } else {
+                ivSpeaker.setImageResource(R.drawable.ic_speaker_off);
+                tvSpeaker.setText(R.string.speaker_on);
+            }
+        }
+
+    }
+    // VisionChat
+    private class VisionActionLayerHolder extends ActionLayerHolder {
+        private VisionActionLayerHolder() {
+            super(findViewById(R.id.action_layer_video));
+        }
+        @Override
+        protected void init() {
+            mActionLayer.findViewById(R.id.btn_camera).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    boolean isLocalCameraMute = !mARTCAICallEngine.isLocalCameraMute();
+                    mARTCAICallEngine.muteLocalCamera(isLocalCameraMute);
+                    updateCameraButtonUI(isLocalCameraMute);
+                    updateAvatarVisibility(mAiAgentType);
+                }
+            });
+            mActionLayer.findViewById(R.id.btn_camera_direction).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    mARTCAICallEngine.switchCamera();
+                }
+            });
+            super.init();
+        }
+        private void updateCameraButtonUI(boolean isCameraMute) {
+            ImageView ivCamera = (ImageView) mActionLayer.findViewById(R.id.iv_camera);
+            TextView tvCamera = (TextView) mActionLayer.findViewById(R.id.tv_camera);
+            if (isCameraMute) {
+                ivCamera.setImageResource(R.drawable.ic_camera_preview_off);
+                tvCamera.setText(R.string.camera_off);
+            } else {
+                ivCamera.setImageResource(R.drawable.ic_camera_preview_on);
+                tvCamera.setText(R.string.camera_on);
+            }
+        }
+    }
+
+    // VoiceChat、AvatarChat
+    private class AudioActionLayerHolder extends ActionLayerHolder {
+        private AudioActionLayerHolder() {
+            super(findViewById(R.id.action_layer_voice));
+        }
+        @Override
+        protected void init() {
+            super.init();
+        }
+    }
+
+    private class SmallVideoViewHolder {
+        private FrameLayout mSmallAvatarLayerContainer = null;
+        private FrameLayout mSmallAvatarLayer = null;
+
+        private int mMinMargin;
+
+        private int mLeftMargin, mTopMargin;
+
+        public void init(Context context) {
+            mMinMargin = DisplayUtil.dip2px(10);
+
+            mSmallAvatarLayerContainer = findViewById(R.id.small_avatar_layer_container);
+            mSmallAvatarLayer = findViewById(R.id.small_avatar_layer);
+
+            FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams)mSmallAvatarLayer.getLayoutParams();
+            mLeftMargin = layoutParams.leftMargin;
+            mTopMargin = layoutParams.topMargin;
+
+            mSmallAvatarLayer.setOnTouchListener(new View.OnTouchListener() {
+                private PointF downPoint = new PointF();
+                private PointF curPoint = new PointF();
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+                    Log.d("SmallVideoViewHolder", "mSmallAvatarLayer onTouch [event: " + event.getAction() + ", x: " + event.getX() + ", y: " + event.getY());
+                    return false;
+                }
+            });
+
+            mSmallAvatarLayer.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Log.d("SmallVideoViewHolder", "mSmallAvatarLayer onClick");
+                }
+            });
+
+        }
+    }
+
+    public void copyToClipboard(Context context, String text) {
+        // 获取剪贴板管理器
+        ClipboardManager clipboard = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+        // 创建剪贴板数据
+        ClipData clip = ClipData.newPlainText("AUIAICall", text); // "label" 可以自定义
+        // 将数据放入剪贴板
+        clipboard.setPrimaryClip(clip);
+    }
 }

@@ -4,7 +4,6 @@ import static com.alivc.rtc.AliRtcEngine.AliRtcDataMsgType.AliEngineDataMsgCusto
 import static com.alivc.rtc.AliRtcEngine.AliRtcVideoTrack.AliRtcVideoTrackCamera;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.SurfaceView;
 import android.view.ViewGroup;
 
@@ -23,14 +22,19 @@ public class ARTCAICallRtcWrapper {
     private AliRtcEngine mAliRtcEngine = null;
     private ARtcConfig mRtcConfig = null;
     private Context mContext = null;
-    private AliRtcEngine.AliRtcVideoCanvas mCanvas = null;
+    private AliRtcEngine.AliRtcVideoCanvas mRemoteVideoCanvas = null;
+    private AliRtcEngine.AliRtcVideoCanvas mLocalVideoCanvas = null;
 
-    private ViewGroup mAvatarViewGroup = null;
-    private ViewGroup.LayoutParams mLayoutParams = null;
+    private ViewGroup mRemoteViewGroup = null;
+    private ViewGroup.LayoutParams mRemoteVideoLayoutParams = null;
+
+    private ViewGroup mLocalViewGroup = null;
+    private ViewGroup.LayoutParams mLocalLayoutParams = null;
 
     public static class ARtcConfig {
         public boolean enableAudioDump = false;
-        public boolean useVideo = false;
+        public boolean enableRemoteVideo = false;
+        public boolean enableLocalVideo = false;
         public boolean usePreEnv = false;
     }
 
@@ -38,6 +42,7 @@ public class ARTCAICallRtcWrapper {
         JSONObject jsonParam = new JSONObject();
         JSONObject jsonData = new JSONObject();
         JSONObject jsonAudio = new JSONObject();
+        JSONObject jsonNet = new JSONObject();
         try {
             jsonData.put("enablePubDataChannel", true);
             jsonData.put("enableSubDataChannel", true);
@@ -45,6 +50,9 @@ public class ARTCAICallRtcWrapper {
 
             jsonAudio.put("user_specified_loop_delay", true);
             jsonParam.put("audio", jsonAudio);
+
+            jsonNet.put("enable_ai_low_latency_channel_mode", true);
+            jsonParam.put("net", jsonNet);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -58,7 +66,7 @@ public class ARTCAICallRtcWrapper {
                 jsonObject.put("user_specified_audio_dump", "TRUE");
             }
             if (mRtcConfig.usePreEnv) {
-//                jsonObject.put("user_specified_environment", "PRE_RELEASE");
+                jsonObject.put("user_specified_environment", "PRE_RELEASE");
             }
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -77,7 +85,8 @@ public class ARTCAICallRtcWrapper {
         this.mAliRtcEngine = aliRtcEngine;
         if (aliRtcEngine != null) {
             aliRtcEngine.setChannelProfile(AliRtcEngine.AliRTCSdkChannelProfile.AliRTCSdkInteractiveLive);
-            aliRtcEngine.setAudioOnlyMode(!mRtcConfig.useVideo);
+            boolean audioOnly = !mRtcConfig.enableRemoteVideo && !mRtcConfig.enableLocalVideo;
+            aliRtcEngine.setAudioOnlyMode(audioOnly);
             aliRtcEngine.setAudioProfile(AliRtcEngine.AliRtcAudioProfile.AliRtcEngineHighQualityMode, AliRtcEngine.AliRtcAudioScenario.AliRtcSceneChatroomMode);
             aliRtcEngine.startAudioPlayer();
 
@@ -92,11 +101,19 @@ public class ARTCAICallRtcWrapper {
             aliRtcEngine.setClientRole(AliRtcEngine.AliRTCSdkClientRole.AliRTCSdkInteractive);
             aliRtcEngine.setDefaultSubscribeAllRemoteAudioStreams(true);
             aliRtcEngine.subscribeAllRemoteAudioStreams(true);
-            aliRtcEngine.setDefaultSubscribeAllRemoteVideoStreams(mRtcConfig.useVideo);
-            aliRtcEngine.subscribeAllRemoteVideoStreams(mRtcConfig.useVideo);
+            aliRtcEngine.setDefaultSubscribeAllRemoteVideoStreams(mRtcConfig.enableRemoteVideo);
+            aliRtcEngine.subscribeAllRemoteVideoStreams(mRtcConfig.enableRemoteVideo);
             aliRtcEngine.publishLocalAudioStream(true);
-            aliRtcEngine.publishLocalVideoStream(false);
+            aliRtcEngine.publishLocalVideoStream(!audioOnly);
             aliRtcEngine.muteLocalMic(false, AliRtcEngine.AliRtcMuteLocalAudioMode.AliRtcMuteAllAudioMode);
+            if (!audioOnly) {
+                AliRtcEngine.AliRtcVideoEncoderConfiguration aliRtcVideoEncoderConfiguration = new AliRtcEngine.AliRtcVideoEncoderConfiguration();
+                aliRtcVideoEncoderConfiguration.dimensions = new AliRtcEngine.AliRtcVideoDimensions(360, 640);
+                aliRtcVideoEncoderConfiguration.frameRate = 15;
+                aliRtcVideoEncoderConfiguration.bitrate = 512;
+                aliRtcVideoEncoderConfiguration.keyFrameInterval = 1000;
+                aliRtcEngine.setVideoEncoderConfiguration(aliRtcVideoEncoderConfiguration);
+            }
         }
     }
 
@@ -182,17 +199,47 @@ public class ARTCAICallRtcWrapper {
         }
     }
 
-    public void setAvatarViewGroup(ViewGroup avatarViewGroup, ViewGroup.LayoutParams layoutParams) {
-        mAvatarViewGroup = avatarViewGroup;
-        mLayoutParams = layoutParams;
+    public boolean muteLocalCamera(boolean mute) {
+        boolean ret = false;
+        if (null != mAliRtcEngine) {
+            ret = 0 == mAliRtcEngine.muteLocalCamera(mute, AliRtcVideoTrackCamera);
+            if (ret) {
+                if (mute) {
+                    mAliRtcEngine.stopPreview();
+                    mAliRtcEngine.publishLocalVideoStream(false);
+                } else {
+                    mAliRtcEngine.startPreview();
+                    mAliRtcEngine.publishLocalVideoStream(true);
+                }
+            }
+        }
+        return ret;
     }
 
+    public boolean switchCamera() {
+        boolean ret = false;
+        if (null != mAliRtcEngine) {
+            ret = 0 == mAliRtcEngine.switchCamera();
+        }
+        return ret;
+    }
+
+
+    public void setAvatarViewGroup(ViewGroup avatarViewGroup, ViewGroup.LayoutParams layoutParams) {
+        mRemoteViewGroup = avatarViewGroup;
+        mRemoteVideoLayoutParams = layoutParams;
+    }
+
+    public void setVisionPreviewView(ViewGroup viewGroup, ViewGroup.LayoutParams visionLayoutParams) {
+        mLocalViewGroup = viewGroup;
+        mLocalLayoutParams = visionLayoutParams;
+    }
     public void initRemoteSurfaceView(String uid) {
-        if (mRtcConfig.useVideo && null == mCanvas) {
-            mCanvas = new AliRtcEngine.AliRtcVideoCanvas();
+        if (mRtcConfig.enableRemoteVideo && null == mRemoteVideoCanvas) {
+            mRemoteVideoCanvas = new AliRtcEngine.AliRtcVideoCanvas();
             SurfaceView avatarSurfaceView = mAliRtcEngine.createRenderSurfaceView(mContext);
             if (avatarSurfaceView != null) {
-                mCanvas.view = avatarSurfaceView;
+                mRemoteVideoCanvas.view = avatarSurfaceView;
                 avatarSurfaceView.setZOrderOnTop(true);
                 avatarSurfaceView.setZOrderMediaOverlay(true);
             }
@@ -200,8 +247,31 @@ public class ARTCAICallRtcWrapper {
 //        canvas.renderMode = mRtcCanvasRenderMode;
 //        canvas.rotationMode = mRemoteRotationMode;
 
-            mAvatarViewGroup.addView(avatarSurfaceView, mLayoutParams);
-            mAliRtcEngine.setRemoteViewConfig(mCanvas, uid, AliRtcVideoTrackCamera);
+            mRemoteViewGroup.addView(avatarSurfaceView, mRemoteVideoLayoutParams);
+            mAliRtcEngine.setRemoteViewConfig(mRemoteVideoCanvas, uid, AliRtcVideoTrackCamera);
+        }
+    }
+
+    public void initLocalPreview() {
+        if (mRtcConfig.enableLocalVideo && null == mLocalVideoCanvas) {
+            mLocalVideoCanvas = new AliRtcEngine.AliRtcVideoCanvas();
+            SurfaceView avatarSurfaceView = mAliRtcEngine.createRenderSurfaceView(mContext);
+            if (avatarSurfaceView != null) {
+                mLocalVideoCanvas.view = avatarSurfaceView;
+                avatarSurfaceView.setZOrderOnTop(true);
+                avatarSurfaceView.setZOrderMediaOverlay(true);
+            }
+//        canvas.backgroundColor = mBackgroundColor;
+//        canvas.renderMode = mRtcCanvasRenderMode;
+//        canvas.rotationMode = mRemoteRotationMode;
+            AliRtcEngine.AliEngineCameraCapturerConfiguration cameraCapturerConfiguration = new AliRtcEngine.AliEngineCameraCapturerConfiguration();
+            cameraCapturerConfiguration.cameraDirection = AliRtcEngine.AliRtcCameraDirection.CAMERA_REAR;
+            mAliRtcEngine.setCameraCapturerConfiguration(cameraCapturerConfiguration);
+
+            mAliRtcEngine.startPreview();
+
+            mLocalViewGroup.addView(avatarSurfaceView, mLocalLayoutParams);
+            mAliRtcEngine.setLocalViewConfig(mLocalVideoCanvas, AliRtcVideoTrackCamera);
         }
     }
 

@@ -35,6 +35,9 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
     private ViewGroup mAvatarViewGroup = null;
     private ViewGroup.LayoutParams mAvatarLayoutParams = null;
 
+    private ViewGroup mVisionViewGroup = null;
+    private ViewGroup.LayoutParams mVisionLayoutParams = null;
+
     private IARTCAICallEngineCallback mEngineCallback = null;
 
     private ARTCAICallRtcWrapper mARTCAICallRtcWrapper = null;
@@ -70,9 +73,15 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
             if (result == 0) {
                 mIsJoined.set(true);
                 syncConfigToRTCEngine();
+
+                mCallbackHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        mARTCAICallRtcWrapper.initLocalPreview();
+                    }
+                });
             } else {
                 notifyErrorOccurs(AICallErrorCode.StartFailed);
-
             }
         }
 
@@ -119,9 +128,9 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
                                                  AliRtcEngine.AliRtcSubscribeState newState,
                                                  int elapseSinceLastState, String channel) {
             super.onAudioSubscribeStateChanged(uid, oldState, newState, elapseSinceLastState, channel);
-            Log.i(TAG, "onAudioSubscribeStateChanged: [uid: " + uid +
-                    ", oldState: " + oldState + ", newState: " + newState +
-                    ", elapseSinceLastState: " + elapseSinceLastState + ", channel: " + channel + "]");
+//            Log.i(TAG, "onAudioSubscribeStateChanged: [uid: " + uid +
+//                    ", oldState: " + oldState + ", newState: " + newState +
+//                    ", elapseSinceLastState: " + elapseSinceLastState + ", channel: " + channel + "]");
         }
 
         @Override
@@ -375,7 +384,7 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
 
     @Override
     public void call(String rtcToken, String aiAgentInstanceId, String aiAgentUserId, String channelId) {
-        Log.i(TAG, "call fail [rtcToken: " + rtcToken + ", aiAgentInstanceId: " + aiAgentInstanceId + ", aiAgentUserId: " + aiAgentUserId + ", channelId: " + channelId + "]");
+        Log.i(TAG, "call [rtcToken: " + rtcToken + ", aiAgentInstanceId: " + aiAgentInstanceId + ", aiAgentUserId: " + aiAgentUserId + ", channelId: " + channelId + "]");
         if (mIsHangUp.get()) {
             // 回调错误
             notifyErrorOccurs(AICallErrorCode.InvalidAction);
@@ -390,8 +399,11 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
 
             ARTCAICallRtcWrapper.ARtcConfig rtcConfig = new ARTCAICallRtcWrapper.ARtcConfig();
             rtcConfig.enableAudioDump = mCallConfig.enableAudioDump;
-            rtcConfig.useVideo = mAgentType == ARTCAICallAgentType.AvatarAgent;
+            rtcConfig.usePreEnv = mCallConfig.useRtcPreEnv;
+            rtcConfig.enableRemoteVideo = mAgentType == ARTCAICallAgentType.AvatarAgent;
+            rtcConfig.enableLocalVideo = mAgentType == ARTCAICallAgentType.VisionAgent;
             mARTCAICallRtcWrapper.setAvatarViewGroup(mAvatarViewGroup, mAvatarLayoutParams);
+            mARTCAICallRtcWrapper.setVisionPreviewView(mVisionViewGroup, mVisionLayoutParams);
             mARTCAICallRtcWrapper.init(mContext, rtcConfig, mRtcEngineEventListener,
                     mRtcEngineRemoteNotify, mAudioVolumeObserver);
             mARTCAICallRtcWrapper.join(mRtcAuthToken);
@@ -538,6 +550,28 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
     public void setAvatarAgentView(ViewGroup viewGroup, ViewGroup.LayoutParams avatarLayoutParams) {
         mAvatarViewGroup = viewGroup;
         mAvatarLayoutParams = avatarLayoutParams;
+    }
+
+    @Override
+    public void setVisionPreviewView(ViewGroup viewGroup, ViewGroup.LayoutParams visionLayoutParams) {
+        mVisionViewGroup = viewGroup;
+        mVisionLayoutParams = visionLayoutParams;
+    }
+
+    @Override
+    public boolean muteLocalCamera(boolean mute) {
+        mCallConfig.isCameraMute = mute;
+        return mARTCAICallRtcWrapper.muteLocalCamera(mute);
+    }
+
+    @Override
+    public boolean isLocalCameraMute() {
+        return mCallConfig.isCameraMute;
+    }
+
+    @Override
+    public boolean switchCamera() {
+        return mARTCAICallRtcWrapper.switchCamera();
     }
 
     @Override

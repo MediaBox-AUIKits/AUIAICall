@@ -22,3 +22,8 @@
 * Web：支持数字人
 * Web：通过AICallKit SDK集成，快速实现业务功能
 * Server：升级到v2
+
+## v1.4.0
+发布时间：2024-10-18
+* Android&iOS：支持视频理解智能体（VisionChat）
+* Server：支持视频理解智能体（VisionChat）

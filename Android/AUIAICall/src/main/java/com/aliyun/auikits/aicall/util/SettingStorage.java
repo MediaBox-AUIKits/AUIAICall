@@ -17,10 +17,12 @@ public class SettingStorage {
     public static final String KEY_SHOW_EXTRA_DEBUG_CONFIG = "KEY_SHOW_EXTRA_DEBUG_CONFIG";
     public static final String KEY_APP_SERVER_TYPE = "KEY_APP_SERVER_TYPE";
     public static final String KEY_DEPOSIT_SWITCH = "KEY_DEPOSIT_SWITCH";
+    public static final String KEY_USE_RTC_PRE_ENV_SWITCH = "KEY_USE_RTC_PRE_ENV_SWITCH";
 
     public static final boolean DEFAULT_DEPOSIT_SWITCH = true;
     public static final boolean DEFAULT_EXTRA_DEBUG_CONFIG = false;
     public static final boolean DEFAULT_APP_SERVER_TYPE = false;
+    public static final boolean DEFAULT_USE_RTC_PRE_ENV = false;
 
     private SharedPreferences mSP = null;
 

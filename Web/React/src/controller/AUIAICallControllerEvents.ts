@@ -1,6 +1,4 @@
-import { AICallAgentState, AICallState } from '../core/interface';
-import { AICallSubtitleData } from '../core/message';
-import { AICallAgentInfo } from './service/interface';
+import { AICallAgentInfo, AICallAgentState, AICallState, AICallSubtitleData } from 'aliyun-auikit-aicall';
 
 interface AUIAICallControllerEvents {
   /**

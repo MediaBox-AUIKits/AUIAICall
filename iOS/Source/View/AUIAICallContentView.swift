@@ -13,9 +13,7 @@ import ARTCAICallKit
 
     public override init(frame: CGRect) {
         super.init(frame: frame)
-        
-        self.addSubview(self.agentRenderView)
-        
+                
         self.addSubview(self.tipsLabel)
         self.addSubview(self.callStateAni)
         
@@ -34,18 +32,12 @@ import ARTCAICallKit
     open override func layoutSubviews() {
         super.layoutSubviews()
         
-        self.agentRenderView.frame = self.bounds
-        self.gradientlayer.frame = CGRect(x: 0, y: self.agentRenderView.av_height - 308, width: self.agentRenderView.av_width, height: 308)
-        
-        self.avatarAgentView?.frame = self.agentRenderView.bounds
-        
-        let hei = self.agentRenderView.av_bottom - 228 - 18
-        self.voiceAgentAniView?.frame = CGRect(x: 0, y: UIView.av_safeTop + 44, width: self.agentRenderView.av_width, height: hei - UIView.av_safeTop - 44)
-
+        let hei = self.av_bottom - 228 - 18
         self.callStateAni.frame = CGRect(x: 0, y: UIView.av_safeTop + 44, width: self.av_width, height: hei - UIView.av_safeTop - 44)
-        self.tipsLabel.frame = CGRect(x: 0, y: hei, width: self.av_width, height: 18)
         
-        self.subtitleIcon.frame = CGRect(x: 50, y: 141, width: 14, height: 14)
+        self.updateAgentLayout()
+        
+        self.subtitleIcon.frame = CGRect(x: 50, y: 121, width: 14, height: 14)
         self.subtitleLabel.frame = CGRect(x: self.subtitleIcon.av_right + 8, y: self.subtitleIcon.av_top - 3, width: self.av_width - self.subtitleIcon.av_right - 8 - 48, height: 0)
         self.subtitleLabel.text = self.subtitleLabel.originalText
     }
@@ -88,23 +80,11 @@ import ARTCAICallKit
         return view
     }()
     
-    open var agentRenderView: UIView = {
-        let view = UIView()
-        return view
-    }()
-    
-    open var gradientlayer: CAGradientLayer = {
-        let layer = CAGradientLayer()
-        layer.locations = [0.27, 0.99]
-        layer.startPoint = CGPoint(x: 0.5, y: 0.06)
-        layer.endPoint = CGPoint(x: 0.5, y: 0.4)
-        layer.colors = [UIColor.av_color(withHexString: "#001146", alpha: 0.0).cgColor, UIColor.av_color(withHexString: "#00040F", alpha: 1.0).cgColor]
-        return layer
-    }()
-
-    
+    open var agentType: ARTCAICallAgentType = .VoiceAgent
     open var voiceAgentAniView: AUIAICallAgentStateAnimation? = nil
     open var avatarAgentView: UIView? = nil
+    open var visionCameraView: UIView? = nil
+    open var visionAgentView: UIView? = nil
     
     open func updateAgentType(agentType: ARTCAICallAgentType) {
         self.voiceAgentAniView?.removeFromSuperview()
@@ -113,28 +93,57 @@ import ARTCAICallKit
         self.avatarAgentView?.removeFromSuperview()
         self.avatarAgentView = nil
         
+        self.visionCameraView?.removeFromSuperview()
+        self.visionCameraView = nil
+        
+        self.agentType = agentType
         if agentType == .VoiceAgent {
             let view = AUIAICallAgentStateAnimation()
             view.isHidden = true
             self.insertSubview(view, at: 0)
             self.voiceAgentAniView = view
-            
-            let hei = self.av_bottom - 228 - 18
-            self.voiceAgentAniView?.frame = CGRect(x: 0, y: UIView.av_safeTop + 44, width: self.av_width, height: hei - UIView.av_safeTop - 44)
         }
-        else {
+        else if agentType == .AvatarAgent {
             let view = UIView()
             // view.backgroundColor = UIColor.white
             view.isHidden = true
             self.insertSubview(view, at: 0)
             self.avatarAgentView = view
+        }
+        else if agentType == .VisionAgent {
+            let cameraView = UIView()
+            // view.backgroundColor = UIColor.white
+            cameraView.isHidden = true
+            self.insertSubview(cameraView, at: 0)
+            self.visionCameraView = cameraView
             
+            let agentView = UIImageView()
+            agentView.image = AUIAICallBundle.getCommonImage("ic_agent")
+            agentView.contentMode = .center
+            agentView.isHidden = false
+            self.visionCameraView?.addSubview(agentView)
+            self.visionAgentView = agentView
+        }
+        self.updateAgentLayout()
+        
+    }
+    
+    private func updateAgentLayout() {
+        if agentType == .VoiceAgent {
+            let hei = self.av_bottom - 228 - 18
+            self.tipsLabel.frame = CGRect(x: 0, y: hei, width: self.av_width, height: 18)
+            self.voiceAgentAniView?.frame = CGRect(x: 0, y: UIView.av_safeTop + 44, width: self.av_width, height: hei - UIView.av_safeTop - 44)
+        }
+        else if agentType == .AvatarAgent {
+            let hei = self.av_bottom - 228 - 18
+            self.tipsLabel.frame = CGRect(x: 0, y: hei, width: self.av_width, height: 18)
             self.avatarAgentView?.frame = self.bounds
         }
-        
-        self.gradientlayer.removeFromSuperlayer()
-        if agentType == .AvatarAgent {
-            self.agentRenderView.layer.addSublayer(self.gradientlayer)
+        else if agentType == .VisionAgent {
+            let hei = self.av_bottom - 240 - 18
+            self.tipsLabel.frame = CGRect(x: 0, y: hei, width: self.av_width, height: 18)
+            self.visionCameraView?.frame = self.bounds
+            self.visionAgentView?.frame = CGRect(x: 0, y: UIView.av_safeTop + 44, width: self.av_width, height: hei - UIView.av_safeTop - 44)
         }
     }
     

@@ -19,6 +19,7 @@ biz:
   ai_aent:
     voice_chat_ai_agent_id: "xxxxxxx"
     avatar_ai_chat_3d_agent_id: "xxxxxxx"
+    vision_chat_ai_agent_id: "xxxxxxx"
     region: "cn-shanghai"
 http:
   cors:
