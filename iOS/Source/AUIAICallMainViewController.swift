@@ -120,7 +120,7 @@ import ARTCAICallKit
             }
             else {
                 let agentType = self.sysAgentTabView.agentType
-                self.startCall(agentType: agentType, agentId: nil)
+                self.startCall(agentType: agentType)
             }
         }
         return btn
@@ -151,7 +151,7 @@ import ARTCAICallKit
             let qr = AVQRCodeScanner()
             qr.scanResultBlock = { scaner, content in
                 scaner.navigationController?.popViewController(animated: true)
-                if let result = self?.checkAuthToken(authToken: content) {
+                if let _ = self?.checkAuthToken(authToken: content) {
                     self?.cusAgentContentView.inputField.text = content
                 }
             }
@@ -202,21 +202,21 @@ import ARTCAICallKit
     
     open func startCall(authToken: String) {
         if let result = self.checkAuthToken(authToken: authToken) {
-            self.startCall(agentType: result.agentType, agentId: result.agentId)
+            self.startCall(agentType: result.agentType, agentId: result.agentId, region: result.region)
         }
     }
     
-    open func startCall(agentType: ARTCAICallAgentType, agentId: String?) {
+    open func startCall(agentType: ARTCAICallAgentType, agentId: String? = nil, region: String? = nil) {
         if agentType == .AvatarAgent {
             let seconds: UInt32 = 5 * 60
-            AUIAICallManager.defaultManager.startCall(agentType: agentType, agentId: agentId, limitSecond: seconds, viewController: self)
+            AUIAICallManager.defaultManager.startCall(agentType: agentType, agentId: agentId, region: region, limitSecond: seconds, viewController: self)
             return
         }
         
-        AUIAICallManager.defaultManager.startCall(agentType: agentType, agentId: agentId, viewController: self)
+        AUIAICallManager.defaultManager.startCall(agentType: agentType, agentId: agentId, region: region, viewController: self)
     }
     
-    func checkAuthToken(authToken: String) -> (agentId: String, agentType: ARTCAICallAgentType)? {
+    func checkAuthToken(authToken: String) -> (agentId: String, agentType: ARTCAICallAgentType, region: String?)? {
         let json = self.decodeAndDeserialize(base64String: authToken)
         guard let json = json else {
             AVAlertController.show(AUIAICallBundle.getString("Invalid Token"), vc: self)
@@ -255,7 +255,9 @@ import ARTCAICallKit
             return nil
         }
         
-        return (agentId, agentType)
+        let region = json["Region"] as? String
+        
+        return (agentId, agentType, region)
     }
     
     func decodeAndDeserialize(base64String: String) -> [String: Any]? {
@@ -300,11 +302,17 @@ import ARTCAICallKit
         super.init(frame: frame)
         
         self.audioCallBtn.sizeToFit()
+        self.audioCallBtn.av_centerX = self.av_width / 6.0
         self.addSubview(self.audioCallBtn)
+        
         self.avatarCallBtn.sizeToFit()
+        self.avatarCallBtn.av_centerX = self.av_width / 6.0 * 3
         self.addSubview(self.avatarCallBtn)
+        
         self.visionCallBtn.sizeToFit()
+        self.visionCallBtn.av_centerX = self.av_width / 6.0 * 5
         self.addSubview(self.visionCallBtn)
+        
         self.addSubview(self.lineView)
         self.contentSize = CGSize(width: max(self.visionCallBtn.av_right + 20, self.av_width), height: self.av_height)
         self.showsHorizontalScrollIndicator = false

@@ -1,7 +1,7 @@
 import { AICallAgentInfo, AICallAgentType } from 'aliyun-auikit-aicall';
 import AUIAICallConfig from '../AUIAICallConfig';
 
-import { APP_SERVER, JSONData, ServiceAuthError, TemplateConfig, WorkflowType } from './interface';
+import { APP_SERVER, getWorkflowType, JSONData, ServiceAuthError, TemplateConfig, WorkflowType } from './interface';
 
 class StandardAppService {
   private getInitTemplateConfig = (config: AUIAICallConfig): TemplateConfig => {
@@ -12,14 +12,13 @@ class StandardAppService {
     if (config.agentVoiceId) {
       configDict.VoiceId = config.agentVoiceId;
     }
-    if (config.agentType === AICallAgentType.AvatarAgent) {
-      if (config.agentAvatarId) {
-        configDict.AvatarId = config.agentAvatarId;
-      }
-      templateConfig.AvatarChat3D = configDict;
-    } else {
-      templateConfig.VoiceChat = configDict;
+    if (config.agentType === AICallAgentType.AvatarAgent && config.agentAvatarId) {
+      configDict.AvatarId = config.agentAvatarId;
     }
+    if (config.enablePushToTalk) {
+      configDict.EnablePushToTalk = config.enablePushToTalk;
+    }
+    templateConfig[getWorkflowType(config.agentType)] = configDict;
 
     return templateConfig;
   };
@@ -52,8 +51,7 @@ class StandardAppService {
     if (config.agentId) {
       param.ai_agent_id = config.agentId;
     } else {
-      param.workflow_type =
-        config.agentType === AICallAgentType.AvatarAgent ? WorkflowType.AvatarChat3D : WorkflowType.VoiceChat;
+      param.workflow_type = getWorkflowType(config.agentType);
     }
 
     return fetch(`${APP_SERVER}/api/v2/aiagent/generateAIAgentCall`, {
@@ -74,7 +72,14 @@ class StandardAppService {
       })
       .then((data) => {
         if (data.code === 200) {
-          return data;
+          return {
+            agentType: config.agentType,
+            instanceId: data.ai_agent_instance_id,
+            channelId: data.channel_id,
+            userId: data.ai_agent_user_id,
+            rtcToken: data.rtc_auth_token,
+            reqId: data.request_id || '',
+          };
         }
         throw new Error(data.message || 'request error');
       });

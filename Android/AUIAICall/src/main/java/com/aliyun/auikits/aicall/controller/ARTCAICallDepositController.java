@@ -18,7 +18,7 @@ public class ARTCAICallDepositController extends ARTCAICallController {
             @Override
             public void run() {
                 setCallState(AICallState.Connecting, ARTCAICallEngine.AICallErrorCode.None);
-                mARTCAICallEngine.getIARTCAICallService().generateAIAgentCall(mUserId, mARTCAiCallConfig.aiAgentId, mAiAgentType, getStartActionCallback());
+                mARTCAICallEngine.getIARTCAICallService().generateAIAgentCall(mUserId, mARTCAiCallConfig.aiAgentId, mAiAgentType, mARTCAiCallConfig, getStartActionCallback());
             }
         });
     }

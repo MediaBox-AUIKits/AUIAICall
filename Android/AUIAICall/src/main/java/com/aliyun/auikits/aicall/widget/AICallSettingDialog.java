@@ -4,13 +4,16 @@ import android.content.Context;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.CompoundButton;
 import android.widget.Switch;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.aliyun.auikits.aicall.BuildConfig;
 import com.aliyun.auikits.aicall.R;
 import com.aliyun.auikits.aicall.base.card.CardEntity;
 import com.aliyun.auikits.aicall.base.card.CardListAdapter;
@@ -36,27 +39,35 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AICallSettingDialog {
+    private static final boolean IS_VOICE_PRINT_FUNCTION_SHOWN = BuildConfig.TEST_ENV_MODE;
+
     CardListAdapter mCardListAdapter;
     AudioToneContentModel mAudioToneContentModel;
     ContentViewModel mContentViewModel;
     BizParameter mBizParameter;
     ARTCAICallEngine mARTCAICallEngine;
     boolean mIsAvatarAgent;
+    boolean mIsVoicePrintRecognized;
+    TextView mTvNaturalConversion = null;
+    TextView mTvPushToTalk = null;
+    ViewGroup mVgInterruptConfig = null;
+    ViewGroup mVgVoicePrintStatus = null;
 
-    public static void show(Context context, ARTCAICallEngine aRTCAICallEngine, boolean isAvatarAgent) {
+
+    public static void show(Context context, ARTCAICallEngine aRTCAICallEngine, boolean isAvatarAgent, boolean isVoicePrintRecognized) {
         View view = LayoutInflater.from(context).inflate(R.layout.dialog_aicall_setting, null, false);
-        AICallSettingDialog aiCallSettingDialog = new AICallSettingDialog(view, aRTCAICallEngine, isAvatarAgent);
+        AICallSettingDialog aiCallSettingDialog = new AICallSettingDialog(view, aRTCAICallEngine, isAvatarAgent, isVoicePrintRecognized);
         view.setTag(aiCallSettingDialog);
 
         ViewHolder viewHolder = new ViewHolder(view);
         DialogPlus dialog = DialogPlus.newDialog(context)
                 .setContentHolder(viewHolder)
                 .setGravity(Gravity.BOTTOM)
-                .setExpanded(true, DisplayUtil.dip2px(360))
+                .setExpanded(true, DisplayUtil.dip2px(420))
                 .setOverlayBackgroundResource(android.R.color.transparent)
                 .setContentBackgroundResource(R.color.layout_base_dialog_background)
                 .setOnClickListener((dialog1, v) -> {
-//                        dialog1.dismiss();
+                    aiCallSettingDialog.onClick(v);
                 })
                 .setOnDismissListener(new OnDismissListener() {
                     @Override
@@ -118,25 +129,15 @@ public class AICallSettingDialog {
         }
     }
 
-    private AICallSettingDialog(View root, ARTCAICallEngine aRTCAICallEngine, boolean isAvatarAgent) {
+    private AICallSettingDialog(View root, ARTCAICallEngine aRTCAICallEngine, boolean isAvatarAgent,
+                                boolean isVoicePrintRecognized) {
         mARTCAICallEngine = aRTCAICallEngine;
         mIsAvatarAgent = isAvatarAgent;
+        mIsVoicePrintRecognized = isVoicePrintRecognized;
 
-        Switch svInterruptConfig = root.findViewById(R.id.sv_interrupt_config);
-        svInterruptConfig.setChecked(mARTCAICallEngine.isVoiceInterruptEnable());
-        svInterruptConfig.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (!mARTCAICallEngine.enableVoiceInterrupt(isChecked)) {
-                    buttonView.setChecked(!isChecked);
-                    ToastHelper.showToast(buttonView.getContext(), R.string.tips_notice_before_connected, Toast.LENGTH_SHORT);
-                } else {
-                    ToastHelper.showToast(buttonView.getContext(),
-                            isChecked ? R.string.config_interrupt_title_open_toast : R.string.config_interrupt_title_close_toast,
-                            Toast.LENGTH_SHORT);
-                }
-            }
-        });
+        initInterruptButton(root);
+        initVoicePrintButton(root);
+        initConversionModeButton(root);
 
         if (mIsAvatarAgent) {
             root.findViewById(R.id.ll_audio_tone_config).setVisibility(View.GONE);
@@ -195,4 +196,88 @@ public class AICallSettingDialog {
             mContentViewModel.bindView(mCardListAdapter);
         }
     }
+
+    private void initInterruptButton(View root) {
+        mVgInterruptConfig = root.findViewById(R.id.ll_interrupt_config);
+        Switch svInterruptConfig = root.findViewById(R.id.sv_interrupt_config);
+        svInterruptConfig.setChecked(mARTCAICallEngine.isVoiceInterruptEnable());
+        svInterruptConfig.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (!mARTCAICallEngine.enableVoiceInterrupt(isChecked)) {
+                    buttonView.setChecked(!isChecked);
+                    ToastHelper.showToast(buttonView.getContext(), R.string.tips_notice_before_connected, Toast.LENGTH_SHORT);
+                } else {
+                    ToastHelper.showToast(buttonView.getContext(),
+                            isChecked ? R.string.config_interrupt_title_open_toast : R.string.config_interrupt_title_close_toast,
+                            Toast.LENGTH_SHORT);
+                }
+            }
+        });
+    }
+
+    private void initVoicePrintButton(View root) {
+        if (IS_VOICE_PRINT_FUNCTION_SHOWN) {
+            Switch svVoicePrint = root.findViewById(R.id.sv_voiceprint);
+            svVoicePrint.setChecked(mARTCAICallEngine.isUsingVoicePrint());
+            svVoicePrint.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                    if (!mARTCAICallEngine.useVoicePrint(isChecked)) {
+                        buttonView.setChecked(!isChecked);
+                        ToastHelper.showToast(buttonView.getContext(), R.string.tips_notice_before_connected, Toast.LENGTH_SHORT);
+                    } else {
+                        ToastHelper.showToast(buttonView.getContext(),
+                                isChecked ? R.string.voiceprint_enable : R.string.voiceprint_disable,
+                                Toast.LENGTH_SHORT);
+                    }
+                }
+            });
+
+            mVgVoicePrintStatus = root.findViewById(R.id.ll_voiceprint_status);
+            mVgVoicePrintStatus.setVisibility(mIsVoicePrintRecognized ? View.VISIBLE : View.GONE);
+        }
+        root.findViewById(R.id.ll_voiceprint).setVisibility(IS_VOICE_PRINT_FUNCTION_SHOWN ?
+                View.VISIBLE : View.GONE);
+    }
+
+    private void initConversionModeButton(View root) {
+        mTvNaturalConversion = root.findViewById(R.id.tv_mode_natural_conversation);
+        mTvPushToTalk = root.findViewById(R.id.tv_mode_push_to_talk);
+        if (mARTCAICallEngine.isPushToTalkEnable()) {
+            mTvNaturalConversion.setSelected(false);
+            mTvPushToTalk.setSelected(true);
+
+            mVgInterruptConfig.setVisibility(View.GONE);
+        } else {
+            mTvNaturalConversion.setSelected(true);
+            mTvPushToTalk.setSelected(false);
+
+            mVgInterruptConfig.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void onClick(View v) {
+        if (v.getId() == R.id.tv_mode_natural_conversation) {
+            mARTCAICallEngine.enablePushToTalk(false);
+
+            mTvNaturalConversion.setSelected(true);
+            mTvPushToTalk.setSelected(false);
+
+            mVgInterruptConfig.setVisibility(View.VISIBLE);
+        } else if (v.getId() == R.id.tv_mode_push_to_talk) {
+            mARTCAICallEngine.enablePushToTalk(true);
+
+            mTvNaturalConversion.setSelected(false);
+            mTvPushToTalk.setSelected(true);
+
+            mVgInterruptConfig.setVisibility(View.GONE);
+        } else if (v.getId() == R.id.btn_delete_voiceprint) {
+            mARTCAICallEngine.clearVoicePrint();
+
+            mVgVoicePrintStatus.setVisibility(View.GONE);
+        }
+
+    }
+
 }

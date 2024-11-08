@@ -33,21 +33,30 @@
 
 .welcome-button-box {
   text-align: center;
-  font-size: 48px;
+  line-height: 1;
   color: #0064c8;
   color: var(--biz-ant-color-primary, #0064c8);
+
+  ._loading,
+  ._error {
+    font-size: 48px;
+  }
 
   ._start-btns {
     display: flex;
     .ant-btn {
-      width: 60px;
-      height: 60px;
+      width: 44px;
+      height: 44px;
+      vertical-align: bottom;
       padding: 0;
       border: none;
       color: #0064c8;
       color: var(--biz-ant-color-primary, #0064c8);
       &._start-btn {
-        font-size: 60px;
+        font-size: 44px;
+      }
+      &:hover {
+        transform: scale(1.1);
       }
     }
   }
@@ -57,5 +66,10 @@
     font-size: 14px;
     font-weight: normal;
     opacity: 0.9;
+    min-width: 84px;
+  }
+
+  ._backBtn {
+    margin-top: 12px;
   }
 }

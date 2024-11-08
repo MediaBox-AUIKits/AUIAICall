@@ -27,3 +27,9 @@
 发布时间：2024-10-18
 * Android&iOS：支持视频理解智能体（VisionChat）
 * Server：支持视频理解智能体（VisionChat）
+
+## v1.5.0
+发布时间：2024-11-08
+* Android&iOS&Web：支持对讲机模式
+* Android&iOS&Web：智能断句下实时字幕显示优化
+* Android&iOS&Web：修复已知问题

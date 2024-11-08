@@ -69,11 +69,16 @@
   font-size: 16px;
 }
 
-.call-block-title ._extra .ant-btn {
-  margin: -5px 0;
-  border: none;
-  padding: 4px 0;
-  box-shadow: none;
+.call-block-title ._extra {
+  .ant-btn {
+    margin: -5px 0;
+    border: none;
+    padding: 4px 0;
+    box-shadow: none;
+    & + .ant-btn {
+      margin-left: 24px;
+    }
+  }
 }
 
 .call-block-title ._extra .ant-btn._close {

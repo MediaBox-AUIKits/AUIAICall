@@ -3,8 +3,14 @@ import react from '@vitejs/plugin-react-swc';
 import svgr from 'vite-plugin-svgr';
 import legacy from '@vitejs/plugin-legacy';
 
+import packageJSON from './package.json';
+
 // https://vitejs.dev/config/
 export default defineConfig({
+  define: {
+    __VERSION__: JSON.stringify(packageJSON.version),
+  },
+
   plugins: [
     react(),
     svgr({ svgrOptions: { icon: true } }),

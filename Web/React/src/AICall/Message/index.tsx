@@ -42,7 +42,7 @@ function Message({ showMessage, onHideMessage }: MessageProps) {
   return (
     <div className={`call-block call-message ${showMessage ? 'is-show' : 'is-hide'}`}>
       <ArrowBtn
-        type={agentType === AICallAgentType.VoiceAgent ? 'rightToRight' : 'rightToLeft'}
+        type={agentType === AICallAgentType.AvatarAgent ? 'rightToLeft' : 'rightToRight'}
         onClick={onHideMessage}
       />
       <div className='call-block-container'>

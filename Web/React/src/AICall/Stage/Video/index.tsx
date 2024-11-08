@@ -18,11 +18,11 @@ function Video() {
       // canplay / timeupdate 都认为是加载完成
       videoElement?.addEventListener('canplay', loaded);
       videoElement?.addEventListener('timeupdate', loaded);
-      return () => {
-        videoElement?.removeEventListener('canplay', loaded);
-        videoElement?.removeEventListener('timeupdate', loaded);
-      };
     }
+    return () => {
+      videoElement?.removeEventListener('canplay', loaded);
+      videoElement?.removeEventListener('timeupdate', loaded);
+    };
   }, [avatarLoading, loaded]);
 
   useEffect(() => {

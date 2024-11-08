@@ -28,6 +28,10 @@ interface CallStore {
   subtitleList: SubtitleItem[];
   setCurrentSubtitle: (subtitle: SubtitleItem) => void;
 
+  enablePushToTalk: boolean;
+  updatingPushToTalk: boolean;
+  pushingToTalk: boolean;
+
   enableVoiceInterrupt: boolean;
   updatingVoiceInterrupt: boolean;
 
@@ -35,6 +39,7 @@ interface CallStore {
   updatingVoiceId: boolean;
 
   microphoneMuted: boolean;
+  cameraMuted: boolean;
 
   reset: () => void;
 }
@@ -47,11 +52,15 @@ const initialCallState: Omit<CallStore, 'setCurrentSubtitle' | 'reset'> = {
   currentSubtitle: undefined,
   currentAgentSubtitle: undefined,
   subtitleList: [],
+  enablePushToTalk: false,
+  updatingPushToTalk: false,
+  pushingToTalk: false,
   enableVoiceInterrupt: true,
   updatingVoiceInterrupt: false,
   voiceId: 'zhixiaoxia',
   updatingVoiceId: false,
   microphoneMuted: false,
+  cameraMuted: false,
 };
 
 const useCallStore = create<CallStore>((set) => ({
@@ -83,8 +92,17 @@ const useCallStore = create<CallStore>((set) => ({
       newState.currentSubtitle = { ...newSubtitle };
 
       // 如果 end 则添加到 subtitleList
-      if (newSubtitle.data.end && newSubtitle.data.text) {
-        newState.subtitleList = [...state.subtitleList, newSubtitle];
+      if (newSubtitle.data.text) {
+        const existSubtitle = state.subtitleList.find(
+          (sub) => sub.source === newSubtitle.source && sub.data.sentenceId === newSubtitle.data.sentenceId
+        );
+        // 如果已经存在更新，否则 Append
+        if (existSubtitle) {
+          existSubtitle.data.text = newSubtitle.data.text;
+          newState.subtitleList = [...state.subtitleList];
+        } else {
+          newState.subtitleList = [...state.subtitleList, newSubtitle];
+        }
       }
       return newState;
     }),

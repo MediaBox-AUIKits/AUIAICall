@@ -30,6 +30,7 @@
     <string name="robot_listening_tips">你说，我在听</string>
     <string name="robot_thinking_tips">思考中...</string>
     <string name="robot_speaking_tips">我正在回复中，可以轻触屏幕或说话打断我</string>
+    <string name="robot_speaking_tips_without_voice_interrupt">我正在回复中，可以轻触屏幕打断我</string>
 
     <string name="setting_title">设置</string>
     <string name="config_interrupt_title">智能打断</string>
@@ -38,7 +39,7 @@
     <string name="config_interrupt_title_close_toast">智能打断已关闭</string>
 
     <string name="config_audio_tone_title">选择音色</string>
-    <string name="config_audio_tone_tips">切换音色后，AI将在下一次回答中使用新的角色</string>
+    <string name="config_audio_tone_tips">切换音色后，AI将在下一次回答中使用新的音色</string>
 
     <string name="layout_base_loading">加载中…</string>
     <string name="layout_base_load_end">-加载完毕-</string>
@@ -89,4 +90,33 @@
     <string name="complete_rating_tips">请先完成所有评分</string>
 
     <string name="tips_authorization_invalidate">鉴权信息缺失，请登录后重试</string>
+
+    <string name="reporting_title">反馈</string>
+    <string name="reporting_type">问题类型</string>
+    <string name="reporting_type_tips">(多选)</string>
+    <string name="reporting_type_function_unavailable">功能不可用</string>
+    <string name="reporting_type_function_bugs">可用但有BUG</string>
+    <string name="reporting_type_response_slow">AI响应太慢</string>
+    <string name="reporting_type_response_inaccurate">AI响应内容不准确</string>
+    <string name="reporting_type_media_quality">音质/画面有问题</string>
+    <string name="reporting_type_others">其他问题</string>
+    <string name="reporting_desc_hint">请描述您遇到的其他问题</string>
+
+    <string name="reporting_id_display">反馈ID: %s</string>
+    <string name="copy">复制</string>
+    <string name="submitted">已提交</string>
+    <string name="copied">已复制</string>
+
+    <string name="mode_natural_conversation">自然对话模式</string>
+    <string name="mode_push_to_talk">对讲机模式</string>
+    <string name="voiceprint_recognition_test_title">声纹识别(邀测)</string>
+    <string name="voiceprint_recognition_test_desc">AI仅把您的声音作为输入，即使同时有多个人在讲话</string>
+    <string name="voiceprint_recognized">声纹已识别</string>
+    <string name="delete_voiceprint">删除声纹</string>
+    <string name="voiceprint_enable">声纹已识别已开启</string>
+    <string name="voiceprint_disable">声纹识别已关闭</string>
+    <string name="main_speaker_not_recognized">检测到有人讲话，未识别到主讲人</string>
+
+    <string name="push_to_talk">按住说话</string>
+    <string name="release_to_send">松开发送</string>
 </resources>

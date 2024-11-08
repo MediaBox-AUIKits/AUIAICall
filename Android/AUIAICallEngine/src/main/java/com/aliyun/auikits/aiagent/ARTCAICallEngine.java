@@ -76,9 +76,34 @@ public abstract class ARTCAICallEngine {
         VisionAgent
     }
 
+    public enum VoicePrintStatusCode {
+        /**
+         * 声纹识别未开启
+         */
+        Disable,
+        /**
+         * 声纹识别开启，未注册
+         */
+        EnableWithoutRegister,
+        /**
+         * 开启了，识别到主讲人
+         */
+        SpeakerRecognized,
+        /**
+         * 开启了，没识别到主讲人
+         */
+        SpeakerNotRecognized,
+        /**
+         * 未知状态
+         */
+        Unknown,
+    }
+
     public static class ARTCAICallConfig {
+        public String aiAgentRegion = null;
         public String loginUserId;
         public String loginAuthrization;
+        public String aiAgentRequestId = "";
         public String aiAgentId = "";
         public boolean enableVoiceInterrupt = true;
         public String aiAgentVoiceId = "";
@@ -92,12 +117,16 @@ public abstract class ARTCAICallEngine {
          */
         public boolean useDeposit = false;
         public boolean useRtcPreEnv = false;
+        public boolean enablePushToTalk = false;
+        public boolean enableVoicePrint = false;
 
         @Override
         public String toString() {
             return "ARTCAICallConfig{" +
-                    "loginUserId='" + loginUserId + '\'' +
-                    ", loginAuthrization='" + loginAuthrization + '\'' +
+                    "aiAgentRegion='" + aiAgentRegion + '\'' +
+                    ", loginUserId='" + loginUserId + '\'' +
+                    ", loginAuthorization='" + loginAuthrization + '\'' +
+                    ", aiAgentRequestId='" + aiAgentRequestId + '\'' +
                     ", aiAgentId='" + aiAgentId + '\'' +
                     ", enableVoiceInterrupt=" + enableVoiceInterrupt +
                     ", aiAgentVoiceId='" + aiAgentVoiceId + '\'' +
@@ -112,43 +141,54 @@ public abstract class ARTCAICallEngine {
         }
     }
 
-    public interface IARTCAICallEngineCallback {
+    public static class IARTCAICallEngineCallback {
 
         /**
          * 发生了错误
          */
-        void onErrorOccurs(AICallErrorCode errorCode);
+        public void onErrorOccurs(AICallErrorCode errorCode) {}
 
         /**
          * 通话开始（入会）
          */
-        void onCallBegin();
+        public void onCallBegin() {}
 
         /**
          * 通话结束（离会）
          */
-        void onCallEnd();
+        public void onCallEnd() {}
 
         /**
          * 机器人状态同步
          * @param oldRobotState
          * @param newRobotState
          */
-        void onAICallEngineRobotStateChanged(ARTCAICallRobotState oldRobotState, ARTCAICallRobotState newRobotState);
+        public void onAICallEngineRobotStateChanged(ARTCAICallRobotState oldRobotState, ARTCAICallRobotState newRobotState) {}
 
         /**
          * 用户说话回调
          * @param isSpeaking
          */
-        void onUserSpeaking(boolean isSpeaking);
+        public void onUserSpeaking(boolean isSpeaking) {}
+
 
         /**
          * 同步ASR识别用户的话
          * @param text ASR识别出的具体文本
          * @param isSentenceEnd 当前文本是否为这句话的最终结果
          * @param sentenceId 当前文本属于的句子ID
+         * @deprecated 使用onUserAsrSubtitleNotify(String text, boolean isSentenceEnd, int sentenceId, VoicePrintStatusCode voicePrintStatusCode)
          */
-        void onUserAsrSubtitleNotify(String text, boolean isSentenceEnd, int sentenceId);
+        public void onUserAsrSubtitleNotify(String text, boolean isSentenceEnd, int sentenceId) {}
+
+        /**
+         * 同步ASR识别用户的话
+         * @param text ASR识别出的具体文本
+         * @param isSentenceEnd 当前文本是否为这句话的最终结果
+         * @param sentenceId 当前文本属于的句子ID
+         * @param voicePrintStatusCode 声纹识别状态
+         */
+        public void onUserAsrSubtitleNotify(String text, boolean isSentenceEnd, int sentenceId, VoicePrintStatusCode voicePrintStatusCode) {}
 
         /**
          * 同步智能体回应的话
@@ -156,50 +196,67 @@ public abstract class ARTCAICallEngine {
          * @param end 当前回复是否结束
          * @param userAsrSentenceId 表示回应对应sentenceId语音输入的的llm内容
          */
-        void onAIAgentSubtitleNotify(String text, boolean end, int userAsrSentenceId);
+        public void onAIAgentSubtitleNotify(String text, boolean end, int userAsrSentenceId) {}
 
         /**
          * 网络状态回调
          * @param uid
          * @param quality
          */
-        void onNetworkStatusChanged(String uid, ARTCAICallNetworkQuality quality);
+        public void onNetworkStatusChanged(String uid, ARTCAICallNetworkQuality quality) {}
 
         /**
          * 音量变化
          * @param uid 用户id
          * @param volume 音量[0-255]
          */
-        void onVoiceVolumeChanged(String uid, int volume);
+        public void onVoiceVolumeChanged(String uid, int volume) {}
 
         /**
          * 当前通话的音色发生了改变
          */
-        void onVoiceIdChanged(String voiceId);
+        public void onVoiceIdChanged(String voiceId) {}
 
         /**
          * 当前通话的语音打断设置改变
          */
-        void onVoiceInterrupted(boolean enable);
+        public void onVoiceInterrupted(boolean enable) {}
 
         /**
          * 智能体视频是否可用（推流）
          */
-        void onAgentVideoAvailable(boolean available);
+        public void onAgentVideoAvailable(boolean available) {}
 
         /**
          * 智能体音频是否可用（推流）
          */
-        void onAgentAudioAvailable(boolean available);
+        public void onAgentAudioAvailable(boolean available) {}
         /**
          * 智能体数字人首帧渲染
          */
-        void onAgentAvatarFirstFrameDrawn();
+        public void onAgentAvatarFirstFrameDrawn() {}
 
         /**
          * 用户入会回调
          */
-        void onUserOnLine(String uid);
+        public void onUserOnLine(String uid) {}
+
+        /**
+         * 回调当前通话的对讲机模式状态变更
+         * @param enable
+         */
+        public void onPushToTalk(boolean enable) {}
+
+        /**
+         * 回调当前通话的声纹状态变更
+         * @param enable
+         */
+        public void onVoicePrintEnable(boolean enable) {}
+
+        /**
+         * 声纹信息被清除
+         */
+        public void onVoicePrintCleared() {}
     }
 
     /**
@@ -311,17 +368,6 @@ public abstract class ARTCAICallEngine {
     public abstract boolean switchCamera();
 
     /**
-     * 评分
-     * @param sumRate 整体评分：1~5
-     * @param delay 通话延时：1~5
-     * @param noise 环境噪音：1~5
-     * @param recognition 人声识别准确率：1~5
-     * @param interactive 交互体验：1~5
-     * @param timbre 音色拟真度：1~5
-     */
-    public abstract void rating(int sumRate, int delay, int noise, int recognition, int interactive, int timbre);
-
-    /**
      * 获取rtc引擎实例
      * @return
      */
@@ -333,4 +379,66 @@ public abstract class ARTCAICallEngine {
      */
     public abstract IARTCAICallService getIARTCAICallService();
 
+    /**
+     * 开启/关闭对讲机模式，对讲机模式下，只有在finishPushToTalk被调用后，智能体才会播报结果
+     * @param enable
+     * @return
+     */
+    public abstract boolean enablePushToTalk(boolean enable);
+
+    /**
+     * 对讲机模式是否开启
+     * @return
+     */
+    public abstract boolean isPushToTalkEnable();
+
+    /**
+     * 对讲机模式：开始讲话
+     * @return
+     */
+    public abstract boolean startPushToTalk();
+    /**
+     * 对讲机模式：结束讲话
+     * @return
+     */
+    public abstract boolean finishPushToTalk();
+    /**
+     * 对讲机模式：取消这次通话
+     * @return
+     */
+    public abstract boolean cancelPushToTalk();
+
+    /**
+     * 开启/关闭声纹降噪
+     * @note 邀测阶段，如需体验，请联系相关人员
+     * @return
+     */
+    public abstract boolean useVoicePrint(boolean enable);
+
+    /**
+     * 声纹降噪是否开启
+     * @note 邀测阶段，如需体验，请联系相关人员
+     * @return
+     */
+    public abstract boolean isUsingVoicePrint();
+
+    /**
+     * 清除声纹信息，相当于重置状态，将会重新识别新的声纹
+     * @note 邀测阶段，如需体验，请联系相关人员
+     * @return
+     */
+    public abstract boolean clearVoicePrint();
+
+    /**
+     *
+     * @param sumRate
+     * @param delay
+     * @param noise
+     * @param recognition
+     * @param interactive
+     * @param timbre
+     * @deprecated
+     */
+    public void rating(int sumRate, int delay, int noise, int recognition, int interactive, int timbre) {
+    }
 }

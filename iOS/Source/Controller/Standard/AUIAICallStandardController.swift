@@ -70,13 +70,16 @@ import ARTCAICallKit
         }
         self.state = .Connecting
         
-        ARTCAICallEngineLog.shared?.startLog(fileName: UUID().uuidString)
+        ARTCAICallEngineLog.StartLog(fileName: UUID().uuidString)
         ARTCAICallEngineLog.WriteLog("Start Call")
         ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "AgentId", value: self.config.agentId ?? "")
+        ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "UserId", value: self.userId)
         
-        self.generateAIAgentCall(userId: self.userId, config: self.config) {[weak self] agent, token, error in
+        self.generateAIAgentCall(userId: self.userId, config: self.config) {[weak self] agent, token, error, reqId in
             
             ARTCAICallEngineLog.WriteLog("Start Call Result: \(error == nil ? "Success" : "Failed")")
+            ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "RequestId", value: reqId)
+
             guard let self = self else { return }
             
             if self.state == .Over {
@@ -85,15 +88,17 @@ import ARTCAICallKit
             
             if let agent = agent, let token = token {
                 
+                ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "ChannelId", value: agent.channelId)
+                ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "AgentUserId", value: agent.uid)
+                ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "InstanceId", value: agent.instanceId)
+                ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "JoinToken", value: token)
+
                 self.config.agentType = agent.agentType
                 self.delegate?.onAICallAIAgentStarted?(agentInfo: agent)
 
-                ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "ChannelId", value: agent.channelId)
-                ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "UserId", value: agent.uid)
-                ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "InstanceId", value: agent.instanceId)
-                
                 _ = self.engine.muteLocalCamera(mute: self.config.muteLocalCamera)
                 _ = self.engine.muteMicrophone(mute: self.config.muteMicrophone)
+                _ = self.engine.enablePushToTalk(enable: self.config.enablePushToTalk)
                 self.engine.call(userId: self.userId, token: token, agentInfo: agent) { [weak self] error in
                     guard let self = self else { return }
                     if self.state == .Over {
@@ -188,6 +193,63 @@ import ARTCAICallKit
     open func switchCamera() {
         _ = self.engine.switchCamera()
     }
+    
+    // 开启/关闭对讲机模式，对讲机模式下，只有在finishPushToTalk被调用后，智能体才会播报结果
+    open func enablePushToTalk(enable: Bool, completed: ((_ error: Error?) -> Void)?) {
+        if self.state == .Connected {
+            if (self.engine.enablePushToTalk(enable: enable)) {
+                completed?(nil)
+                return
+            }
+        }
+        completed?(NSError.aicall_create(code: .InvalidAction, message: nil))
+    }
+    
+    open func startPushToTalk() -> Bool {
+        if self.state == .Connected {
+            return self.engine.startPushToTalk()
+        }
+        return false
+    }
+    
+    open func finishPushToTalk() -> Bool {
+        if self.state == .Connected {
+            return self.engine.finishPushToTalk()
+        }
+        return false
+    }
+    
+    open func cancelPushToTalk() -> Bool {
+        if self.state == .Connected {
+            return self.engine.cancelPushToTalk()
+        }
+        return false
+    }
+    
+    open private(set) var isVoiceprintRegisted: Bool = false
+    
+    // 当前断句是否使用声纹降噪识别
+    var useVoiceprintCompleted: ((_ error: Error?) -> Void)? = nil
+    open func useVoiceprint(isUse: Bool, completed: ((_ error: Error?) -> Void)?) {
+        if self.state == .Connected {
+            if (self.engine.useVoiceprint(isUse: isUse)) {
+                self.useVoiceprintCompleted = completed
+                return
+            }
+        }
+        completed?(NSError.aicall_create(code: .InvalidAction, message: nil))
+    }
+    
+    // 删除当前声纹数据
+    public func clearVoiceprint() -> Bool {
+        if self.state == .Connected {
+            if self.engine.clearVoiceprint() {
+                self.isVoiceprintRegisted = false
+                return true
+            }
+        }
+        return false
+    }
 }
 
 extension AUIAICallStandardController: ARTCAICallEngineDelegate {
@@ -241,13 +303,16 @@ extension AUIAICallStandardController: ARTCAICallEngineDelegate {
         self.delegate?.onAICallActiveSpeakerVolumeChanged?(userId: uid, volume: volume)
     }
     
-    public func onUserSubtitleNotify(text: String, isSentenceEnd: Bool, sentenceId: Int) {
-        debugPrint("AUIAICallStandardController onUserSubtitleNotify:\(text)  isSentenceEnd:\(isSentenceEnd)  sentenceId:\(sentenceId)")
-        self.delegate?.onAICallUserSubtitleNotify?(text: text, isSentenceEnd: isSentenceEnd, sentenceId: sentenceId)
+    public func onUserSubtitleNotify(text: String, isSentenceEnd: Bool, sentenceId: Int, voiceprintResult: ARTCAICallVoiceprintResult) {
+//        debugPrint("AUIAICallStandardController onUserSubtitleNotify:\(text)  isSentenceEnd:\(isSentenceEnd)  sentenceId:\(sentenceId) voiceprintResult:\(voiceprintResult)")
+        if isSentenceEnd {
+            self.isVoiceprintRegisted = voiceprintResult == .DetectedSpeaker || voiceprintResult == .UndetectedSpeaker
+        }
+        self.delegate?.onAICallUserSubtitleNotify?(text: text, isSentenceEnd: isSentenceEnd, sentenceId: sentenceId, voiceprintResult: voiceprintResult)
     }
     
     public func onVoiceAgentSubtitleNotify(text: String, isSentenceEnd: Bool, userAsrSentenceId: Int) {
-        debugPrint("AUIAICallStandardController onVoiceAgentSubtitleNotify:\(text)  isSentenceEnd:\(isSentenceEnd)  userAsrSentenceId:\(userAsrSentenceId)")
+//        debugPrint("AUIAICallStandardController onVoiceAgentSubtitleNotify:\(text)  isSentenceEnd:\(isSentenceEnd)  userAsrSentenceId:\(userAsrSentenceId)")
         self.delegate?.onAICallAgentSubtitleNotify?(text: text, isSentenceEnd: isSentenceEnd, userAsrSentenceId: userAsrSentenceId)
     }
     
@@ -278,6 +343,31 @@ extension AUIAICallStandardController: ARTCAICallEngineDelegate {
         }
         self.enableVoiceInterruptCompleted = nil
     }
+    
+    public func onPushToTalk(enable: Bool) {
+        debugPrint("AUIAICallStandardController onPushToTalk:\(enable)")
+        
+        self.config.enablePushToTalk = enable
+        self.delegate?.onAICallAgentPushToTalkChanged?(enable: enable)
+    }
+    
+    public func onVoiceprint(enable: Bool) {
+        debugPrint("AUIAICallStandardController onVoiceprint:\(enable)")
+        if self.config.useVoiceprint == enable {
+            if let useVoiceprintCompleted = self.useVoiceprintCompleted {
+                useVoiceprintCompleted(NSError.aicall_create(code: .InvalidAction))
+            }
+        }
+        else {
+            self.config.useVoiceprint = enable
+            self.useVoiceprintCompleted?(nil)
+        }
+        self.useVoiceprintCompleted = nil
+    }
+    
+    public func onVoiceprintCleared() {
+        debugPrint("AUIAICallStandardController onVoiceprintCleared")
+    }
 }
 
 extension AUIAICallStandardController {
@@ -292,12 +382,17 @@ extension AUIAICallStandardController {
         return "VoiceChat"
     }
     
-    public func generateAIAgentCall(userId: String, config: AUIAICallConfig, completed: ((_ rsp: ARTCAICallAgentInfo?, _ token: String?, _ error: Error?) -> Void)?) {
+    public func generateAIAgentCall(userId: String, config: AUIAICallConfig, completed: ((_ rsp: ARTCAICallAgentInfo?, _ token: String?, _ error: Error?, _ reqId: String) -> Void)?) {
         
         var template_config: [String : Any] = [:]
         var configDict: [String : Any] = [
             "EnableVoiceInterrupt": config.enableVoiceInterrupt,
+            "EnablePushToTalk": config.enablePushToTalk,
         ]
+        if let voiceprintId = config.voiceprintId {
+            configDict.updateValue(voiceprintId, forKey: "VoiceprintId")
+            configDict.updateValue(config.useVoiceprint, forKey: "UseVoiceprint")
+        }
         if !config.agentVoiceId.isEmpty {
             configDict.updateValue(config.agentVoiceId, forKey: "VoiceId")
         }
@@ -328,17 +423,21 @@ extension AUIAICallStandardController {
                 "template_config": template_config.aicall_jsonString
             ]
         }
+        if let region = config.region {
+            body.updateValue(region, forKey: "region")
+        }
 
         self.appserver.request(path: "/api/v2/aiagent/generateAIAgentCall", body: body) { response, data, error in
+            let reqId = (data?["request_id"] as? String) ?? "unknow"
             if error == nil {
                 debugPrint("generateAIAgentCall response: success")
                 let rtc_auth_token = data?["rtc_auth_token"] as? String
                 let info = ARTCAICallAgentInfo(data: data)
-                completed?(info, rtc_auth_token, nil)
+                completed?(info, rtc_auth_token, nil, reqId)
             }
             else {
                 debugPrint("generateAIAgentCall response: failed, error:\(error!)")
-                completed?(nil, nil, error)
+                completed?(nil, nil, error, reqId)
             }
         }
     }

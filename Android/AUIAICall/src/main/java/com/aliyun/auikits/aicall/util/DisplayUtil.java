@@ -51,4 +51,17 @@ public class DisplayUtil {
     public static float convertPixelsToDp(float px, Context context){
         return px / ((float) context.getResources().getDisplayMetrics().densityDpi / DisplayMetrics.DENSITY_DEFAULT);
     }
+
+    // 获取系统标题栏的高度
+    public static int getStatusBarHeight(Context context) {
+        int statusBarHeight = 0;
+        if (null != context) {
+            int resourceId = context.getResources().getIdentifier("status_bar_height", "dimen", "android");
+            if (resourceId > 0) {
+                statusBarHeight = context.getResources().getDimensionPixelSize(resourceId);
+            }
+        }
+        return statusBarHeight;
+    }
+
 }

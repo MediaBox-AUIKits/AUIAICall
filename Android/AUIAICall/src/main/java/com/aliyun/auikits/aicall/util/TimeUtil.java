@@ -1,5 +1,8 @@
 package com.aliyun.auikits.aicall.util;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 public class TimeUtil {
     public static String formatDuration(long milliseconds) {
         // 计算总秒数
@@ -22,5 +25,11 @@ public class TimeUtil {
             timeFormatted = String.format("%02d:%02d", minutes, seconds);
         }
         return timeFormatted;
+    }
+
+    private static SimpleDateFormat sDateFormat = new SimpleDateFormat("yyyy-MM-dd-HH:mm:ss.SSS");
+    public static String formatedDateTime() {
+        String dateTimeStr = sDateFormat.format(new Date());
+        return dateTimeStr;
     }
 }

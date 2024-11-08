@@ -60,6 +60,7 @@ import UIKit
         if self.enableAIDelayDetection {
             self.rtcEngine?.setParameter("{\"audio\":{\"user_specified_loop_delay\":true}}")
         }
+        ARTCAICallEngineLog.WriteLog("ARTCAICallEngine joinChannel begin")
         self.rtcEngine?.joinChannel(token, channelId: nil, userId: nil, name: nil) { [weak self] errCode, channel, userId, elapsed in
             var err : NSError? = nil
             if errCode != 0 {
@@ -67,8 +68,8 @@ import UIKit
                 err = NSError.aicall_create(code: .BeginCallFailed, message: "Join channel failed(\(errCode)")
             }
             else {
+                ARTCAICallEngineLog.WriteLog("ARTCAICallEngine joinChannel success")
                 self?.isJoined = true
-                self?.startPublish()
             }
             self?.isJoining = false
             completed?(err)
@@ -141,6 +142,11 @@ import UIKit
         if self.isJoined == false {
             return false
         }
+        
+        if self.enablePushToTalk {
+            return false
+        }
+        
         let model = ARTCAICallMessageSendModel()
         model.type = .EnableVoiceInterrupt
         model.senderId = self.userId
@@ -172,6 +178,10 @@ import UIKit
             self.isMuteLocalMic = mute
             return true
         }
+        if self.enablePushToTalk {
+            self.isMuteLocalMic = mute
+            return true
+        }
         if rtcEngine.muteLocalMic(mute, mode: .allAudioMode) == 0 {
             self.isMuteLocalMic = mute
             return true
@@ -181,6 +191,10 @@ import UIKit
     }
     
     public func muteLocalCamera(mute: Bool) -> Bool {
+        if self.agentInfo?.agentType != .VisionAgent {
+            return false
+        }
+        
         guard let rtcEngine = self.rtcEngine else {
             self.isMuteLocalCamera = mute
             return true
@@ -189,20 +203,147 @@ import UIKit
             self.isMuteLocalCamera = mute
             if mute {
                 self.stopPreview()
-                self.rtcEngine?.publishLocalVideoStream(false)
             }
             else {
                 self.startPreview()
-                self.rtcEngine?.publishLocalVideoStream(true)
             }
+            
+            self.rtcEngine?.publishLocalVideoStream(self.agentInfo?.agentType == .VisionAgent
+                                                    && !(self.isMuteLocalCamera || self.enablePushToTalk))
             return true
         }
         return false
     }
     
     public func switchCamera() -> Bool {
+        if self.agentInfo?.agentType != .VisionAgent {
+            return false
+        }
         guard let rtcEngine = self.rtcEngine else { return false }
         return rtcEngine.switchCamera() == 0
+    }
+    
+    private(set) var enablePushToTalk: Bool = false {
+        didSet {
+            self.updateEnablePushToTalk()
+        }
+    }
+    public func enablePushToTalk(enable: Bool) -> Bool {
+        if self.enablePushToTalk == enable {
+            return false
+        }
+        
+        self.isStartPushToTalk = false
+        if self.rtcEngine == nil {
+            self.enablePushToTalk = enable
+            return true
+        }
+        
+        if self.isJoined == true {
+            let model = ARTCAICallMessageSendModel()
+            model.type = .EnablePushToTalk
+            model.senderId = self.userId
+            model.receiverId = self.agentInfo?.uid
+            model.data = ["enable": enable]
+            let result = self.sendMsgToDataChannel(model: model)
+            if result {
+                self.enablePushToTalk = enable
+                self.delegate?.onPushToTalk?(enable: self.enablePushToTalk)
+            }
+            return result
+        }
+        
+        return false
+    }
+    
+    private(set) var isStartPushToTalk: Bool = false
+    private(set) var enableControlAuidioCapturePushToTalkMode = false
+    
+    public func startPushToTalk() -> Bool {
+        if self.isJoined == false || !self.enablePushToTalk || self.isStartPushToTalk {
+            return false
+        }
+        self.isStartPushToTalk = true
+        let model = ARTCAICallMessageSendModel()
+        model.type = .StartPushToTalk
+        model.senderId = self.userId
+        model.receiverId = self.agentInfo?.uid
+        _ = self.sendMsgToDataChannel(model: model)
+        
+        self.checkAudioCapturePushToTalkMode(start: true)
+        self.rtcEngine?.muteLocalMic(false, mode: .allAudioMode)
+        self.rtcEngine?.publishLocalVideoStream(self.agentInfo?.agentType == .VisionAgent
+                                                && !(self.isMuteLocalCamera))
+        return true
+    }
+    
+    public func finishPushToTalk() -> Bool {
+        if self.isJoined == false || !self.enablePushToTalk || !self.isStartPushToTalk {
+            return false
+        }
+        self.isStartPushToTalk = false
+        
+        self.checkAudioCapturePushToTalkMode(start: false)
+        self.rtcEngine?.muteLocalMic(true, mode: .allAudioMode)
+        self.rtcEngine?.publishLocalVideoStream(self.agentInfo?.agentType == .VisionAgent
+                                                && !(self.isMuteLocalCamera))
+        
+        let model = ARTCAICallMessageSendModel()
+        model.type = .FinishPushToTalk
+        model.senderId = self.userId
+        model.receiverId = self.agentInfo?.uid
+        _ = self.sendMsgToDataChannel(model: model)
+        
+        return true
+    }
+    
+    public func cancelPushToTalk() -> Bool {
+        if self.isJoined == false || !self.enablePushToTalk || !self.isStartPushToTalk {
+            return false
+        }
+        self.isStartPushToTalk = false
+        
+        self.checkAudioCapturePushToTalkMode(start: false)
+        self.rtcEngine?.muteLocalMic(true, mode: .allAudioMode)
+        self.rtcEngine?.publishLocalVideoStream(self.agentInfo?.agentType == .VisionAgent
+                                                && !(self.isMuteLocalCamera))
+        
+        let model = ARTCAICallMessageSendModel()
+        model.type = .CancelPushToTalk
+        model.senderId = self.userId
+        model.receiverId = self.agentInfo?.uid
+        _ = self.sendMsgToDataChannel(model: model)
+        
+        return true
+    }
+    
+    // 当前断句是否使用声纹降噪识别
+    public func useVoiceprint(isUse: Bool) -> Bool {
+        // send message to data channel
+        if self.isJoined == false {
+            return false
+        }
+        
+        let model = ARTCAICallMessageSendModel()
+        model.type = .UseVoiceprint
+        model.senderId = self.userId
+        model.receiverId = self.agentInfo?.uid
+        model.data = ["enable": isUse]
+        return self.sendMsgToDataChannel(model: model)
+    }
+    
+    // 清除当前声纹数据
+    public func clearVoiceprint() -> Bool {
+        // send message to data channel
+        if self.isJoined == false {
+            return false
+        }
+        
+        let model = ARTCAICallMessageSendModel()
+        model.type = .ClearVoiceprint
+        model.senderId = self.userId
+        model.receiverId = self.agentInfo?.uid
+        return self.sendMsgToDataChannel(model: model)
     }
     
     public func getRTCInstance() -> AnyObject? {
@@ -283,6 +424,11 @@ extension ARTCAICallEngine {
             engine.subscribeAllRemoteVideoStreams(true)
         }
         else if self.agentInfo?.agentType == .VisionAgent {
+            let captureConfig = AliRtcCameraCapturerConfiguration()
+            captureConfig.preference = .preview
+            captureConfig.cameraDirection = .back
+            engine.setCameraCapturerConfiguration(captureConfig)
+            
             let config = AliRtcVideoEncoderConfiguration()
             config.dimensions = self.visionConfigPrivate.dimensions
             config.frameRate = self.visionConfigPrivate.frameRate
@@ -290,11 +436,6 @@ extension ARTCAICallEngine {
             config.keyFrameInterval = self.visionConfigPrivate.keyFrameInterval
             config.orientationMode = AliRtcVideoEncoderOrientationMode.fixedPortrait
             engine.setVideoEncoderConfiguration(config)
-            
-            let captureConfig = AliRtcCameraCapturerConfiguration()
-            captureConfig.preference = .auto
-            captureConfig.cameraDirection = .back
-            engine.setCameraCapturerConfiguration(captureConfig)
         }
         else {
             engine.setAudioOnlyMode(true)
@@ -307,10 +448,25 @@ extension ARTCAICallEngine {
         self.rtcEngine = engine
         // 推流配置
         self.rtcEngine?.publishLocalAudioStream(true)
-        self.rtcEngine?.publishLocalVideoStream(false)
+        self.rtcEngine?.publishLocalVideoStream(self.agentInfo?.agentType == .VisionAgent 
+                                                && !(self.isMuteLocalCamera || self.enablePushToTalk))
 
-        _ = self.muteMicrophone(mute: self.isMuteLocalMic)
-        _ = self.muteLocalCamera(mute: self.isMuteLocalCamera)
+        // 设备控制
+        self.rtcEngine?.muteLocalMic(self.isMuteLocalMic || self.enablePushToTalk, mode: .allAudioMode)
+        if self.enablePushToTalk{
+            if !self.enableControlAuidioCapturePushToTalkMode {
+                self.rtcEngine?.startAudioCapture()
+            }
+        }
+        else {
+            self.rtcEngine?.startAudioCapture()
+        }
+        if self.agentInfo?.agentType == .VisionAgent {
+            self.rtcEngine?.muteLocalCamera(self.isMuteLocalCamera, for: .camera)
+            if !self.isMuteLocalCamera {
+                self.startPreview()
+            }
+        }
     }
     
     private func destroyRtcEngine() {
@@ -333,18 +489,6 @@ extension ARTCAICallEngine {
     private func stopPreview() {
         self.rtcEngine?.stopPreview()
         self.rtcEngine?.setLocalViewConfig(nil, for: AliRtcVideoTrack.camera)
-    }
-    
-    private func startPublish() {
-        if self.isJoined == false {
-            return
-        }
-        self.rtcEngine?.startAudioCapture()
-        self.rtcEngine?.publishLocalAudioStream(true)
-        
-        if self.agentInfo?.agentType == .VisionAgent && self.isMuteLocalCamera == false {
-            self.rtcEngine?.publishLocalVideoStream(true)
-        }
     }
     
     private func stopPublish() {
@@ -370,6 +514,31 @@ extension ARTCAICallEngine {
         self.stopPullAgentVideo()
         self.agentCanvas = nil
         self.agentCanvasUid = nil
+    }
+    
+    private func checkAudioCapturePushToTalkMode(start: Bool) {
+        guard self.enableControlAuidioCapturePushToTalkMode else {
+            return
+        }
+        if start {
+            self.rtcEngine?.startAudioCapture()
+        }
+        else {
+            self.rtcEngine?.stopAudioCapture()
+        }
+    }
+    
+    private func updateEnablePushToTalk() {
+        if self.enablePushToTalk {
+            self.checkAudioCapturePushToTalkMode(start: false)
+            self.rtcEngine?.muteLocalMic(true, mode: .allAudioMode)
+        }
+        else {
+            self.checkAudioCapturePushToTalkMode(start: true)
+            self.rtcEngine?.muteLocalMic(self.isMuteLocalMic, mode: .allAudioMode)
+        }
+        self.rtcEngine?.publishLocalVideoStream(self.agentInfo?.agentType == .VisionAgent
+                                                && !(self.isMuteLocalCamera || self.enablePushToTalk))
     }
     
     private func sendMsgToDataChannel(model: ARTCAICallMessageSendModel) -> Bool {
@@ -405,7 +574,7 @@ extension ARTCAICallEngine {
         let seqId = model.seqId ?? 0
         if model.type == .AgentErrorOccurs {
             if let code = model.data?["code"] as? Int32 {
-                ARTCAICallEngineLog.WriteLog("ARTCAICallEngine Received[\(seqId)] AgentErrorOccurs：\(code)")
+                ARTCAICallEngineLog.WriteLog(.Error, "ARTCAICallEngine Received[\(seqId)] AgentErrorOccurs：\(code)")
                 var err: ARTCAICallErrorCode? = nil
                 if code == 4001 {
                     err = .AvatarRoutesExhausted
@@ -427,7 +596,7 @@ extension ARTCAICallEngine {
         else if model.type == .AgentStateChanged {
             if let state = model.data?["state"] as? Int32 {
                 if let agentState = ARTCAICallAgentState(rawValue: state) {
-                    ARTCAICallEngineLog.WriteLog("ARTCAICallEngine Received[\(seqId)] AgentState：\(agentState)")
+                    ARTCAICallEngineLog.WriteLog(.Debug, "ARTCAICallEngine Received[\(seqId)] AgentState：\(agentState)")
                     self.agentState = agentState
                     self.delegate?.onAgentStateChanged?(state: agentState)
                 }
@@ -437,7 +606,7 @@ extension ARTCAICallEngine {
             if let text = model.data?["text"] as? String {
                 let end = model.data?["end"] as? Bool ?? true
                 let sentenceId = model.data?["sentenceId"] as? Int ?? 0
-                ARTCAICallEngineLog.WriteLog("ARTCAICallEngine Received[\(seqId)] AgentSubtitleNotify：\(text)  isSentenceEnd=\(end)  sentenceId=\(sentenceId)")
+                ARTCAICallEngineLog.WriteLog(.Debug, "ARTCAICallEngine Received[\(seqId)] AgentSubtitleNotify：\(text)  isSentenceEnd=\(end)  sentenceId=\(sentenceId)")
                 self.delegate?.onVoiceAgentSubtitleNotify?(text: text, isSentenceEnd: end, userAsrSentenceId: sentenceId)
             }
         }
@@ -445,8 +614,10 @@ extension ARTCAICallEngine {
             if let text = model.data?["text"] as? String {
                 let end = model.data?["end"] as? Bool ?? true
                 let sentenceId = model.data?["sentenceId"] as? Int ?? 0
-                ARTCAICallEngineLog.WriteLog("ARTCAICallEngine Received[\(seqId)] UserSubtitleNotify：\(text)  isSentenceEnd=\(end)  sentenceId=\(sentenceId)")
+                let voiceprint = model.data?["voiceprint"] as? Int32 ?? 0
+                ARTCAICallEngineLog.WriteLog(.Debug, "ARTCAICallEngine Received[\(seqId)] UserSubtitleNotify：\(text)  isSentenceEnd=\(end)  sentenceId=\(sentenceId)  voiceprint=\(voiceprint)")
                 self.delegate?.onUserSubtitleNotify?(text: text, isSentenceEnd: end, sentenceId: sentenceId)
+                self.delegate?.onUserSubtitleNotify?(text: text, isSentenceEnd: end, sentenceId: sentenceId, voiceprintResult: ARTCAICallVoiceprintResult(rawValue: voiceprint) ?? .Off)
             }
         }
         else if model.type == .VoiceInterruptChanged {
@@ -467,6 +638,25 @@ extension ARTCAICallEngine {
                 self.rtcEngine?.refreshAuthInfo(withToken: token)
             }
         }
+        else if model.type == .PushToTalkChanged {
+            if let enable = model.data?["enable"] as? Bool {
+                ARTCAICallEngineLog.WriteLog("ARTCAICallEngine Received[\(seqId)] PushToTalkChanged：\(enable)")
+                if self.enablePushToTalk != enable {
+                    self.enablePushToTalk = enable
+                    self.delegate?.onPushToTalk?(enable: self.enablePushToTalk)
+                }
+            }
+        }
+        else if model.type == .VoiceprintUsingChanged {
+            if let enable = model.data?["enable"] as? Bool {
+                ARTCAICallEngineLog.WriteLog("ARTCAICallEngine Received[\(seqId)] VoiceprintChanged：\(enable)")
+                self.delegate?.onVoiceprint?(enable: enable)
+            }
+        }
+        else if model.type == .VoiceprintClearSucceed {
+            ARTCAICallEngineLog.WriteLog("ARTCAICallEngine Received[\(seqId)] VoiceprintClearSucceed")
+            self.delegate?.onVoiceprintCleared?()
+        }
     }
 }
 
@@ -481,7 +671,7 @@ extension ARTCAICallEngine: AliRtcEngineDelegate {
         guard let dataDict = dataDict else {
             return
         }
-        ARTCAICallEngineLog.WriteLog("ARTCAICallEngine onDataChannelMessage:\(dataDict)")
+        ARTCAICallEngineLog.WriteLog(.Debug, "ARTCAICallEngine onDataChannelMessage:\(dataDict)")
         guard let type = dataDict["type"] as? Int32 else {
             return
         }
@@ -515,6 +705,14 @@ extension ARTCAICallEngine: AliRtcEngineDelegate {
                 self.delegate?.onCallEnd?()
             }
         }
+    }
+    
+    public func onAudioPublishStateChanged(_ oldState: AliRtcPublishState, newState: AliRtcPublishState, elapseSinceLastState: Int, channel: String) {
+        ARTCAICallEngineLog.WriteLog("ARTCAICallEngine onAudioPublishStateChanged oldState:\(oldState) newState:\(newState)")
+    }
+    
+    public func onAudioPublishStateChanged(_ track: AliRtcAudioTrack, oldState: AliRtcPublishState, newState: AliRtcPublishState, elapseSinceLastState: Int, channel: String) {
+        ARTCAICallEngineLog.WriteLog("ARTCAICallEngine onAudioPublishStateChanged oldState:\(oldState) newState:\(newState)")
     }
     
     public func onRemoteUser(onLineNotify uid: String, elapsed: Int32) {
@@ -576,7 +774,7 @@ extension ARTCAICallEngine: AliRtcEngineDelegate {
     }
     
     public func onOccurError(_ error: Int32, message: String) {
-        ARTCAICallEngineLog.WriteLog("ARTCAICallEngine onOccurError:\(error) message:\(message)")
+        ARTCAICallEngineLog.WriteLog(.Error, "ARTCAICallEngine onOccurError:\(error) message:\(message)")
         DispatchQueue.main.async {
 //            if error == AliRtcErrorCode.errPublishInvaild.rawValue ||
 //                error == AliRtcErrorCode.errPublishAudioStreamFailed.rawValue {
@@ -595,7 +793,7 @@ extension ARTCAICallEngine: AliRtcEngineDelegate {
     }
     
     public func onLocalDeviceException(_ deviceType: AliRtcLocalDeviceType, exceptionType: AliRtcLocalDeviceExceptionType, message msg: String?) {
-        ARTCAICallEngineLog.WriteLog("ARTCAICallEngine onLocalDeviceException:\(deviceType) exceptionType:\(exceptionType) message:\(msg ?? "unknown")")
+        ARTCAICallEngineLog.WriteLog(.Error, "ARTCAICallEngine onLocalDeviceException:\(deviceType) exceptionType:\(exceptionType) message:\(msg ?? "unknown")")
         DispatchQueue.main.async {
             self.delegate?.onErrorOccurs?(code: .LocalDeviceException)
         }

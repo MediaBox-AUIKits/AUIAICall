@@ -18,8 +18,10 @@ public interface IARTCAICallService extends IARTCAICallIMCallback {
     }
 
     void generateAIAgentCall(String userId, String aiAgentId, ARTCAICallEngine.ARTCAICallAgentType aiAgentType, IARTCAICallServiceCallback callback);
+    void generateAIAgentCall(String userId, String aiAgentId, ARTCAICallEngine.ARTCAICallAgentType aiAgentType, ARTCAICallEngine.ARTCAICallConfig artcaiCallConfig, IARTCAICallServiceCallback callback);
 
     void startAIAgentService(String userId, ARTCAICallEngine.ARTCAICallAgentType aiAgentType, IARTCAICallServiceCallback callback);
+    void startAIAgentService(String userId, ARTCAICallEngine.ARTCAICallAgentType aiAgentType, ARTCAICallEngine.ARTCAICallConfig artcaiCallConfig, IARTCAICallServiceCallback callback);
 
     /**
      *
@@ -36,6 +38,15 @@ public interface IARTCAICallService extends IARTCAICallIMCallback {
     void switchAiAgentVoice(String robotInstanceId, ARTCAICallEngine.ARTCAICallAgentType aiAgentType, String soundId, IARTCAICallServiceCallback callback);
 
     void interruptAiAgentSpeak();
+
+    void enablePushToTalk(boolean enable);
+
+    void startPushToTalk();
+    void finishPushToTalk();
+    void cancelPushToTalk();
+
+    void enableVoicePrint(boolean enable);
+    void deleteVoicePrint();
 
     void setIMService(IARTCAICallIMService imService);
 

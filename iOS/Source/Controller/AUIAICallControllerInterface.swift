@@ -14,7 +14,11 @@ import ARTCAICallKit
     open var agentVoiceId: String = ""             // 智能体讲话音色Id
     open var agentAvatarId: String = ""            // 数字人模型Id
     open var agentGreeting: String? = nil          // 智能体欢迎语，AI智能体在用户入会后主动说的一句话
+    open var region: String? = nil                 // 智能体服务所在的区域，如果为空，Appserver会使用默认的region来启动智能体服务
     open var enableVoiceInterrupt = true           // 是否开启智能打断
+    open var enablePushToTalk = false              // 是否开启对讲机模式
+    open var useVoiceprint = false                 // 当前断句是否使用声纹降噪识别
+    open var voiceprintId: String? = nil           // 声纹Id，如果不为空表示当前通话开启声纹降噪能力，为空表示不启用声纹降噪能力
     open var enableSpeaker = true                  // 是否开启扬声器
     open var muteMicrophone = false                // 是否关闭麦克风（静音）
     open var muteLocalCamera = false               // 是否关闭摄像头
@@ -66,14 +70,21 @@ import ARTCAICallKit
     /**
      * 用户提问被智能体识别结果通知
      */
-    @objc optional func onAICallUserSubtitleNotify(text: String, isSentenceEnd: Bool, sentenceId: Int)
+    @objc optional func onAICallUserSubtitleNotify(text: String, isSentenceEnd: Bool, sentenceId: Int, voiceprintResult: ARTCAICallVoiceprintResult)
     
     /**
      * 智能体回答结果通知
      */
     @objc optional func onAICallAgentSubtitleNotify(text: String, isSentenceEnd: Bool, userAsrSentenceId: Int)
     
+    /**
+     * 当前通话的对讲机模式是否启用
+     */
+    @objc optional func onAICallAgentPushToTalkChanged(enable: Bool)
     
+    /**
+     * 用户Token过期
+     */
     @objc optional func onAICallUserTokenExpired()
 }
 
@@ -132,4 +143,26 @@ import ARTCAICallKit
     
     // 切换前后摄像头
     func switchCamera()
+    
+    // 开启/关闭对讲机模式，对讲机模式下，只有在finishPushToTalk被调用后，智能体才会播报结果
+    func enablePushToTalk(enable: Bool, completed: ((_ error: Error?) -> Void)?)
+    
+    // 开始讲话
+    func startPushToTalk() -> Bool
+    
+    // 结束讲话
+    func finishPushToTalk() -> Bool
+    
+    // 取消这次讲话
+    func cancelPushToTalk() -> Bool
+
+    // 当前声纹是否注册（邀测阶段，如需体验，请联系相关人员）
+    var isVoiceprintRegisted: Bool { get }
+    
+    // 当前断句是否使用声纹降噪识别（邀测阶段，如需体验，请联系相关人员）
+    func useVoiceprint(isUse: Bool, completed: ((_ error: Error?) -> Void)?)
+    
+    // 删除当前声纹数据（邀测阶段，如需体验，请联系相关人员）
+    func clearVoiceprint() -> Bool
+    
 }

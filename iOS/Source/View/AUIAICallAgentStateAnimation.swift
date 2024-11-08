@@ -81,7 +81,7 @@ import ARTCAICallKit
     open func start(_ pre: Bool = false) {
         self.stop()
         
-        debugPrint("AUIAICallAgentStateAnimation: start ani")
+//        debugPrint("AUIAICallAgentStateAnimation: start ani")
         self.isAni = true
         if self.listeningAniView.isHidden == false {
             self.listeningAniView.start()
@@ -95,7 +95,7 @@ import ARTCAICallKit
     }
     
     open func stop() {
-        debugPrint("AUIAICallAgentStateAnimation: stop ani")
+//        debugPrint("AUIAICallAgentStateAnimation: stop ani")
         self.isAni = false
         
         self.listeningAniView.stop()

@@ -7,6 +7,7 @@ import com.aliyuncs.aui.dto.req.AiAgentStopRequestDto;
 import com.aliyuncs.aui.dto.req.AiAgentUpdateRequestDto;
 import com.aliyuncs.aui.dto.req.GenerateAIAgentCallRequestDto;
 import com.aliyuncs.aui.dto.res.AiAgentStartResponse;
+import com.aliyuncs.aui.dto.res.CommonResponse;
 import com.aliyuncs.aui.dto.res.GenerateAIAgentCallResponse;
 import com.aliyuncs.aui.service.AiAgentService;
 import com.aliyuncs.aui.service.ImsService;
@@ -36,6 +37,8 @@ public class ImsServiceImpl implements ImsService {
     private String liveMicAppId;
     @Value("${biz.live_mic.app_key}")
     private String liveMicAppKey;
+    @Value("${biz.live_mic.gslb}")
+    private String gslb;
 
     @Resource
     private AiAgentService aiAgentService;
@@ -50,27 +53,26 @@ public class ImsServiceImpl implements ImsService {
         // 生成aigc的rtcAuthToken，基于机器人的userid
         String robotRtcAuthToken = createBase64Token(channelId, robotUserId, getAigcTimestamp());
 
-        String instanceId = aiAgentService.startAiAgent(channelId, robotUserId, robotRtcAuthToken,
+        AiAgentStartResponse aiAgentStartResponse = aiAgentService.startAiAgent(channelId, robotUserId, robotRtcAuthToken,
                 aiAgentStartRequestDto.getTemplateConfig(), aiAgentStartRequestDto.getWorkflowType());
-
-        return AiAgentStartResponse.builder().aiAgentInstanceId(instanceId).rtcAuthToken(rtcAuthToken)
-                .aiAgentUserId(robotUserId).channelId(channelId).build();
+        return AiAgentStartResponse.builder().aiAgentInstanceId(aiAgentStartResponse.getAiAgentInstanceId()).rtcAuthToken(rtcAuthToken)
+                .aiAgentUserId(robotUserId).channelId(channelId).requestId(aiAgentStartResponse.getRequestId()).result(aiAgentStartResponse.isResult()).message(aiAgentStartResponse.getMessage()).build();
     }
 
     @Override
-    public boolean stopAIAgentInstance(AiAgentStopRequestDto aiAgentStopRequestDto) {
+    public CommonResponse stopAIAgentInstance(AiAgentStopRequestDto aiAgentStopRequestDto) {
         return aiAgentService.stopAiAgent(aiAgentStopRequestDto.getAiAgentInstanceId());
     }
 
     @Override
-    public boolean updateAIAgentInstance(AiAgentUpdateRequestDto aiAgentUpdateRequestDto) {
+    public CommonResponse updateAIAgentInstance(AiAgentUpdateRequestDto aiAgentUpdateRequestDto) {
         return aiAgentService.updateAiAgent(aiAgentUpdateRequestDto.getAiAgentInstanceId(), aiAgentUpdateRequestDto.getTemplateConfig());
     }
 
     @Override
     public GenerateAIAgentCallResponse generateAIAgentCall(GenerateAIAgentCallRequestDto requestDto) {
         return aiAgentService.generateAIAgentCall(requestDto.getAiAgentId(),requestDto.getUserId(), requestDto.getExpire(),
-                requestDto.getTemplateConfig(), requestDto.getWorkflowType());
+                requestDto.getTemplateConfig(), requestDto.getWorkflowType(), requestDto.getRegion());
     }
 
     private long getClientTimestamp() {
@@ -92,7 +94,7 @@ public class ImsServiceImpl implements ImsService {
         tokenJson.put("userid", userId);
         tokenJson.put("nonce", "");
         tokenJson.put("timestamp", timestamp);
-        tokenJson.put("gslb",new String[]{"https://gw.rtn.aliyuncs.com"});
+        tokenJson.put("gslb",new String[]{gslb});
         tokenJson.put("token", rtcAuth);
         return Base64.encodeToString(JSON.toJSONBytes(tokenJson));
     }

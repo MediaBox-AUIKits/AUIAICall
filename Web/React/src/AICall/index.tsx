@@ -25,6 +25,8 @@ function AICall(props: AICallProps) {
   const agentType = useCallStore((state) => state.agentType);
   const [showMessage, setShowMessage] = useState(true);
   const [messageApi, contextHolder] = message.useMessage();
+  const pushingStartTimeRef = useRef(0);
+  const pushingTimerRef = useRef(0);
 
   const countdownRef = useRef(0);
   const startTimeRef = useRef(0);
@@ -34,6 +36,42 @@ function AICall(props: AICallProps) {
     controller?.handup();
     useCallStore.getState().reset();
   }, [controller]);
+
+  const stopPushToTalk = useMemo(
+    () => () => {
+      if (!pushingStartTimeRef.current || !useCallStore.getState().enablePushToTalk) return;
+      if (pushingTimerRef.current) {
+        clearTimeout(pushingTimerRef.current);
+      }
+      const duration = Date.now() - pushingStartTimeRef.current;
+      if (duration < 500) {
+        messageApi.error('说话时间太短');
+        controller?.cancelPushToTalk();
+      } else {
+        controller?.finishPushToTalk();
+      }
+      useCallStore.setState({
+        pushingToTalk: false,
+      });
+      pushingStartTimeRef.current = 0;
+    },
+    [controller, messageApi]
+  );
+
+  const startPushToTalk = useMemo(
+    () => () => {
+      if (!useCallStore.getState().enablePushToTalk) return;
+      controller?.startPushToTalk();
+      useCallStore.setState({
+        pushingToTalk: true,
+      });
+      pushingStartTimeRef.current = Date.now();
+      pushingTimerRef.current = window.setTimeout(() => {
+        stopPushToTalk();
+      }, 60 * 1000);
+    },
+    [controller, stopPushToTalk]
+  );
 
   // Tab 键打断
   const onKeyDown = useMemo(() => {
@@ -47,25 +85,44 @@ function AICall(props: AICallProps) {
         e.preventDefault();
         e.stopPropagation();
         interruptSpeaking();
+      } else if (e.key === ' ') {
+        if (pushingStartTimeRef.current) return;
+        e.stopImmediatePropagation();
+        e.preventDefault();
+        e.stopPropagation();
+        startPushToTalk();
       }
     };
-  }, [controller]);
+  }, [controller, startPushToTalk]);
+
+  const onKeyUp = useMemo(() => {
+    return (e: KeyboardEvent) => {
+      if (e.key === ' ') {
+        stopPushToTalk();
+      }
+    };
+  }, [stopPushToTalk]);
 
   useEffect(() => {
     document.addEventListener('keydown', onKeyDown, true);
+    document.addEventListener('keyup', onKeyUp, true);
     return () => {
       document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('keyup', onKeyUp);
       controller?.removeAllListeners();
       controller?.handup();
     };
-  }, [controller, onKeyDown]);
+  }, [controller, onKeyDown, onKeyUp]);
 
   // 开始通话
   const startCall = async (agentType: AICallAgentType) => {
     if (!controller) return;
     controller.config.agentType = agentType;
+    // controller.config.enablePushToTalk = true;
+
     useCallStore.setState({
       agentType,
+      // enablePushToTalk: true,
     });
 
     controller.on('AICallStateChanged', (newState) => {
@@ -73,6 +130,7 @@ function AICall(props: AICallProps) {
         callState: newState,
       });
       if (newState === AICallState.Error) {
+        controller?.handup();
         useCallStore.setState({
           callErrorMessage: getErrorMessage(controller.errorCode),
         });
@@ -136,15 +194,6 @@ function AICall(props: AICallProps) {
     }
   };
 
-  const toggleMicrophoneMuted = () => {
-    const to = !useCallStore.getState().microphoneMuted;
-    controller?.switchMicrophone(to);
-    messageApi.success(to ? '麦克风已关闭' : '麦克风已开启');
-    useCallStore.setState({
-      microphoneMuted: to,
-    });
-  };
-
   const stopCall = async () => {
     controller?.handup();
     useCallStore.getState().reset();
@@ -162,7 +211,6 @@ function AICall(props: AICallProps) {
           <Stage
             showMessage={showMessage}
             onStop={stopCall}
-            toggleMicrophoneMuted={toggleMicrophoneMuted}
             onShowMessage={() => {
               setShowMessage(true);
             }}

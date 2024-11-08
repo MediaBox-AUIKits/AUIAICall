@@ -18,8 +18,8 @@ import com.aliyun.auikits.aiagent.service.ARTCAICallRtcWrapper;
 import com.aliyun.auikits.aiagent.service.ARTCAICallServiceImpl;
 import com.aliyun.auikits.aiagent.service.IARTCAICallIMService;
 import com.aliyun.auikits.aiagent.service.IARTCAICallService;
-import com.aliyun.auikits.aiagent.util.BizStatHelper;
 import com.aliyun.auikits.aiagent.util.IMsgTypeDef;
+import com.aliyun.auikits.aiagent.util.Logger;
 
 import org.json.JSONObject;
 
@@ -53,6 +53,7 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
     private AtomicBoolean mIsJoined = new AtomicBoolean(false);
     private boolean mIsRtcTokenRefreshing = false;
     private AtomicBoolean mIsHangUp = new AtomicBoolean(false);
+    private Boolean isMicrophoneEnableBeforePushToTalkMode = null;
 
     private Handler mCallbackHandler = new Handler(Looper.getMainLooper());
 
@@ -69,7 +70,7 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
         public void onJoinChannelResult(int result, String channel, String userId, int elapsed) {
             super.onJoinChannelResult(result, channel, userId, elapsed);
 
-            Log.i(TAG, "onJoinChannelResult: [result: " + result + ", channel: " + channel + ", userId: " + userId + ", elapsed: " + elapsed + "]");
+            Logger.i("onJoinChannelResult: [result: " + result + ", channel: " + channel + ", userId: " + userId + ", elapsed: " + elapsed + "]");
             if (result == 0) {
                 mIsJoined.set(true);
                 syncConfigToRTCEngine();
@@ -88,7 +89,7 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
         @Override
         public void onLeaveChannelResult(int result, AliRtcEngine.AliRtcStats stats) {
             super.onLeaveChannelResult(result, stats);
-            Log.i(TAG, "onLeaveChannelResult: [result: " + result + ", stats: " + stats + "]");
+            Logger.i("onLeaveChannelResult: [result: " + result + ", stats: " + stats + "]");
             if (result == 0) {
                 notifyOnCallEnd();
             }
@@ -116,7 +117,7 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
                                                  AliRtcEngine.AliRtcSubscribeState newState,
                                                  int elapseSinceLastState, String channel) {
             super.onVideoSubscribeStateChanged(uid, oldState, newState, elapseSinceLastState, channel);
-            Log.i(TAG, "onVideoSubscribeStateChanged: [uid: " + uid +
+            Logger.i("onVideoSubscribeStateChanged: [uid: " + uid +
                     ", oldState: " + oldState + ", newState: " + newState +
                     ", elapseSinceLastState: " + elapseSinceLastState + ", channel: " + channel + "]");
 
@@ -140,7 +141,7 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
                                                  AliRtcEngine.AliRtcSubscribeState newState,
                                                  int elapseSinceLastState, String channel) {
             super.onAudioSubscribeStateChanged(uid, track, oldState, newState, elapseSinceLastState, channel);
-            Log.i(TAG, "onAudioSubscribeStateChanged: [uid: " + uid +
+            Logger.i("onAudioSubscribeStateChanged: [uid: " + uid +
                     ", track: " + track +
                     ", oldState: " + oldState + ", newState: " + newState +
                     ", elapseSinceLastState: " + elapseSinceLastState + ", channel: " + channel + "]");
@@ -157,7 +158,7 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
         @Override
         public void onRemoteUserOnLineNotify(final String uid, final int elapsed) {
             super.onRemoteUserOnLineNotify(uid, elapsed);
-            Log.i(TAG, "onRemoteUserOnLineNotify: [uid: " + uid +
+            Logger.i("onRemoteUserOnLineNotify: [uid: " + uid +
                     ", elapsed: " + elapsed + "]");
             notifyUserOnline(uid);
         }
@@ -165,7 +166,7 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
         @Override
         public void onRemoteUserOffLineNotify(final String uid, final AliRtcEngine.AliRtcUserOfflineReason reason) {
             super.onRemoteUserOffLineNotify(uid, reason);
-            Log.i(TAG, "onRemoteUserOffLineNotify: [uid: " + uid +
+            Logger.i("onRemoteUserOffLineNotify: [uid: " + uid +
                     ", reason: " + reason + "]");
             // 关闭智能体离会通知
             if ((!TextUtils.isEmpty(mAIAgentAvatarUserId) && TextUtils.equals(mAIAgentAvatarUserId, uid)) ||
@@ -177,7 +178,7 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
         @Override
         public void onRemoteTrackAvailableNotify(String uid, AliRtcEngine.AliRtcAudioTrack audioTrack, AliRtcEngine.AliRtcVideoTrack videoTrack) {
             super.onRemoteTrackAvailableNotify(uid, audioTrack, videoTrack);
-            Log.i(TAG, "onRemoteTrackAvailableNotify: [uid: " + uid +
+            Logger.i("onRemoteTrackAvailableNotify: [uid: " + uid +
                     ", audioTrack: " + audioTrack +
                     ", videoTrack: " + videoTrack + "]");
 
@@ -198,19 +199,19 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
         @Override
         public void onFirstAudioPacketReceived(String uid, AliRtcEngine.AliRtcAudioTrack aliRtcAudioTrack, int timeCost) {
             super.onFirstAudioPacketReceived(uid, aliRtcAudioTrack, timeCost);
-            Log.i(TAG, "onFirstAudioPacketReceived [uid: " + uid + ", aliRtcAudioTrack: " + aliRtcAudioTrack + ", timeCost: " + timeCost + "]");
+            Logger.i("onFirstAudioPacketReceived [uid: " + uid + ", aliRtcAudioTrack: " + aliRtcAudioTrack + ", timeCost: " + timeCost + "]");
             notifyOnCallBegin();
         }
 
         @Override
         public void onFirstVideoPacketReceived(String uid, AliRtcEngine.AliRtcVideoTrack aliRtcVideoTrack, int timeCost) {
-            Log.i(TAG, "onFirstVideoPacketReceived [uid: " + uid + ", aliRtcVideoTrack: " + aliRtcVideoTrack + ", timeCost: " + timeCost + "]");
+            Logger.i("onFirstVideoPacketReceived [uid: " + uid + ", aliRtcVideoTrack: " + aliRtcVideoTrack + ", timeCost: " + timeCost + "]");
             super.onFirstVideoPacketReceived(uid, aliRtcVideoTrack, timeCost);
         }
 
         @Override
         public void onFirstVideoFrameReceived(String uid, AliRtcEngine.AliRtcVideoTrack aliRtcVideoTrack, int timeCost) {
-            Log.i(TAG, "onFirstVideoFrameReceived [uid: " + uid + ", aliRtcVideoTrack: " + aliRtcVideoTrack + ", timeCost: " + timeCost + "]");
+            Logger.i("onFirstVideoFrameReceived [uid: " + uid + ", aliRtcVideoTrack: " + aliRtcVideoTrack + ", timeCost: " + timeCost + "]");
             super.onFirstVideoFrameReceived(uid, aliRtcVideoTrack, timeCost);
         }
 
@@ -238,7 +239,7 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
         @Override
         public void onBye(int code) {
             super.onBye(code);
-            Log.i(TAG, "onBye: [code: " + code + "]");
+            Logger.i("onBye: [code: " + code + "]");
             if (code == 1 /* AliRtcEngine.AliRtcOnByeType.AliRtcByeTypeRestoreSession */) {
                 notifyErrorOccurs(AICallErrorCode.KickedByUserReplace);
             } else if (code == 3 /* AliRtcEngine.AliRtcOnByeType.AliRtcByeTypeKickOff */) {
@@ -252,14 +253,14 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
         @Override
         public void onAuthInfoWillExpire() {
             super.onAuthInfoWillExpire();
-            Log.i(TAG, "onAuthInfoWillExpire");
+            Logger.i("onAuthInfoWillExpire");
             refreshRTCToken();
         }
 
         @Override
         public void onAuthInfoExpired() {
             super.onAuthInfoExpired();
-            Log.i(TAG, "onAuthInfoExpired");
+            Logger.i("onAuthInfoExpired");
             notifyErrorOccurs(AICallErrorCode.TokenExpired);
         }
 
@@ -313,7 +314,9 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
                             String text = dataJson.optString("text");
                             boolean end = dataJson.optBoolean("end");
                             int sentenceId = dataJson.optInt("sentenceId");
-                            notifyUserAsrSubtitle(text, end, sentenceId);
+                            // 1表示识别到主讲人，0表示没有识别到主讲人
+                            int voicePrintFlag = dataJson.optInt("voiceprint");
+                            notifyUserAsrSubtitle(text, end, sentenceId, voicePrintFlag);
                         } else if (msgType == IMsgTypeDef.MSG_TYPE_AI_AGENT_ERROR_NOTIFY) {
                             /**
                              *   "data": {
@@ -331,6 +334,14 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
                             } else if (aiAgentErrorCode == IMsgTypeDef.AI_AGENT_ERROR_CODE.AI_AGENT_AVATAR_AGENT_UNAVAILABLE) {
                                 notifyErrorOccurs(AICallErrorCode.AvatarAgentUnavailable);
                             }
+                        } else if (msgType == IMsgTypeDef.MSG_TYPE_PUSH_TO_TALK_ENABLE_RESULT) {
+                            boolean enable = dataJson.optBoolean("enable");
+                            notifyPushToTalkEnableResult(enable);
+                        } else if (msgType == IMsgTypeDef.MSG_TYPE_VOICE_PRINT_ENABLE_RESULT) {
+                            boolean enable = dataJson.optBoolean("enable");
+                            notifyVoicePrintEnableResult(enable);
+                        } else if (msgType == IMsgTypeDef.MSG_TYPE_DELETE_PRINT_ENABLE_RESULT) {
+                            notifyVoicePrintClearResult();
                         } else {
                             notifyIMMessageReceived(msgType, seqId, senderId, receiverId, dataJson);
                         }
@@ -369,12 +380,11 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
     public ARTCAICallEngineImpl(Context context, String userId) {
         mContext = context;
         mUserId = userId;
-        BizStatHelper.init(context);
     }
 
     @Override
     public void init(ARTCAICallConfig config) {
-        Log.i(TAG, "init config: " + config);
+        Logger.i("init config: " + config);
         mCallConfig = config;
 
         mARTCAICallService = generateAICallService(mCallConfig);
@@ -384,7 +394,7 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
 
     @Override
     public void call(String rtcToken, String aiAgentInstanceId, String aiAgentUserId, String channelId) {
-        Log.i(TAG, "call [rtcToken: " + rtcToken + ", aiAgentInstanceId: " + aiAgentInstanceId + ", aiAgentUserId: " + aiAgentUserId + ", channelId: " + channelId + "]");
+        Logger.i("call [rtcToken: " + rtcToken + ", aiAgentInstanceId: " + aiAgentInstanceId + ", aiAgentUserId: " + aiAgentUserId + ", channelId: " + channelId + "]");
         if (mIsHangUp.get()) {
             // 回调错误
             notifyErrorOccurs(AICallErrorCode.InvalidAction);
@@ -416,7 +426,7 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
             @Override
             public void run() {
                 if (mIsHangUp.compareAndSet(false, true)) {
-                    Log.i(TAG, "handup begin");
+                    Logger.i("handup begin");
                     Runnable rtcLeaveRunnable = new Runnable() {
                         @Override
                         public void run() {
@@ -426,24 +436,24 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
 
                             notifyOnCallEnd();
 
-                            Log.i(TAG, "handup end");
+                            Logger.i("handup end");
                         }
                     };
 
                     String loopDelay = mARTCAICallRtcWrapper.getLoopDelay();
-                    Log.i(TAG, "handup [mRobotInstanceId: " + mAIAgentInstanceId + ", loopDelay: " + loopDelay + "]");
+                    Logger.i("handup [mRobotInstanceId: " + mAIAgentInstanceId + ", loopDelay: " + loopDelay + "]");
                     boolean needCallLeaveRunnableNextLoop = false;
                     // 调用关闭服务
                     if (!TextUtils.isEmpty(mAIAgentInstanceId)) {
                         needCallLeaveRunnableNextLoop = mARTCAICallService.stopAIAgentService(mAIAgentInstanceId, new IARTCAICallService.IARTCAICallServiceCallback() {
                             @Override
                             public void onSuccess(JSONObject jsonObject) {
-                                Log.i(TAG, "stopAIGCRobotService succ");
+                                Logger.i("stopAIGCRobotService succ");
                             }
 
                             @Override
                             public void onFail(int errorCode, String errorMsg) {
-                                Log.i(TAG, "stopAIGCRobotService fail [errorCode: " + errorCode + ", errorMsg: " + errorMsg + "]");
+                                Logger.i("stopAIGCRobotService fail [errorCode: " + errorCode + ", errorMsg: " + errorMsg + "]");
                             }
                         });
                     }
@@ -478,12 +488,16 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
             mARTCAICallService.enableVoiceInterrupt(mAIAgentInstanceId, mAgentType, enable, new IARTCAICallService.IARTCAICallServiceCallback() {
                 @Override
                 public void onSuccess(JSONObject jsonObject) {
-                    Log.i(TAG, "enableVoiceInterrupt succ");
+                    if (null != jsonObject) {
+                        boolean enable = jsonObject.optBoolean("enable");
+                        notifyVoiceInterruptedSwitch(enable);
+                    }
+                    Logger.i("enableVoiceInterrupt succ");
                 }
 
                 @Override
                 public void onFail(int errorCode, String errorMsg) {
-                    Log.i(TAG, "enableVoiceInterrupt fail [errorCode: " + errorCode + ", errorMsg: " + errorMsg + "]");
+                    Logger.i("enableVoiceInterrupt fail [errorCode: " + errorCode + ", errorMsg: " + errorMsg + "]");
                 }
             });
             return true;
@@ -497,7 +511,7 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
         mCallConfig.enableSpeaker = enable;
         if (isJoinedChannel()) {
             // 调用rtc扬声器开关
-            Log.i(TAG, "enableSpeaker [enable: " + enable + "]");
+            Logger.i("enableSpeaker [enable: " + enable + "]");
             mARTCAICallRtcWrapper.enableSpeaker(enable);
             return true;
         }
@@ -513,12 +527,16 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
             mARTCAICallService.switchAiAgentVoice(mAIAgentInstanceId, mAgentType, voiceId, new IARTCAICallService.IARTCAICallServiceCallback() {
                 @Override
                 public void onSuccess(JSONObject jsonObject) {
-                    Log.i(TAG, "switchRobotVoice succ [voiceId: " + voiceId + "]");
+                    if (null != jsonObject) {
+                        String voiceId = jsonObject.optString("voiceId");
+                        notifyVoiceIdChanged(voiceId);
+                    }
+                    Logger.i("switchRobotVoice succ [voiceId: " + voiceId + "]");
                 }
 
                 @Override
                 public void onFail(int errorCode, String errorMsg) {
-                    Log.i(TAG, "switchRobotVoice fail [errorCode: " + errorCode + ", errorMsg: " + errorMsg + "]");
+                    Logger.i("switchRobotVoice fail [errorCode: " + errorCode + ", errorMsg: " + errorMsg + "]");
                 }
             });
             return true;
@@ -575,43 +593,13 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
     }
 
     @Override
-    public void rating(int sumRate, int delay, int noise, int recognition, int interactive, int timbre) {
-        try {
-            JSONObject args = new JSONObject();
-            /**
-             * final	final	整体评分：1~5
-             * delay	delay	通话延时：1~5
-             * noise	noise	环境噪音：1~5
-             * recognition	reco	人声识别准确率：1~5
-             * interactive	intera	交互体验：1~5
-             * timbre	timbre	音色拟真度：1~5
-             */
-            args.put("atype", mAgentType == ARTCAICallAgentType.AvatarAgent ? "avatar" : "voice");
-            args.put("aid", mCallConfig.aiAgentId);
-            args.put("ains", mAIAgentInstanceId);
-            args.put("ach", mChannelId);
-            args.put("auid", mAIAgentUserId);
-            args.put("uid", mUserId);
-            args.put("final", sumRate);
-            args.put("delay", delay);
-            args.put("noise", noise);
-            args.put("reco", recognition);
-            args.put("intera", interactive);
-            args.put("timbre", timbre);
-            BizStatHelper.stat("2000", args.toString());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
-
-    @Override
     public void switchMicrophone(boolean on) {
 //        Log.e("switchMicrophone", "on: " + on, new Throwable());
         mCallConfig.isMicrophoneOn = on;
         if (isJoinedChannel()) {
             // 调用rtc麦克风开关
             mARTCAICallRtcWrapper.switchMicrophone(on);
-            Log.i(TAG, "switchMicrophone [on: " + on + "]");
+            Logger.i("switchMicrophone [on: " + on + "]");
         }
     }
 
@@ -628,6 +616,85 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
     @Override
     public IARTCAICallService getIARTCAICallService() {
         return mARTCAICallService;
+    }
+
+    @Override
+    public boolean useVoicePrint(boolean enable) {
+        if (isJoinedChannel()) {
+            Logger.i("enableVoicePrint: " + enable);
+            mCallConfig.enableVoicePrint = enable;
+            mARTCAICallService.enableVoicePrint(enable);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean isUsingVoicePrint() {
+        return mCallConfig.enableVoicePrint;
+    }
+
+    @Override
+    public boolean clearVoicePrint() {
+        if (isJoinedChannel()) {
+            Logger.i("deleteVoicePrint");
+            mARTCAICallService.deleteVoicePrint();
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean enablePushToTalk(boolean enable) {
+        if (isJoinedChannel()) {
+            Logger.i("enablePushToTalk: " + enable);
+            mCallConfig.enablePushToTalk = enable;
+            mARTCAICallService.enablePushToTalk(enable);
+            onPushToTalkModeChanged();
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean isPushToTalkEnable() {
+        return mCallConfig.enablePushToTalk;
+    }
+
+    @Override
+    public boolean startPushToTalk() {
+        if (isJoinedChannel()) {
+            Logger.i("startToPushToTalk");
+            switchMicrophone(true);
+            mARTCAICallRtcWrapper.publishLocalVideoStream(true);
+
+            mARTCAICallService.startPushToTalk();
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean finishPushToTalk() {
+        if (isJoinedChannel()) {
+            Logger.i("finishToPushToTalk");
+            switchMicrophone(false);
+            mARTCAICallRtcWrapper.publishLocalVideoStream(false);
+
+            mARTCAICallService.finishPushToTalk();
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean cancelPushToTalk() {
+        if (isJoinedChannel()) {
+            Logger.i("cancelToPushToTalk");
+            mARTCAICallService.cancelPushToTalk();
+            return true;
+        }
+        return false;
     }
 
     private boolean isJoinedChannel() {
@@ -663,7 +730,7 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
     }
 
     private void onRTCTokenResult(boolean isSucc, String rtcToken) {
-        Log.i(TAG, "onRTCTokenResult: [isSucc: " + isSucc + ", rtcToken: " + rtcToken + "]");
+        Logger.i("onRTCTokenResult: [isSucc: " + isSucc + ", rtcToken: " + rtcToken + "]");
         mCallbackHandler.post(new Runnable() {
             @Override
             public void run() {
@@ -681,7 +748,7 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
     }
 
     protected IARTCAICallService generateAICallService(ARTCAICallConfig artcAiCallConfig) {
-        return new ARTCAICallServiceImpl(artcAiCallConfig.appServerHost, artcAiCallConfig.loginUserId, artcAiCallConfig.loginAuthrization);
+        return new ARTCAICallServiceImpl(artcAiCallConfig.aiAgentRegion, artcAiCallConfig.appServerHost, artcAiCallConfig.loginUserId, artcAiCallConfig.loginAuthrization);
     }
 
     private void setARTCAICallRobotState(ARTCAICallRobotState aRTCAICallRobotState) {
@@ -706,20 +773,58 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
             @Override
             public void run() {
                 if (isJoinedChannel()) {
-                    switchMicrophone(mCallConfig.isMicrophoneOn);
                     enableSpeaker(mCallConfig.enableSpeaker);
+
+                    onPushToTalkModeChanged();
                 }
             }
         });
     }
 
-    private void notifyUserAsrSubtitle(String text, boolean isSentenceEnd, int sentenceId) {
+    private void onPushToTalkModeChanged() {
+        if (isPushToTalkEnable()) {
+            isMicrophoneEnableBeforePushToTalkMode = mCallConfig.isMicrophoneOn;
+            switchMicrophone(false);
+            mARTCAICallRtcWrapper.publishLocalAudioStream(true);
+            mARTCAICallRtcWrapper.publishLocalVideoStream(false);
+        } else {
+            if (null != isMicrophoneEnableBeforePushToTalkMode) {
+                mCallConfig.isMicrophoneOn = isMicrophoneEnableBeforePushToTalkMode;
+            }
+            switchMicrophone(mCallConfig.isMicrophoneOn);
+            mARTCAICallRtcWrapper.publishLocalAudioStream(true);
+            if (mAgentType == ARTCAICallAgentType.VisionAgent) {
+                mARTCAICallRtcWrapper.publishLocalVideoStream(true);
+            }
+        }
+
+        notifyPushToTalkEnableResult(isPushToTalkEnable());
+    }
+
+    private void notifyUserAsrSubtitle(String text, boolean isSentenceEnd, int sentenceId, int voicePrintFlag) {
         if (!TextUtils.isEmpty(text)) {
             mCallbackHandler.post(new Runnable() {
                 @Override
                 public void run() {
                     if (null != mEngineCallback) {
-                        mEngineCallback.onUserAsrSubtitleNotify(text, isSentenceEnd, sentenceId);
+                        VoicePrintStatusCode voicePrintStatusCode = VoicePrintStatusCode.Unknown;
+                        switch (voicePrintFlag) {
+                            case 0:
+                                voicePrintStatusCode = VoicePrintStatusCode.Disable;
+                                break;
+                            case 1:
+                                voicePrintStatusCode = VoicePrintStatusCode.EnableWithoutRegister;
+                                break;
+                            case 2:
+                                voicePrintStatusCode = VoicePrintStatusCode.SpeakerRecognized;
+                                break;
+                            case 3:
+                                voicePrintStatusCode = VoicePrintStatusCode.SpeakerNotRecognized;
+                                break;
+                            default:
+                                break;
+                        }
+                        mEngineCallback.onUserAsrSubtitleNotify(text, isSentenceEnd, sentenceId, voicePrintStatusCode);
                     }
                 }
             });
@@ -915,6 +1020,43 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
             public void run() {
                 if (null != mEngineCallback) {
                     mEngineCallback.onUserOnLine(uid);
+                }
+            }
+        });
+    }
+
+    protected void notifyPushToTalkEnableResult(boolean enable) {
+        mCallbackHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                Logger.i("onPushToTalk: " + enable);
+                if (null != mEngineCallback) {
+                    mEngineCallback.onPushToTalk(enable);
+                }
+            }
+        });
+    }
+
+    private void notifyVoicePrintEnableResult(boolean enable) {
+        mCallbackHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                Logger.i("onVoicePrintEnable: " + enable);
+                if (null != mEngineCallback) {
+                    mEngineCallback.onVoicePrintEnable(enable);
+                }
+            }
+        });
+    }
+
+    private void notifyVoicePrintClearResult() {
+
+        mCallbackHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                Logger.i("notifyVoicePrintClearResult");
+                if (null != mEngineCallback) {
+                    mEngineCallback.onVoicePrintCleared();
                 }
             }
         });

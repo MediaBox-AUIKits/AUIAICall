@@ -16,6 +16,7 @@ biz:
   live_mic:
     app_id: "xxxxxxx"
     app_key: "xxxxxxx"
+    gslb: https://gw.rtn.aliyuncs.com
   ai_aent:
     voice_chat_ai_agent_id: "xxxxxxx"
     avatar_ai_chat_3d_agent_id: "xxxxxxx"

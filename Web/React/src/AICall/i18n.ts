@@ -5,9 +5,20 @@ const i18n = {
 
   'agent.voice': '语音通话',
   'agent.avatar': '数字人通话',
+  'agent.vision': '视觉理解通话',
+
+  'push.pushtoTalk': '按住讲话',
+  'push.releaseToSend': '松开发送',
+  'push.pushToTalkMode': '对讲机模式',
+  'push.pushtoTalk_releaseToSend': '按下按钮后讲话，松开按钮后结束讲话 ',
+  'push.openFail': '打开/关闭对讲机模式失败',
+  'push.turnedOn': '对讲机模式已打开',
+  'push.turnedOff': '对讲机模式已关闭',
+
+  'setting.modeTitle': '通话模式',
 
   'setting.voiceInterruptTitle': '智能打断',
-  'setting.voiceInterruptHelp': '根据声音和环境智能体打断AI智能体',
+  'setting.voiceInterruptHelp': '根据声音和环境智能打断AI智能体',
 
   'setting.voiceIdTitle': '选择音色',
   'setting.voiceIdHelp': '切换音色后，AI将在下一次回答中使用新的音色',

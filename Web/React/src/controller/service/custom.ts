@@ -1,7 +1,7 @@
 import { AICallAgentInfo, AICallAgentType } from 'aliyun-auikit-aicall';
 import AUIAICallConfig from '../AUIAICallConfig';
 
-import { APP_SERVER, JSONData, ServiceAuthError, TemplateConfig, WorkflowType } from './interface';
+import { APP_SERVER, getWorkflowType, JSONData, ServiceAuthError, TemplateConfig, WorkflowType } from './interface';
 
 class AppServerService {
   private _userId?: string;
@@ -32,14 +32,14 @@ class AppServerService {
     if (config.agentVoiceId) {
       configDict.VoiceId = config.agentVoiceId;
     }
-    if (config.agentType === AICallAgentType.AvatarAgent) {
-      if (config.agentAvatarId) {
-        configDict.AvatarId = config.agentAvatarId;
-      }
-      templateConfig.AvatarChat3D = configDict;
-    } else {
-      templateConfig.VoiceChat = configDict;
+    if (config.agentType === AICallAgentType.AvatarAgent && config.agentAvatarId) {
+      configDict.AvatarId = config.agentAvatarId;
     }
+    if (config.enablePushToTalk !== undefined) {
+      configDict.EnablePushToTalk = config.enablePushToTalk;
+    }
+
+    templateConfig[getWorkflowType(config.agentType)] = configDict;
 
     return templateConfig;
   };
@@ -72,8 +72,7 @@ class AppServerService {
       user_id: this._userId,
       expire: 24 * 60 * 60,
       template_config: JSON.stringify(this.getInitTemplateConfig(config)),
-      workflow_type:
-        config.agentType === AICallAgentType.AvatarAgent ? WorkflowType.AvatarChat3D : WorkflowType.VoiceChat,
+      workflow_type: getWorkflowType(config.agentType),
     };
 
     return fetch(`${APP_SERVER}/api/v2/aiagent/startAIAgentInstance`, {
@@ -94,7 +93,14 @@ class AppServerService {
       })
       .then((data) => {
         if (data.code === 200) {
-          return data;
+          return {
+            agentType: config.agentType,
+            instanceId: data.ai_agent_instance_id,
+            channelId: data.channel_id,
+            userId: data.ai_agent_user_id,
+            rtcToken: data.rtc_auth_token,
+            reqId: data.request_id || '',
+          };
         }
         throw new Error(data.message || 'request error');
       });

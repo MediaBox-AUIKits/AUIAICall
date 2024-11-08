@@ -1,8 +1,6 @@
-import { Button, Popover } from 'antd';
-import Icon from '@ant-design/icons';
+import { Alert } from 'antd';
 
 import CallFooter from './Footer';
-import SettingSvg from './svg/setting.svg?react';
 import CallSettings from './Settings';
 import CallSubtitle from './Subtitle';
 
@@ -14,16 +12,19 @@ import './index.less';
 import useCallStore from '../store';
 import ArrowBtn from '../../components/ArrowBtn';
 import { useEffect, useState } from 'react';
+import Vision from './Vision';
+
 
 interface StageProps {
   showMessage: boolean;
   onStop: () => void;
-  toggleMicrophoneMuted: () => void;
   onShowMessage: () => void;
 }
 
-function Stage({ onStop, toggleMicrophoneMuted, showMessage: propsShowMessage, onShowMessage }: StageProps) {
+function Stage({ onStop, showMessage: propsShowMessage, onShowMessage }: StageProps) {
   const agentType = useCallStore((state) => state.agentType);
+  const enablePushToTalk = useCallStore((state) => state.enablePushToTalk);
+  const cameraMuted = useCallStore((state) => state.cameraMuted);
   const [showMessage, setShowMessage] = useState(propsShowMessage);
 
   useEffect(() => {
@@ -44,11 +45,24 @@ function Stage({ onStop, toggleMicrophoneMuted, showMessage: propsShowMessage, o
     };
   }, [propsShowMessage]);
 
+  let CharacterComponent = Voice;
+  if (agentType === AICallAgentType.AvatarAgent) {
+    CharacterComponent = Video;
+  } else if (agentType === AICallAgentType.VisionAgent) {
+    CharacterComponent = Vision;
+  }
+
   return (
-    <div className='call-block stage-block'>
+    <div
+      className={`call-block stage-block ${
+        agentType === AICallAgentType.AvatarAgent || (agentType === AICallAgentType.VisionAgent && !cameraMuted)
+          ? 'has-video'
+          : ''
+      }`}
+    >
       {!showMessage && (
         <ArrowBtn
-          type={agentType === AICallAgentType.VoiceAgent ? 'leftToLeft' : 'rightToRight'}
+          type={agentType === AICallAgentType.AvatarAgent ? 'rightToRight' : 'leftToLeft'}
           onClick={onShowMessage}
         />
       )}
@@ -56,25 +70,21 @@ function Stage({ onStop, toggleMicrophoneMuted, showMessage: propsShowMessage, o
         <div className='call-block-title'>
           <div className='_text'>小云</div>
           <div className='_extra'>
-            <Popover
-              overlayClassName='stage-settings-content'
-              placement='bottomRight'
-              arrow={false}
-              title='设置'
-              content={<CallSettings />}
-              trigger='click'
-            >
-              <Button>
-                <Icon component={SettingSvg} />
-                设置
-              </Button>
-            </Popover>
+            
+            <CallSettings />
           </div>
         </div>
         <div className='call-block-bd stage-bd'>
-          {agentType === AICallAgentType.AvatarAgent ? <Video /> : <Voice />}
+          {enablePushToTalk && (
+            <Alert
+              className='stage-push-to-talk-tip'
+              message='已开启对讲机模式，长按空格开始讲话，对讲机状态下，麦克风默认开启。'
+              closable
+            />
+          )}
+          <CharacterComponent />
           <CallSubtitle />
-          <CallFooter onStop={onStop} toggleMicrophoneMuted={toggleMicrophoneMuted} />
+          <CallFooter onStop={onStop} />
         </div>
       </div>
     </div>

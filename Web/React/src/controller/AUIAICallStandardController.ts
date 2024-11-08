@@ -2,10 +2,11 @@ import { AICallAgentInfo, AICallState } from 'aliyun-auikit-aicall';
 import AUIAICallController from './AUIAICallController';
 
 import standardService from './service/standard';
+import AUIAICallConfig from './AUIAICallConfig';
 
 class AUIAICallStandardController extends AUIAICallController {
-  constructor(userId: string, token: string) {
-    super(userId, token);
+  constructor(userId: string, token: string, config?: AUIAICallConfig) {
+    super(userId, token, config);
   }
 
   async startAIAgent(): Promise<AICallAgentInfo> {
@@ -13,7 +14,7 @@ class AUIAICallStandardController extends AUIAICallController {
   }
 
   async stopAIAgent(): Promise<void> {
-    this.currentEngine?.stopAgent();
+    this.engine?.stopAgent();
     await new Promise((resolve) => {
       setTimeout(() => {
         resolve(true);
@@ -23,25 +24,25 @@ class AUIAICallStandardController extends AUIAICallController {
 
   async enableVoiceInterrupt(enable: boolean): Promise<boolean> {
     if (this.state === AICallState.Connected) {
-      this.currentEngine?.enableVoiceInterrupt(enable);
+      this.engine?.enableVoiceInterrupt(enable);
     }
     return true;
   }
 
   async switchVoiceId(voiceId: string): Promise<boolean> {
     if (this.state === AICallState.Connected) {
-      this.currentEngine?.switchVoiceId(voiceId);
+      this.engine?.switchVoiceId(voiceId);
     }
     return true;
   }
 
   async requestRTCToken(): Promise<string> {
     if (this.state === AICallState.Connected) {
-      this.currentEngine?.requestRTCToken();
+      this.engine?.requestRTCToken();
 
       // 等待返回新的 RTC token
       return new Promise((resolve) => {
-        this.currentEngine?.once('newRTCToken', (token: string) => {
+        this.engine?.once('newRTCToken', (token: string) => {
           resolve(token);
         });
       });

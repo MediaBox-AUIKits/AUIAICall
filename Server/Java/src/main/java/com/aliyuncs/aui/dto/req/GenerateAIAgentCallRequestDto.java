@@ -29,4 +29,7 @@ public class GenerateAIAgentCallRequestDto {
     @JsonProperty("workflow_type")
     private String workflowType;
 
+    @JsonProperty("region")
+    private String region;
+
 }

@@ -17,12 +17,21 @@ import UIKit
     case VoiceInterruptChanged = 1004
     case VoiceIdChanged = 1005
     case RTCTokenResponsed = 1006
-    
+    case PushToTalkChanged = 1007
+    case VoiceprintUsingChanged = 1008
+    case VoiceprintClearSucceed = 1009
+
     case StopAIAgent = 1100
     case InterruptSpeaking = 1101
     case EnableVoiceInterrupt = 1102
     case SwitchVoiceId = 1103
     case RequestRTCToken = 1104
+    case EnablePushToTalk = 1105
+    case StartPushToTalk = 1106
+    case FinishPushToTalk = 1107
+    case CancelPushToTalk = 1108
+    case UseVoiceprint = 1109
+    case ClearVoiceprint = 1110
 }
 
 @objcMembers open class ARTCAICallMessageSendModel: NSObject {

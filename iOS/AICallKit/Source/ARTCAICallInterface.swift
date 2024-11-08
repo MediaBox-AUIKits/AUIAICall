@@ -118,6 +118,32 @@ import UIKit
 }
 
 /**
+ * 声纹降噪反馈结果
+ */
+@objc public enum ARTCAICallVoiceprintResult: Int32 {
+
+    /**
+     * 没开启声纹降噪
+     */
+    case Off = 0
+    
+    /**
+     * 开启了，还未注册
+     */
+    case Unregister = 1
+    
+    /**
+     * 开启了，识别到主讲人
+     */
+    case DetectedSpeaker = 2
+    
+    /**
+     * 开启了，没识别到主讲人
+     */
+    case UndetectedSpeaker = 3
+}
+
+/**
  * 错误码
  */
 @objc public enum ARTCAICallErrorCode: Int32 {
@@ -279,7 +305,17 @@ import UIKit
      * @param isSentenceEnd 当前文本是否为这句话的最终结果
      * @param sentenceId 当前文本属于的句子ID
      */
+    @available(*, deprecated, message: "Use 'onUserSubtitleNotify(text: String, isSentenceEnd: Bool, sentenceId: Int, voiceprint: Int32)' instead.")
     @objc optional func onUserSubtitleNotify(text: String, isSentenceEnd: Bool, sentenceId: Int)
+    
+    /**
+     * 用户提问被智能体识别结果的通知
+     * @param text 被智能体识别出的提问文本
+     * @param isSentenceEnd 当前文本是否为这句话的最终结果
+     * @param sentenceId 当前文本属于的句子ID
+     * @param voiceprintResult 当前声纹降噪识别结果反馈
+     */
+    @objc optional func onUserSubtitleNotify(text: String, isSentenceEnd: Bool, sentenceId: Int, voiceprintResult: ARTCAICallVoiceprintResult)
     
     /**
      * 智能体回答结果通知
@@ -300,6 +336,25 @@ import UIKit
      * @param enable 是否启用
      */
     @objc optional func onVoiceInterrupted(enable: Bool)
+    
+    /**
+     * 当前通话的对讲机模式是否启用
+     * @param enable 是否启用
+     */
+    @objc optional func onPushToTalk(enable: Bool)
+    
+    /**
+     * 当前通话的声纹降噪是否启用
+     * 邀测阶段，如需体验，请联系相关人员
+     * @param enable 是否启用
+     */
+    @objc optional func onVoiceprint(enable: Bool)
+    
+    /**
+     * 当前通话的声纹数据被清除
+     * 邀测阶段，如需体验，请联系相关人员
+     */
+    @objc optional func onVoiceprintCleared()
 }
 
 /**
@@ -430,7 +485,7 @@ import UIKit
     var agentInfo: ARTCAICallAgentInfo? { get }
 
     /**
-     * 视觉配置，通话前设置才能生效
+     * 视觉配置，VisionAgent时，在通话前设置才能生效，
      */
     var visionConfig: ARTCAICallVisionConfig { set get }
     
@@ -455,7 +510,7 @@ import UIKit
     func handup(_ stopAIAgent: Bool)
     
     /**
-     * 设置智能体渲染视图，及缩放模式
+     * 设置智能体渲染视图，及缩放模式，AvatarAgent时有效
      */
     func setAgentView(view: UIView?, mode: ARTCAICallAgentViewMode)
         
@@ -485,14 +540,46 @@ import UIKit
     func muteMicrophone(mute: Bool) -> Bool
     
     /**
-     * 关闭/取消关闭摄像头
+     * 关闭/取消关闭摄像头，VisionAgent时有效
      */
     func muteLocalCamera(mute: Bool) -> Bool
     
     /**
-     * 切换前后摄像头
+     * 切换前后摄像头，VisionAgent时有效
      */
     func switchCamera() -> Bool
+    
+    /**
+     * 开启/关闭对讲机模式，对讲机模式下，只有在finishPushToTalk被调用后，智能体才会播报结果
+     */
+    func enablePushToTalk(enable: Bool) -> Bool
+    
+    /**
+     * 开始讲话
+     */
+    func startPushToTalk() -> Bool
+    
+    /**
+     * 结束讲话
+     */
+    func finishPushToTalk() -> Bool
+    
+    /**
+     * 取消这次讲话
+     */
+    func cancelPushToTalk() -> Bool
+    
+    /**
+     * 当前断句是否使用声纹降噪识别
+     * 邀测阶段，如需体验，请联系相关人员
+     */
+    func useVoiceprint(isUse: Bool) -> Bool
+    
+    /**
+     * 清除当前声纹数据
+     * 邀测阶段，如需体验，请联系相关人员
+     */
+    func clearVoiceprint() -> Bool
     
     /**
      * 获取RTC引擎

@@ -5,6 +5,7 @@ import { AICallAgentType, AICallState } from 'aliyun-auikit-aicall';
 
 import Voice from './svg/voice.svg?react';
 import Avatar from './svg/avatar.svg?react';
+import Vision from './svg/vision.svg?react';
 
 import useCallStore from '../store';
 
@@ -30,7 +31,7 @@ function CallWelcome({ onStart }: CallWelcomeProps) {
   } else if (callState === AICallState.Error) {
     content = (
       <>
-        <ExclamationOutlined />
+        <ExclamationOutlined className='_error' />
         <div className='_tip'>{callErrorMessage || '通话异常'}</div>
         <div className='_backBtn'>
           <Button
@@ -60,7 +61,7 @@ function CallWelcome({ onStart }: CallWelcomeProps) {
           </Button>
           <div className='_tip'>{i18n['agent.voice']}</div>
         </div>
-        <div style={{ width: 60 }} />
+        <div style={{ width: 28 }} />
         <div>
           <Button
             className='_start-btn'
@@ -71,6 +72,18 @@ function CallWelcome({ onStart }: CallWelcomeProps) {
             <Icon component={Avatar} />
           </Button>
           <div className='_tip'>{i18n['agent.avatar']}</div>
+        </div>
+        <div style={{ width: 28 }} />
+        <div>
+          <Button
+            className='_start-btn'
+            onClick={() => {
+              onStart(AICallAgentType.VisionAgent);
+            }}
+          >
+            <Icon component={Vision} />
+          </Button>
+          <div className='_tip'>{i18n['agent.vision']}</div>
         </div>
       </div>
     );

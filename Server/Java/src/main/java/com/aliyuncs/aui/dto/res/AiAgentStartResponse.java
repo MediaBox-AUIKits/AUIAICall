@@ -29,4 +29,13 @@ public class AiAgentStartResponse {
     @JsonProperty("channel_id")
     private String channelId;
 
+    @JsonProperty("result")
+    private boolean result;
+
+    @JsonProperty("message")
+    private String message;
+
+    @JsonProperty("request_id")
+    private String requestId;
+
 }

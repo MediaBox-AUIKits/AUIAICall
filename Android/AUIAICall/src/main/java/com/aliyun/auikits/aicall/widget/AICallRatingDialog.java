@@ -12,6 +12,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.aliyun.auikits.aicall.R;
+import com.aliyun.auikits.aicall.util.DisplayUtil;
 import com.aliyun.auikits.aicall.util.ToastHelper;
 import com.orhanobut.dialogplus.DialogPlus;
 import com.orhanobut.dialogplus.DialogPlusBuilder;
@@ -38,18 +39,6 @@ public class AICallRatingDialog {
         void onDismiss();
     }
 
-    // 获取系统标题栏的高度
-    private static int getStatusBarHeight(Context context) {
-        int statusBarHeight = 0;
-        if (null != context) {
-            int resourceId = context.getResources().getIdentifier("status_bar_height", "dimen", "android");
-            if (resourceId > 0) {
-                statusBarHeight = context.getResources().getDimensionPixelSize(resourceId);
-            }
-        }
-        return statusBarHeight;
-    }
-
     public static void show(Context context, IRatingDialogDismissListener onDismissListener) {
         if (!AI_CALL_RATING_ENABLE) {
             if (null != onDismissListener) {
@@ -61,7 +50,7 @@ public class AICallRatingDialog {
         AICallRatingDialog aiCallRatingDialog = new AICallRatingDialog(view);
         view.setTag(aiCallRatingDialog);
 
-        int statusBarHeight = getStatusBarHeight(context);
+        int statusBarHeight = DisplayUtil.getStatusBarHeight(context);
         View topBar = view.findViewById(R.id.top_bar);
         LinearLayout.LayoutParams layoutParams = (LinearLayout.LayoutParams) topBar.getLayoutParams();
         layoutParams.topMargin = statusBarHeight;

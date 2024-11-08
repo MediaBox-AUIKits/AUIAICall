@@ -3,12 +3,18 @@ package com.aliyun.auikits.aicall.controller;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.TextUtils;
+import android.util.Base64;
 import android.util.Log;
 
 import com.aliyun.auikits.aiagent.ARTCAICallEngine;
 import com.aliyun.auikits.aiagent.service.IARTCAICallService;
+import com.aliyun.auikits.aicall.util.BizStatHelper;
+import com.aliyun.auikits.aiagent.util.Logger;
 
 import org.json.JSONObject;
+
+import java.util.List;
 
 public abstract class ARTCAICallController {
 
@@ -45,6 +51,9 @@ public abstract class ARTCAICallController {
     protected ARTCAICallEngine.IARTCAICallEngineCallback mBizCallEngineCallback = null;
     ARTCAICallEngine.ARTCAICallAgentType mAiAgentType;
     protected String mChannelId = "";
+    protected String mAIAgentInstanceId = "";
+    protected String mAIAgentUserId = "";
+    protected String mRtcAuthToken = "";
 
     protected ARTCAICallEngine.IARTCAICallEngineCallback mCallEngineCallbackWrapper = new ARTCAICallEngine.IARTCAICallEngineCallback() {
         @Override
@@ -86,9 +95,9 @@ public abstract class ARTCAICallController {
         }
 
         @Override
-        public void onUserAsrSubtitleNotify(String text, boolean isSentenceEnd, int sentenceId) {
+        public void onUserAsrSubtitleNotify(String text, boolean isSentenceEnd, int sentenceId, ARTCAICallEngine.VoicePrintStatusCode voicePrintStatusCode) {
             if (null != mBizCallEngineCallback) {
-                mBizCallEngineCallback.onUserAsrSubtitleNotify(text, isSentenceEnd, sentenceId);
+                mBizCallEngineCallback.onUserAsrSubtitleNotify(text, isSentenceEnd, sentenceId, voicePrintStatusCode);
             }
         }
 
@@ -154,10 +163,32 @@ public abstract class ARTCAICallController {
                 mBizCallEngineCallback.onUserOnLine(uid);
             }
         }
+
+        @Override
+        public void onPushToTalk(boolean enable) {
+            if (null != mBizCallEngineCallback) {
+                mBizCallEngineCallback.onPushToTalk(enable);
+            }
+        }
+
+        @Override
+        public void onVoicePrintEnable(boolean enable) {
+            if (null != mBizCallEngineCallback) {
+                mBizCallEngineCallback.onVoicePrintEnable(enable);
+            }
+        }
+
+        @Override
+        public void onVoicePrintCleared() {
+            if (null != mBizCallEngineCallback) {
+                mBizCallEngineCallback.onVoicePrintCleared();
+            }
+        }
     };
     protected ARTCAICallController(Context context, String userId) {
         mContext = context;
         mUserId = userId;
+        BizStatHelper.init(context);
     }
 
     public void init(ARTCAICallEngine.ARTCAICallConfig artcaiCallConfig) {
@@ -199,6 +230,93 @@ public abstract class ARTCAICallController {
         return mUserId;
     }
 
+    public String getAiAgentRequestId() {
+        String requestId = "0";
+        if (null != mARTCAiCallConfig && !TextUtils.isEmpty(mARTCAiCallConfig.aiAgentRequestId)) {
+            requestId = mARTCAiCallConfig.aiAgentRequestId;
+        }
+        return requestId;
+    }
+
+    public void rating(int sumRate, int delay, int noise, int recognition, int interactive, int timbre) {
+        try {
+            JSONObject args = new JSONObject();
+            /**
+             * final	final	整体评分：1~5
+             * delay	delay	通话延时：1~5
+             * noise	noise	环境噪音：1~5
+             * recognition	reco	人声识别准确率：1~5
+             * interactive	intera	交互体验：1~5
+             * timbre	timbre	音色拟真度：1~5
+             */
+            args.put("atype", mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent ? "avatar" : "voice");
+            args.put("aid", mARTCAiCallConfig.aiAgentId);
+            args.put("ains", mAIAgentInstanceId);
+            args.put("ach", mChannelId);
+            args.put("auid", mAIAgentUserId);
+            args.put("uid", mUserId);
+            args.put("final", sumRate);
+            args.put("delay", delay);
+            args.put("noise", noise);
+            args.put("reco", recognition);
+            args.put("intera", interactive);
+            args.put("timbre", timbre);
+            BizStatHelper.stat("2000", args.toString());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public void commitReporting(List<Integer> reportTypeIdList, String otherTypeDesc) {
+
+        if (null == reportTypeIdList || reportTypeIdList.isEmpty()) {
+            return;
+        }
+        try {
+            {
+                JSONObject args = new JSONObject();
+                args.put("req_id", mARTCAiCallConfig.aiAgentRequestId);
+                args.put("aid", mARTCAiCallConfig.aiAgentId);
+                args.put("ains", mAIAgentInstanceId);
+                args.put("auid", mAIAgentUserId);
+                args.put("uid", mUserId);
+                args.put("ach", mChannelId);
+                args.put("rtc_base64_token", mRtcAuthToken);
+                if (!TextUtils.isEmpty(mRtcAuthToken)) {
+                    String decodeJson = new String(Base64.decode(mRtcAuthToken, Base64.DEFAULT));
+                    JSONObject tokenJson = new JSONObject(decodeJson);
+                    String appId = tokenJson.optString("appid");
+                    String userId = tokenJson.optString("userid");
+
+                    String streamType = mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent ? "audio" : "camera";
+                    args.put("rtc_stream_name", appId + "_" + mChannelId + "_" + userId + "_" + streamType);
+                }
+                StringBuilder idBuilder = new StringBuilder();
+                for (int reportTypeId : reportTypeIdList) {
+                    if (idBuilder.length() > 0) {
+                        idBuilder.append(",");
+                    }
+                    idBuilder.append(reportTypeId);
+                }
+                args.put("rep_type", idBuilder.toString());
+                if (!otherTypeDesc.isEmpty()) {
+                    args.put("rep_desc", otherTypeDesc);
+                }
+                BizStatHelper.stat("2001", args.toString());
+            }
+            {
+                JSONObject args = new JSONObject();
+                args.put("req_id", mARTCAiCallConfig.aiAgentRequestId);
+
+                String allLog = Logger.getAllLogRecordStr();
+                args.put("log_str", allLog);
+                BizStatHelper.stat("2002", args.toString());
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
     protected void setCallState(AICallState callState, ARTCAICallEngine.AICallErrorCode aiCallErrorCode) {
         Log.i("AUIAICall", "setCallState: [callState: " + callState + ", aiCallErrorCode: " + aiCallErrorCode + "]");
         mCallbackHandler.post(new Runnable() {
@@ -224,10 +342,12 @@ public abstract class ARTCAICallController {
                 mCallbackHandler.post(new Runnable() {
                     @Override
                     public void run() {
-                        String aIAgentInstanceId = jsonObject.optString("ai_agent_instance_id");
-                        String rtcAuthToken = jsonObject.optString("rtc_auth_token");
-                        String aIAgentUserId = jsonObject.optString("ai_agent_user_id");
+                        mAIAgentInstanceId = jsonObject.optString("ai_agent_instance_id");
+                        mRtcAuthToken = jsonObject.optString("rtc_auth_token");
+                        mAIAgentUserId = jsonObject.optString("ai_agent_user_id");
                         mChannelId = jsonObject.optString("channel_id");
+                        String requestId = jsonObject.optString("request_id");
+                        mARTCAiCallConfig.aiAgentRequestId = requestId;
 
                         if (jsonObject.has("workflow_type")) {
                             ARTCAICallEngine.ARTCAICallAgentType artcaiCallAgentType;
@@ -242,7 +362,7 @@ public abstract class ARTCAICallController {
                             mARTCAICallEngine.setAICallAgentType(artcaiCallAgentType);
                         }
                         Log.i("AUIAICall", "StartActionCallback succ result: " + jsonObject);
-                        mARTCAICallEngine.call(rtcAuthToken, aIAgentInstanceId, aIAgentUserId, mChannelId);
+                        mARTCAICallEngine.call(mRtcAuthToken, mAIAgentInstanceId, mAIAgentUserId, mChannelId);
                     }
                 });
             }

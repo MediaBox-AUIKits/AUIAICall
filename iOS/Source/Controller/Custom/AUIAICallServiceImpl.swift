@@ -22,7 +22,7 @@ import ARTCAICallKit
         return "VoiceChat"
     }
     
-    public func startAIAgent(userId: String, config: AUIAICallConfig, completed: ((ARTCAICallAgentInfo?, String?, Error?) -> Void)?) {
+    public func startAIAgent(userId: String, config: AUIAICallConfig, completed: ((ARTCAICallAgentInfo?, String?, Error?, _ reqId: String) -> Void)?) {
         if config.agentId == nil {
             self.startAIAgentInstance(userId: userId, config: config, completed: completed)
         }
@@ -31,17 +31,22 @@ import ARTCAICallKit
         }
     }
     
-    private func generateAIAgentCall(userId: String, config: AUIAICallConfig, completed: ((_ rsp: ARTCAICallAgentInfo?, _ token: String?, _ error: Error?) -> Void)?) {
+    private func generateAIAgentCall(userId: String, config: AUIAICallConfig, completed: ((_ rsp: ARTCAICallAgentInfo?, _ token: String?, _ error: Error?, _ reqId: String) -> Void)?) {
         
         guard let agentId = config.agentId else {
-            completed?(nil, nil, NSError.aicall_create(code: .InvalidParames, message: "lack off agentId"))
+            completed?(nil, nil, NSError.aicall_create(code: .InvalidParames, message: "lack off agentId"), "unknow")
             return
         }
         
         var template_config: [String : Any] = [:]
         var configDict: [String : Any] = [
             "EnableVoiceInterrupt": config.enableVoiceInterrupt,
+            "EnablePushToTalk": config.enablePushToTalk,
         ]
+        if let voiceprintId = config.voiceprintId {
+            configDict.updateValue(voiceprintId, forKey: "VoiceprintId")
+            configDict.updateValue(config.useVoiceprint, forKey: "UseVoiceprint")
+        }
         if !config.agentVoiceId.isEmpty {
             configDict.updateValue(config.agentVoiceId, forKey: "VoiceId")
         }
@@ -56,33 +61,42 @@ import ARTCAICallKit
 
         
         let expire: Int = 24 * 60 * 60
-        let body: [String: Any] = [
+        var body: [String: Any] = [
             "ai_agent_id": agentId,
             "user_id": userId,
             "expire": expire,
             "template_config": template_config.aicall_jsonString
         ]
+        if let region = config.region {
+            body.updateValue(region, forKey: "region")
+        }
 
         self.appserver.request(path: "/api/v2/aiagent/generateAIAgentCall", body: body) { response, data, error in
+            let reqId = (data?["request_id"] as? String) ?? "unknow"
             if error == nil {
                 debugPrint("generateAIAgentCall response: success")
                 let rtc_auth_token = data?["rtc_auth_token"] as? String
                 let info = ARTCAICallAgentInfo(data: data)
-                completed?(info, rtc_auth_token, nil)
+                completed?(info, rtc_auth_token, nil, reqId)
             }
             else {
                 debugPrint("generateAIAgentCall response: failed, error:\(error!)")
-                completed?(nil, nil, error)
+                completed?(nil, nil, error, reqId)
             }
         }
     }
     
-    private func startAIAgentInstance(userId: String, config: AUIAICallConfig, completed: ((_ rsp: ARTCAICallAgentInfo?, _ token: String?, _ error: Error?) -> Void)?) {
+    private func startAIAgentInstance(userId: String, config: AUIAICallConfig, completed: ((_ rsp: ARTCAICallAgentInfo?, _ token: String?, _ error: Error?, _ reqId: String) -> Void)?) {
 
         var template_config: [String : Any] = [:]
         var configDict: [String : Any] = [
             "EnableVoiceInterrupt": config.enableVoiceInterrupt,
+            "EnablePushToTalk": config.enablePushToTalk,
         ]
+        if let voiceprintId = config.voiceprintId {
+            configDict.updateValue(voiceprintId, forKey: "VoiceprintId")
+            configDict.updateValue(config.useVoiceprint, forKey: "UseVoiceprint")
+        }
         if !config.agentVoiceId.isEmpty {
             configDict.updateValue(config.agentVoiceId, forKey: "VoiceId")
         }
@@ -101,6 +115,7 @@ import ARTCAICallKit
         ]
         
         self.appserver.request(path: "/api/v2/aiagent/startAIAgentInstance", body: body) { response, data, error in
+            let reqId = (data?["request_id"] as? String) ?? "unknow"
             if error == nil {
                 debugPrint("startAIAgentInstance response: success")
                 let rtc_auth_token = data?["rtc_auth_token"] as? String
@@ -108,11 +123,11 @@ import ARTCAICallKit
                 var mutableData = data as? [String: Any]
                 mutableData?.updateValue(workflow_type, forKey: "workflow_type")
                 let info = ARTCAICallAgentInfo(data: mutableData)
-                completed?(info, rtc_auth_token, nil)
+                completed?(info, rtc_auth_token, nil, reqId)
             }
             else {
                 debugPrint("startAIAgentInstance response: failed, error:\(error!)")
-                completed?(nil, nil, error)
+                completed?(nil, nil, error, reqId)
             }
         }
     }
@@ -161,12 +176,44 @@ import ARTCAICallKit
         self.updateAIAgentInstance(body: body, completed: completed)
     }
     
-    public func updateAIAgent(userId: String, instanceId: String, agentType: ARTCAICallAgentType, enable: Bool, completed: ((_ error: Error?) -> Void)?) {
+    public func updateAIAgent(userId: String, instanceId: String, agentType: ARTCAICallAgentType, enableVoiceInterrupt: Bool, completed: ((_ error: Error?) -> Void)?) {
         
         let key = self.agentTypeToString(agentType)
         let configDict: [String : Any] = [
             key: [
-                "EnableVoiceInterrupt":enable,
+                "EnableVoiceInterrupt":enableVoiceInterrupt,
+            ]
+        ]
+        let body = [
+            "user_id": userId,
+            "ai_agent_instance_id": instanceId,
+            "template_config": configDict.aicall_jsonString
+        ]
+        self.updateAIAgentInstance(body: body, completed: completed)
+    }
+    
+    public func updateAIAgent(userId: String, instanceId: String, agentType: ARTCAICallAgentType, enablePushToTalk: Bool, completed: ((_ error: Error?) -> Void)?) {
+        
+        let key = self.agentTypeToString(agentType)
+        let configDict: [String : Any] = [
+            key: [
+                "EnablePushToTalk":enablePushToTalk,
+            ]
+        ]
+        let body = [
+            "user_id": userId,
+            "ai_agent_instance_id": instanceId,
+            "template_config": configDict.aicall_jsonString
+        ]
+        self.updateAIAgentInstance(body: body, completed: completed)
+    }
+    
+    public func updateAIAgent(userId: String, instanceId: String, agentType: ARTCAICallAgentType, useVoiceprint: Bool, completed: ((_ error: Error?) -> Void)?) {
+        
+        let key = self.agentTypeToString(agentType)
+        let configDict: [String : Any] = [
+            key: [
+                "UseVoiceprint": useVoiceprint,
             ]
         ]
         let body = [

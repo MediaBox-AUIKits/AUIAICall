@@ -3,7 +3,10 @@ package com.aliyun.auikits.aicall;
 
 import static com.aliyun.auikits.aiagent.ARTCAICallEngine.AICallErrorCode.AgentConcurrentLimit;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+
+import android.os.Message;
 import android.view.WindowManager;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -40,6 +43,7 @@ import com.aliyun.auikits.aicall.util.TimeUtil;
 import com.aliyun.auikits.aicall.util.ToastHelper;
 import com.aliyun.auikits.aicall.widget.AICallNoticeDialog;
 import com.aliyun.auikits.aicall.widget.AICallRatingDialog;
+import com.aliyun.auikits.aicall.widget.AICallReportingDialog;
 import com.aliyun.auikits.aicall.widget.AICallSettingDialog;
 import com.aliyun.auikits.aicall.widget.SpeechAnimationView;
 import com.aliyun.auikits.aiagent.ARTCAICallEngine;
@@ -52,6 +56,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class AUIAICallInCallActivity extends AppCompatActivity {
+    public static final String BUNDLE_KEY_AI_AGENT_REGION = "BUNDLE_KEY_AI_AGENT_REGION";
     public static final String BUNDLE_KEY_AI_AGENT_TYPE = "BUNDLE_KEY_AI_AGENT_TYPE";
     public static final String BUNDLE_KEY_AI_AGENT_ID = "BUNDLE_KEY_AI_AGENT_ID";
     public static final String BUNDLE_KEY_LOGIN_USER_ID = "BUNDLE_KEY_LOGIN_USER_ID";
@@ -74,6 +79,8 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
     private long mLastBackButtonExitMillis = 0;
     private ARTCAICallEngine.ARTCAICallAgentType mAiAgentType = ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent;
     private boolean mFirstAvatarFrameDrawn = false;
+    private boolean mIsPushToTalkMode = false;
+    private boolean mIsVoicePrintRecognized = false;
 
     private SubtitleHolder mSubtitleHolder = new SubtitleHolder();
     private ActionLayerHolder mActionLayerHolder = null;
@@ -131,11 +138,21 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onUserAsrSubtitleNotify(String text, boolean isSentenceEnd, int sentenceId) {
-            Log.i("AUIAICALL", "onUserAsrSubtitleNotify: [sentenceId: " + sentenceId + ", isSentenceEnd" + isSentenceEnd + ", text: " + text + "]");
+        public void onUserAsrSubtitleNotify(String text, boolean isSentenceEnd, int sentenceId, ARTCAICallEngine.VoicePrintStatusCode voicePrintStatusCode) {
+            Log.i("AUIAICALL", "onUserAsrSubtitleNotify: [sentenceId: " + sentenceId + ", isSentenceEnd" + isSentenceEnd + ", text: " + text + ", voicePrintStatusCode: " + voicePrintStatusCode + "]");
 
             if (IS_SUBTITLE_ENABLE) {
                 mSubtitleHolder.updateSubtitle(true, isSentenceEnd, text, sentenceId);
+                 if (voicePrintStatusCode == ARTCAICallEngine.VoicePrintStatusCode.SpeakerNotRecognized ||
+                        voicePrintStatusCode == ARTCAICallEngine.VoicePrintStatusCode.SpeakerRecognized) {
+                     mIsVoicePrintRecognized = true;
+                 }
+                // 声纹非主讲人反馈结果
+                if (voicePrintStatusCode == ARTCAICallEngine.VoicePrintStatusCode.SpeakerNotRecognized) {
+                    setSecondaryCallTips(getResources().getString(R.string.main_speaker_not_recognized));
+                } else {
+                    setSecondaryCallTips("");
+                }
             } else {
                 mSubtitleHolder.setSubtitleLayoutVisibility(false);
             }
@@ -217,6 +234,27 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         public void onUserOnLine(String uid) {
             Log.i("AUIAICALL", "onUserOnLine: " + uid);
         }
+
+        @Override
+        public void onPushToTalk(boolean enable) {
+            Log.i("AUIAICALL", "onPushToTalk: " + enable);
+            mIsPushToTalkMode = enable;
+            updateActionLayerHolder();
+        }
+
+        @Override
+        public void onVoicePrintEnable(boolean enable) {
+            Log.i("AUIAICall", "onVoicePrintEnable: " + enable);
+            if (!enable) {
+                mIsVoicePrintRecognized = false;
+            }
+        }
+
+        @Override
+        public void onVoicePrintCleared() {
+            Log.i("AUIAICall", "onVoicePrintCleared");
+            mIsVoicePrintRecognized = false;
+        }
     };
 
     @Override
@@ -237,10 +275,42 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
 
         mHandler = new Handler();
 
+        findViewById(R.id.btn_reporting).setVisibility(
+                AICallReportingDialog.AI_CALL_REPORTING_ENABLE ? View.VISIBLE : View.GONE);
+        findViewById(R.id.btn_reporting).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                AICallReportingDialog.showDialog(AUIAICallInCallActivity.this, new AICallReportingDialog.IReportingDialogDismissListener() {
+                    @Override
+                    public void onReportingSubmit(List<Integer> reportTypeStatIdList, String reportIssueDesc) {
+                        mARTCAICallController.commitReporting(reportTypeStatIdList, reportIssueDesc);
+                    }
+
+                    @Override
+                    public void onDismiss(boolean hasSubmit) {
+                        if (hasSubmit) {
+                            String requestId = mARTCAICallController.getAiAgentRequestId();
+                            String content = getResources().getString(R.string.reporting_id_display, requestId);
+                            AICallNoticeDialog.showFunctionalDialog(AUIAICallInCallActivity.this,
+                                    null, false, content, true,
+                                    R.string.copy, new AICallNoticeDialog.IActionHandle() {
+                                        @Override
+                                        public void handleAction() {
+                                            copyToClipboard(AUIAICallInCallActivity.this, requestId);
+                                            ToastHelper.showToast(AUIAICallInCallActivity.this, R.string.copied, Toast.LENGTH_SHORT);
+                                        }
+                                    }
+                            );
+                        }
+                    }
+                });
+            }
+        });
         findViewById(R.id.btn_setting).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                AICallSettingDialog.show(AUIAICallInCallActivity.this, mARTCAICallEngine, mAiAgentType== ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent);
+                AICallSettingDialog.show(AUIAICallInCallActivity.this, mARTCAICallEngine,
+                        mAiAgentType== ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent, mIsVoicePrintRecognized);
             }
         });
         findViewById(R.id.speech_animation_view).setOnClickListener(new View.OnClickListener() {
@@ -262,11 +332,13 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             }
         });
 
+        String aiAgentRegion = null;
         String aiAgentId = null;
         mAiAgentType = ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent;
         String loginUserId = null;
         String loginAuthorization = null;
         if (null != getIntent() && null != getIntent().getExtras()) {
+            aiAgentRegion = getIntent().getExtras().getString(BUNDLE_KEY_AI_AGENT_REGION, null);
             aiAgentId = getIntent().getExtras().getString(BUNDLE_KEY_AI_AGENT_ID, null);
             mAiAgentType = (ARTCAICallEngine.ARTCAICallAgentType) getIntent().getExtras().getSerializable(BUNDLE_KEY_AI_AGENT_TYPE);
 
@@ -296,6 +368,7 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
 
         boolean useDeposit = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_DEPOSIT_SWITCH, SettingStorage.DEFAULT_DEPOSIT_SWITCH);
         ARTCAICallEngine.ARTCAICallConfig artcaiCallConfig = new ARTCAICallEngine.ARTCAICallConfig();
+        artcaiCallConfig.aiAgentRegion = aiAgentRegion;
         artcaiCallConfig.aiAgentId = aiAgentId;
         artcaiCallConfig.enableAudioDump = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_AUDIO_DUMP_SWITCH);
         artcaiCallConfig.useRtcPreEnv = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_USE_RTC_PRE_ENV_SWITCH);
@@ -304,6 +377,9 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         artcaiCallConfig.useDeposit = useDeposit;
         artcaiCallConfig.loginUserId = loginUserId;
         artcaiCallConfig.loginAuthrization = loginAuthorization;
+        mIsPushToTalkMode = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_PUSH_TO_TALK, SettingStorage.DEFAULT_ENABLE_PUSH_TO_TALK);
+        artcaiCallConfig.enablePushToTalk = mIsPushToTalkMode;
+        artcaiCallConfig.enableVoicePrint = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_VOICE_PRINT, SettingStorage.DEFAULT_ENABLE_VOICE_PRINT);
 
         mARTCAICallController = useDeposit ? new ARTCAICallDepositController(this, loginUserId) :
                 new ARTCAICustomController(this, loginUserId);
@@ -325,7 +401,7 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         mARTCAICallController.start();
 
         mSmallVideoViewHolder.init(this);
-        initActionLayerHolder();
+        updateActionLayerHolder();
     }
 
     @Override
@@ -354,7 +430,7 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                     new AICallRatingDialog.IRatingDialogDismissListener() {
                         @Override
                         public void onSubmit(int subRating, int callDelay, int noiseHandling, int recognition, int interaction, int realism) {
-                            mARTCAICallEngine.rating(subRating, callDelay, noiseHandling,
+                            mARTCAICallController.rating(subRating, callDelay, noiseHandling,
                                     recognition, interaction, realism);
                         }
 
@@ -478,13 +554,27 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         updateSpeechAnimationType();
     }
 
-    private void initActionLayerHolder() {
-        if (null == mActionLayerHolder) {
-            if (mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VisionAgent) {
-                mActionLayerHolder = new VisionActionLayerHolder();
-            } else {
-                mActionLayerHolder = new AudioActionLayerHolder();
+    private void updateActionLayerHolder() {
+        boolean needInit = false;
+        if (mIsPushToTalkMode) {
+            if (mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VisionAgent && !(mActionLayerHolder instanceof VisionPushToTalkLayerHolder)) {
+                mActionLayerHolder = new VisionPushToTalkLayerHolder();
+                needInit = true;
+            } else if (mAiAgentType != ARTCAICallEngine.ARTCAICallAgentType.VisionAgent && !(mActionLayerHolder instanceof AudioPushToTalkLayerHolder)) {
+                mActionLayerHolder = new AudioPushToTalkLayerHolder();
+                needInit = true;
             }
+        } else {
+            if (mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VisionAgent && !(mActionLayerHolder instanceof VisionActionLayerHolder)) {
+                mActionLayerHolder = new VisionActionLayerHolder();
+                needInit = true;
+            } else if (mAiAgentType != ARTCAICallEngine.ARTCAICallAgentType.VisionAgent && !(mActionLayerHolder instanceof AudioActionLayerHolder)) {
+                mActionLayerHolder = new AudioActionLayerHolder();
+                needInit = true;
+            }
+        }
+
+        if (needInit) {
             mActionLayerHolder.init();
         }
     }
@@ -504,7 +594,13 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                 resId = R.string.robot_thinking_tips;
                 needSetText = true;
             } else if (mRobotState == ARTCAICallEngine.ARTCAICallRobotState.Speaking) {
-                resId = R.string.robot_speaking_tips;
+                boolean isVoiceInterruptEnable = mARTCAICallEngine.isVoiceInterruptEnable();
+                boolean isPushToTalkEnable = mARTCAICallEngine.isPushToTalkEnable();
+                if (!isVoiceInterruptEnable || isPushToTalkEnable) {
+                    resId = R.string.robot_speaking_tips_without_voice_interrupt;
+                } else {
+                    resId = R.string.robot_speaking_tips;
+                }
                 needSetText = true;
             } else if (mRobotState == ARTCAICallEngine.ARTCAICallRobotState.Listening) {
                 resId = R.string.robot_listening_tips;
@@ -561,6 +657,11 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                 tvCallTips.setText("");
             }
         }
+    }
+
+    private void setSecondaryCallTips(String tips) {
+        TextView tvSecondaryCallTips = (TextView) findViewById(R.id.tv_call_secondary_tips);
+        tvSecondaryCallTips.setText(tips);
     }
 
     private void updateSpeechAnimationType() {
@@ -797,7 +898,7 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                 mSvFullScreenSubtitle.setOnTouchListener(new View.OnTouchListener() {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
-                        Log.i("AUIAICall", "mSvFullScreenSubtitle onTouch : " + event.getAction());
+//                        Log.i("AUIAICall", "mSvFullScreenSubtitle onTouch : " + event.getAction());
                         if (event.getAction() == MotionEvent.ACTION_UP) {
                             setFullScreenSubtitleVisibility(false);
                         }
@@ -834,10 +935,19 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         protected ActionLayerHolder(View actionLayer) {
             findViewById(R.id.action_layer_voice).setVisibility(View.GONE);
             findViewById(R.id.action_layer_video).setVisibility(View.GONE);
+            findViewById(R.id.action_layer_push_to_talk_voice).setVisibility(View.GONE);
+            findViewById(R.id.action_layer_push_to_talk_video).setVisibility(View.GONE);
             mActionLayer = actionLayer;
             mActionLayer.setVisibility(View.VISIBLE);
         }
         protected void init() {
+            initStopCallButtonUI();
+            initMuteButtonUI();
+            initSpeakerButtonUI();
+            updateSpeakerButtonUI();
+        }
+
+        protected void initStopCallButtonUI() {
             mActionLayer.findViewById(R.id.btn_stop_call).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
@@ -846,6 +956,9 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                     }
                 }
             });
+        }
+
+        protected void initMuteButtonUI() {
             mActionLayer.findViewById(R.id.btn_mute_call).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
@@ -855,18 +968,9 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                     updateUIByEngineState();
                 }
             });
-            mActionLayer.findViewById(R.id.btn_speaker).setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    boolean isSpeakerOn = mARTCAICallEngine.isSpeakerOn();
-                    mARTCAICallEngine.enableSpeaker(!isSpeakerOn);
-                    updateSpeakerButtonUI();
-                }
-            });
-            updateSpeakerButtonUI();
         }
 
-        private void updateMuteButtonUI(boolean isMuted) {
+        protected void updateMuteButtonUI(boolean isMuted) {
             ImageView ivMuteCall = (ImageView) mActionLayer.findViewById(R.id.iv_mute_call);
             TextView tvMuteCall = (TextView) mActionLayer.findViewById(R.id.tv_mute_call);
             if (isMuted) {
@@ -878,7 +982,17 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             }
         }
 
-        private void updateSpeakerButtonUI() {
+        protected void initSpeakerButtonUI() {
+            mActionLayer.findViewById(R.id.btn_speaker).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    boolean isSpeakerOn = mARTCAICallEngine.isSpeakerOn();
+                    mARTCAICallEngine.enableSpeaker(!isSpeakerOn);
+                    updateSpeakerButtonUI();
+                }
+            });
+        }
+        protected void updateSpeakerButtonUI() {
             boolean isSpeakerOn = null != mARTCAICallEngine ? mARTCAICallEngine.isSpeakerOn() : true;
             ImageView ivSpeaker = (ImageView) mActionLayer.findViewById(R.id.iv_speaker);
             TextView tvSpeaker = (TextView) mActionLayer.findViewById(R.id.tv_speaker);
@@ -891,14 +1005,73 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             }
         }
 
-    }
-    // VisionChat
-    private class VisionActionLayerHolder extends ActionLayerHolder {
-        private VisionActionLayerHolder() {
-            super(findViewById(R.id.action_layer_video));
+        protected void initPushToTalkButton() {
+            ViewGroup llPushToTalk = mActionLayer.findViewById(R.id.btn_push_to_talk);
+
+            llPushToTalk.setOnTouchListener(new View.OnTouchListener() {
+                static final int MSG_AUTO_FINISH_PUSH_TO_TALK = 8888;
+                static final int AUTO_FINISH_PUSH_TO_TALK_TIME = 60000;
+                long startTalkMillis = 0;
+                Handler uiHandler = new Handler(Looper.getMainLooper()) {
+                    @Override
+                    public void handleMessage(@NonNull Message msg) {
+                        super.handleMessage(msg);
+
+                        if (msg.what == MSG_AUTO_FINISH_PUSH_TO_TALK) {
+                            Log.i("initPushToTalkButton",  "MSG_AUTO_FINISH_PUSH_TO_TALK");
+                            onFinishTalk(true);
+                        }
+                    }
+                };
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+                    Log.i("initPushToTalkButton",  "onTouch: " + event.getAction());
+                    if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                        onStartTalk();
+                    } else if (event.getAction() == MotionEvent.ACTION_UP) {
+                        onFinishTalk(false);
+                    }
+                    return true;
+                }
+
+                private void onStartTalk() {
+                    Log.i("initPushToTalkButton",  "onStartTalk");
+                    if (null != mARTCAICallEngine) {
+                        mARTCAICallEngine.startPushToTalk();
+                        startTalkMillis = SystemClock.uptimeMillis();
+                        uiHandler.sendEmptyMessageDelayed(MSG_AUTO_FINISH_PUSH_TO_TALK, AUTO_FINISH_PUSH_TO_TALK_TIME);
+
+                        ImageView ivPushToTalk = mActionLayer.findViewById(R.id.iv_push_to_talk);
+                        TextView tvPushToTalk = mActionLayer.findViewById(R.id.tv_push_to_talk);
+                        ivPushToTalk.setImageResource(R.drawable.ic_microphone_speaking);
+                        tvPushToTalk.setText(R.string.release_to_send);
+                    }
+                }
+                private void onFinishTalk(boolean auto) {
+                    Log.i("initPushToTalkButton",  "onFinishTalk");
+                    if (null != mARTCAICallEngine && startTalkMillis != 0) {
+                        long talkTime = SystemClock.uptimeMillis() - startTalkMillis;
+                        startTalkMillis = 0;
+                        if (talkTime > 500) { // 大于500ms才会发送
+                            mARTCAICallEngine.finishPushToTalk();
+                        } else {
+                            mARTCAICallEngine.cancelPushToTalk();
+                        }
+
+                        ImageView ivPushToTalk = mActionLayer.findViewById(R.id.iv_push_to_talk);
+                        TextView tvPushToTalk = mActionLayer.findViewById(R.id.tv_push_to_talk);
+                        ivPushToTalk.setImageResource(R.drawable.ic_microphone_idle);
+                        tvPushToTalk.setText(R.string.push_to_talk);
+                    }
+                    if (!auto) {
+                        uiHandler.removeMessages(MSG_AUTO_FINISH_PUSH_TO_TALK);
+                    }
+                }
+
+            });
         }
-        @Override
-        protected void init() {
+
+        protected void initCameraButtonUI() {
             mActionLayer.findViewById(R.id.btn_camera).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
@@ -908,15 +1081,16 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                     updateAvatarVisibility(mAiAgentType);
                 }
             });
+        }
+        protected void initCameraDirectionUI() {
             mActionLayer.findViewById(R.id.btn_camera_direction).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     mARTCAICallEngine.switchCamera();
                 }
             });
-            super.init();
         }
-        private void updateCameraButtonUI(boolean isCameraMute) {
+        protected void updateCameraButtonUI(boolean isCameraMute) {
             ImageView ivCamera = (ImageView) mActionLayer.findViewById(R.id.iv_camera);
             TextView tvCamera = (TextView) mActionLayer.findViewById(R.id.tv_camera);
             if (isCameraMute) {
@@ -928,6 +1102,21 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             }
         }
     }
+    // VisionChat
+    private class VisionActionLayerHolder extends ActionLayerHolder {
+        private VisionActionLayerHolder() {
+            super(findViewById(R.id.action_layer_video));
+        }
+        @Override
+        protected void init() {
+            initCameraButtonUI();
+            initCameraDirectionUI();
+            initStopCallButtonUI();
+            initMuteButtonUI();
+            initSpeakerButtonUI();
+            updateSpeakerButtonUI();
+        }
+    }
 
     // VoiceChat、AvatarChat
     private class AudioActionLayerHolder extends ActionLayerHolder {
@@ -936,9 +1125,46 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         }
         @Override
         protected void init() {
-            super.init();
+            initStopCallButtonUI();
+            initMuteButtonUI();
+            initSpeakerButtonUI();
+            updateSpeakerButtonUI();
         }
     }
+
+    // VoiceChat、AvatarChat - PushToTalk
+    private class AudioPushToTalkLayerHolder extends ActionLayerHolder {
+        private AudioPushToTalkLayerHolder() {
+            super(findViewById(R.id.action_layer_push_to_talk_voice));
+        }
+
+        @Override
+        protected void init() {
+            initStopCallButtonUI();
+            initSpeakerButtonUI();
+            initPushToTalkButton();
+            updateSpeakerButtonUI();
+        }
+    }
+
+
+    // VoiceChat、AvatarChat - PushToTalk
+    private class VisionPushToTalkLayerHolder extends ActionLayerHolder {
+        private VisionPushToTalkLayerHolder() {
+            super(findViewById(R.id.action_layer_push_to_talk_video));
+        }
+
+        @Override
+        protected void init() {
+            initCameraButtonUI();
+            initCameraDirectionUI();
+            initStopCallButtonUI();
+            initSpeakerButtonUI();
+            initPushToTalkButton();
+            updateSpeakerButtonUI();
+        }
+    }
+
 
     private class SmallVideoViewHolder {
         private FrameLayout mSmallAvatarLayerContainer = null;

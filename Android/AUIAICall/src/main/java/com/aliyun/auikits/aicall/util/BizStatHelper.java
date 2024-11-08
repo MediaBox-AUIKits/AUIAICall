@@ -1,4 +1,4 @@
-package com.aliyun.auikits.aiagent.util;
+package com.aliyun.auikits.aicall.util;
 
 import android.content.Context;
 import android.content.pm.PackageInfo;
@@ -30,7 +30,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public class BizStatHelper {
-    private static final String URL = "https://alivc-aio.cn-hangzhou.log.aliyuncs.com/logstores/ai_agent/track";
+    private static final String POST_URL = "xxx";
 
     private final static boolean DEBUG = false;
 
@@ -47,7 +47,7 @@ public class BizStatHelper {
     private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
 
     public static void init(Context context) {
-        sContext = context;
+        sContext = context.getApplicationContext();
         sHandler = new Handler(Looper.getMainLooper());
     }
 
@@ -105,7 +105,7 @@ public class BizStatHelper {
 
                 for (OneLog oneLog : tmpList) {
                     JSONObject oneLogJson = new JSONObject();
-                    oneLogJson.put("event", oneLog.event);
+                    oneLogJson.put("ev", oneLog.event);
                     oneLogJson.put("stm", String.valueOf(oneLog.stm));
                     oneLogJson.put("args", oneLog.args);
                     logJsonArray.put(oneLogJson);
@@ -133,7 +133,7 @@ public class BizStatHelper {
                         body,
                         JSON);
                 Request request = new Request.Builder()
-                        .url(URL)
+                        .url(POST_URL)
                         .header("x-log-apiversion", "0.6.0")
                         .header("x-log-bodyrawsize", String.valueOf(body.length()))
                         .post(requestBody)

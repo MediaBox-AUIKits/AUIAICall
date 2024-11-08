@@ -3,8 +3,8 @@
 "Official Agent" = "官方智能体";
 "Custom Agent" = "自定义智能体";
 "AI Voice Call" = "AI音频通话";
-"AI Avatar Call" = "AI数字人通话";
-"AI Vision Call" = "AI视觉理解通话";
+"AI Avatar Call" = "数字人通话";
+"AI Vision Call" = "视觉理解通话";
 "Authorized AI Agent" = "授权AI智能体";
 "Please Scan Code to Get Authorized Token" = "请扫描二维码获取授权Token";
 "Invalid Token" = "请使用正确的Token";
@@ -14,14 +14,16 @@
 "Custom" = "自定义方式（自集成）";
 "Standard" = "标准方式（全托管）";
 "Cancel" = "取消";
+"Close" = "退出";
+"Copy" = "拷贝";
 
 "Enable & Save" = "启用并保存";
-"Currently Not Connected" = "当前未接通";
+"Currently not connected" = "当前未接通";
 "Connecting..." = "接通中...";
 "Call Ended" = "已结束通话";
-"Smart Interruption is Turned On" = "智能打断已开启";
-"Smart Interruption is Turned Off" = "智能打断已关闭";
-"Failed to Switch Smart Interruption" = "操作失败了";
+"Smart interruption is turned on" = "智能打断已开启";
+"Smart interruption is turned off" = "智能打断已关闭";
+"Failed to switch smart interruption" = "操作失败了";
 "An Error Occurred During the Call" = "当前通话出现了错误";
 "Cannot Start Call, Service Issue Detected" = "无法启动通话，当前服务出问题了";
 "Call Failed, Authorization Expired" = "通话失败，当前授权已过期";
@@ -49,7 +51,7 @@
 "Smart Interrupt" = "智能打断";
 "Interrupt AI Based on Sound and Environment" = "据声音和环境智能打断AI智能体";
 "Choose Voice Tone" = "选择音色";
-"New Voice Tone Will Take Effect in Next Response" = "切换音色后，AI将在下一次回答中使用新的角色";
+"New Voice Tone Will Take Effect in Next Response" = "切换音色后，AI将在下一次回答中使用新的音色";
 "Zhi Xiaobai" = "智小白";
 "Zhi Xiaoxia" = "智小夏";
 "Abin" = "阿斌";
@@ -65,3 +67,38 @@
 "The call has ended. The avatar agent call can only be experienced for 5 minutes." = "通话结束，数字人通话仅可以体验5分钟。";
 "AI avatar calling is in high demand, please try again later or enjoy the new experience of AI voice calling first." = "数字人通话火爆，请稍后尝试或先享AI音频通话新体验。";
 "Log in token expired, please try log in." = "登录态失效，请重新登录！";
+
+
+"Push to Talk" = "按住讲话";
+"Release to Send" = "松开发送";
+"Push to Talk Mode" = "对讲机模式";
+"Natural Conversation Mode" = "自然对话模式";
+"Push to Talk, Release to Send" = "按下按钮后讲话，松开按钮后结束讲话 ";
+"Failed to enable/disable push to talk Mode" = "打开/关闭对讲机模式失败";
+"Push to talk mode is turned on" = "对讲机模式已打开";
+"Push to talk mode is turned off" = "对讲机模式已关闭";
+"The hold time is too short, sending has been canceled." = "按住时间太短，已取消发送";
+"You have canceled to send you talk." = "已取消发送";
+
+"Report" = "反馈";
+"Issues" = "问题类型";
+"(Mutliple Selected)" = "(多选)";
+"Feature not available" = "功能不可用";
+"Available but has bugs" = "可用但有BUG";
+"AI response is too slow" = "AI响应太慢";
+"AI response content is not accurate" = "AI响应内容不准确";
+"Audio/Video quality issues" = "音质/画面有问题";
+"Other issues" = "其他问题";
+"Please describe your issue." = "请描述您遇到的其他问题";
+"Successfully submitted." = "已提交";
+"Thank you for your support. Your request ID is %@" = "感谢您的支持，你的反馈Id是：%@";
+
+"Voiceprint(Invitation for Testing)" = "声纹识别（邀测）";
+"The AI only uses your voice as input." = "AI仅把您的声音作为输入，即使同时有多个人在讲话";
+"Failed to switch voiceprint" = "操作失败了";
+"Voiceprint is turned on" = "声纹识别已开启";
+"Voiceprint is turned off" = "声纹识别已关闭";
+"Detected speaking, but speaker could not be identified." = "检测到有人讲话，未识别到主讲人";
+"Failed to clear voiceprint's data." = "删除声纹数据失！";
+"Detected speaking" = "声纹已识别";
+"Remove Voiceprint" = "删除声纹";

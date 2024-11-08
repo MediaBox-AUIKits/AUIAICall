@@ -25,6 +25,25 @@ import ARTCAICallKit
         }
     }
     
+    public var voiceprintId: String? {
+        get {
+            if self.enableVoiceprint {
+                return self.userId
+            }
+            return nil
+        }
+    }
+    
+    // 邀测阶段，如需体验，请联系相关人员
+    public var enableVoiceprint: Bool = false {
+        didSet {
+#if DEMO_FOR_DEBUG
+            AUIAICallDebugPanel.enableVoiceprintSwitch = self.enableVoiceprint
+#endif
+            AUIAICallSettingPanel.enableVoiceprintSwitch = self.enableVoiceprint
+        }
+    }
+    
     public var onUserTokenExpiredBlcok: (()->Void)? = nil
     
     public func checkDeviceAuth(agentType: ARTCAICallAgentType, success: @escaping () -> Void) {
@@ -46,25 +65,25 @@ import ARTCAICallKit
     }
 
     // 通过指定agentType（agentId为空时，由appserver配置的）发起通话，
-    open func startCall(agentType: ARTCAICallAgentType, agentId: String? = nil, limitSecond: UInt32 = 0, viewController: UIViewController? = nil) {
+    open func startCall(agentType: ARTCAICallAgentType, agentId: String? = nil, region: String? = nil, limitSecond: UInt32 = 0, viewController: UIViewController? = nil) {
         
         if self.userId == nil {
             self.userId = NSString.av_random()
         }
         
 #if DEMO_FOR_DEBUG
-        AUIAICallDebugManager.shared.startCall(agentType: agentType, agentId: agentId, limitSecond: limitSecond, viewController: viewController)
+        AUIAICallDebugManager.shared.startCall(agentType: agentType, agentId: agentId, region: region, limitSecond: limitSecond, viewController: viewController)
 #elseif AICALL_INTEGRATION_STANDARD
-        self.startCallWithStandard(agentType: agentType, agentId: agentId, limitSecond: limitSecond, viewController: viewController)
+        self.startCallWithStandard(agentType: agentType, agentId: agentId, region: region, limitSecond: limitSecond, viewController: viewController)
 #elseif AICALL_INTEGRATION_CUSTOM
-        self.startCallWithCustom(agentType: agentType, agentId: agentId, limitSecond: limitSecond, viewController: viewController)
+        self.startCallWithCustom(agentType: agentType, agentId: agentId, region: region, limitSecond: limitSecond, viewController: viewController)
 #endif
     }
     
     
 #if AICALL_INTEGRATION_STANDARD
     // 全托管方式发起通话，通过指定agentType（agentId为空时，由appserver配置的）发起通话，
-    open func startCallWithStandard(agentType: ARTCAICallAgentType, agentId: String? = nil, limitSecond: UInt32 = 0, viewController: UIViewController? = nil) {
+    open func startCallWithStandard(agentType: ARTCAICallAgentType, agentId: String? = nil, region: String? = nil, limitSecond: UInt32 = 0, viewController: UIViewController? = nil) {
         
         if self.userId == nil {
             self.userId = NSString.av_random()
@@ -79,6 +98,9 @@ import ARTCAICallKit
             controller.config.agentType = agentType
             controller.config.agentVoiceId = ""
             controller.config.agentAvatarId = self.avatarId
+            controller.config.voiceprintId = AUIAICallManager.defaultManager.voiceprintId
+            controller.config.useVoiceprint = true
+            controller.config.region = region
             controller.config.limitSecond = limitSecond
             let vc = AUIAICallViewController(controller)
             vc.onUserTokenExpiredBlcok = self.onUserTokenExpiredBlcok
@@ -90,7 +112,7 @@ import ARTCAICallKit
     
 #if AICALL_INTEGRATION_CUSTOM
     // 自集成方式发起通话，通过指定agentType（agentId为空时，由appserver配置的）发起通话，
-    open func startCallWithCustom(agentType: ARTCAICallAgentType, agentId: String? = nil, limitSecond: UInt32 = 0, viewController: UIViewController? = nil) {
+    open func startCallWithCustom(agentType: ARTCAICallAgentType, agentId: String? = nil, region: String? = nil, limitSecond: UInt32 = 0, viewController: UIViewController? = nil) {
         
         if self.userId == nil {
             self.userId = NSString.av_random()
@@ -105,6 +127,9 @@ import ARTCAICallKit
             controller.config.agentType = agentType
             controller.config.agentVoiceId = ""
             controller.config.agentAvatarId = self.avatarId
+            controller.config.voiceprintId = AUIAICallManager.defaultManager.voiceprintId
+            controller.config.useVoiceprint = true
+            controller.config.region = region
             controller.config.limitSecond = limitSecond
             let vc = AUIAICallViewController(controller)
             vc.onUserTokenExpiredBlcok = self.onUserTokenExpiredBlcok

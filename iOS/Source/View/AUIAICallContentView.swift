@@ -15,6 +15,7 @@ import ARTCAICallKit
         super.init(frame: frame)
                 
         self.addSubview(self.tipsLabel)
+        self.addSubview(self.voiceprintTipsLabel)
         self.addSubview(self.callStateAni)
         
         self.addSubview(self.subtitleIcon)
@@ -72,6 +73,16 @@ import ARTCAICallKit
         icon.isHidden = true
         icon.isUserInteractionEnabled = false
         return icon
+    }()
+    
+    open lazy var voiceprintTipsLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = AVTheme.text_weak
+        label.textAlignment = .center
+        label.font = AVTheme.regularFont(14)
+        label.text = AUIAICallBundle.getString("Detected speaking, but speaker could not be identified.")
+        label.isHidden = true
+        return label
     }()
 
     open lazy var callStateAni: AUIAICallStateAnimation = {
@@ -145,6 +156,7 @@ import ARTCAICallKit
             self.visionCameraView?.frame = self.bounds
             self.visionAgentView?.frame = CGRect(x: 0, y: UIView.av_safeTop + 44, width: self.av_width, height: hei - UIView.av_safeTop - 44)
         }
+        self.voiceprintTipsLabel.frame = CGRect(x: 0, y: tipsLabel.av_top - 22 - 10, width: self.av_width, height: 22)
     }
     
     open func updateSubTitle(enable: Bool, isLLM: Bool, text: String, clear: Bool) {

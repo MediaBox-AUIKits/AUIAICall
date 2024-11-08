@@ -20,9 +20,17 @@ android {
     }
 
     buildTypes {
+        debug {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+
+            buildConfigField "boolean", "TEST_ENV_MODE", getBoolProperty("TEST_ENV_MODE") ? "true" : "false"
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+
+            buildConfigField "boolean", "TEST_ENV_MODE", getBoolProperty("TEST_ENV_MODE") ? "true" : "false"
         }
     }
     compileOptions {
@@ -58,11 +66,9 @@ dependencies {
     annotationProcessor externalARouterCompiler
 
 
-    if(UseAiCallKitAAR()) {
-        println("USE_AICALLKIT_AAR yes")
-        implementation 'com.aliyun.auikits.android:ARTCAICallKit:1.2.0'
+    if(getBoolProperty('USE_AICALLKIT_AAR')) {
+        implementation 'com.aliyun.auikits.android:ARTCAICallKit:1.3.0'
     } else {
-        println("USE_AICALLKIT_AAR no")
         implementation project(':AUIAICallEngine')
         implementation project(':ARTCAICallKit')
     }
@@ -72,10 +78,12 @@ dependencies {
     implementation project(':AUIBaseKits::AUICommon')
 }
 
-def UseAiCallKitAAR() {
-    if (findProperty('USE_AICALLKIT_AAR') == null) {
+def getBoolProperty(String gradlePropertyKey) {
+    if (findProperty(gradlePropertyKey) == null) {
+        println("${gradlePropertyKey} undefined")
         return false
     } else {
-        return Boolean.valueOf(USE_AICALLKIT_AAR)
+        println("${gradlePropertyKey} : " + getProperty(gradlePropertyKey))
+        return Boolean.valueOf(getProperty(gradlePropertyKey))
     }
 }

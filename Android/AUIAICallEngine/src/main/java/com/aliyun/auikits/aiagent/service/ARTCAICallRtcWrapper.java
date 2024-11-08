@@ -1,5 +1,7 @@
 package com.aliyun.auikits.aiagent.service;
 
+import static com.alivc.rtc.AliRtcEngine.AliRtcCaptureOutputPreference.ALIRTC_CAPTURER_OUTPUT_PREFERENCE_AUTO;
+import static com.alivc.rtc.AliRtcEngine.AliRtcCaptureOutputPreference.ALIRTC_CAPTURER_OUTPUT_PREFERENCE_PREVIEW;
 import static com.alivc.rtc.AliRtcEngine.AliRtcDataMsgType.AliEngineDataMsgCustom;
 import static com.alivc.rtc.AliRtcEngine.AliRtcVideoTrack.AliRtcVideoTrackCamera;
 
@@ -103,10 +105,15 @@ public class ARTCAICallRtcWrapper {
             aliRtcEngine.subscribeAllRemoteAudioStreams(true);
             aliRtcEngine.setDefaultSubscribeAllRemoteVideoStreams(mRtcConfig.enableRemoteVideo);
             aliRtcEngine.subscribeAllRemoteVideoStreams(mRtcConfig.enableRemoteVideo);
-            aliRtcEngine.publishLocalAudioStream(true);
-            aliRtcEngine.publishLocalVideoStream(!audioOnly);
+            aliRtcEngine.publishLocalAudioStream(false);
+            aliRtcEngine.publishLocalVideoStream(false);
             aliRtcEngine.muteLocalMic(false, AliRtcEngine.AliRtcMuteLocalAudioMode.AliRtcMuteAllAudioMode);
             if (!audioOnly) {
+                AliRtcEngine.AliEngineCameraCapturerConfiguration cameraCapturerConfiguration = new AliRtcEngine.AliEngineCameraCapturerConfiguration();
+                cameraCapturerConfiguration.cameraDirection = AliRtcEngine.AliRtcCameraDirection.CAMERA_REAR;
+                cameraCapturerConfiguration.preference = ALIRTC_CAPTURER_OUTPUT_PREFERENCE_PREVIEW;
+                mAliRtcEngine.setCameraCapturerConfiguration(cameraCapturerConfiguration);
+
                 AliRtcEngine.AliRtcVideoEncoderConfiguration aliRtcVideoEncoderConfiguration = new AliRtcEngine.AliRtcVideoEncoderConfiguration();
                 aliRtcVideoEncoderConfiguration.dimensions = new AliRtcEngine.AliRtcVideoDimensions(360, 640);
                 aliRtcVideoEncoderConfiguration.frameRate = 15;
@@ -206,12 +213,28 @@ public class ARTCAICallRtcWrapper {
             if (ret) {
                 if (mute) {
                     mAliRtcEngine.stopPreview();
-                    mAliRtcEngine.publishLocalVideoStream(false);
+                    publishLocalVideoStream(false);
                 } else {
                     mAliRtcEngine.startPreview();
-                    mAliRtcEngine.publishLocalVideoStream(true);
+                    publishLocalVideoStream(true);
                 }
             }
+        }
+        return ret;
+    }
+
+    public boolean publishLocalAudioStream(boolean enable) {
+        boolean ret = false;
+        if (null != mAliRtcEngine) {
+            mAliRtcEngine.publishLocalAudioStream(enable);
+        }
+        return ret;
+    }
+
+    public boolean publishLocalVideoStream(boolean enable) {
+        boolean ret = false;
+        if (null != mAliRtcEngine) {
+            mAliRtcEngine.publishLocalVideoStream(enable);
         }
         return ret;
     }
@@ -264,10 +287,6 @@ public class ARTCAICallRtcWrapper {
 //        canvas.backgroundColor = mBackgroundColor;
 //        canvas.renderMode = mRtcCanvasRenderMode;
 //        canvas.rotationMode = mRemoteRotationMode;
-            AliRtcEngine.AliEngineCameraCapturerConfiguration cameraCapturerConfiguration = new AliRtcEngine.AliEngineCameraCapturerConfiguration();
-            cameraCapturerConfiguration.cameraDirection = AliRtcEngine.AliRtcCameraDirection.CAMERA_REAR;
-            mAliRtcEngine.setCameraCapturerConfiguration(cameraCapturerConfiguration);
-
             mAliRtcEngine.startPreview();
 
             mLocalViewGroup.addView(avatarSurfaceView, mLocalLayoutParams);

@@ -83,6 +83,7 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
                 jumpToInCallActivity();
             }
         });
+        findViewById(R.id.btn_more).setVisibility(BuildConfig.TEST_ENV_MODE ? View.VISIBLE : View.GONE);
         findViewById(R.id.btn_more).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -140,6 +141,7 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
             if (System.currentTimeMillis() <= mLayoutHolder.getCustomLayerHolder().getExpireTimestamp()) {
                 intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_AI_AGENT_TYPE, mLayoutHolder.getCustomLayerHolder().getExperienceTokenCallType());
                 intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_AI_AGENT_ID, mLayoutHolder.getCustomLayerHolder().getAiAgentId());
+                intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_AI_AGENT_REGION, mLayoutHolder.getCustomLayerHolder().getExperienceRegion());
             } else {
                 canJump = false;
                 ToastHelper.showToast(AUIAICallEntranceActivity.this, R.string.token_expired_tips, Toast.LENGTH_SHORT);
@@ -164,6 +166,8 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
         ((Switch)view.findViewById(R.id.sv_audio_dump_tip)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_AUDIO_DUMP_SWITCH));
         ((Switch)view.findViewById(R.id.sv_server_type)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_APP_SERVER_TYPE, SettingStorage.DEFAULT_APP_SERVER_TYPE));
         ((Switch)view.findViewById(R.id.sv_use_rtc_pre_env)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_USE_RTC_PRE_ENV_SWITCH, SettingStorage.DEFAULT_USE_RTC_PRE_ENV));
+        ((Switch)view.findViewById(R.id.sv_boot_push_to_talk)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_PUSH_TO_TALK, SettingStorage.DEFAULT_ENABLE_PUSH_TO_TALK));
+        ((Switch)view.findViewById(R.id.sv_boot_use_voice_print)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_VOICE_PRINT, SettingStorage.DEFAULT_ENABLE_VOICE_PRINT));
 
         if (!showExtraDebugConfig) {
             view.findViewById(R.id.ll_audio_dump).setVisibility(View.GONE);
@@ -193,6 +197,11 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
                         boolean useRtcPreEnv = ((Switch)view.findViewById(R.id.sv_use_rtc_pre_env)).isChecked();
                         SettingStorage.getInstance().setBoolean(SettingStorage.KEY_USE_RTC_PRE_ENV_SWITCH, useRtcPreEnv);
 
+                        boolean bootEnablePushToTalk = ((Switch)view.findViewById(R.id.sv_boot_push_to_talk)).isChecked();
+                        SettingStorage.getInstance().setBoolean(SettingStorage.KEY_BOOT_ENABLE_PUSH_TO_TALK, bootEnablePushToTalk);
+
+                        boolean bootUseVoicePrint = ((Switch)view.findViewById(R.id.sv_boot_use_voice_print)).isChecked();
+                        SettingStorage.getInstance().setBoolean(SettingStorage.KEY_BOOT_ENABLE_VOICE_PRINT, bootUseVoicePrint);
                     }
                     if (v.getId() == R.id.btn_confirm || v.getId() == R.id.btn_cancel) {
                         dialog1.dismiss();
@@ -282,6 +291,7 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
                 String aiAgentId = jsonObject.optString("TemporaryAIAgentId");
                 String workflowType = jsonObject.optString("WorkflowType");
                 String expireTime = jsonObject.optString("ExpireTime");
+                String region = jsonObject.optString("Region");
                 long expireTimestamp = parseTimestamp(expireTime);
                 if (System.currentTimeMillis() <= expireTimestamp) {
                     mLayoutHolder.getCustomLayerHolder().setExperienceToken(shareToken);
@@ -294,6 +304,7 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
                         aiCallAgentType = ARTCAICallEngine.ARTCAICallAgentType.VisionAgent;
                     }
                     mLayoutHolder.getCustomLayerHolder().setExperienceTokenCallType(aiCallAgentType);
+                    mLayoutHolder.getCustomLayerHolder().setExperienceRegion(region);
                 } else {
                     ToastHelper.showToast(this, R.string.token_expired_tips, Toast.LENGTH_SHORT);
                 }
@@ -427,6 +438,7 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
         private ImageView mIvExperienceTokenScan = null;
         private String mAiAgentId = null;
         private ARTCAICallEngine.ARTCAICallAgentType mExperienceTokenCallType = ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent;
+        private String mExperienceRegion = null;
         private long mExpireTimestamp = 0;
 
         private void init(Context context) {
@@ -482,6 +494,13 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
             return mExpireTimestamp;
         }
 
+        public void setExperienceRegion(String experienceRegion) {
+            this.mExperienceRegion = experienceRegion;
+        }
+
+        public String getExperienceRegion() {
+            return mExperienceRegion;
+        }
     }
 
     private static String aiCallAgentTypeTitle(Context context, ARTCAICallEngine.ARTCAICallAgentType aICallAgentType) {

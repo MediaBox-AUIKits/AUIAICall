@@ -13,6 +13,6 @@ public class ARTCAICallDepositEngineImpl extends ARTCAICallEngineImpl {
 
     @Override
     protected IARTCAICallService generateAICallService(ARTCAICallConfig artcAiCallConfig) {
-        return new ARTCAICallDepositServiceImpl(artcAiCallConfig.appServerHost, artcAiCallConfig.loginUserId, artcAiCallConfig.loginAuthrization);
+        return new ARTCAICallDepositServiceImpl(artcAiCallConfig.aiAgentRegion, artcAiCallConfig.appServerHost, artcAiCallConfig.loginUserId, artcAiCallConfig.loginAuthrization);
     }
 }

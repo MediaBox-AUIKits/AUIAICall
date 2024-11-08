@@ -3,7 +3,7 @@
   padding-top: 48px;
 }
 
-.is-avatar .call-footer {
+.has-video .call-footer {
   background: linear-gradient(180deg, rgba(0, 0, 0, 0) 2%, rgba(0, 0, 0, 0.62) 91%);
 }
 
@@ -18,7 +18,7 @@
   }
 }
 
-.is-avatar .call-tip {
+.has-video .call-tip {
   color: #fff;
   ._time {
     color: #fff;
@@ -37,11 +37,47 @@
 }
 
 .call-btn {
+  position: relative;
   margin: 0 45px;
   text-align: center;
+  .ant-btn._dropdown {
+    right: -28px;
+    top: 20px;
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+  }
+
+  ._mic-btn {
+    position: relative;
+  }
+
+  ._push-animation {
+    position: absolute;
+    bottom: 24px;
+    left: 25px;
+    width: 8px;
+    height: 8px;
+    background-color: #4dcfe1;
+    border-radius: 4px;
+    animation: push-to-talk 1s ease-in-out infinite;
+  }
 }
 
-.is-avatar .call-btn {
+@keyframes push-to-talk {
+  0% {
+    height: 8px;
+  }
+  50% {
+    height: 16px;
+  }
+  100% {
+    height: 8px;
+  }
+}
+
+.has-video .call-btn {
   opacity: 0.8;
 }
 
@@ -63,6 +99,7 @@
   opacity: 0.6;
   font-size: 14px;
   line-height: 22px;
+  white-space: nowrap;
 }
 
 .call-btn .ant-btn {
@@ -74,6 +111,10 @@
   border-radius: 50%;
 }
 
-.is-avatar .call-btn ._text {
+.has-video .call-btn ._text {
   color: #fff;
+}
+
+._dropdown-overlay .ant-dropdown-menu-item {
+  max-width: 250px;
 }

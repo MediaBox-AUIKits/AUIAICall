@@ -26,9 +26,17 @@ class AUIAICallConfig {
    */
   enableVoiceInterrupt = true;
   /**
+   * 是否开启PushToTalk
+   */
+  enablePushToTalk = false;
+  /**
    * 是否关闭麦克风（静音）
    */
   muteMicrophone = false;
+  /**
+   * 是否关闭摄像头
+   */
+  muteCamera = false;
   /**
    * 通话限制时间，为0表示不限制，否则通话时间到达秒数后，会自动结束通话
    */

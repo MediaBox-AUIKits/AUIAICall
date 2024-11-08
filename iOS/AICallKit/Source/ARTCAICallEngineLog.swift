@@ -9,27 +9,51 @@ import UIKit
 
 @objcMembers open class ARTCAICallEngineLog: NSObject {
     
-#if DEBUG
-    public static var shared: ARTCAICallEngineLog? = ARTCAICallEngineLog()
-#else
-    public static var shared: ARTCAICallEngineLog? = nil
-#endif
     
-    public static func WriteLog(_ items: Any...) {
-        self.shared?.writeLog(items)
+    public enum LogType: Int32 {
+        case Debug = 0
+        case Info
+        case Error
+        case None
     }
     
+    
+    public static func WriteLog(_ items: Any...) {
+        self.shared.writeLog(logType: .Info, items: items)
+    }
+    
+    public static func WriteLog(_ logType: LogType, _ items: Any...) {
+        self.shared.writeLog(logType: logType, items: items)
+    }
+    
+    public static func StartLog(fileName: String) {
+        self.shared.startLog(fileName: fileName)
+    }
+    
+    public static func StopLog() {
+        self.shared.stopLog()
+    }
+    
+    public static var EnableLogType: LogType = .None
+    
+    public static var PrintLogBlock: ((_ logType: LogType, _ logString: String) -> Void)? = nil
+    
+    private static let shared: ARTCAICallEngineLog = ARTCAICallEngineLog()
+
     private override init() {
         super.init()
     }
-        
-    public func writeLog(_ items: Any...) {
+
+    private func writeLog(logType: LogType, items: Any...) {
         let timestamp = self.getCurrentTimeString()
-        let itemsWithTimestamp = ["[\(timestamp)]"] + items.map { "\($0)" }
+        let itemsWithTimestamp = ["[\(timestamp)]\(self.getLogTypeString(logType: logType))"] + items.map { "\($0)" }
         let message = itemsWithTimestamp.joined(separator: " ")
-        debugPrint(message)
+        ARTCAICallEngineLog.PrintLogBlock?(logType, message)
         
-        self.logQueue.async {
+        if logType.rawValue < ARTCAICallEngineLog.EnableLogType.rawValue {
+            return
+        }
+        self.logQueue?.async {
             if let logFileHandle = self.logFileHandle {
                 logFileHandle.seekToEndOfFile() // 移动到文件末尾
                 if let data = message.appending("\n").data(using: .utf8) {
@@ -39,9 +63,15 @@ import UIKit
         }
     }
     
-    public func startLog(fileName: String) {
+    private func startLog(fileName: String) {
+        if ARTCAICallEngineLog.EnableLogType == .None {
+            return
+        }
         self.stopLog()
-        self.logQueue.async {
+        if self.logQueue == nil {
+            self.logQueue = DispatchQueue(label: "com.artcaicallengine.logqueue")
+        }
+        self.logQueue?.async {
             let fileManager = FileManager.default
             let fileDir = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("aicall_log")
             if !fileManager.fileExists(atPath: fileDir.path) {
@@ -61,8 +91,8 @@ import UIKit
         }
     }
     
-    public func stopLog() {
-        self.logQueue.async {
+    private func stopLog() {
+        self.logQueue?.async {
             if let logFileHandle = self.logFileHandle {
                 let text = "log end\n"
                 logFileHandle.seekToEndOfFile() // 移动到文件末尾
@@ -73,11 +103,11 @@ import UIKit
                 self.logFileHandle = nil
             }
         }
+        self.logQueue = nil
     }
     
-    // 创建一个串行队列
-    private let logQueue = DispatchQueue(label: "com.artcaicallengine.logqueue")
-    
+    // 串行队列
+    private var logQueue: DispatchQueue? = nil
     private var logFileHandle: FileHandle? = nil
     
     // 获取当前时间并格式化为字符串
@@ -85,5 +115,18 @@ import UIKit
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSS"
         return dateFormatter.string(from: Date())
+    }
+    
+    private func getLogTypeString(logType: LogType) -> String {
+        if logType == .Debug {
+            return "[DEBUG]"
+        }
+        if logType == .Info {
+            return "[INFO]"
+        }
+        if logType == .Error {
+            return "[ERROR]"
+        }
+        return ""
     }
 }

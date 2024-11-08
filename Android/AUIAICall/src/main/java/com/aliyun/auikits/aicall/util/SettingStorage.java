@@ -6,6 +6,8 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
 
+import com.aliyun.auikits.aicall.BuildConfig;
+
 public class SettingStorage {
     private static final String FILE_NAME = "AI_CALL_SETTING_STORAGE";
     private static class LAZY_HOLDER {
@@ -18,11 +20,27 @@ public class SettingStorage {
     public static final String KEY_APP_SERVER_TYPE = "KEY_APP_SERVER_TYPE";
     public static final String KEY_DEPOSIT_SWITCH = "KEY_DEPOSIT_SWITCH";
     public static final String KEY_USE_RTC_PRE_ENV_SWITCH = "KEY_USE_RTC_PRE_ENV_SWITCH";
+    public static final String KEY_BOOT_ENABLE_PUSH_TO_TALK = "KEY_BOOT_ENABLE_PUSH_TO_TALK";
+    public static final String KEY_BOOT_ENABLE_VOICE_PRINT = "KEY_BOOT_ENABLE_VOICE_PRINT";
 
-    public static final boolean DEFAULT_DEPOSIT_SWITCH = true;
-    public static final boolean DEFAULT_EXTRA_DEBUG_CONFIG = false;
-    public static final boolean DEFAULT_APP_SERVER_TYPE = false;
-    public static final boolean DEFAULT_USE_RTC_PRE_ENV = false;
+    public static final boolean DEFAULT_DEPOSIT_SWITCH = BuildConfig.TEST_ENV_MODE ?
+            true :
+            true;  // 发布包默认要为true
+    public static final boolean DEFAULT_EXTRA_DEBUG_CONFIG = BuildConfig.TEST_ENV_MODE ?
+            true :
+            false;  // 发布包默认要为false
+    public static final boolean DEFAULT_APP_SERVER_TYPE = BuildConfig.TEST_ENV_MODE ?
+            false :
+            false;  // 发布包默认要为false
+    public static final boolean DEFAULT_USE_RTC_PRE_ENV = BuildConfig.TEST_ENV_MODE ?
+            false :
+            false;  // 发布包默认要为false
+    public static final boolean DEFAULT_ENABLE_PUSH_TO_TALK = BuildConfig.TEST_ENV_MODE ?
+            false :
+            false;  // 发布包默认要为false
+    public static final boolean DEFAULT_ENABLE_VOICE_PRINT = BuildConfig.TEST_ENV_MODE ?
+            false :
+            false;  // 发布包默认要为false
 
     private SharedPreferences mSP = null;
 

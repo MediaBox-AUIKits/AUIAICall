@@ -35,4 +35,13 @@ public class GenerateAIAgentCallResponse {
     @JsonProperty("rtc_auth_token")
     private String rtcAuthToken;
 
+    @JsonProperty("result")
+    private boolean result;
+
+    @JsonProperty("message")
+    private String message;
+
+    @JsonProperty("request_id")
+    private String requestId;
+
 }

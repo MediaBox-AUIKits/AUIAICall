@@ -29,6 +29,7 @@
     <string name="robot_listening_tips">I\'m listening to you</string>
     <string name="robot_thinking_tips">Thinking...</string>
     <string name="robot_speaking_tips">I\'m replying, you can tap the screen or speak to interrupt me</string>
+    <string name="robot_speaking_tips_without_voice_interrupt">I\'m replying, you can tap the screen to interrupt me</string>
 
     <string name="setting_title">Settings</string>
     <string name="config_interrupt_title">Smart Interrupt</string>
@@ -37,7 +38,7 @@
     <string name="config_interrupt_title_close_toast">Intelligent interrupt turned off</string>
 
     <string name="config_audio_tone_title">Choose Tone</string>
-    <string name="config_audio_tone_tips">After switching tones, the AI will use the new role in the next response</string>
+    <string name="config_audio_tone_tips">After switching tones, the AI will use the new voice in the next response</string>
 
     <string name="layout_base_loading">Loading...</string>
     <string name="layout_base_load_end">- Load Complete -</string>
@@ -88,4 +89,33 @@
     <string name="complete_rating_tips">Please complete all ratings first</string>
 
     <string name="tips_authorization_invalidate">Authentication information is missing, please log in and try again!</string>
+
+    <string name="reporting_title">Feedback</string>
+    <string name="reporting_type">Issue Type</string>
+    <string name="reporting_type_tips">(Multiple choices)</string>
+    <string name="reporting_type_function_unavailable">Function unavailable</string>
+    <string name="reporting_type_function_bugs">Available but has bugs</string>
+    <string name="reporting_type_response_slow">AI response is too slow</string>
+    <string name="reporting_type_response_inaccurate">AI response content is inaccurate</string>
+    <string name="reporting_type_media_quality">Audio/Video quality issues</string>
+    <string name="reporting_type_others">Other issues</string>
+    <string name="reporting_desc_hint">Please describe any other issues you encountered</string>
+
+    <string name="reporting_id_display">Request ID: %s</string>
+    <string name="copy">Copy</string>
+    <string name="submitted">Submitted</string>
+    <string name="copied">Copied</string>
+
+    <string name="mode_natural_conversation">Natural Conversation Mode</string>
+    <string name="mode_push_to_talk">Push To Talk Mode</string>
+    <string name="voiceprint_recognition_test_title">Voiceprint Recognition (Invite Only)</string>
+    <string name="voiceprint_recognition_test_desc">AI only uses your voice as input, even if multiple people are speaking at the same time</string>
+    <string name="voiceprint_recognized">Voiceprint Recognized</string>
+    <string name="delete_voiceprint">Delete Voiceprint</string>
+    <string name="voiceprint_enable">Voiceprint recognition enabled</string>
+    <string name="voiceprint_disable">Voiceprint recognition disabled</string>
+    <string name="main_speaker_not_recognized">Detected someone speaking, did not recognize the speaker</string>
+
+    <string name="push_to_talk">Push to Speak</string>
+    <string name="release_to_send">Release to Send</string>
 </resources>

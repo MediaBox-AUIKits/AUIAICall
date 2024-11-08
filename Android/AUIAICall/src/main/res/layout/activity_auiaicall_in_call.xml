@@ -23,6 +23,16 @@
             android:layout_marginStart="10dp"
             android:padding="10dp"
             android:src="@drawable/ic_config"/>
+
+        <ImageView
+            android:id="@+id/btn_reporting"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            app:layout_constraintRight_toLeftOf="@id/btn_setting"
+            app:layout_constraintTop_toTopOf="parent"
+            android:layout_marginStart="10dp"
+            android:padding="10dp"
+            android:src="@drawable/ic_reporting"/>
         <TextView
             android:id="@+id/tv_ai_call_title"
             app:layout_constraintLeft_toLeftOf="parent"
@@ -125,6 +135,18 @@
             />
     </LinearLayout>
 
+
+    <TextView
+        android:id="@+id/tv_call_secondary_tips"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toTopOf="@id/tv_call_tips"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        style="@style/layout_base_text_style_14_light_white"
+        android:layout_marginBottom="34dp"
+        android:text=""/>
+
     <TextView
         android:id="@+id/tv_call_tips"
         android:layout_width="wrap_content"
@@ -156,18 +178,32 @@
         android:layout_marginBottom="40dp"
         >
         <include
-            layout="@layout/layout_auicicall_in_call_action_voice"
+            layout="@layout/layout_auiaicall_in_call_action_voice"
             android:id="@+id/action_layer_voice"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="visible"
+            />
+        <include
+            layout="@layout/layout_auiaicall_in_call_action_push_to_talk_voice"
+            android:id="@+id/action_layer_push_to_talk_voice"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:visibility="gone"
             />
         <include
-            layout="@layout/layout_auicicall_in_call_action_video"
+            layout="@layout/layout_auiaicall_in_call_action_video"
             android:id="@+id/action_layer_video"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:visibility="visible"
+            android:visibility="gone"
+            />
+        <include
+            layout="@layout/layout_auiaicall_in_call_action_push_to_talk_video"
+            android:id="@+id/action_layer_push_to_talk_video"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
             />
     </FrameLayout>
 
