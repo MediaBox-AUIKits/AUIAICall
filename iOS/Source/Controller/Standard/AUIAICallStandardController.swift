@@ -61,6 +61,27 @@ import ARTCAICallKit
     }
     public weak var delegate: AUIAICallControllerDelegate?
     
+    
+    public var agentShareInfo: String? = nil {
+        didSet {
+            if let agentShareInfo = self.agentShareInfo {
+                self.agentShareConfig = self.engine.parseShareAgentCall(shareInfo: agentShareInfo)
+            }
+        }
+    }
+    private var agentShareConfig: ARTCAICallAgentShareConfig? = nil {
+        didSet {
+            if let agentShareConfig = self.agentShareConfig {
+                self.config.agentId = agentShareConfig.shareId
+                self.config.agentType = agentShareConfig.agentType
+                if agentShareConfig.agentType == .AvatarAgent {
+                    self.config.limitSecond = 5 * 60
+                }
+            }
+        }
+    }
+
+    
     // ****************************Func**************************
     
     // 创建&开始通话
@@ -71,7 +92,7 @@ import ARTCAICallKit
         self.state = .Connecting
         
         ARTCAICallEngineLog.StartLog(fileName: UUID().uuidString)
-        ARTCAICallEngineLog.WriteLog("Start Call")
+        ARTCAICallEngineLog.WriteLog("Start Call For Standard")
         ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "AgentId", value: self.config.agentId ?? "")
         ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "UserId", value: self.userId)
         
@@ -368,6 +389,14 @@ extension AUIAICallStandardController: ARTCAICallEngineDelegate {
     public func onVoiceprintCleared() {
         debugPrint("AUIAICallStandardController onVoiceprintCleared")
     }
+    
+    public func onAgentWillLeave(reason: Int32, message: String) {
+        self.delegate?.onAICallAgentWillLeave?(reason: reason, message: message)
+    }
+    
+    public func onReceivedAgentCustomMessage(data: [String : Any]?) {
+        debugPrint("AUIAICallStandardController onReceivedAgentCustomMessage:\(data ?? [:])")
+    }
 }
 
 extension AUIAICallStandardController {
@@ -384,10 +413,18 @@ extension AUIAICallStandardController {
     
     public func generateAIAgentCall(userId: String, config: AUIAICallConfig, completed: ((_ rsp: ARTCAICallAgentInfo?, _ token: String?, _ error: Error?, _ reqId: String) -> Void)?) {
         
+        if let agentShareConfig = self.agentShareConfig {
+            self.engine.generateShareAgentCall(shareConfig: agentShareConfig, userId: userId) { rsp, token, error, reqId in
+                completed?(rsp, token, error, reqId)
+            }
+            return
+        }
+        
         var template_config: [String : Any] = [:]
         var configDict: [String : Any] = [
             "EnableVoiceInterrupt": config.enableVoiceInterrupt,
             "EnablePushToTalk": config.enablePushToTalk,
+            "MaxIdleTime": config.agentMaxIdleTime,
         ]
         if let voiceprintId = config.voiceprintId {
             configDict.updateValue(voiceprintId, forKey: "VoiceprintId")

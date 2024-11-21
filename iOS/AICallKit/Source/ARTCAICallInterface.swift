@@ -355,6 +355,81 @@ import UIKit
      * 邀测阶段，如需体验，请联系相关人员
      */
     @objc optional func onVoiceprintCleared()
+    
+    /**
+     * 当前智能体即将离开（结束当前通话）
+     * @param reason 原因：2001(闲时退出)  0(其他)
+     * @param message 描述原因
+     */
+    @objc optional func onAgentWillLeave(reason: Int32, message: String)
+    
+    /**
+     * 收到当前智能体发过来的自定义消息
+     * @param data 消息内容
+     */
+    @objc optional func onReceivedAgentCustomMessage(data: [String: Any]?)
+}
+
+
+/**
+ * 分享智能体配置信息
+ */
+@objcMembers open class ARTCAICallAgentShareConfig: NSObject {
+    /**
+     * 初始化
+     */
+    public init(shareId: String?, agentType: ARTCAICallAgentType, expireTime: Date?, templateConfig: String?, region: String?) {
+        self.shareId = shareId
+        self.agentType = agentType
+        self.expireTime = expireTime
+        self.templateConfig = templateConfig
+        self.region = region
+    }
+    
+    /**
+     * 初始化
+     */
+    public convenience init(data: Dictionary<AnyHashable, Any>?) {
+        let shareId = data?["TemporaryAIAgentId"] as? String
+        let expireTime = (data?["ExpireTime"] as? String)?.aicall_parseDateString()
+
+        var type = ARTCAICallAgentType.VoiceAgent
+        if data?["WorkflowType"] as? String == "AvatarChat3D" {
+            type = ARTCAICallAgentType.AvatarAgent
+        }
+        else if data?["WorkflowType"] as? String == "VisionChat" {
+            type = ARTCAICallAgentType.VisionAgent
+        }
+        let templateConfig = data?["TemplateConfig"] as? String
+        let region = data?["Region"] as? String
+        self.init(shareId: shareId, agentType: type, expireTime: expireTime, templateConfig: templateConfig, region: region)
+    }
+    
+    
+    /**
+     * 智能体分享ID
+     */
+    public let shareId: String?
+    
+    /**
+     * 智能体工作量类型
+     */
+    public let agentType: ARTCAICallAgentType
+    
+    /**
+     * 过期时间
+     */
+    public let expireTime: Date?
+    
+    /**
+     * 模板配置（Json字符串）
+     */
+    public let templateConfig: String?
+    
+    /**
+     * 服务所在区域
+     */
+    public let region: String?
 }
 
 /**
@@ -590,6 +665,17 @@ import UIKit
      * 释放资源
      */
     func destroy()
+    
+    
+    /**
+     * 解析一个分享的智能体信息
+     */
+    func parseShareAgentCall(shareInfo: String) -> ARTCAICallAgentShareConfig?
+    
+    /**
+     * 启动一个分享的智能体通话
+     */
+    func generateShareAgentCall(shareConfig: ARTCAICallAgentShareConfig, userId: String, completed: ((_ rsp: ARTCAICallAgentInfo?, _ token: String?, _ error: NSError?, _ reqId: String) -> Void)?)
 }
 
 /**

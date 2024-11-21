@@ -99,6 +99,39 @@ public abstract class ARTCAICallEngine {
         Unknown,
     }
 
+    public static class ARTCAICallVideoConfig {
+        /** 是否使用本地高清预览 */
+        public boolean useHighQualityPreview = false;
+        /** 是否默认启动前置摄像头 */
+        public boolean useFrontCameraDefault = false;
+        /** 摄像头采集帧率 */
+        public int cameraCaptureFrameRate = 15;
+
+        /** 视频编码宽度 */
+        public int videoEncoderWidth = 360;
+        /** 视频编码高度 */
+        public int videoEncoderHeight = 640;
+        /** 视频编码帧率 */
+        public int videoEncoderFrameRate = 15;
+        /** 视频编码码率 */
+        public int videoEncoderBitRate = 512;
+        /** 关键帧间隔，单位毫秒。默认值0，表示SDK内部控制关键帧间隔。 */
+        public int videoEncoderKeyFrameInterval = 3000;
+
+        @Override
+        public String toString() {
+            return "ARTCAICallVideoConfig{" +
+                    "useHighQualityPreview=" + useHighQualityPreview +
+                    ", useFrontCameraDefault=" + useFrontCameraDefault +
+                    ", videoEncoderWidth=" + videoEncoderWidth +
+                    ", videoEncoderHeight=" + videoEncoderHeight +
+                    ", videoEncoderFrameRate=" + videoEncoderFrameRate +
+                    ", videoEncoderBitRate=" + videoEncoderBitRate +
+                    ", videoEncoderKeyFrameInterval=" + videoEncoderKeyFrameInterval +
+                    '}';
+        }
+    }
+
     public static class ARTCAICallConfig {
         public String aiAgentRegion = null;
         public String loginUserId;
@@ -119,13 +152,17 @@ public abstract class ARTCAICallEngine {
         public boolean useRtcPreEnv = false;
         public boolean enablePushToTalk = false;
         public boolean enableVoicePrint = false;
+        /**
+         * 视频相关配置
+         */
+        public ARTCAICallVideoConfig mAiCallVideoConfig = new ARTCAICallVideoConfig();
 
         @Override
         public String toString() {
             return "ARTCAICallConfig{" +
                     "aiAgentRegion='" + aiAgentRegion + '\'' +
                     ", loginUserId='" + loginUserId + '\'' +
-                    ", loginAuthorization='" + loginAuthrization + '\'' +
+                    ", loginAuthrization='" + loginAuthrization + '\'' +
                     ", aiAgentRequestId='" + aiAgentRequestId + '\'' +
                     ", aiAgentId='" + aiAgentId + '\'' +
                     ", enableVoiceInterrupt=" + enableVoiceInterrupt +
@@ -137,6 +174,9 @@ public abstract class ARTCAICallEngine {
                     ", appServerHost='" + appServerHost + '\'' +
                     ", useDeposit=" + useDeposit +
                     ", useRtcPreEnv=" + useRtcPreEnv +
+                    ", enablePushToTalk=" + enablePushToTalk +
+                    ", enableVoicePrint=" + enableVoicePrint +
+                    ", mAiCallVideoConfig=" + mAiCallVideoConfig +
                     '}';
         }
     }
@@ -257,6 +297,19 @@ public abstract class ARTCAICallEngine {
          * 声纹信息被清除
          */
         public void onVoicePrintCleared() {}
+
+        /**
+         * 当前智能体即将离开（结束当前通话）
+         * @param reason 原因：2001(闲时退出)  0(其他)
+         * @param message 描述原因
+         */
+        public void onAgentWillLeave(int reason, String message) {}
+
+        /**
+         * 智能体自定义消息
+         * @param data 自定义消息体，使用json字符串
+         */
+        public void onReceivedAgentCustomMessage(String data) {}
     }
 
     /**

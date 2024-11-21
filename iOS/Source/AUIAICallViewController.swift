@@ -87,6 +87,7 @@ import ARTCAICallKit
     }
     
     public let controller: AUIAICallControllerInterface
+    public var enableVoiceIdSwitch: Bool = true
     
     open lazy var titleLabel: UILabel = {
         let label = UILabel()
@@ -277,7 +278,7 @@ extension AUIAICallViewController {
             return
         }
         let panel = AUIAICallSettingPanel(frame: CGRect(x: 0, y: 0, width: self.view.av_width, height: 0))
-        panel.enableVoiceIdSwitch = self.controller.config.agentType != .AvatarAgent
+        panel.enableVoiceIdSwitch = self.enableVoiceIdSwitch
         panel.config = self.controller.config
         panel.isVoiceprintRegisted = self.controller.isVoiceprintRegisted
         panel.applyPlayBlock = { [weak self] item in
@@ -570,6 +571,17 @@ extension AUIAICallViewController: AUIAICallControllerDelegate {
         }
         else {
             AVToastView.show(AUIAICallBundle.getString("Push to talk mode is turned off"), view: self.view, position: .mid)
+        }
+    }
+    
+    public func onAICallAgentWillLeave(reason: Int32, message: String) {
+        self.controller.handup()
+        if let keyWindow = UIView.av_keyWindow {
+            var toast = AUIAICallBundle.getString("The call has ended.")
+            if reason == 2001 {
+                toast = AUIAICallBundle.getString("Due to your prolonged inactivity, the call has ended.")
+            }
+            AVToastView.show(toast, view: keyWindow, position: .mid)
         }
     }
 }

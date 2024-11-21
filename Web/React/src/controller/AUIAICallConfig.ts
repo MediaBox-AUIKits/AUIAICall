@@ -41,6 +41,26 @@ class AUIAICallConfig {
    * 通话限制时间，为0表示不限制，否则通话时间到达秒数后，会自动结束通话
    */
   limitSecond = 0;
+
+  /**
+   * 智能体闲时的最大等待时间(单位：秒)，超时智能体自动下线，设置为-1表示闲时不退出。
+   */
+  agentMaxIdleTime = 600;
+
+  /**
+   * 语音对话头像地址
+   */
+  voiceAvatarUrl?: string;
+
+  /**
+   * 本地摄像头预览渲染视图
+   */
+  previewView?: HTMLVideoElement | string;
+
+  /**
+   * 智能体视频渲染视图
+   */
+  agentView?: HTMLVideoElement | string;
 }
 
 export default AUIAICallConfig;

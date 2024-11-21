@@ -19,4 +19,10 @@ public class CommonResponse {
 
     @JsonProperty("request_id")
     private String requestId;
+
+    @JsonProperty("code")
+    private int code;
+
+    @JsonProperty("error_code")
+    private String errorCode;
 }

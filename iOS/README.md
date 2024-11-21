@@ -24,7 +24,7 @@ AUI Kits AI智能体集成工具适用于网络客服、AI助理、撮合助手�
 ```
 
 ### 环境要求
-- Xcode 15.4 及以上版本，推荐使用最新正式版本
+- Xcode 16 及以上版本，推荐使用最新正式版本
 - CocoaPods 1.9.3 及以上版本
 - 准备 iOS 10.0 及以上版本的真机
 
@@ -65,7 +65,7 @@ target '你的App target' do
     pod 'AliVCSDK_ARTC', '~> 6.17.0'
 
     # AI实时互动通话场景SDK
-    pod "ARTCAICallKit", '~> 1.3.0'
+    pod "ARTCAICallKit", '~> 1.4.0'
 
     # 基础UI组件源码
     pod 'AUIFoundation', :path => "./AUIAICall/AUIBaseKits/AUIFoundation/", :modular_headers => true

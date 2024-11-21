@@ -20,6 +20,8 @@ import UIKit
     case PushToTalkChanged = 1007
     case VoiceprintUsingChanged = 1008
     case VoiceprintClearSucceed = 1009
+    case AgentWillLeave = 1010
+    case CustomMessageReceived = 1011
 
     case StopAIAgent = 1100
     case InterruptSpeaking = 1101

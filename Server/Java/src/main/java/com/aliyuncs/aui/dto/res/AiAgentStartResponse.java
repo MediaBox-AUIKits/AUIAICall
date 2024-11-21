@@ -32,6 +32,12 @@ public class AiAgentStartResponse {
     @JsonProperty("result")
     private boolean result;
 
+    @JsonProperty("code")
+    private int code;
+
+    @JsonProperty("error_code")
+    private String errorCode;
+
     @JsonProperty("message")
     private String message;
 

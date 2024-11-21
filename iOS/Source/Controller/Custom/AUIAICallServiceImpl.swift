@@ -42,6 +42,7 @@ import ARTCAICallKit
         var configDict: [String : Any] = [
             "EnableVoiceInterrupt": config.enableVoiceInterrupt,
             "EnablePushToTalk": config.enablePushToTalk,
+            "MaxIdleTime": config.agentMaxIdleTime,
         ]
         if let voiceprintId = config.voiceprintId {
             configDict.updateValue(voiceprintId, forKey: "VoiceprintId")
@@ -92,6 +93,7 @@ import ARTCAICallKit
         var configDict: [String : Any] = [
             "EnableVoiceInterrupt": config.enableVoiceInterrupt,
             "EnablePushToTalk": config.enablePushToTalk,
+            "MaxIdleTime": config.agentMaxIdleTime,
         ]
         if let voiceprintId = config.voiceprintId {
             configDict.updateValue(voiceprintId, forKey: "VoiceprintId")

@@ -1,0 +1,23 @@
+.vision {
+  flex: 1 1 auto;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  video {
+    position: absolute;
+    width: 100%;
+    min-height: 100%;
+    background-color: #000;
+    opacity: 0;
+    bottom: 0;
+    transition: opacity 0.5s ease-in-out;
+  }
+
+  &.has-camera {
+    video {
+      opacity: 1;
+    }
+  }
+}

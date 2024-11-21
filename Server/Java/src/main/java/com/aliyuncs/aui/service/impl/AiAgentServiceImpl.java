@@ -7,7 +7,7 @@ import com.aliyun.teaopenapi.models.Config;
 import com.aliyun.teaopenapi.models.OpenApiRequest;
 import com.aliyun.teaopenapi.models.Params;
 import com.aliyun.teautil.models.RuntimeOptions;
-import com.aliyuncs.aui.common.exception.BizException;
+import com.aliyuncs.aui.dto.res.AiAgentInstanceDescribeResponse;
 import com.aliyuncs.aui.dto.res.AiAgentStartResponse;
 import com.aliyuncs.aui.dto.res.CommonResponse;
 import com.aliyuncs.aui.dto.res.GenerateAIAgentCallResponse;
@@ -61,7 +61,7 @@ public class AiAgentServiceImpl implements AiAgentService {
     }
 
     @Override
-    public AiAgentStartResponse startAiAgent(String ChannelId, String userId, String rtcAuthToken, String templateConfig, String workflowType) {
+    public AiAgentStartResponse startAiAgent(String ChannelId, String userId, String rtcAuthToken, String templateConfig, String workflowType, String userData) {
         Params params = new Params()
                 // 接口名称
                 .setAction("StartAIAgentInstance")
@@ -83,11 +83,11 @@ public class AiAgentServiceImpl implements AiAgentService {
         boolean isAvatarChat3D = isAvatarChat3D(workflowType);
 
         java.util.Map<String, Object> queries = new java.util.HashMap<>();
-        if(isAvatarChat3D(workflowType)){
+        if (isAvatarChat3D(workflowType)) {
             queries.put("AIAgentId", avatarChat3DAiAgentId);
-        } else if(isVoiceChat(workflowType)){
+        } else if (isVoiceChat(workflowType)) {
             queries.put("AIAgentId", voiceChatAiAgentId);
-        } else if(isVisionChat(workflowType)){
+        } else if (isVisionChat(workflowType)) {
             queries.put("AIAgentId", visionChatAiAgentId);
         } else {
             String errMessage = String.format("workflowType %s is not support", workflowType);
@@ -114,9 +114,14 @@ public class AiAgentServiceImpl implements AiAgentService {
         if (StringUtils.isNotEmpty(templateConfig)) {
             queries.put("TemplateConfig", templateConfig);
         }
+        if (StringUtils.isNotEmpty(userData)) {
+            queries.put("UserData", userData);
+        }
         RuntimeOptions runtime = new RuntimeOptions();
         String requestId = StringUtils.EMPTY;
         String message = StringUtils.EMPTY;
+        int code = 500;
+        String errCode = StringUtils.EMPTY;
         try {
             OpenApiRequest request = new OpenApiRequest().setQuery(com.aliyun.openapiutil.Client.query(queries));
             long start = System.currentTimeMillis();
@@ -127,25 +132,28 @@ public class AiAgentServiceImpl implements AiAgentService {
             log.info("startAiAgent, response:{}", JSONObject.toJSONString(response));
             if (response != null) {
                 if (response.containsKey("statusCode")) {
-                    Integer statusCode = (Integer)response.get("statusCode");
+                    Integer statusCode = (Integer) response.get("statusCode");
                     if (200 == statusCode) {
                         Map<String, Object> body = (Map<String, Object>) response.get("body");
                         String instanceId = (String) body.get("InstanceId");
                         requestId = (String) body.get("RequestId");
                         log.info("startAiAgent success. instanceId:{}, consume:{}ms", instanceId, (System.currentTimeMillis() - start));
-                        return AiAgentStartResponse.builder().aiAgentInstanceId(instanceId).requestId(requestId).result(true).build();
+                        return AiAgentStartResponse.builder().aiAgentInstanceId(instanceId).requestId(requestId).result(true).code(200).build();
                     }
                 }
             }
         } catch (TeaException e) {
             log.error("startAiAgent Tea error. e:{}", e.getMessage());
             requestId = e.getData().get("RequestId").toString();
-            message = e.getCode();
+            code = e.getStatusCode();
+            errCode = e.getCode();
+            message = e.getMessage();
+            return AiAgentStartResponse.builder().result(false).code(code).errorCode(errCode).requestId(requestId).message(message).build();
         } catch (Exception e) {
             log.error("startAiAgent error. e:{}", e.getMessage());
             throw new RuntimeException(e.getMessage());
         }
-        return AiAgentStartResponse.builder().result(false).requestId(requestId).message(message).build();
+        return AiAgentStartResponse.builder().result(false).code(code).message(message).build();
     }
 
     private static boolean isAvatarChat3D(String workflowType) {
@@ -153,7 +161,7 @@ public class AiAgentServiceImpl implements AiAgentService {
         return isAvatarChat3D;
     }
 
-    private static boolean isVoiceChat(String workflowType){
+    private static boolean isVoiceChat(String workflowType) {
         return "VoiceChat".equalsIgnoreCase(workflowType);
     }
 
@@ -187,6 +195,8 @@ public class AiAgentServiceImpl implements AiAgentService {
 
         String requestId = StringUtils.EMPTY;
         String message = StringUtils.EMPTY;
+        String errCode = StringUtils.EMPTY;
+        int code = 500;
         try {
             com.aliyun.teaopenapi.models.OpenApiRequest request = new com.aliyun.teaopenapi.models.OpenApiRequest()
                     .setQuery(com.aliyun.openapiutil.Client.query(queries));
@@ -196,24 +206,27 @@ public class AiAgentServiceImpl implements AiAgentService {
             log.info("stopAiAgent, response:{}", JSONObject.toJSONString(response));
             if (response != null) {
                 if (response.containsKey("statusCode")) {
-                    Integer statusCode = (Integer)response.get("statusCode");
+                    Integer statusCode = (Integer) response.get("statusCode");
                     if (200 == statusCode) {
                         Map<String, Object> body = (Map<String, Object>) response.get("body");
                         requestId = (String) body.get("RequestId");
                         log.info("stopAiAgent success. instanceId:{}, consume:{}ms", aiAgentInstanceId, (System.currentTimeMillis() - start));
-                        return CommonResponse.builder().result(true).requestId(requestId).build();
+                        return CommonResponse.builder().result(true).code(200).requestId(requestId).build();
                     }
                 }
             }
         } catch (TeaException e) {
             log.error("stopAiAgent Tea error. e:{}", e.getMessage());
             requestId = e.getData().get("RequestId").toString();
-            message = e.getCode();
+            message = e.getMessage();
+            code = e.getStatusCode();
+            errCode = e.getCode();
+            return CommonResponse.builder().result(false).requestId(requestId).message(message).code(code).errorCode(errCode).build();
         } catch (Exception e) {
             log.error("stopAiAgent error. e:{}", e.getMessage());
             throw new RuntimeException(e.getMessage());
         }
-        return CommonResponse.builder().result(false).requestId(requestId).message(message).build();
+        return CommonResponse.builder().result(false).message(message).code(code).build();
     }
 
     @Override
@@ -243,6 +256,8 @@ public class AiAgentServiceImpl implements AiAgentService {
 
         String requestId = StringUtils.EMPTY;
         String message = StringUtils.EMPTY;
+        String errCode = StringUtils.EMPTY;
+        int code = 500;
         try {
             com.aliyun.teaopenapi.models.OpenApiRequest request = new com.aliyun.teaopenapi.models.OpenApiRequest()
                     .setQuery(com.aliyun.openapiutil.Client.query(queries));
@@ -252,28 +267,30 @@ public class AiAgentServiceImpl implements AiAgentService {
             log.info("updateAiAgent, response:{}", JSONObject.toJSONString(response));
             if (response != null) {
                 if (response.containsKey("statusCode")) {
-                    Integer statusCode = (Integer)response.get("statusCode");
+                    Integer statusCode = (Integer) response.get("statusCode");
                     if (200 == statusCode) {
                         Map<String, Object> body = (Map<String, Object>) response.get("body");
                         requestId = (String) body.get("RequestId");
                         log.info("updateAiAgent success. instanceId:{}, consume:{}ms", aiAgentInstanceId, (System.currentTimeMillis() - start));
-                        return CommonResponse.builder().result(true).requestId(requestId).build();
+                        return CommonResponse.builder().result(true).requestId(requestId).code(200).build();
                     }
                 }
             }
         } catch (TeaException e) {
             log.error("updateRobot Tea error. e:{}", e.getMessage());
             requestId = e.getData().get("RequestId").toString();
-            message = e.getCode();
+            code = e.getStatusCode();
+            errCode = e.getCode();
+            message = e.getMessage();
         } catch (Exception e) {
             log.error("updateRobot error. e:{}", e.getMessage());
             throw new RuntimeException(e.getMessage());
         }
-        return CommonResponse.builder().result(false).requestId(requestId).message(message).build();
+        return CommonResponse.builder().result(false).requestId(requestId).message(message).code(code).errorCode(errCode).build();
     }
 
     @Override
-    public GenerateAIAgentCallResponse generateAIAgentCall(String aiAgentId, String userId, Integer expire, String templateConfig, String workflowType, String region) {
+    public GenerateAIAgentCallResponse generateAIAgentCall(String aiAgentId, String userId, Integer expire, String templateConfig, String workflowType, String region, String userData) {
         Params params = new Params()
                 // 接口名称
                 .setAction("GenerateAIAgentCall")
@@ -311,9 +328,14 @@ public class AiAgentServiceImpl implements AiAgentService {
         queries.put("Expire", expire);
         queries.put("UserId", userId);
         queries.put("TemplateConfig", templateConfig);
+        if (StringUtils.isNotEmpty(userData)) {
+            queries.put("UserData", userData);
+        }
         com.aliyun.teautil.models.RuntimeOptions runtime = new com.aliyun.teautil.models.RuntimeOptions();
         String requestId = StringUtils.EMPTY;
         String message = StringUtils.EMPTY;
+        String errCode = StringUtils.EMPTY;
+        int code = 500;
         try {
             com.aliyun.teaopenapi.models.OpenApiRequest request = new com.aliyun.teaopenapi.models.OpenApiRequest()
                     .setQuery(com.aliyun.openapiutil.Client.query(queries));
@@ -324,7 +346,7 @@ public class AiAgentServiceImpl implements AiAgentService {
             log.info("generateAIAgentCall, response:{}", JSONObject.toJSONString(response));
             if (response != null) {
                 if (response.containsKey("statusCode")) {
-                    Integer statusCode = (Integer)response.get("statusCode");
+                    Integer statusCode = (Integer) response.get("statusCode");
                     if (200 == statusCode) {
                         Map<String, Object> body = (Map<String, Object>) response.get("body");
                         String channelId = (String) body.get("ChannelId");
@@ -342,6 +364,7 @@ public class AiAgentServiceImpl implements AiAgentService {
                                 .rtcAuthToken(token)
                                 .WorkflowType(workflowType)
                                 .requestId(requestId)
+                                .code(200)
                                 .result(true)
                                 .build();
                     }
@@ -350,19 +373,20 @@ public class AiAgentServiceImpl implements AiAgentService {
         } catch (TeaException e) {
             log.error("generateAIAgentCall Tea error. e:{}", e.getMessage());
             requestId = e.getData().get("RequestId").toString();
-            message = e.getCode();
-        }
-        catch (Exception e) {
+            message = e.getMessage();
+            code = e.getStatusCode();
+            errCode = e.getCode();
+        } catch (Exception e) {
             log.error("generateAIAgentCall error. e:{}", e.getMessage());
             throw new RuntimeException(e.getMessage());
         }
-        return GenerateAIAgentCallResponse.builder().result(false).requestId(requestId).message(message).build();
+        return GenerateAIAgentCallResponse.builder().result(false).code(code).errorCode(errCode).requestId(requestId).message(message).build();
     }
 
     public Client getClient(String region) {
-        // 如果区域为空或空白，设置默认区域为 "cn-shanghai"
+        // 如果区域为空或空白，设置默认区域为 imsRegion
         if (StringUtils.isBlank(region)) {
-            region = "cn-shanghai";
+            region = imsRegion;
         }
         // 使用 computeIfAbsent 方法在并发环境下安全地获取或创建 Client
         return clientByRegion.computeIfAbsent(region, this::createClient);
@@ -382,5 +406,80 @@ public class AiAgentServiceImpl implements AiAgentService {
             log.error("createClient error. e:{}", e.getMessage());
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public AiAgentInstanceDescribeResponse describeAiAgentInstance(String aiAgentInstanceId) {
+        Params params = new Params()
+                // 接口名称
+                .setAction("DescribeAIAgentInstance")
+                // 接口版本
+                .setVersion("2020-11-09")
+                // 接口协议
+                .setProtocol("HTTPS")
+                // 接口 HTTP 方法
+                .setMethod("POST")
+                .setAuthType("AK")
+                .setStyle("HTTPS")
+                // 接口 PATH
+                .setPathname("/")
+                // 接口请求体内容格式
+                .setReqBodyType("json")
+                // 接口响应体内容格式
+                .setBodyType("json");
+        // runtime options
+        java.util.Map<String, Object> queries = new java.util.HashMap<>();
+        queries.put("InstanceId", aiAgentInstanceId);
+        com.aliyun.teautil.models.RuntimeOptions runtime = new com.aliyun.teautil.models.RuntimeOptions();
+        String requestId = StringUtils.EMPTY;
+        String message = StringUtils.EMPTY;
+        String errCode = StringUtils.EMPTY;
+        int code = 500;
+        try {
+            com.aliyun.teaopenapi.models.OpenApiRequest request = new com.aliyun.teaopenapi.models.OpenApiRequest()
+                    .setQuery(com.aliyun.openapiutil.Client.query(queries));
+            long start = System.currentTimeMillis();
+            log.info("describeAiAgentInstance, queries:{}", JSONObject.toJSONString(queries));
+            Map<String, ?> response = client.callApi(params, request, runtime);
+            log.info("describeAiAgentInstance, response:{}", JSONObject.toJSONString(response));
+            if (response != null) {
+                if (response.containsKey("statusCode")) {
+                    Integer statusCode = (Integer) response.get("statusCode");
+                    if (200 == statusCode) {
+                        Map<String, Object> body = (Map<String, Object>) response.get("body");
+                        Map<String, Object> instance = (Map<String, Object>) body.get("Instance");
+
+                        String callLogUrl = (String) instance.get("CallLogUrl");
+                        String runtimeConfig = JSONObject.toJSONString(instance.get("RuntimeConfig"));
+                        String status = (String) instance.get("Status");
+                        String template_config = JSONObject.toJSONString(instance.get("TemplateConfig"));
+                        String user_data = (String) instance.get("UserData");
+                        requestId = (String) body.get("RequestId");
+
+                        return AiAgentInstanceDescribeResponse.builder()
+                                .callLogUrl(callLogUrl)
+                                .runtimeConfig(runtimeConfig)
+                                .status(status)
+                                .templateConfig(template_config)
+                                .userData(user_data)
+                                .code(200)
+                                .message("success")
+                                .requestId(requestId)
+                                .build();
+                    }
+                }
+            }
+        } catch (TeaException e) {
+            log.error("describeAiAgentInstance Tea error. e:{}", e.getMessage());
+            requestId = e.getData().get("RequestId").toString();
+            message = e.getMessage();
+            code = e.getStatusCode();
+            errCode = e.getCode();
+        } catch (Exception e) {
+            message = e.getMessage();
+            log.error("describeAiAgentInstance error. e:{}", e.getMessage());
+        }
+        return AiAgentInstanceDescribeResponse.builder().code(code).message(message).requestId(requestId).errorCode(errCode).build();
+
     }
 }

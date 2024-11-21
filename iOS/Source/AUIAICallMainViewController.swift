@@ -116,7 +116,7 @@ import ARTCAICallKit
                     AVAlertController.show(AUIAICallBundle.getString("Please Scan Code to Get Authorized Token"), vc: self)
                     return
                 }
-                self.startCall(authToken: authToken)
+                self.startCall(agentShareInfo: authToken)
             }
             else {
                 let agentType = self.sysAgentTabView.agentType
@@ -140,25 +140,14 @@ import ARTCAICallKit
         let view = AUIAICallCusAgentContentView(frame: CGRect(x: 20, y: self.cusAgentBtn.av_bottom + 16, width: self.contentView.av_width - 40, height: self.startCallBtn.av_top - self.cusAgentBtn.av_bottom - 16 - 38))
         view.inputField.isEnabled = false
         view.scanBtn.clickBlock = { [weak self] btn in
-#if DEMO_FOR_DEBUG
-            if (AUIAICallDebugManager.shared.currentIntegrationWay == .Custom) {
-                AVAlertController.show("请在标准集成方式下使用分享智能体")
-                return
-            }
-#endif
-            
-#if DEMO_FOR_DEBUG || AICALL_INTEGRATION_STANDARD
             let qr = AVQRCodeScanner()
             qr.scanResultBlock = { scaner, content in
                 scaner.navigationController?.popViewController(animated: true)
-                if let _ = self?.checkAuthToken(authToken: content) {
+                if let _ = AUIAICallMainViewController.checkAuthToken(authToken: content) {
                     self?.cusAgentContentView.inputField.text = content
                 }
             }
             self?.navigationController?.pushViewController(qr, animated: true)
-#else
-            AVAlertController.show("请在标准集成方式下使用分享智能体")
-#endif
         }
         return view
     }()
@@ -200,10 +189,8 @@ import ARTCAICallKit
         }
     }
     
-    open func startCall(authToken: String) {
-        if let result = self.checkAuthToken(authToken: authToken) {
-            self.startCall(agentType: result.agentType, agentId: result.agentId, region: result.region)
-        }
+    open func startCall(agentShareInfo: String) {
+        AUIAICallManager.defaultManager.startCall(agentShareInfo: agentShareInfo, viewController: self)
     }
     
     open func startCall(agentType: ARTCAICallAgentType, agentId: String? = nil, region: String? = nil) {
@@ -216,26 +203,26 @@ import ARTCAICallKit
         AUIAICallManager.defaultManager.startCall(agentType: agentType, agentId: agentId, region: region, viewController: self)
     }
     
-    func checkAuthToken(authToken: String) -> (agentId: String, agentType: ARTCAICallAgentType, region: String?)? {
-        let json = self.decodeAndDeserialize(base64String: authToken)
+    static func checkAuthToken(authToken: String) -> (agentId: String, agentType: ARTCAICallAgentType, region: String?)? {
+        let json = authToken.aicall_decodeBase64AndDeserialize()
         guard let json = json else {
-            AVAlertController.show(AUIAICallBundle.getString("Invalid Token"), vc: self)
+            AVAlertController.show(AUIAICallBundle.getString("Invalid Token"))
             return nil
         }
         
         let expireTime = json["ExpireTime"] as? String
         guard let expireTime = expireTime else {
-            AVAlertController.show(AUIAICallBundle.getString("Invalid Token"), vc: self)
+            AVAlertController.show(AUIAICallBundle.getString("Invalid Token"))
             return nil
         }
-        if self.isDateStringExpired(dateString: expireTime) {
-            AVAlertController.show(AUIAICallBundle.getString("Token Expire"), vc: self)
+        if expireTime.aicall_isDateStringExpired() {
+            AVAlertController.show(AUIAICallBundle.getString("Token Expire"))
             return nil
         }
         
         let agentId = json["TemporaryAIAgentId"] as? String
         guard let agentId = agentId else {
-            AVAlertController.show(AUIAICallBundle.getString("Invalid Token"), vc: self)
+            AVAlertController.show(AUIAICallBundle.getString("Invalid Token"))
             return nil
         }
         
@@ -251,47 +238,13 @@ import ARTCAICallKit
             agentType = .VisionAgent
         }
         guard let agentType = agentType else {
-            AVAlertController.show(AUIAICallBundle.getString("Invalid Token"), vc: self)
+            AVAlertController.show(AUIAICallBundle.getString("Invalid Token"))
             return nil
         }
         
         let region = json["Region"] as? String
         
         return (agentId, agentType, region)
-    }
-    
-    func decodeAndDeserialize(base64String: String) -> [String: Any]? {
-        // Base64 Decode
-        guard let decodedData = Data(base64Encoded: base64String, options: .ignoreUnknownCharacters) else {
-            debugPrint("Failed to decode Base64 string.")
-            return nil
-        }
-        
-        // JSON Deserialize
-        do {
-            let jsonObject = try JSONSerialization.jsonObject(with: decodedData, options: [])
-            if let jsonDictionary = jsonObject as? [String: Any] {
-                return jsonDictionary
-            }
-        } catch {
-            debugPrint("Failed to deserialize JSON: \(error.localizedDescription)")
-        }
-        
-        return nil
-    }
-
-    func isDateStringExpired(dateString: String, dateFormat: String = "yyyy-MM-dd HH:mm:ss") -> Bool {
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = dateFormat
-        dateFormatter.timeZone = TimeZone(abbreviation: "UTC")
-        
-        guard let date = dateFormatter.date(from: dateString) else {
-            debugPrint("Failed to formatted Data String")
-            return false
-        }
-        
-        let currentDate = Date()
-        return currentDate > date
     }
 }
 

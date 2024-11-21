@@ -44,4 +44,10 @@ public class GenerateAIAgentCallResponse {
     @JsonProperty("request_id")
     private String requestId;
 
+    @JsonProperty("error_code")
+    private String errorCode;
+
+    @JsonProperty("code")
+    private int code;
+
 }

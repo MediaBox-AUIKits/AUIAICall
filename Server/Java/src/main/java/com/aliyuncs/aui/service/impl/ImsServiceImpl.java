@@ -6,6 +6,7 @@ import com.aliyuncs.aui.dto.req.AIAgentStartRequestDto;
 import com.aliyuncs.aui.dto.req.AiAgentStopRequestDto;
 import com.aliyuncs.aui.dto.req.AiAgentUpdateRequestDto;
 import com.aliyuncs.aui.dto.req.GenerateAIAgentCallRequestDto;
+import com.aliyuncs.aui.dto.res.AiAgentInstanceDescribeResponse;
 import com.aliyuncs.aui.dto.res.AiAgentStartResponse;
 import com.aliyuncs.aui.dto.res.CommonResponse;
 import com.aliyuncs.aui.dto.res.GenerateAIAgentCallResponse;
@@ -54,9 +55,11 @@ public class ImsServiceImpl implements ImsService {
         String robotRtcAuthToken = createBase64Token(channelId, robotUserId, getAigcTimestamp());
 
         AiAgentStartResponse aiAgentStartResponse = aiAgentService.startAiAgent(channelId, robotUserId, robotRtcAuthToken,
-                aiAgentStartRequestDto.getTemplateConfig(), aiAgentStartRequestDto.getWorkflowType());
+                aiAgentStartRequestDto.getTemplateConfig(), aiAgentStartRequestDto.getWorkflowType(), aiAgentStartRequestDto.getUserData());
         return AiAgentStartResponse.builder().aiAgentInstanceId(aiAgentStartResponse.getAiAgentInstanceId()).rtcAuthToken(rtcAuthToken)
-                .aiAgentUserId(robotUserId).channelId(channelId).requestId(aiAgentStartResponse.getRequestId()).result(aiAgentStartResponse.isResult()).message(aiAgentStartResponse.getMessage()).build();
+                .aiAgentUserId(robotUserId).channelId(channelId).requestId(aiAgentStartResponse.getRequestId())
+                .result(aiAgentStartResponse.isResult()).message(aiAgentStartResponse.getMessage())
+                .code(aiAgentStartResponse.getCode()).errorCode(aiAgentStartResponse.getErrorCode()).build();
     }
 
     @Override
@@ -72,7 +75,12 @@ public class ImsServiceImpl implements ImsService {
     @Override
     public GenerateAIAgentCallResponse generateAIAgentCall(GenerateAIAgentCallRequestDto requestDto) {
         return aiAgentService.generateAIAgentCall(requestDto.getAiAgentId(),requestDto.getUserId(), requestDto.getExpire(),
-                requestDto.getTemplateConfig(), requestDto.getWorkflowType(), requestDto.getRegion());
+                requestDto.getTemplateConfig(), requestDto.getWorkflowType(), requestDto.getRegion(), requestDto.getUserData());
+    }
+
+    @Override
+    public AiAgentInstanceDescribeResponse describeAiAgentInstance(String aiAgentInstanceId) {
+        return aiAgentService.describeAiAgentInstance(aiAgentInstanceId);
     }
 
     private long getClientTimestamp() {

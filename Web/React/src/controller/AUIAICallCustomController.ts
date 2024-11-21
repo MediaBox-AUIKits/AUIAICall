@@ -10,7 +10,8 @@ class AUIAICallCustomController extends AUIAICallController {
   }
 
   async startAIAgent(): Promise<AICallAgentInfo> {
-    return await customService.startAIAgent(this.userId, this.token, this.config);
+    const agentInfo = await customService.startAIAgent(this.userId, this.token, this.config);
+    return agentInfo;
   }
 
   async stopAIAgent(instanceId: string): Promise<void> {

@@ -23,4 +23,7 @@ public class AIAgentStartRequestDto {
     @NotBlank
     @JsonProperty("workflow_type")
     private String workflowType;
+
+    @JsonProperty("user_data")
+    private String userData;
 }

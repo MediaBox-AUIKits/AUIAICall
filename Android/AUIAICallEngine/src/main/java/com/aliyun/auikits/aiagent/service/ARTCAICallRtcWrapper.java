@@ -1,6 +1,5 @@
 package com.aliyun.auikits.aiagent.service;
 
-import static com.alivc.rtc.AliRtcEngine.AliRtcCaptureOutputPreference.ALIRTC_CAPTURER_OUTPUT_PREFERENCE_AUTO;
 import static com.alivc.rtc.AliRtcEngine.AliRtcCaptureOutputPreference.ALIRTC_CAPTURER_OUTPUT_PREFERENCE_PREVIEW;
 import static com.alivc.rtc.AliRtcEngine.AliRtcDataMsgType.AliEngineDataMsgCustom;
 import static com.alivc.rtc.AliRtcEngine.AliRtcVideoTrack.AliRtcVideoTrackCamera;
@@ -38,6 +37,21 @@ public class ARTCAICallRtcWrapper {
         public boolean enableRemoteVideo = false;
         public boolean enableLocalVideo = false;
         public boolean usePreEnv = false;
+        public boolean useHighQualityPreview = false;
+        /** 是否默认启动前置摄像头 */
+        public boolean useFrontCameraDefault = false;
+        /** 摄像头采集帧率 */
+        public int cameraCaptureFrameRate = 15;
+        /** 视频编码宽度 */
+        public int videoEncoderWidth = 360;
+        /** 视频编码高度 */
+        public int videoEncoderHeight = 640;
+        /** 视频编码帧率 */
+        public int videoEncoderFrameRate = 15;
+        /** 视频编码码率 */
+        public int videoEncoderBitRate = 512;
+        /** 关键帧间隔，单位毫秒。默认值0，表示SDK内部控制关键帧间隔。 */
+        public int videoEncoderKeyFrameInterval = 1000;
     }
 
     private String composeParams() {
@@ -110,15 +124,21 @@ public class ARTCAICallRtcWrapper {
             aliRtcEngine.muteLocalMic(false, AliRtcEngine.AliRtcMuteLocalAudioMode.AliRtcMuteAllAudioMode);
             if (!audioOnly) {
                 AliRtcEngine.AliEngineCameraCapturerConfiguration cameraCapturerConfiguration = new AliRtcEngine.AliEngineCameraCapturerConfiguration();
-                cameraCapturerConfiguration.cameraDirection = AliRtcEngine.AliRtcCameraDirection.CAMERA_REAR;
-                cameraCapturerConfiguration.preference = ALIRTC_CAPTURER_OUTPUT_PREFERENCE_PREVIEW;
+                cameraCapturerConfiguration.cameraDirection = mRtcConfig.useFrontCameraDefault ?
+                        AliRtcEngine.AliRtcCameraDirection.CAMERA_FRONT :
+                        AliRtcEngine.AliRtcCameraDirection.CAMERA_REAR;
+                cameraCapturerConfiguration.fps = mRtcConfig.cameraCaptureFrameRate;
+                if (mRtcConfig.useHighQualityPreview) {
+                    cameraCapturerConfiguration.preference = ALIRTC_CAPTURER_OUTPUT_PREFERENCE_PREVIEW;
+                }
                 mAliRtcEngine.setCameraCapturerConfiguration(cameraCapturerConfiguration);
 
                 AliRtcEngine.AliRtcVideoEncoderConfiguration aliRtcVideoEncoderConfiguration = new AliRtcEngine.AliRtcVideoEncoderConfiguration();
-                aliRtcVideoEncoderConfiguration.dimensions = new AliRtcEngine.AliRtcVideoDimensions(360, 640);
-                aliRtcVideoEncoderConfiguration.frameRate = 15;
-                aliRtcVideoEncoderConfiguration.bitrate = 512;
-                aliRtcVideoEncoderConfiguration.keyFrameInterval = 1000;
+                aliRtcVideoEncoderConfiguration.dimensions = new AliRtcEngine.AliRtcVideoDimensions(
+                        mRtcConfig.videoEncoderWidth, mRtcConfig.videoEncoderHeight);
+                aliRtcVideoEncoderConfiguration.frameRate = mRtcConfig.videoEncoderFrameRate;
+                aliRtcVideoEncoderConfiguration.bitrate = mRtcConfig.videoEncoderBitRate;
+                aliRtcVideoEncoderConfiguration.keyFrameInterval = mRtcConfig.videoEncoderKeyFrameInterval;
                 aliRtcEngine.setVideoEncoderConfiguration(aliRtcVideoEncoderConfiguration);
             }
         }

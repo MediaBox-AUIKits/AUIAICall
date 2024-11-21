@@ -4,10 +4,13 @@ import AUIAICallConfig from '../AUIAICallConfig';
 import { APP_SERVER, getWorkflowType, JSONData, ServiceAuthError, TemplateConfig, WorkflowType } from './interface';
 
 class StandardAppService {
+  private appServer = APP_SERVER;
+
   private getInitTemplateConfig = (config: AUIAICallConfig): TemplateConfig => {
     const templateConfig: TemplateConfig = {};
     const configDict: JSONData = {
       EnableVoiceInterrupt: config.enableVoiceInterrupt,
+      MaxIdleTime: config.agentMaxIdleTime,
     };
     if (config.agentVoiceId) {
       configDict.VoiceId = config.agentVoiceId;
@@ -18,10 +21,15 @@ class StandardAppService {
     if (config.enablePushToTalk) {
       configDict.EnablePushToTalk = config.enablePushToTalk;
     }
+
     templateConfig[getWorkflowType(config.agentType)] = configDict;
 
     return templateConfig;
   };
+
+  setAppServer(appServer: string) {
+    this.appServer = appServer;
+  }
 
   /**
    * 启动智能体实例
@@ -54,7 +62,7 @@ class StandardAppService {
       param.workflow_type = getWorkflowType(config.agentType);
     }
 
-    return fetch(`${APP_SERVER}/api/v2/aiagent/generateAIAgentCall`, {
+    return fetch(`${this.appServer}/api/v2/aiagent/generateAIAgentCall`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -80,6 +88,43 @@ class StandardAppService {
             rtcToken: data.rtc_auth_token,
             reqId: data.request_id || '',
           };
+        }
+        throw new Error(data.message || 'request error');
+      });
+  };
+
+  describeAIAgent = async (userId: string, token: string, instanceId: string): Promise<TemplateConfig> => {
+    if (!userId || !instanceId) {
+      throw new Error('userId or instanceId is empty');
+    }
+
+    const param: {
+      user_id: string;
+      ai_agent_instance_id: string;
+    } = {
+      user_id: userId,
+      ai_agent_instance_id: instanceId,
+    };
+
+    return fetch(`${this.appServer}/api/v2/aiagent/describeAIAgentInstance`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: token,
+      },
+      body: JSON.stringify(param),
+    })
+      .then((res) => {
+        if (res.status === 403) {
+          throw new ServiceAuthError('token is invalid');
+        } else if (res.status !== 200) {
+          throw new Error(`response status is ${res.status}`);
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (data.code === 200) {
+          return JSON.parse(data.template_config);
         }
         throw new Error(data.message || 'request error');
       });

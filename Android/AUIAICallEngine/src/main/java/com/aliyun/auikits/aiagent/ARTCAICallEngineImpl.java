@@ -334,6 +334,24 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
                             } else if (aiAgentErrorCode == IMsgTypeDef.AI_AGENT_ERROR_CODE.AI_AGENT_AVATAR_AGENT_UNAVAILABLE) {
                                 notifyErrorOccurs(AICallErrorCode.AvatarAgentUnavailable);
                             }
+                        } else if (msgType == IMsgTypeDef.MSG_TYPE_AI_AGENT_LEAVE_NOTIFY) {
+                            /**
+                             *   {
+                             *     "reason": 2001,           // 原因: 2001（智能体触发了闲时退出）
+                             *     "message": "闲时退出"      // 描述
+                             *   }
+                             */
+                            int reason = dataJson.optInt("reason");
+                            String message = dataJson.optString("message");
+                            notifyAiAgentWillLeave(reason, message);
+                        } else if (msgType == IMsgTypeDef.MSG_TYPE_AI_AGENT_CUSTOM_MESSAGE_NOTIFY) {
+                            /**
+                             *   {
+                             *     "message": "{}"         // 消息内容，使用json字符串
+                             *   }
+                             */
+                            String message = dataJson.optString("message");
+                            notifyReceivedAgentCustomMessage(message);
                         } else if (msgType == IMsgTypeDef.MSG_TYPE_PUSH_TO_TALK_ENABLE_RESULT) {
                             boolean enable = dataJson.optBoolean("enable");
                             notifyPushToTalkEnableResult(enable);
@@ -412,6 +430,14 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
             rtcConfig.usePreEnv = mCallConfig.useRtcPreEnv;
             rtcConfig.enableRemoteVideo = mAgentType == ARTCAICallAgentType.AvatarAgent;
             rtcConfig.enableLocalVideo = mAgentType == ARTCAICallAgentType.VisionAgent;
+            rtcConfig.useHighQualityPreview = mCallConfig.mAiCallVideoConfig.useHighQualityPreview;
+            rtcConfig.useFrontCameraDefault = mCallConfig.mAiCallVideoConfig.useFrontCameraDefault;
+            rtcConfig.cameraCaptureFrameRate = mCallConfig.mAiCallVideoConfig.cameraCaptureFrameRate;
+            rtcConfig.videoEncoderWidth = mCallConfig.mAiCallVideoConfig.videoEncoderWidth;
+            rtcConfig.videoEncoderHeight = mCallConfig.mAiCallVideoConfig.videoEncoderHeight;
+            rtcConfig.videoEncoderFrameRate = mCallConfig.mAiCallVideoConfig.videoEncoderFrameRate;
+            rtcConfig.videoEncoderBitRate = mCallConfig.mAiCallVideoConfig.videoEncoderBitRate;
+            rtcConfig.videoEncoderKeyFrameInterval = mCallConfig.mAiCallVideoConfig.videoEncoderKeyFrameInterval;
             mARTCAICallRtcWrapper.setAvatarViewGroup(mAvatarViewGroup, mAvatarLayoutParams);
             mARTCAICallRtcWrapper.setVisionPreviewView(mVisionViewGroup, mVisionLayoutParams);
             mARTCAICallRtcWrapper.init(mContext, rtcConfig, mRtcEngineEventListener,
@@ -1057,6 +1083,30 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
                 Logger.i("notifyVoicePrintClearResult");
                 if (null != mEngineCallback) {
                     mEngineCallback.onVoicePrintCleared();
+                }
+            }
+        });
+    }
+
+    private void notifyAiAgentWillLeave(int reason, String message) {
+        mCallbackHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                Logger.i("notifyAiAgentWillLeave reason: " + reason + ", message: " + message);
+                if (null != mEngineCallback) {
+                    mEngineCallback.onAgentWillLeave(reason, message);
+                }
+            }
+        });
+    }
+
+    private void notifyReceivedAgentCustomMessage(String data) {
+        mCallbackHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                Logger.i("notifyReceivedAgentCustomMessage: " + data);
+                if (null != mEngineCallback) {
+                    mEngineCallback.onReceivedAgentCustomMessage(data);
                 }
             }
         });

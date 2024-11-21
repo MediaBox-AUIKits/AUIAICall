@@ -8,6 +8,44 @@
 import UIKit
 import CommonCrypto
 
+extension String {
+    public func aicall_decodeBase64AndDeserialize() -> [String: Any]? {
+        // Base64 Decode
+        guard let decodedData = Data(base64Encoded: self, options: .ignoreUnknownCharacters) else {
+            return nil
+        }
+        
+        // JSON Deserialize
+        do {
+            let jsonObject = try JSONSerialization.jsonObject(with: decodedData, options: [])
+            if let jsonDictionary = jsonObject as? [String: Any] {
+                return jsonDictionary
+            }
+        } catch {
+            debugPrint("Failed to deserialize JSON: \(error.localizedDescription)")
+        }
+        
+        return nil
+    }
+    
+    public func aicall_parseDateString(dateFormat: String = "yyyy-MM-dd HH:mm:ss") -> Date? {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = dateFormat
+        dateFormatter.timeZone = TimeZone(abbreviation: "UTC")
+        return dateFormatter.date(from: self)
+    }
+
+    public func aicall_isDateStringExpired(dateFormat: String = "yyyy-MM-dd HH:mm:ss") -> Bool {
+        guard let date = self.aicall_parseDateString(dateFormat: dateFormat) else {
+            debugPrint("Failed to formatted Data String")
+            return false
+        }
+        
+        let currentDate = Date()
+        return currentDate > date
+    }
+}
+
 extension Dictionary {
     
     public var aicall_jsonString: String {

@@ -1,7 +1,7 @@
 {
   "name": "amaui-web-aicall",
   "private": true,
-  "version": "1.5.0",
+  "version": "1.6.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,12 +11,14 @@
   },
   "dependencies": {
     "@ant-design/icons": "^5.4.0",
-    "aliyun-auikit-aicall": "^1.3.3",
+    "@react-spring/web": "^9.7.5",
     "antd": "^5.20.1",
+    "antd-mobile": "^5.38.1",
     "eventemitter3": "^5.0.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "zustand": "^4.5.5"
+    "zustand": "^4.5.5",
+    "aliyun-auikit-aicall": "^1.4.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.8.0",
@@ -35,6 +37,7 @@
     "typescript-eslint": "^8.0.0",
     "vite": "^5.4.0",
     "vite-plugin-dts": "^4.2.2",
-    "vite-plugin-svgr": "^4.2.0"
+    "vite-plugin-svgr": "^4.2.0",
+    "yargs-parser": "^21.1.1"
   }
 }

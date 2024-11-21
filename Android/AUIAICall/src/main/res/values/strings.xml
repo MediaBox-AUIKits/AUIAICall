@@ -118,4 +118,7 @@
 
     <string name="push_to_talk">Push to Speak</string>
     <string name="release_to_send">Release to Send</string>
+
+    <string name="ai_agent_leave_notify_long_time_idle">Due to your prolonged inactivity, the call has ended.</string>
+    <string name="ai_agent_leave_notify_default">The call has ended.</string>
 </resources>

@@ -25,6 +25,12 @@ interface AUIAICallControllerEvents {
    * @param volume 音量[0-100]
    */
   AICallActiveSpeakerVolumeChanged: (userId: string, volume: number) => void;
+
+  /**
+   * 对讲机模式变化
+   * @param enable 对讲机模式状态
+   */
+  AICallPushToTalkChanged: (enable: boolean) => void;
   /**
    * 用户提问被智能体识别字幕通知
    */
@@ -37,6 +43,23 @@ interface AUIAICallControllerEvents {
    * 用户token过期
    */
   AICallUserTokenExpired: () => void;
+
+  /**
+   * 智能体音频流订阅成功
+   */
+  AICallAgentAudioSubscribed: (audioElement?: HTMLAudioElement) => void;
+
+  /**
+   * 智能体即将结束通话
+   */
+  AICallAgentWillLeave: (reason: number, message: string) => void;
+
+  /**
+   * 智能体自定义消息
+   */
+  AICallReceivedAgentCustomMessage: (data: {
+    [key: string]: string | number | boolean | object | null | undefined;
+  }) => void;
 }
 
 export default AUIAICallControllerEvents;

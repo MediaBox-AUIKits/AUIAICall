@@ -33,3 +33,12 @@
 * Android&iOS&Web：支持对讲机模式
 * Android&iOS&Web：智能断句下实时字幕显示优化
 * Android&iOS&Web：修复已知问题
+
+
+## v1.6.0
+发布时间：2024-11-21
+* Android&iOS&Web：支持接收来自智能体的自定义消息
+* Android&iOS&Web：支持智能体闲时退出
+* Android&iOS&Web：CallKit SDK可以对分享出来的智能体启动通话，无需通过AppServer
+* Web：支持移动端
+

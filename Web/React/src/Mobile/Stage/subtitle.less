@@ -1,0 +1,38 @@
+.subtitle {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 4;
+  display: flex;
+  padding: 16px;
+  margin: 0 32px;
+  height: 100px;
+  overflow-y: auto;
+
+  & ._source {
+    width: 20px;
+    margin: 0 4px;
+  }
+
+  ._agent-icon {
+    margin-top: 4px;
+    width: 20px;
+    height: 30px;
+    background-image: url(../assets/agent-icon.png);
+    background-repeat: no-repeat;
+    background-size: 17.5px 20px;
+  }
+
+  & ._text {
+    flex: 1;
+    margin-top: 2px;
+    text-align: left;
+    font-size: 12px;
+    line-height: 18px;
+    color: #26244c;
+  }
+}
+
+.has-video .subtitle ._text {
+  color: #747a8c;
+}

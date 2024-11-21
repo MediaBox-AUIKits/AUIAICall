@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="570dp"
+    android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@color/layout_base_dialog_background">
 
@@ -30,222 +30,231 @@
         android:background="@color/layout_base_iv_border"
         />
 
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingVertical="16dp"
-        android:paddingHorizontal="20dp"
-        android:orientation="horizontal">
-
-        <TextView
-            android:id="@+id/tv_mode_natural_conversation"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:background="@drawable/btn_conversation_mode_selector"
-            android:text="@string/mode_natural_conversation"
-            android:paddingVertical="16dp"
-            android:gravity="center_horizontal"
-            style="@style/layout_base_text_style_12"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toLeftOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" />
-
-        <TextView
-            android:id="@+id/tv_mode_push_to_talk"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:background="@drawable/btn_conversation_mode_selector"
-            android:gravity="center_horizontal"
-            android:text="@string/mode_push_to_talk"
-            android:paddingVertical="16dp"
-            android:layout_marginLeft="16dp"
-            style="@style/layout_base_text_style_12"
-            app:layout_constraintLeft_toRightOf="parent"
-            app:layout_constraintRight_toLeftOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"/>
-
-    </LinearLayout>
-
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/ll_voiceprint"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingLeft="20dp"
-        android:paddingRight="20dp"
-        android:visibility="visible"
-        >
+        android:layout_height="match_parent">
         <LinearLayout
-            android:id="@+id/ll_voiceprint_title"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            android:paddingTop="16dp"
-            android:paddingBottom="16dp"
-            android:orientation="vertical">
-            <TextView
-                android:id="@+id/tv_voiceprint_title"
-                style="@style/layout_base_text_style_14"
-                android:text="@string/voiceprint_recognition_test_title"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="4dp"
-                />
-            <TextView
-                android:id="@+id/tv_voiceprint_tips"
-                style="@style/layout_base_text_style_10_gray"
-                android:text="@string/voiceprint_recognition_test_desc"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
-        </LinearLayout>
-        <Switch
-            android:id="@+id/sv_voiceprint"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toTopOf="@id/ll_voiceprint_title"
-            app:layout_constraintBottom_toTopOf="@id/ll_voiceprint_status"
-            />
-        <LinearLayout
-            android:id="@+id/ll_voiceprint_status"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/ll_voiceprint_title"
-            android:background="@drawable/bg_voice_print_status"
-            android:paddingVertical="14dp"
-            android:paddingHorizontal="16dp"
-            android:orientation="horizontal">
-            <TextView
-                android:id="@+id/tv_voiceprint_status"
-                style="@style/layout_base_text_style_12_light_white"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/voiceprint_recognized"
-                />
-            <TextView
-                android:id="@+id/btn_delete_voiceprint"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                style="@style/layout_base_text_style_12"
-                android:layout_gravity="center_vertical"
-                android:paddingHorizontal="12dp"
-                android:paddingVertical="2dp"
-                android:background="@drawable/btn_selector"
-                android:text="@string/delete_voiceprint"
-                />
-        </LinearLayout>
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/ll_interrupt_config"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingLeft="20dp"
-        android:paddingRight="20dp"
-        >
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            android:paddingTop="16dp"
-            android:paddingBottom="16dp"
             android:orientation="vertical">
-            <TextView
-                android:id="@+id/tv_interrupt_config_title"
-                style="@style/layout_base_text_style_14"
-                android:text="@string/config_interrupt_title"
-                android:layout_width="wrap_content"
+                <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="4dp"
-                />
-            <TextView
-                android:id="@+id/tv_interrupt_config_tips"
-                style="@style/layout_base_text_style_10_gray"
-                android:text="@string/config_interrupt_tips"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
-        </LinearLayout>
-        <Switch
-            android:id="@+id/sv_interrupt_config"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            />
-    </androidx.constraintlayout.widget.ConstraintLayout>
+                android:paddingVertical="16dp"
+                android:paddingHorizontal="20dp"
+                android:orientation="horizontal">
 
+                <TextView
+                    android:id="@+id/tv_mode_natural_conversation"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@drawable/btn_conversation_mode_selector"
+                    android:text="@string/mode_natural_conversation"
+                    android:paddingVertical="16dp"
+                    android:gravity="center_horizontal"
+                    style="@style/layout_base_text_style_12"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toLeftOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent" />
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/ll_audio_tone_config"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingLeft="20dp"
-        android:paddingRight="20dp"
-        >
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            android:paddingTop="16dp"
-            android:paddingBottom="16dp"
-            android:orientation="vertical">
-            <TextView
-                android:id="@+id/tv_config_audio_tone_title"
-                style="@style/layout_base_text_style_14"
-                android:text="@string/config_audio_tone_title"
-                android:layout_width="wrap_content"
+                <TextView
+                    android:id="@+id/tv_mode_push_to_talk"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@drawable/btn_conversation_mode_selector"
+                    android:gravity="center_horizontal"
+                    android:text="@string/mode_push_to_talk"
+                    android:paddingVertical="16dp"
+                    android:layout_marginLeft="16dp"
+                    style="@style/layout_base_text_style_12"
+                    app:layout_constraintLeft_toRightOf="parent"
+                    app:layout_constraintRight_toLeftOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"/>
+
+            </LinearLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/ll_voiceprint"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="4dp"
-                />
-            <TextView
-                android:id="@+id/tv_config_audio_tone_tips"
-                style="@style/layout_base_text_style_10_gray"
-                android:text="@string/config_audio_tone_tips"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
+                android:paddingLeft="20dp"
+                android:paddingRight="20dp"
+                android:visibility="visible"
+                >
+                <LinearLayout
+                    android:id="@+id/ll_voiceprint_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    android:paddingTop="16dp"
+                    android:paddingBottom="16dp"
+                    android:orientation="vertical">
+                    <TextView
+                        android:id="@+id/tv_voiceprint_title"
+                        style="@style/layout_base_text_style_14"
+                        android:text="@string/voiceprint_recognition_test_title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="4dp"
+                        />
+                    <TextView
+                        android:id="@+id/tv_voiceprint_tips"
+                        style="@style/layout_base_text_style_10_gray"
+                        android:text="@string/voiceprint_recognition_test_desc"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+                </LinearLayout>
+                <Switch
+                    android:id="@+id/sv_voiceprint"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toTopOf="@id/ll_voiceprint_title"
+                    app:layout_constraintBottom_toTopOf="@id/ll_voiceprint_status"
+                    />
+                <LinearLayout
+                    android:id="@+id/ll_voiceprint_status"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/ll_voiceprint_title"
+                    android:background="@drawable/bg_voice_print_status"
+                    android:paddingVertical="14dp"
+                    android:paddingHorizontal="16dp"
+                    android:orientation="horizontal">
+                    <TextView
+                        android:id="@+id/tv_voiceprint_status"
+                        style="@style/layout_base_text_style_12_light_white"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/voiceprint_recognized"
+                        />
+                    <TextView
+                        android:id="@+id/btn_delete_voiceprint"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        style="@style/layout_base_text_style_12"
+                        android:layout_gravity="center_vertical"
+                        android:paddingHorizontal="12dp"
+                        android:paddingVertical="2dp"
+                        android:background="@drawable/btn_selector"
+                        android:text="@string/delete_voiceprint"
+                        />
+                </LinearLayout>
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/ll_interrupt_config"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingLeft="20dp"
+                android:paddingRight="20dp"
+                >
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    android:paddingTop="16dp"
+                    android:paddingBottom="16dp"
+                    android:orientation="vertical">
+                    <TextView
+                        android:id="@+id/tv_interrupt_config_title"
+                        style="@style/layout_base_text_style_14"
+                        android:text="@string/config_interrupt_title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="4dp"
+                        />
+                    <TextView
+                        android:id="@+id/tv_interrupt_config_tips"
+                        style="@style/layout_base_text_style_10_gray"
+                        android:text="@string/config_interrupt_tips"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+                </LinearLayout>
+                <Switch
+                    android:id="@+id/sv_interrupt_config"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/ll_audio_tone_config"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingLeft="20dp"
+                android:paddingRight="20dp"
+                >
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    android:paddingTop="16dp"
+                    android:paddingBottom="16dp"
+                    android:orientation="vertical">
+                    <TextView
+                        android:id="@+id/tv_config_audio_tone_title"
+                        style="@style/layout_base_text_style_14"
+                        android:text="@string/config_audio_tone_title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="4dp"
+                        />
+                    <TextView
+                        android:id="@+id/tv_config_audio_tone_tips"
+                        style="@style/layout_base_text_style_10_gray"
+                        android:text="@string/config_audio_tone_tips"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+                </LinearLayout>
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/ll_audio_tone_list"
+                android:layout_width="match_parent"
+                android:layout_height="144dp"
+                android:background="@color/layout_base_dialog_background"
+                >
+                <com.scwang.smart.refresh.layout.SmartRefreshLayout
+                    android:id="@+id/srl_audio_tone_list"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    >
+
+                    <com.scwang.smart.refresh.header.ClassicsHeader
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"/>
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rv_audio_tone_list"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:overScrollMode="never"
+                        />
+
+                    <com.scwang.smart.refresh.footer.ClassicsFooter
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"/>
+                </com.scwang.smart.refresh.layout.SmartRefreshLayout>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
         </LinearLayout>
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/ll_audio_tone_list"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/layout_base_dialog_background"
-        >
-        <com.scwang.smart.refresh.layout.SmartRefreshLayout
-            android:id="@+id/srl_audio_tone_list"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            >
-
-            <com.scwang.smart.refresh.header.ClassicsHeader
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rv_audio_tone_list"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:overScrollMode="never"
-                />
-
-            <com.scwang.smart.refresh.footer.ClassicsFooter
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
-        </com.scwang.smart.refresh.layout.SmartRefreshLayout>
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
+    </ScrollView>
 </LinearLayout>

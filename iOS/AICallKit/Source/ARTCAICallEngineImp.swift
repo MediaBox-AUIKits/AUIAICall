@@ -49,7 +49,7 @@ import UIKit
             completed?(NSError.aicall_create(code: .InvalidAction, message: "Current isJoined or isJoining"))
             return
         }
-        
+        ARTCAICallEngineLog.WriteLog("ARTCAICallEngine Init RTCEngine")
         self.isJoining = true
         self.userId = userId
         self.agentInfo = agentInfo
@@ -657,6 +657,23 @@ extension ARTCAICallEngine {
             ARTCAICallEngineLog.WriteLog("ARTCAICallEngine Received[\(seqId)] VoiceprintClearSucceed")
             self.delegate?.onVoiceprintCleared?()
         }
+        else if model.type == .AgentWillLeave {
+            let reason = (model.data?["reason"] as? Int32) ?? 0
+            let message = (model.data?["message"] as? String) ?? ""
+            ARTCAICallEngineLog.WriteLog("ARTCAICallEngine Received[\(seqId)] AgentWillLeave: \(reason) message:\(message)")
+            self.delegate?.onAgentWillLeave?(reason: reason, message: message)
+        }
+        else if model.type == .CustomMessageReceived {
+            let jsonString = (model.data?["message"] as? String) ?? ""
+            ARTCAICallEngineLog.WriteLog("ARTCAICallEngine Received[\(seqId)] CustomMessageReceived: \(jsonString)")
+            if let data = jsonString.data(using: .utf8) {
+                let messageDict = (try? JSONSerialization.jsonObject(with: data, options: .allowFragments)) as? [String : Any]
+                self.delegate?.onReceivedAgentCustomMessage?(data: messageDict)
+            }
+            else {
+                self.delegate?.onReceivedAgentCustomMessage?(data: nil)
+            }
+        }
     }
 }
 
@@ -913,5 +930,52 @@ extension ARTCAICallEngine: AliRtcEngineDelegate {
     
     func onFirstLocalVideoFrameDrawn(_ width: Int32, height: Int32, elapsed: Int32) {
         ARTCAICallEngineLog.WriteLog("ARTCAICallEngine onFirstLocalVideoFrameDrawn")
+    }
+}
+
+extension ARTCAICallEngine {
+    
+    public func parseShareAgentCall(shareInfo: String) -> ARTCAICallAgentShareConfig? {
+        let json = shareInfo.aicall_decodeBase64AndDeserialize()
+        guard let json = json else {
+            return nil
+        }
+        return ARTCAICallAgentShareConfig.init(data: json)
+    }
+    
+    public func generateShareAgentCall(shareConfig: ARTCAICallAgentShareConfig, userId: String, completed: ((ARTCAICallAgentInfo?, String?, NSError?, String) -> Void)?) {
+        guard let shareId = shareConfig.shareId else {
+            completed?(nil, nil, NSError.aicall_create(code: .InvalidParames), "")
+            return
+        }
+        
+        if (shareConfig.expireTime != nil) && (Date() > shareConfig.expireTime!) {
+            completed?(nil, nil, NSError.aicall_create(code: .TokenExpired), "")
+        }
+        
+        var body: [String: Any] = [:]
+        let expire: Int = 24 * 60 * 60
+        body = [
+            "ai_agent_id": shareId,
+            "user_id": userId,
+            "expire": expire,
+            "template_config": shareConfig.templateConfig ?? "{}",
+        ]
+        if let region = shareConfig.region {
+            body.updateValue(region, forKey: "region")
+        }
+
+        ARTCAICallRequest.defaultRequest.request(path: "/api/v1/aiagent/generateAIAgentCall", body: body) { response, data, error in
+            let reqId = (data?["request_id"] as? String) ?? "unknow"
+            ARTCAICallEngineLog.WriteLog("ARTCAICallEngine generateShareAgentCall:\(reqId)")
+            if error == nil {
+                let rtc_auth_token = data?["rtc_auth_token"] as? String
+                let info = ARTCAICallAgentInfo(data: data)
+                completed?(info, rtc_auth_token, nil, reqId)
+            }
+            else {
+                completed?(nil, nil, error, reqId)
+            }
+        }
     }
 }

@@ -1,0 +1,21 @@
+.avatar {
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  video {
+    position: absolute;
+    min-height: 100%;
+    width: 100%;
+    background-color: #000;
+    object-fit: contain;
+    bottom: 0;
+    opacity: 0.5;
+    transition: opacity 0.5s ease-in-out;
+
+    &.has-loaded {
+      opacity: 1;
+    }
+  }
+}

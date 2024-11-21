@@ -9,6 +9,7 @@ import android.util.Log;
 
 import com.aliyun.auikits.aiagent.ARTCAICallEngine;
 import com.aliyun.auikits.aiagent.service.IARTCAICallService;
+import com.aliyun.auikits.aiagent.util.ARTCAIAgentUtil;
 import com.aliyun.auikits.aicall.util.BizStatHelper;
 import com.aliyun.auikits.aiagent.util.Logger;
 
@@ -184,7 +185,22 @@ public abstract class ARTCAICallController {
                 mBizCallEngineCallback.onVoicePrintCleared();
             }
         }
+
+        @Override
+        public void onAgentWillLeave(int reason, String message) {
+            if (null != mBizCallEngineCallback) {
+                mBizCallEngineCallback.onAgentWillLeave(reason, message);
+            }
+        }
+
+        @Override
+        public void onReceivedAgentCustomMessage(String data) {
+            if (null != mBizCallEngineCallback) {
+                mBizCallEngineCallback.onReceivedAgentCustomMessage(data);
+            }
+        }
     };
+
     protected ARTCAICallController(Context context, String userId) {
         mContext = context;
         mUserId = userId;
@@ -342,25 +358,16 @@ public abstract class ARTCAICallController {
                 mCallbackHandler.post(new Runnable() {
                     @Override
                     public void run() {
-                        mAIAgentInstanceId = jsonObject.optString("ai_agent_instance_id");
-                        mRtcAuthToken = jsonObject.optString("rtc_auth_token");
-                        mAIAgentUserId = jsonObject.optString("ai_agent_user_id");
-                        mChannelId = jsonObject.optString("channel_id");
-                        String requestId = jsonObject.optString("request_id");
-                        mARTCAiCallConfig.aiAgentRequestId = requestId;
+                        ARTCAIAgentUtil.ARTCAIAgentInfo aiAgentInfo = ARTCAIAgentUtil.parseAiAgentInfo(jsonObject);
 
-                        if (jsonObject.has("workflow_type")) {
-                            ARTCAICallEngine.ARTCAICallAgentType artcaiCallAgentType;
-                            String workflowType = jsonObject.optString("workflow_type");
-                            if (IARTCAICallService.AI_AGENT_TYPE_AVATAR.equals(workflowType)) {
-                                artcaiCallAgentType = ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent;
-                            } else if (IARTCAICallService.AI_AGENT_TYPE_VISION.equals(workflowType)) {
-                                artcaiCallAgentType = ARTCAICallEngine.ARTCAICallAgentType.VisionAgent;
-                            } else {
-                                artcaiCallAgentType = ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent;
-                            }
-                            mARTCAICallEngine.setAICallAgentType(artcaiCallAgentType);
-                        }
+                        mAIAgentInstanceId = aiAgentInfo.aIAgentInstanceId;
+                        mRtcAuthToken = aiAgentInfo.rtcAuthToken;
+                        mAIAgentUserId = aiAgentInfo.aIAgentUserId;
+                        mChannelId = aiAgentInfo.channelId;
+                        mARTCAiCallConfig.aiAgentRequestId = aiAgentInfo.requestId;
+
+                        mARTCAICallEngine.setAICallAgentType(aiAgentInfo.aiCallAgentType);
+
                         Log.i("AUIAICall", "StartActionCallback succ result: " + jsonObject);
                         mARTCAICallEngine.call(mRtcAuthToken, mAIAgentInstanceId, mAIAgentUserId, mChannelId);
                     }

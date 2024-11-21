@@ -32,4 +32,7 @@ public class GenerateAIAgentCallRequestDto {
     @JsonProperty("region")
     private String region;
 
+    @JsonProperty("user_data")
+    private String userData;
+
 }

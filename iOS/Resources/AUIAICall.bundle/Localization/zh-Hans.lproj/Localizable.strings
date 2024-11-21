@@ -102,3 +102,5 @@
 "Failed to clear voiceprint's data." = "删除声纹数据失！";
 "Detected speaking" = "声纹已识别";
 "Remove Voiceprint" = "删除声纹";
+"Due to your prolonged inactivity, the call has ended." = "由于你长时间未进行通话，该通话已经结束";
+"The call has ended." = "通话已经结束";

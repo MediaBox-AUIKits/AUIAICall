@@ -28,6 +28,7 @@ class AppServerService {
     const templateConfig: TemplateConfig = {};
     const configDict: JSONData = {
       EnableVoiceInterrupt: config.enableVoiceInterrupt,
+      MaxIdleTime: config.agentMaxIdleTime,
     };
     if (config.agentVoiceId) {
       configDict.VoiceId = config.agentVoiceId;
@@ -101,6 +102,43 @@ class AppServerService {
             rtcToken: data.rtc_auth_token,
             reqId: data.request_id || '',
           };
+        }
+        throw new Error(data.message || 'request error');
+      });
+  };
+
+  describeAIAgent = async (instanceId: string, token: string, userId: string): Promise<JSONData> => {
+    if (!userId || !instanceId) {
+      throw new Error('userId or instanceId is empty');
+    }
+
+    const param: {
+      user_id: string;
+      ai_agent_instance_id: string;
+    } = {
+      user_id: userId,
+      ai_agent_instance_id: instanceId,
+    };
+
+    return fetch(`${APP_SERVER}/api/v2/aiagent/describeAIAgentInstance`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: token,
+      },
+      body: JSON.stringify(param),
+    })
+      .then((res) => {
+        if (res.status === 403) {
+          throw new ServiceAuthError('token is invalid');
+        } else if (res.status !== 200) {
+          throw new Error(`response status is ${res.status}`);
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (data.code === 200) {
+          return JSON.parse(data.template_config);
         }
         throw new Error(data.message || 'request error');
       });

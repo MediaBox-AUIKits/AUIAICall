@@ -54,9 +54,9 @@ public class AICallSettingDialog {
     ViewGroup mVgVoicePrintStatus = null;
 
 
-    public static void show(Context context, ARTCAICallEngine aRTCAICallEngine, boolean isAvatarAgent, boolean isVoicePrintRecognized) {
+    public static void show(Context context, ARTCAICallEngine aRTCAICallEngine, boolean isAvatarAgent, boolean isVoicePrintRecognized, boolean isSharedAgent) {
         View view = LayoutInflater.from(context).inflate(R.layout.dialog_aicall_setting, null, false);
-        AICallSettingDialog aiCallSettingDialog = new AICallSettingDialog(view, aRTCAICallEngine, isAvatarAgent, isVoicePrintRecognized);
+        AICallSettingDialog aiCallSettingDialog = new AICallSettingDialog(view, aRTCAICallEngine, isAvatarAgent, isVoicePrintRecognized, isSharedAgent);
         view.setTag(aiCallSettingDialog);
 
         ViewHolder viewHolder = new ViewHolder(view);
@@ -89,21 +89,24 @@ public class AICallSettingDialog {
         @Override
         public void initData(BizParameter parameter, IBizCallback<CardEntity> callback) {
             String currentAudioId = mARTCAiCallEngine.getRobotVoiceId();
-//            if (currentAudioId.isEmpty()) {
-//                currentAudioId = "zhixiaoxia";
-//            }
+//            1、voiceId：longxiaochun   名称：龙小淳
+//            2、voiceId：longhua   名称：龙华
+//            3、voiceId：longcheng   名称：龙橙
 
             List<AudioToneData> cardDataList = new ArrayList<>();
+//            AudioToneData audioToneData1 = new AudioToneData("longxiaochun", "龙小淳");
             AudioToneData audioToneData1 = new AudioToneData("zhixiaobai", "Zhi Xiao Bai");
             audioToneData1.setIconResId(R.drawable.ic_audio_tone);
             audioToneData1.setUsing(currentAudioId.equals(audioToneData1.getAudioToneId()));
             cardDataList.add(audioToneData1);
 
+//            AudioToneData audioToneData2 = new AudioToneData("longhua", "龙华");
             AudioToneData audioToneData2 = new AudioToneData("zhixiaoxia", "Zhi Xiao Xia");
             audioToneData2.setIconResId(R.drawable.ic_audio_tone);
             audioToneData2.setUsing(currentAudioId.equals(audioToneData2.getAudioToneId()));
             cardDataList.add(audioToneData2);
 
+//            AudioToneData audioToneData3 = new AudioToneData("longcheng", "龙橙");
             AudioToneData audioToneData3 = new AudioToneData("abin", "A Bin");
             audioToneData3.setIconResId(R.drawable.ic_audio_tone);
             audioToneData3.setUsing(currentAudioId.equals(audioToneData3.getAudioToneId()));
@@ -130,7 +133,7 @@ public class AICallSettingDialog {
     }
 
     private AICallSettingDialog(View root, ARTCAICallEngine aRTCAICallEngine, boolean isAvatarAgent,
-                                boolean isVoicePrintRecognized) {
+                                boolean isVoicePrintRecognized, boolean isSharedAgent) {
         mARTCAICallEngine = aRTCAICallEngine;
         mIsAvatarAgent = isAvatarAgent;
         mIsVoicePrintRecognized = isVoicePrintRecognized;
@@ -139,7 +142,7 @@ public class AICallSettingDialog {
         initVoicePrintButton(root);
         initConversionModeButton(root);
 
-        if (mIsAvatarAgent) {
+        if (mIsAvatarAgent || isSharedAgent) {
             root.findViewById(R.id.ll_audio_tone_config).setVisibility(View.GONE);
             root.findViewById(R.id.ll_audio_tone_list).setVisibility(View.GONE);
         } else {

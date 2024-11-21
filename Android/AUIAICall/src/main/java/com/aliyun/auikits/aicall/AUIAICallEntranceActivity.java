@@ -13,7 +13,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.text.TextUtils;
-import android.util.Base64;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -27,6 +26,7 @@ import android.widget.Toast;
 import com.acker.simplezxing.activity.CaptureActivity;
 import com.alibaba.android.arouter.facade.annotation.Route;
 import com.aliyun.auikits.aiagent.ARTCAICallEngine;
+import com.aliyun.auikits.aiagent.util.ARTCAIAgentUtil;
 import com.aliyun.auikits.aicall.util.PermissionUtils;
 import com.aliyun.auikits.aicall.util.SettingStorage;
 import com.aliyun.auikits.aicall.util.ToastHelper;
@@ -37,16 +37,9 @@ import com.orhanobut.dialogplus.OnDismissListener;
 import com.orhanobut.dialogplus.ViewHolder;
 import com.permissionx.guolindev.PermissionX;
 
-import org.json.JSONObject;
-
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.TimeZone;
 
 @Route(path = "/aicall/AUIAICallEntranceActivity")
 public class AUIAICallEntranceActivity extends AppCompatActivity {
@@ -168,6 +161,7 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
         ((Switch)view.findViewById(R.id.sv_use_rtc_pre_env)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_USE_RTC_PRE_ENV_SWITCH, SettingStorage.DEFAULT_USE_RTC_PRE_ENV));
         ((Switch)view.findViewById(R.id.sv_boot_push_to_talk)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_PUSH_TO_TALK, SettingStorage.DEFAULT_ENABLE_PUSH_TO_TALK));
         ((Switch)view.findViewById(R.id.sv_boot_use_voice_print)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_VOICE_PRINT, SettingStorage.DEFAULT_ENABLE_VOICE_PRINT));
+        ((Switch)view.findViewById(R.id.sv_share_boot_use_demo_app_server)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_SHARE_BOOT_USE_DEMO_APP_SERVER, SettingStorage.DEFAULT_SHARE_BOOT_USE_DEMO_APP_SERVER));
 
         if (!showExtraDebugConfig) {
             view.findViewById(R.id.ll_audio_dump).setVisibility(View.GONE);
@@ -202,6 +196,9 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
 
                         boolean bootUseVoicePrint = ((Switch)view.findViewById(R.id.sv_boot_use_voice_print)).isChecked();
                         SettingStorage.getInstance().setBoolean(SettingStorage.KEY_BOOT_ENABLE_VOICE_PRINT, bootUseVoicePrint);
+
+                        boolean shareBootUseDemoAppServer = ((Switch)view.findViewById(R.id.sv_share_boot_use_demo_app_server)).isChecked();
+                        SettingStorage.getInstance().setBoolean(SettingStorage.KEY_SHARE_BOOT_USE_DEMO_APP_SERVER, shareBootUseDemoAppServer);
                     }
                     if (v.getId() == R.id.btn_confirm || v.getId() == R.id.btn_cancel) {
                         dialog1.dismiss();
@@ -282,49 +279,30 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
     private void handleShareToken(String shareToken) {
         if (!TextUtils.isEmpty(shareToken)) {
             try {
-                Log.i("AUIAICALL", "handleShareToken: [shareToken: " + shareToken + "]");
-                byte[] decodeTokenBytes = Base64.decode(shareToken, Base64.DEFAULT);
-                String decodeToken = new String(decodeTokenBytes);
-                JSONObject jsonObject = new JSONObject(decodeToken);
-                String requestId = jsonObject.optString("RequestId");
-                String name = jsonObject.optString("Name");
-                String aiAgentId = jsonObject.optString("TemporaryAIAgentId");
-                String workflowType = jsonObject.optString("WorkflowType");
-                String expireTime = jsonObject.optString("ExpireTime");
-                String region = jsonObject.optString("Region");
-                long expireTimestamp = parseTimestamp(expireTime);
-                if (System.currentTimeMillis() <= expireTimestamp) {
-                    mLayoutHolder.getCustomLayerHolder().setExperienceToken(shareToken);
-                    mLayoutHolder.getCustomLayerHolder().setAiAgentId(aiAgentId);
-                    mLayoutHolder.getCustomLayerHolder().setExpireTimestamp(expireTimestamp);
-                    ARTCAICallEngine.ARTCAICallAgentType aiCallAgentType = ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent;
-                    if ("AvatarChat3D".equals(workflowType)) {
-                        aiCallAgentType = ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent;
-                    } else if ("VisionChat".equals(workflowType)) {
-                        aiCallAgentType = ARTCAICallEngine.ARTCAICallAgentType.VisionAgent;
+                Log.i("AUIAICall", "handleShareToken: [shareToken: " + shareToken + "]");
+                ARTCAIAgentUtil.ARTCAIAgentShareInfo shareInfo = ARTCAIAgentUtil.parseAiAgentShareInfo(shareToken);
+                if (null != shareInfo) {
+                    if (System.currentTimeMillis() <= shareInfo.expireTimestamp) {
+                        mLayoutHolder.getCustomLayerHolder().setExperienceToken(shareToken);
+                        mLayoutHolder.getCustomLayerHolder().setAiAgentId(shareInfo.aiAgentId);
+                        mLayoutHolder.getCustomLayerHolder().setExpireTimestamp(shareInfo.expireTimestamp);
+                        ARTCAICallEngine.ARTCAICallAgentType aiCallAgentType = ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent;
+                        if ("AvatarChat3D".equals(shareInfo.workflowType)) {
+                            aiCallAgentType = ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent;
+                        } else if ("VisionChat".equals(shareInfo.workflowType)) {
+                            aiCallAgentType = ARTCAICallEngine.ARTCAICallAgentType.VisionAgent;
+                        }
+                        mLayoutHolder.getCustomLayerHolder().setExperienceTokenCallType(aiCallAgentType);
+                        mLayoutHolder.getCustomLayerHolder().setExperienceRegion(shareInfo.region);
+                    } else {
+                        ToastHelper.showToast(this, R.string.token_expired_tips, Toast.LENGTH_SHORT);
                     }
-                    mLayoutHolder.getCustomLayerHolder().setExperienceTokenCallType(aiCallAgentType);
-                    mLayoutHolder.getCustomLayerHolder().setExperienceRegion(region);
-                } else {
-                    ToastHelper.showToast(this, R.string.token_expired_tips, Toast.LENGTH_SHORT);
                 }
-                Log.i("AUIAICALL", "handleShareToken: [decodeToken: " + decodeToken + "]");
+                Log.i("AUIAICALL", "handleShareToken: [shareInfo: " + shareInfo + "]");
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
         }
-    }
-    public static long parseTimestamp(String formatTime) {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        long timestamp = 0;
-        try {
-            sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-            Date date = sdf.parse(formatTime);
-            timestamp = date.getTime();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return timestamp;
     }
 
     private void startCaptureActivityForResult() {

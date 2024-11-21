@@ -354,4 +354,12 @@ extension AUIAICallCustomController: ARTCAICallEngineDelegate {
     public func onVoiceprintCleared() {
         
     }
+    
+    public func onAgentWillLeave(reason: Int32, message: String) {
+        self.delegate?.onAICallAgentWillLeave?(reason: reason, message: message)
+    }
+    
+    public func onReceivedAgentCustomMessage(data: [String : Any]?) {
+        
+    }
 }

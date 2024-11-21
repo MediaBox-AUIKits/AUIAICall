@@ -1,6 +1,7 @@
 import EventEmitter from 'eventemitter3';
 import {
   AICallAgentInfo,
+  AICallAgentShareConfig,
   AICallAgentState,
   AICallAgentType,
   AICallErrorCode,
@@ -67,6 +68,21 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
     return this._agentState;
   }
 
+  protected _shareConfig?: AICallAgentShareConfig;
+  public get shareConfig(): AICallAgentShareConfig | undefined {
+    return this._shareConfig;
+  }
+  public set shareConfig(shareToken: string) {
+    this._shareConfig = ARTCAICallEngine.parseShareAgentCall(shareToken);
+    if (this._shareConfig.agentType !== undefined) {
+      this.config.agentType = this._shareConfig.agentType;
+    }
+  }
+
+  protected _agentAudioElement?: HTMLAudioElement;
+  public get agentAudioElement() {
+    return this._agentAudioElement;
+  }
   /**
    * 检查麦克风
    */
@@ -91,6 +107,7 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
 
     await this.checkMicrophone();
 
+    this._currentEngine = new ARTCAICallEngine();
     let instanceInfo: AICallAgentInfo | undefined;
     try {
       // 此处的 userId 应该从 AppServer 获取
@@ -99,8 +116,9 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
         this._errorCode = AICallErrorCode.BeginCallFailed;
         throw new Error();
       }
-    } catch (error) {
-      this._errorCode = AICallErrorCode.BeginCallFailed;
+    } catch (error: unknown) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      this._errorCode = (error as any).code || AICallErrorCode.BeginCallFailed;
       if (error instanceof ServiceAuthError) {
         this.emit('AICallUserTokenExpired');
       }
@@ -110,8 +128,6 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
 
     this._agentInfo = instanceInfo;
     this.emit('AICallAIAgentStarted', instanceInfo);
-
-    this._currentEngine = new ARTCAICallEngine();
 
     this._currentEngine.on('errorOccurred', (errorCode: number) => {
       this._errorCode = errorCode;
@@ -126,9 +142,11 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
 
     // 实时字幕相关呢
     this._currentEngine.on('agentSubtitleNotify', (data: AICallSubtitleData) => {
+      if (this.state !== AICallState.Connected) return;
       this.emit('AICallAgentSubtitleNotify', data);
     });
     this._currentEngine.on('userSubtitleNotify', (data: AICallSubtitleData) => {
+      if (this.state !== AICallState.Connected) return;
       this.emit('AICallUserSubtitleNotify', data);
     });
 
@@ -145,13 +163,35 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
     this._currentEngine.on('speakingVolumeChanged', (userId, volume) => {
       this.emit('AICallActiveSpeakerVolumeChanged', userId, volume);
     });
+    this._currentEngine.on('pushToTalkChanged', (enable) => {
+      this.emit('AICallPushToTalkChanged', enable);
+    });
+    this._currentEngine.on('agentWillLeave', (reason, message) => {
+      this.emit('AICallAgentWillLeave', reason, message);
+    });
+
+    this._currentEngine.on('receivedAgentCustomMessage', (data) => {
+      this.emit('AICallReceivedAgentCustomMessage', data);
+    });
+
+    this._currentEngine.on('audioSubscribed', (_userId, audioElement) => {
+      if (audioElement) {
+        this._agentAudioElement = audioElement;
+      }
+      this.emit('AICallAgentAudioSubscribed', audioElement);
+    });
 
     try {
       await this.engine?.call(this.userId, instanceInfo, {
         muteMicrophone: this._config.muteMicrophone,
         muteCamera: this._config.muteCamera,
         enablePushToTalk: this._config.enablePushToTalk,
+        previewElement: this._config.previewView,
       });
+
+      if (this.config.agentView) {
+        this.engine?.setAgentView(this.config.agentView);
+      }
 
       // 默认静音麦克风
       if (this.config.muteMicrophone) {
@@ -181,18 +221,19 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
 
   async handup(): Promise<void> {
     const agent = this.engine?.agentInfo;
+    this.state = AICallState.Over;
+    await this.engine?.handup();
     if (agent) {
       await this.stopAIAgent(agent.instanceId);
     }
     this.removeAllListeners();
-    this.engine?.handup();
-    this.state = AICallState.Over;
   }
   /**
    * 设置智能体视频渲染视图
    * @param view Video标签或 id
    */
   setAgentView(view: HTMLVideoElement | string): void {
+    this._config.agentView = view;
     this.engine?.setAgentView(view);
   }
 
@@ -250,7 +291,7 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
     return false;
   }
 
-  switchCamera(deviceId: string): boolean {
+  switchCamera(deviceId?: string): boolean {
     if (this.config.agentType === AICallAgentType.VisionAgent && this.state === AICallState.Connected) {
       this.engine?.switchCamera(deviceId);
       return true;
@@ -259,6 +300,7 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
   }
 
   startPreview(elementOrId: string | HTMLVideoElement) {
+    this.config.previewView = elementOrId;
     this.engine?.startPreview(elementOrId);
   }
 

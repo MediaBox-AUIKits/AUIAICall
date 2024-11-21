@@ -14,6 +14,7 @@ import ARTCAICallKit
     open var agentVoiceId: String = ""             // 智能体讲话音色Id
     open var agentAvatarId: String = ""            // 数字人模型Id
     open var agentGreeting: String? = nil          // 智能体欢迎语，AI智能体在用户入会后主动说的一句话
+    open var agentMaxIdleTime: UInt32 = 600        // 智能体闲时的最大等待时间(单位：秒)，超时智能体自动下线，设置为-1表示闲时不退出。
     open var region: String? = nil                 // 智能体服务所在的区域，如果为空，Appserver会使用默认的region来启动智能体服务
     open var enableVoiceInterrupt = true           // 是否开启智能打断
     open var enablePushToTalk = false              // 是否开启对讲机模式
@@ -76,6 +77,11 @@ import ARTCAICallKit
      * 智能体回答结果通知
      */
     @objc optional func onAICallAgentSubtitleNotify(text: String, isSentenceEnd: Bool, userAsrSentenceId: Int)
+    
+    /**
+     * 智能体即将结束通话
+     */
+    @objc optional func onAICallAgentWillLeave(reason: Int32, message: String)
     
     /**
      * 当前通话的对讲机模式是否启用

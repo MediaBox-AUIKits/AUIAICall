@@ -1,0 +1,36 @@
+.stage {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.stage-bd {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+
+  &.has-video::after {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2;
+    content: " ";
+    height: 285px;
+    background: linear-gradient(
+      180deg,
+      rgba(0, 17, 70, 0) 6%,
+      rgba(0, 4, 15, 0.6) 51%
+    );
+  }
+}
+
+.stage-error-message {
+  text-align: center;
+}
+
+.character {
+  min-height: 0;
+  flex: 1;
+}

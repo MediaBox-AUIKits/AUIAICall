@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import svgr from 'vite-plugin-svgr';
 import legacy from '@vitejs/plugin-legacy';
+import path from 'path';
 
 import packageJSON from './package.json';
 
@@ -9,6 +10,20 @@ import packageJSON from './package.json';
 export default defineConfig({
   define: {
     __VERSION__: JSON.stringify(packageJSON.version),
+  },
+
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'), // 将 '@' 映射到 './src' 目录
+    },
+  },
+  build: {
+    rollupOptions: {
+      input: {
+        index: path.resolve(__dirname, 'index.html'),
+        mobile: path.resolve(__dirname, 'mobile.html'),
+      },
+    },
   },
 
   plugins: [

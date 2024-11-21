@@ -26,6 +26,8 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 public class ARTCAICallServiceImpl implements IARTCAICallService {
+    // 内置appServer
+    private static final String DEFAULT_HOST = "https://ice-smart-aiagent-fcapp.aliyun-inc.com";
 
     protected IARTCAICallIMService mAiCallIMService = null;
     private AppServerService mAppServerService = null;
@@ -68,6 +70,32 @@ public class ARTCAICallServiceImpl implements IARTCAICallService {
     }
 
     @Override
+    public void generateAIAgentShareCall(String userId, String aiAgentId, ARTCAICallEngine.ARTCAICallAgentType aiAgentType, ARTCAICallEngine.ARTCAICallConfig artcaiCallConfig, IARTCAICallServiceCallback callback) {
+        JSONObject jsonObject = new JSONObject();
+        try {
+            if (!TextUtils.isEmpty(aiAgentId)) {
+                jsonObject.put("ai_agent_id", aiAgentId);
+            }
+            jsonObject.put("user_id", userId);
+            jsonObject.put("workflow_type", agentTypeId(aiAgentType));
+            jsonObject.put("expire", 3600*24);
+            jsonObject.put("template_config",
+                    composeAiAgentConfigJson(aiAgentType, defaultVoiceId(aiAgentType), null, null, null, null,
+                            null != artcaiCallConfig ? artcaiCallConfig.enablePushToTalk : null,
+                            null != artcaiCallConfig ? artcaiCallConfig.enableVoicePrint : null,
+                            null != artcaiCallConfig ? artcaiCallConfig.loginUserId : null)
+            );
+            jsonObject.put("user_id", mLoginUserId);
+            if (!TextUtils.isEmpty(mAiAgentRegion)) {
+                jsonObject.put("region", mAiAgentRegion);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        mAppServerService.postAsync(DEFAULT_HOST, AppServerService.API_GENERATE_AI_AGENT_SHARE_CALL_PATH, mLoginAuthorization, jsonObject, callback);
+    }
+
+    @Override
     public void generateAIAgentCall(String userId, String aiAgentId, ARTCAICallEngine.ARTCAICallAgentType aiAgentType, IARTCAICallServiceCallback callback) {
         generateAIAgentCall(userId, aiAgentId, aiAgentType, null, callback);
     }
@@ -96,7 +124,7 @@ public class ARTCAICallServiceImpl implements IARTCAICallService {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-        mAppServerService.postAsync(AppServerService.API_GENERATE_AI_AGENT_CALL_PATH, mLoginAuthorization, jsonObject, callback);
+        mAppServerService.postAsync(null, AppServerService.API_GENERATE_AI_AGENT_CALL_PATH, mLoginAuthorization, jsonObject, callback);
     }
 
     @Override
@@ -120,7 +148,7 @@ public class ARTCAICallServiceImpl implements IARTCAICallService {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-        mAppServerService.postAsync(AppServerService.API_START_AI_AGENT_PATH, mLoginAuthorization, jsonObject, callback);
+        mAppServerService.postAsync(null, AppServerService.API_START_AI_AGENT_PATH, mLoginAuthorization, jsonObject, callback);
     }
 
     @Override
@@ -132,7 +160,7 @@ public class ARTCAICallServiceImpl implements IARTCAICallService {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-        mAppServerService.postAsync(AppServerService.API_STOP_AI_AGENT_PATH, mLoginAuthorization, jsonObject, callback);
+        mAppServerService.postAsync(null, AppServerService.API_STOP_AI_AGENT_PATH, mLoginAuthorization, jsonObject, callback);
         return false;
     }
 
@@ -145,7 +173,7 @@ public class ARTCAICallServiceImpl implements IARTCAICallService {
 //        } catch (Exception ex) {
 //            ex.printStackTrace();
 //        }
-//        mAppServerService.postAsync(AppServerService.API_REFRESH_TOKEN_PATH, jsonObject, callback);
+//        mAppServerService.postAsync(null, AppServerService.API_REFRESH_TOKEN_PATH, jsonObject, callback);
         if (null != mAiCallIMService) {
             try {
                 JSONObject jsonObject = new JSONObject();
@@ -172,7 +200,7 @@ public class ARTCAICallServiceImpl implements IARTCAICallService {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-        mAppServerService.postAsync(AppServerService.API_UPDATE_AI_AGENT_PATH, mLoginAuthorization, jsonObject, callback);
+        mAppServerService.postAsync(null, AppServerService.API_UPDATE_AI_AGENT_PATH, mLoginAuthorization, jsonObject, callback);
     }
 
     @Override
@@ -186,7 +214,7 @@ public class ARTCAICallServiceImpl implements IARTCAICallService {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-        mAppServerService.postAsync(AppServerService.API_UPDATE_AI_AGENT_PATH, mLoginAuthorization, jsonObject, callback);
+        mAppServerService.postAsync(null, AppServerService.API_UPDATE_AI_AGENT_PATH, mLoginAuthorization, jsonObject, callback);
     }
 
     @Override
@@ -342,6 +370,7 @@ public class ARTCAICallServiceImpl implements IARTCAICallService {
     public static class AppServerService {
         private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
 
+        private static String API_GENERATE_AI_AGENT_SHARE_CALL_PATH = "/api/v1/aiagent/generateAIAgentCall";
         private static String API_GENERATE_AI_AGENT_CALL_PATH = "/api/v2/aiagent/generateAIAgentCall";
         private static String API_START_AI_AGENT_PATH = "/api/v2/aiagent/startAIAgentInstance";
         private static String API_STOP_AI_AGENT_PATH = "/api/v2/aiagent/stopAIAgentInstance";
@@ -354,17 +383,24 @@ public class ARTCAICallServiceImpl implements IARTCAICallService {
             mHost = host;
         }
 
-        private String getRequestUrl(String path) {
-            return mHost + path;
+        private String getRequestUrl(String host, String path) {
+            if (TextUtils.isEmpty(host)) {
+                return mHost + path;
+            } else {
+                return host + path;
+            }
         }
 
-        private void postAsync(String path, String authorization, JSONObject json, IARTCAICallServiceCallback callback) {
+        private void postAsync(String host, String path, String authorization, JSONObject json, IARTCAICallServiceCallback callback) {
             RequestBody body = RequestBody.create(
                     null != json ? json.toString() : "",
                     JSON);
-            Request request = new Request.Builder()
-                    .url(getRequestUrl(path))
-                    .header("Authorization", authorization)
+            Request.Builder requestBuilder = new Request.Builder()
+                    .url(getRequestUrl(host, path));
+            if (!TextUtils.isEmpty(authorization)) {
+                requestBuilder.header("Authorization", authorization);
+            }
+            Request request = requestBuilder
                     .post(body)
                     .build();
 
@@ -389,14 +425,20 @@ public class ARTCAICallServiceImpl implements IARTCAICallService {
                     }
                     if (response.code() == 200) {
                         JSONObject jsonBody = convertResponseJson(bodyString);
-                        int bizResponseCode = jsonBody.optInt("code");
-                        if (bizResponseCode == 200) {
-                            if (null != callback) {
-                                callback.onSuccess(jsonBody);
+                        if (null != jsonBody) {
+                            int bizResponseCode = jsonBody.optInt("code");
+                            if (bizResponseCode == 200) {
+                                if (null != callback) {
+                                    callback.onSuccess(jsonBody);
+                                }
+                            } else {
+                                if (null != callback) {
+                                    callback.onFail(-1, "[bizResponseCode: " + bizResponseCode + "]");
+                                }
                             }
                         } else {
                             if (null != callback) {
-                                callback.onFail(-1, "[bizResponseCode: " + bizResponseCode + "]");
+                                callback.onFail(-1, "[code: " + response.code() + ", msg: " + response.message() + ", body: " + bodyString + "]");
                             }
                         }
                     } else {

@@ -63,6 +63,21 @@ import ARTCAICallKit
             }
         }
     }
+    
+    open func startCall(agentShareInfo: String, viewController: UIViewController? = nil) {
+        
+        if self.userId == nil {
+            self.userId = NSString.av_random()
+        }
+        
+#if DEMO_FOR_DEBUG
+        AUIAICallDebugManager.shared.startCall(agentShareInfo: agentShareInfo, viewController: viewController)
+#elseif AICALL_INTEGRATION_STANDARD
+        self.startCallWithStandard(agentShareInfo: agentShareInfo, viewController: viewController)
+#elseif AICALL_INTEGRATION_CUSTOM
+        // unsupport
+#endif
+    }
 
     // 通过指定agentType（agentId为空时，由appserver配置的）发起通话，
     open func startCall(agentType: ARTCAICallAgentType, agentId: String? = nil, region: String? = nil, limitSecond: UInt32 = 0, viewController: UIViewController? = nil) {
@@ -103,12 +118,32 @@ import ARTCAICallKit
             controller.config.region = region
             controller.config.limitSecond = limitSecond
             let vc = AUIAICallViewController(controller)
+            vc.enableVoiceIdSwitch = agentType != .AvatarAgent
+            vc.onUserTokenExpiredBlcok = self.onUserTokenExpiredBlcok
+            topVC.av_presentFullScreenViewController(vc, animated: true)
+        }
+    }
+    
+    open func startCallWithStandard(agentShareInfo: String, viewController: UIViewController? = nil) {
+        if self.userId == nil {
+            self.userId = NSString.av_random()
+        }
+        
+        self.checkDeviceAuth(agentType: .VisionAgent) { [weak self] in
+            guard let self = self else {return}
+            
+            let topVC = viewController ?? UIViewController.av_top()
+            let controller = AUIAICallStandardController(userId: self.userId!)
+            controller.agentShareInfo = agentShareInfo
+            let vc = AUIAICallViewController(controller)
+            vc.enableVoiceIdSwitch = false
             vc.onUserTokenExpiredBlcok = self.onUserTokenExpiredBlcok
             topVC.av_presentFullScreenViewController(vc, animated: true)
         }
     }
 #endif
     
+
     
 #if AICALL_INTEGRATION_CUSTOM
     // 自集成方式发起通话，通过指定agentType（agentId为空时，由appserver配置的）发起通话，
@@ -132,6 +167,7 @@ import ARTCAICallKit
             controller.config.region = region
             controller.config.limitSecond = limitSecond
             let vc = AUIAICallViewController(controller)
+            vc.enableVoiceIdSwitch = agentType != .AvatarAgent
             vc.onUserTokenExpiredBlcok = self.onUserTokenExpiredBlcok
             topVC.av_presentFullScreenViewController(vc, animated: true)
         }

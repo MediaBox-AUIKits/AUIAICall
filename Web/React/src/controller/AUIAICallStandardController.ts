@@ -1,16 +1,41 @@
-import { AICallAgentInfo, AICallState } from 'aliyun-auikit-aicall';
+import { AICallAgentInfo, AICallAgentType, AICallState } from 'aliyun-auikit-aicall';
 import AUIAICallController from './AUIAICallController';
 
 import standardService from './service/standard';
 import AUIAICallConfig from './AUIAICallConfig';
+import { APP_SERVER } from './service/interface';
 
 class AUIAICallStandardController extends AUIAICallController {
   constructor(userId: string, token: string, config?: AUIAICallConfig) {
     super(userId, token, config);
   }
 
+  set appServer(appServerUrl: string) {
+    standardService.setAppServer(appServerUrl);
+  }
+
   async startAIAgent(): Promise<AICallAgentInfo> {
-    return await standardService.generateAIAgent(this.userId, this.token, this.config);
+    let agentInfo: AICallAgentInfo;
+    if (this.shareConfig) {
+      agentInfo = await this.engine?.generateShareAgentCall(this.shareConfig, this.userId);
+    } else {
+      agentInfo = await standardService.generateAIAgent(this.userId, this.token, this.config);
+    }
+
+    try {
+      if (agentInfo.agentType === AICallAgentType.VoiceAgent) {
+        // 每次先清空当前的 AvatarUrl
+        this.config.voiceAvatarUrl = '';
+        const templateConfig = await standardService.describeAIAgent(this.userId, this.token, agentInfo.instanceId);
+        if (templateConfig.VoiceChat?.AvatarUrl) {
+          this.config.voiceAvatarUrl = templateConfig.VoiceChat?.AvatarUrl as string;
+        }
+      }
+    } catch (error) {
+      console.log(error);
+    }
+
+    return agentInfo;
   }
 
   async stopAIAgent(): Promise<void> {
@@ -48,6 +73,11 @@ class AUIAICallStandardController extends AUIAICallController {
       });
     }
     return '';
+  }
+
+  destory() {
+    super.destory();
+    this.appServer = APP_SERVER;
   }
 }
 

@@ -78,6 +78,7 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
     private boolean isUserSpeaking = false;
     private long mLastBackButtonExitMillis = 0;
     private ARTCAICallEngine.ARTCAICallAgentType mAiAgentType = ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent;
+    private boolean mIsSharedAgent = false;
     private boolean mFirstAvatarFrameDrawn = false;
     private boolean mIsPushToTalkMode = false;
     private boolean mIsVoicePrintRecognized = false;
@@ -255,6 +256,21 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             Log.i("AUIAICall", "onVoicePrintCleared");
             mIsVoicePrintRecognized = false;
         }
+
+        @Override
+        public void onAgentWillLeave(int reason, String message) {
+            int toastResId = R.string.ai_agent_leave_notify_default;
+            if (reason == 2001) {
+                toastResId = R.string.ai_agent_leave_notify_long_time_idle;
+            }
+            ToastHelper.showToast(AUIAICallInCallActivity.this, toastResId, Toast.LENGTH_SHORT);
+            handUp(false);
+        }
+
+        @Override
+        public void onReceivedAgentCustomMessage(String data) {
+
+        }
     };
 
     @Override
@@ -310,7 +326,8 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 AICallSettingDialog.show(AUIAICallInCallActivity.this, mARTCAICallEngine,
-                        mAiAgentType== ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent, mIsVoicePrintRecognized);
+                        mAiAgentType== ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent,
+                        mIsVoicePrintRecognized, mIsSharedAgent);
             }
         });
         findViewById(R.id.speech_animation_view).setOnClickListener(new View.OnClickListener() {
@@ -341,6 +358,7 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             aiAgentRegion = getIntent().getExtras().getString(BUNDLE_KEY_AI_AGENT_REGION, null);
             aiAgentId = getIntent().getExtras().getString(BUNDLE_KEY_AI_AGENT_ID, null);
             mAiAgentType = (ARTCAICallEngine.ARTCAICallAgentType) getIntent().getExtras().getSerializable(BUNDLE_KEY_AI_AGENT_TYPE);
+            mIsSharedAgent = !TextUtils.isEmpty(aiAgentId);
 
             loginUserId = getIntent().getExtras().getString(BUNDLE_KEY_LOGIN_USER_ID, null);
             loginAuthorization = getIntent().getExtras().getString(BUNDLE_KEY_LOGIN_AUTHORIZATION, null);
@@ -380,6 +398,8 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         mIsPushToTalkMode = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_PUSH_TO_TALK, SettingStorage.DEFAULT_ENABLE_PUSH_TO_TALK);
         artcaiCallConfig.enablePushToTalk = mIsPushToTalkMode;
         artcaiCallConfig.enableVoicePrint = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_VOICE_PRINT, SettingStorage.DEFAULT_ENABLE_VOICE_PRINT);
+        artcaiCallConfig.mAiCallVideoConfig.useHighQualityPreview = true;
+        artcaiCallConfig.mAiCallVideoConfig.cameraCaptureFrameRate = 15;
 
         mARTCAICallController = useDeposit ? new ARTCAICallDepositController(this, loginUserId) :
                 new ARTCAICustomController(this, loginUserId);

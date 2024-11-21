@@ -22,6 +22,16 @@ biz:
     avatar_ai_chat_3d_agent_id: "xxxxxxx"
     vision_chat_ai_agent_id: "xxxxxxx"
     region: "cn-shanghai"
+  voice:
+    api_key: "xxxxxx"
+
+  upload:
+    access_key: "xxxx"
+    access_secret: "xxxx"
+    role_arn: "xxxxx"
+    region: "xxxx"
+    bucket: "xxxx"
+    base_path: "xxxx"
 http:
   cors:
     host: "*"
