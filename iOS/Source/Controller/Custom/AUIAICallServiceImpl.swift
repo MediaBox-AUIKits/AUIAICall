@@ -22,72 +22,23 @@ import ARTCAICallKit
         return "VoiceChat"
     }
     
-    public func startAIAgent(userId: String, config: AUIAICallConfig, completed: ((ARTCAICallAgentInfo?, String?, Error?, _ reqId: String) -> Void)?) {
-        if config.agentId == nil {
-            self.startAIAgentInstance(userId: userId, config: config, completed: completed)
+    private func handlerCallError(error: NSError?, data: [AnyHashable: Any]?) -> NSError? {
+        guard let error = error else { return nil }
+        if error.code == 403 {
+            return NSError.aicall_create(code: .TokenExpired)
         }
-        else {
-            self.generateAIAgentCall(userId: userId, config: config, completed: completed)
+        if let ret = data?["error_code"] as? String {
+            if ret == "Forbidden.SubscriptionRequired" {
+                return NSError.aicall_create(code: .AgentSubscriptionRequired)
+            }
+            else if ret == "AgentNotFound" {
+                return NSError.aicall_create(code: .AgentNotFound)
+            }
         }
+        return NSError.aicall_create(code: .BeginCallFailed)
     }
     
-    private func generateAIAgentCall(userId: String, config: AUIAICallConfig, completed: ((_ rsp: ARTCAICallAgentInfo?, _ token: String?, _ error: Error?, _ reqId: String) -> Void)?) {
-        
-        guard let agentId = config.agentId else {
-            completed?(nil, nil, NSError.aicall_create(code: .InvalidParames, message: "lack off agentId"), "unknow")
-            return
-        }
-        
-        var template_config: [String : Any] = [:]
-        var configDict: [String : Any] = [
-            "EnableVoiceInterrupt": config.enableVoiceInterrupt,
-            "EnablePushToTalk": config.enablePushToTalk,
-            "MaxIdleTime": config.agentMaxIdleTime,
-        ]
-        if let voiceprintId = config.voiceprintId {
-            configDict.updateValue(voiceprintId, forKey: "VoiceprintId")
-            configDict.updateValue(config.useVoiceprint, forKey: "UseVoiceprint")
-        }
-        if !config.agentVoiceId.isEmpty {
-            configDict.updateValue(config.agentVoiceId, forKey: "VoiceId")
-        }
-        
-        if config.agentType == .AvatarAgent {
-            if config.agentAvatarId.isEmpty == false {
-                configDict.updateValue(config.agentAvatarId, forKey: "AvatarId")
-            }
-        }
-        let workflow_type = self.agentTypeToString(config.agentType)
-        template_config.updateValue(configDict, forKey: workflow_type)
-
-        
-        let expire: Int = 24 * 60 * 60
-        var body: [String: Any] = [
-            "ai_agent_id": agentId,
-            "user_id": userId,
-            "expire": expire,
-            "template_config": template_config.aicall_jsonString
-        ]
-        if let region = config.region {
-            body.updateValue(region, forKey: "region")
-        }
-
-        self.appserver.request(path: "/api/v2/aiagent/generateAIAgentCall", body: body) { response, data, error in
-            let reqId = (data?["request_id"] as? String) ?? "unknow"
-            if error == nil {
-                debugPrint("generateAIAgentCall response: success")
-                let rtc_auth_token = data?["rtc_auth_token"] as? String
-                let info = ARTCAICallAgentInfo(data: data)
-                completed?(info, rtc_auth_token, nil, reqId)
-            }
-            else {
-                debugPrint("generateAIAgentCall response: failed, error:\(error!)")
-                completed?(nil, nil, error, reqId)
-            }
-        }
-    }
-    
-    private func startAIAgentInstance(userId: String, config: AUIAICallConfig, completed: ((_ rsp: ARTCAICallAgentInfo?, _ token: String?, _ error: Error?, _ reqId: String) -> Void)?) {
+    public func startAIAgent(userId: String, config: AUIAICallConfig, completed: ((_ rsp: ARTCAICallAgentInfo?, _ token: String?, _ error: NSError?, _ reqId: String) -> Void)?) {
 
         var template_config: [String : Any] = [:]
         var configDict: [String : Any] = [
@@ -110,13 +61,16 @@ import ARTCAICallKit
         let workflow_type = self.agentTypeToString(config.agentType)
         template_config.updateValue(configDict, forKey: workflow_type)
 
-        let body: [String : Any] = [
+        var body: [String : Any] = [
             "user_id": userId,
             "workflow_type": workflow_type,
             "template_config": template_config.aicall_jsonString
         ]
+        if let userData = config.userData {
+            body.updateValue(userData.aicall_jsonString, forKey: "user_data")
+        }
         
-        self.appserver.request(path: "/api/v2/aiagent/startAIAgentInstance", body: body) { response, data, error in
+        self.appserver.request(path: "/api/v2/aiagent/startAIAgentInstance", body: body) {[weak self] response, data, error in
             let reqId = (data?["request_id"] as? String) ?? "unknow"
             if error == nil {
                 debugPrint("startAIAgentInstance response: success")
@@ -129,16 +83,16 @@ import ARTCAICallKit
             }
             else {
                 debugPrint("startAIAgentInstance response: failed, error:\(error!)")
-                completed?(nil, nil, error, reqId)
+                completed?(nil, nil, self?.handlerCallError(error: error, data: data), reqId)
             }
         }
     }
     
-    public func stopAIAgent(userId: String, instanceId: String, completed: ((_ error: Error?) -> Void)?) {
+    public func stopAIAgent(userId: String, instanceId: String, completed: ((_ error: NSError?) -> Void)?) {
         self.stopAIAgentInstance(userId: userId, instanceId: instanceId, completed: completed)
     }
     
-    private func stopAIAgentInstance(userId: String, instanceId: String, completed: ((_ error: Error?) -> Void)?) {
+    private func stopAIAgentInstance(userId: String, instanceId: String, completed: ((_ error: NSError?) -> Void)?) {
         
         let body = [
             "user_id": userId,
@@ -162,7 +116,7 @@ import ARTCAICallKit
         }
     }
     
-    public func updateAIAgent(userId: String, instanceId: String, agentType: ARTCAICallAgentType, voiceId: String, completed: ((_ error: Error?) -> Void)?) {
+    public func updateAIAgent(userId: String, instanceId: String, agentType: ARTCAICallAgentType, voiceId: String, completed: ((_ error: NSError?) -> Void)?) {
         
         let workflow_type = self.agentTypeToString(agentType)
         let configDict: [String : Any] = [
@@ -178,7 +132,7 @@ import ARTCAICallKit
         self.updateAIAgentInstance(body: body, completed: completed)
     }
     
-    public func updateAIAgent(userId: String, instanceId: String, agentType: ARTCAICallAgentType, enableVoiceInterrupt: Bool, completed: ((_ error: Error?) -> Void)?) {
+    public func updateAIAgent(userId: String, instanceId: String, agentType: ARTCAICallAgentType, enableVoiceInterrupt: Bool, completed: ((_ error: NSError?) -> Void)?) {
         
         let key = self.agentTypeToString(agentType)
         let configDict: [String : Any] = [
@@ -194,7 +148,7 @@ import ARTCAICallKit
         self.updateAIAgentInstance(body: body, completed: completed)
     }
     
-    public func updateAIAgent(userId: String, instanceId: String, agentType: ARTCAICallAgentType, enablePushToTalk: Bool, completed: ((_ error: Error?) -> Void)?) {
+    public func updateAIAgent(userId: String, instanceId: String, agentType: ARTCAICallAgentType, enablePushToTalk: Bool, completed: ((_ error: NSError?) -> Void)?) {
         
         let key = self.agentTypeToString(agentType)
         let configDict: [String : Any] = [
@@ -210,7 +164,7 @@ import ARTCAICallKit
         self.updateAIAgentInstance(body: body, completed: completed)
     }
     
-    public func updateAIAgent(userId: String, instanceId: String, agentType: ARTCAICallAgentType, useVoiceprint: Bool, completed: ((_ error: Error?) -> Void)?) {
+    public func updateAIAgent(userId: String, instanceId: String, agentType: ARTCAICallAgentType, useVoiceprint: Bool, completed: ((_ error: NSError?) -> Void)?) {
         
         let key = self.agentTypeToString(agentType)
         let configDict: [String : Any] = [
@@ -226,7 +180,7 @@ import ARTCAICallKit
         self.updateAIAgentInstance(body: body, completed: completed)
     }
     
-    private func updateAIAgentInstance(body: [String: Any], completed: ((_ error: Error?) -> Void)?) {
+    private func updateAIAgentInstance(body: [String: Any], completed: ((_ error: NSError?) -> Void)?) {
         
         self.appserver.request(path: "/api/v2/aiagent/updateAIAgentInstance", body: body) { response, data, error in
             if error == nil {

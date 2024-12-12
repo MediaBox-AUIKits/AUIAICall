@@ -41,6 +41,7 @@ import com.aliyun.auikits.aicall.util.DisplayUtil;
 import com.aliyun.auikits.aicall.util.SettingStorage;
 import com.aliyun.auikits.aicall.util.TimeUtil;
 import com.aliyun.auikits.aicall.util.ToastHelper;
+import com.aliyun.auikits.aicall.widget.AICallAudioTipsDialog;
 import com.aliyun.auikits.aicall.widget.AICallNoticeDialog;
 import com.aliyun.auikits.aicall.widget.AICallRatingDialog;
 import com.aliyun.auikits.aicall.widget.AICallReportingDialog;
@@ -150,9 +151,13 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                  }
                 // 声纹非主讲人反馈结果
                 if (voicePrintStatusCode == ARTCAICallEngine.VoicePrintStatusCode.SpeakerNotRecognized) {
-                    setSecondaryCallTips(getResources().getString(R.string.main_speaker_not_recognized));
-                } else {
-                    setSecondaryCallTips("");
+                    setSecondaryCallTips(true, getResources().getString(R.string.main_speaker_not_recognized),
+                            getResources().getString(R.string.reset_voiceprint), new Runnable() {
+                                @Override
+                                public void run() {
+                                    mARTCAICallEngine.clearVoicePrint();
+                                }
+                            });
                 }
             } else {
                 mSubtitleHolder.setSubtitleLayoutVisibility(false);
@@ -271,6 +276,19 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         public void onReceivedAgentCustomMessage(String data) {
 
         }
+
+        @Override
+        public void onHumanTakeoverWillStart(String takeoverUid, int takeoverMode) {
+            Log.i("AUIAICall", "onHumanTakeoverWillStart, uid:"+ takeoverUid +", mode:" + takeoverMode);
+            ToastHelper.showToast(AUIAICallInCallActivity.this, R.string.ai_agent_human_takeover_will_start, Toast.LENGTH_SHORT);
+        }
+
+        @Override
+        public void onHumanTakeoverConnected(String takeoverUid) {
+            Log.i("AUIAICall", "onHumanTakeoverConnected");
+            ToastHelper.showToast(AUIAICallInCallActivity.this, R.string.ai_agent_human_takeover_connect, Toast.LENGTH_SHORT);
+
+        }
     };
 
     @Override
@@ -380,6 +398,10 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                             "\nchannelId: " + mARTCAICallController.getChannelId();
                     Toast.makeText(AUIAICallInCallActivity.this, titleClickTips, Toast.LENGTH_LONG).show();
                     copyToClipboard(AUIAICallInCallActivity.this, titleClickTips);
+
+                    if (SettingStorage.getInstance().getBoolean(SettingStorage.KEY_AUDIO_TIPS_SWITCH)) {
+                        AICallAudioTipsDialog.show(AUIAICallInCallActivity.this, mARTCAICallController);
+                    }
                 }
             }
         });
@@ -389,6 +411,7 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         artcaiCallConfig.aiAgentRegion = aiAgentRegion;
         artcaiCallConfig.aiAgentId = aiAgentId;
         artcaiCallConfig.enableAudioDump = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_AUDIO_DUMP_SWITCH);
+        artcaiCallConfig.userSpecifiedAudioTips = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_AUDIO_TIPS_SWITCH);
         artcaiCallConfig.useRtcPreEnv = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_USE_RTC_PRE_ENV_SWITCH);
         boolean usePreHost = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_APP_SERVER_TYPE, SettingStorage.DEFAULT_APP_SERVER_TYPE);
         artcaiCallConfig.appServerHost = usePreHost ? AppServiceConst.PRE_HOST : AppServiceConst.HOST;
@@ -398,8 +421,13 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         mIsPushToTalkMode = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_PUSH_TO_TALK, SettingStorage.DEFAULT_ENABLE_PUSH_TO_TALK);
         artcaiCallConfig.enablePushToTalk = mIsPushToTalkMode;
         artcaiCallConfig.enableVoicePrint = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_VOICE_PRINT, SettingStorage.DEFAULT_ENABLE_VOICE_PRINT);
+        artcaiCallConfig.userExtendData = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_USER_EXTEND_DATA);
         artcaiCallConfig.mAiCallVideoConfig.useHighQualityPreview = true;
         artcaiCallConfig.mAiCallVideoConfig.cameraCaptureFrameRate = 15;
+        // 这里frameRate设置为5，需要根据控制台上的智能体的抽帧帧率（一般为2）进行调整，最大不建议超过15fps
+        // videoEncoderBitRate: videoEncoderFrameRate超过10可以设置为512
+        artcaiCallConfig.mAiCallVideoConfig.videoEncoderFrameRate = 5;
+        artcaiCallConfig.mAiCallVideoConfig.videoEncoderBitRate = 340;
 
         mARTCAICallController = useDeposit ? new ARTCAICallDepositController(this, loginUserId) :
                 new ARTCAICustomController(this, loginUserId);
@@ -631,6 +659,12 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                 case StartFailed:
                     resId = R.string.call_error_start_failed;
                     break;
+                case AgentSubscriptionRequired:
+                    resId = R.string.call_error_agent_subscription_required;
+                    break;
+                case AgentNotFund:
+                    resId = R.string.call_error_agent_not_found;
+                    break;
                 case TokenExpired:
                     resId = R.string.call_error_token_expired;
                     break;
@@ -679,9 +713,34 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         }
     }
 
-    private void setSecondaryCallTips(String tips) {
-        TextView tvSecondaryCallTips = (TextView) findViewById(R.id.tv_call_secondary_tips);
-        tvSecondaryCallTips.setText(tips);
+    private void setSecondaryCallTips(boolean show, String tips, String actionTips, Runnable actionRunnable) {
+        ViewGroup llCallSecondaryTips = findViewById(R.id.ll_call_secondary_tips);
+        if (show && llCallSecondaryTips.getVisibility() == View.GONE) {
+            if (useVideo()) {
+                llCallSecondaryTips.setBackgroundResource(R.drawable.bg_secondary_tips_incall);
+            } else {
+                llCallSecondaryTips.setBackground(null);
+            }
+            ((TextView)findViewById(R.id.tv_call_secondary_tips)).setText(tips);
+            ((TextView)findViewById(R.id.btn_call_secondary_tips)).setText(actionTips);
+
+            Runnable delayGoneRunnable = () -> {
+                setSecondaryCallTips(false, null, null, null);
+            };
+            ((TextView)findViewById(R.id.btn_call_secondary_tips)).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (null != actionRunnable) {
+                        actionRunnable.run();
+                    }
+                    setSecondaryCallTips(false, null, null, null);
+                    llCallSecondaryTips.removeCallbacks(delayGoneRunnable);
+                }
+            });
+
+            llCallSecondaryTips.postDelayed(delayGoneRunnable, 8000);
+        }
+        llCallSecondaryTips.setVisibility(show ? View.VISIBLE : View.GONE);
     }
 
     private void updateSpeechAnimationType() {

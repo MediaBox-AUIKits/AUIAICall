@@ -135,17 +135,36 @@
             />
     </LinearLayout>
 
-
-    <TextView
-        android:id="@+id/tv_call_secondary_tips"
+    <LinearLayout
+        android:id="@+id/ll_call_secondary_tips"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toTopOf="@id/tv_call_tips"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        style="@style/layout_base_text_style_14_light_white"
-        android:layout_marginBottom="34dp"
-        android:text=""/>
+        android:orientation="horizontal"
+        android:layout_marginBottom="22dp"
+        android:paddingVertical="12dp"
+        android:paddingHorizontal="8dp"
+        android:background="@drawable/bg_secondary_tips_incall"
+        android:visibility="gone"
+        >
+        <TextView
+            android:id="@+id/tv_call_secondary_tips"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            style="@style/layout_base_text_style_12"
+            android:text="@string/main_speaker_not_recognized"/>
+        <TextView
+            android:id="@+id/btn_call_secondary_tips"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            style="@style/layout_base_text_style_10"
+            android:text="@string/reset_voiceprint"
+            android:paddingHorizontal="8dp"
+            android:layout_marginLeft="8dp"
+            android:background="@drawable/bg_secondary_tips_button"/>
+    </LinearLayout>
 
     <TextView
         android:id="@+id/tv_call_tips"

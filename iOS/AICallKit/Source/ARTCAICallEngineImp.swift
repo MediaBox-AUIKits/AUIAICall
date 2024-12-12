@@ -383,6 +383,7 @@ extension ARTCAICallEngine {
         }
         
         var extras: [String: Any] = [:]
+        extras.updateValue("CODEC_TYPE_HARDWARE_ENCODER_HARDWARE_DECODER", forKey: "user_specified_codec_type")
         if ARTCAICallEngineDebuger.Debug_IsEnableDumpData {
             extras.updateValue("TRUE", forKey: "user_specified_audio_dump")
         }
@@ -425,9 +426,11 @@ extension ARTCAICallEngine {
         }
         else if self.agentInfo?.agentType == .VisionAgent {
             let captureConfig = AliRtcCameraCapturerConfiguration()
-            captureConfig.preference = .preview
+            captureConfig.preference = self.visionConfigPrivate.useHighQualityPreview ? .preview : .auto
             captureConfig.cameraDirection = .back
+            captureConfig.fps = Int32(self.visionConfig.cameraCaptureFrameRate)
             engine.setCameraCapturerConfiguration(captureConfig)
+            engine.setCapturePipelineScaleMode(.post)
             
             let config = AliRtcVideoEncoderConfiguration()
             config.dimensions = self.visionConfigPrivate.dimensions
@@ -672,6 +675,26 @@ extension ARTCAICallEngine {
             }
             else {
                 self.delegate?.onReceivedAgentCustomMessage?(data: nil)
+            }
+        }
+        else if model.type == .HumanTakeoverWillStart {
+            if let takeoverUid = model.data?["takeoverUid"] as? String {
+                let takeoverMode = model.data?["takeoverMode"] as? Int
+                if takeoverMode == 0 {
+                    ARTCAICallEngineLog.WriteLog("ARTCAICallEngine Received[\(seqId)] HumanTakeoverWillStart：\(takeoverUid) takeoverMode:\(takeoverMode!)")
+                    self.rtcEngine?.subscribeRemoteAudioStream(takeoverUid, sub: false)
+                    self.delegate?.onHumanTakeoverWillStart?(takeoverUid: takeoverUid, takeoverMode: 0)
+                }
+                else {
+                    ARTCAICallEngineLog.WriteLog("ARTCAICallEngine Received[\(seqId)] HumanTakeoverWillStart：\(takeoverUid) takeoverMode:\(takeoverMode == nil ? "null" : "\(takeoverMode!)")")
+                    self.delegate?.onHumanTakeoverWillStart?(takeoverUid: takeoverUid, takeoverMode: 1)
+                }
+            }
+        }
+        else if model.type == .HumanTakeoverConnected {
+            if let takeoverUid = model.data?["takeoverUid"] as? String {
+                ARTCAICallEngineLog.WriteLog("ARTCAICallEngine Received[\(seqId)] HumanTakeoverConnected：\(takeoverUid)")
+                self.delegate?.onHumanTakeoverConnected?(takeoverUid: takeoverUid)
             }
         }
     }
@@ -964,8 +987,11 @@ extension ARTCAICallEngine {
         if let region = shareConfig.region {
             body.updateValue(region, forKey: "region")
         }
+        if let userData = shareConfig.userData {
+            body.updateValue(userData.aicall_jsonString, forKey: "user_data")
+        }
 
-        ARTCAICallRequest.defaultRequest.request(path: "/api/v1/aiagent/generateAIAgentCall", body: body) { response, data, error in
+        ARTCAICallRequest.defaultRequest.request(path: "/api/v1/aiagent/generateAIAgentCall", body: body) {[weak self] response, data, error in
             let reqId = (data?["request_id"] as? String) ?? "unknow"
             ARTCAICallEngineLog.WriteLog("ARTCAICallEngine generateShareAgentCall:\(reqId)")
             if error == nil {
@@ -974,8 +1000,22 @@ extension ARTCAICallEngine {
                 completed?(info, rtc_auth_token, nil, reqId)
             }
             else {
-                completed?(nil, nil, error, reqId)
+                
+                completed?(nil, nil, self?.handlerCallError(error: error, data: data), reqId)
             }
         }
+    }
+    
+    private func handlerCallError(error: NSError?, data: [AnyHashable: Any]?) -> NSError? {
+        guard let error = error else { return nil }
+        if let ret = data?["error_code"] as? String {
+            if ret == "Forbidden.SubscriptionRequired" {
+                return NSError.aicall_create(code: .AgentSubscriptionRequired)
+            }
+            else if ret == "AgentNotFound" {
+                return NSError.aicall_create(code: .AgentNotFound)
+            }
+        }
+        return error
     }
 }

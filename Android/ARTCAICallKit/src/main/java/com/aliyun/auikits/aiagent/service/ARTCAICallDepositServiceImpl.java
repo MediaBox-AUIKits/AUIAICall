@@ -7,8 +7,8 @@ import org.json.JSONObject;
 
 public class ARTCAICallDepositServiceImpl extends ARTCAICallServiceImpl {
 
-    public ARTCAICallDepositServiceImpl(String aiAgentRegion, String appServerHost, String loginUserId, String loginAuthorization) {
-        super(aiAgentRegion, appServerHost, loginUserId, loginAuthorization);
+    public ARTCAICallDepositServiceImpl(ARTCAICallEngine.ARTCAICallConfig artcAiCallConfig) {
+        super(artcAiCallConfig);
     }
 
     @Override

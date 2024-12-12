@@ -38,10 +38,3 @@ export const getWorkflowType = (type?: AICallAgentType) => {
   if (AgentTypeWorkflowTypeMap[type]) return AgentTypeWorkflowTypeMap[type];
   return WorkflowType.VoiceChat;
 };
-
-export class ServiceAuthError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'AuthError';
-  }
-}

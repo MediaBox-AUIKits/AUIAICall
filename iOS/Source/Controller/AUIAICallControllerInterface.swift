@@ -20,6 +20,8 @@ import ARTCAICallKit
     open var enablePushToTalk = false              // 是否开启对讲机模式
     open var useVoiceprint = false                 // 当前断句是否使用声纹降噪识别
     open var voiceprintId: String? = nil           // 声纹Id，如果不为空表示当前通话开启声纹降噪能力，为空表示不启用声纹降噪能力
+    open var userData: [String: Any]? = nil        // 用户自定义信息，该信息最终传给智能体
+    
     open var enableSpeaker = true                  // 是否开启扬声器
     open var muteMicrophone = false                // 是否关闭麦克风（静音）
     open var muteLocalCamera = false               // 是否关闭摄像头
@@ -79,7 +81,8 @@ import ARTCAICallKit
     @objc optional func onAICallAgentSubtitleNotify(text: String, isSentenceEnd: Bool, userAsrSentenceId: Int)
     
     /**
-     * 智能体即将结束通话
+     * 智能体即将结束通话 
+     * @param reason 原因：2001(闲时退出) , 2002(真人接管结束)   0(其他)
      */
     @objc optional func onAICallAgentWillLeave(reason: Int32, message: String)
     
@@ -87,6 +90,16 @@ import ARTCAICallKit
      * 当前通话的对讲机模式是否启用
      */
     @objc optional func onAICallAgentPushToTalkChanged(enable: Bool)
+    
+    /**
+     * 当真人即将接管当前智能体
+     */
+    @objc optional func onAICallHumanTakeoverWillStart(takeoverUid: String, takeoverMode: Int)
+    
+    /**
+     * 当真人接管已经接通
+     */
+    @objc optional func onAICallHumanTakeoverConnected(takeoverUid: String)
     
     /**
      * 用户Token过期

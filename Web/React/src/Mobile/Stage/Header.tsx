@@ -1,5 +1,5 @@
 import { useContext, useMemo, useState } from 'react';
-import { Button, Popup, Radio, SafeArea, Space, Switch, Toast } from 'antd-mobile';
+import { Button, Popup, Radio, SafeArea, Selector, Space, Switch, Toast } from 'antd-mobile';
 import { SettingSVG, VoiceAbinSVG, VoiceZhixiaobaiSVG, VoiceZhixiaoxiaSVG } from './Icons';
 import useCallStore from '@/common/store';
 import i18n from '@/common/i18n';
@@ -9,6 +9,8 @@ import './header.less';
 import ControllerContext from '@/common/ControlerContext';
 import { RadioValue } from 'antd-mobile/es/components/radio';
 
+import logger from '@/common/logger';
+
 function Header() {
   const controller = useContext(ControllerContext);
   const agentType = useCallStore((state) => state.agentType);
@@ -17,6 +19,9 @@ function Header() {
   const updatingVoiceInterrupt = useCallStore((state) => state.updatingVoiceInterrupt);
   const voiceId = useCallStore((state) => state.voiceId);
   const updatingVoiceId = useCallStore((state) => state.updatingVoiceId);
+
+  const enablePushToTalk = useCallStore((state) => state.enablePushToTalk);
+  const updatingPushToTalk = useCallStore((state) => state.updatingPushToTalk);
 
   const [settingVisible, setSettingVisible] = useState(false);
 
@@ -49,6 +54,33 @@ function Header() {
     useCallStore.setState({ voiceId: updated ? voiceId : original, updatingVoiceId: false });
   };
 
+  const onPushToTalkChange = async (value: string) => {
+    const checked = value === 'pushToTalk';
+    const original = useCallStore.getState().enablePushToTalk;
+    useCallStore.setState({ enablePushToTalk: checked, updatingPushToTalk: true });
+    const updated = await controller?.enablePushToTalk(checked);
+    if (updated) {
+      Toast.show({
+        content: `对讲机模式已${checked ? '开启' : '关闭'}`,
+        position: 'bottom',
+      });
+    } else {
+      Toast.show({
+        content: '对讲机模式切换失败',
+        position: 'bottom',
+      });
+    }
+    // 退出对讲机模式，恢复音频静音状态
+    if (!checked) {
+      if (useCallStore.getState().microphoneMuted) {
+        controller?.muteMicrophone(true);
+      } else {
+        controller?.muteMicrophone(false);
+      }
+    }
+    useCallStore.setState({ enablePushToTalk: updated ? checked : original, updatingPushToTalk: false });
+  };
+
   const agentName = useMemo(() => {
     if (agentType === AICallAgentType.AvatarAgent) {
       return i18n['agent.avatar'];
@@ -63,11 +95,18 @@ function Header() {
       <SafeArea position='top' />
       <div className='header'>
         {agentName}
-        <Button onClick={() => setSettingVisible(true)} disabled={callState !== AICallState.Connected}>
+        
+        <Button
+          onClick={() => {
+            logger.info('Header', 'OpenSetting');
+            setSettingVisible(true);
+          }}
+          disabled={callState !== AICallState.Connected}
+        >
           {SettingSVG}
         </Button>
         <Popup
-          className='setting-pop'
+          className='header-pop setting-pop'
           visible={settingVisible}
           onMaskClick={() => {
             setSettingVisible(false);
@@ -78,23 +117,45 @@ function Header() {
         >
           <div className='_title'>设置</div>
           <ul>
-            <li>
-              <div className='_itemBox'>
-                <div className='_itemInfo'>
-                  <div className='_itemTitle'>智能打断</div>
-                  <div className='_itemDesc'>根据声音和环境智能打断AI机器人</div>
-                </div>
-                <div className='_itemSwitch'>
-                  <Switch
-                    checked={enableVoiceInterrupt}
-                    loading={updatingVoiceInterrupt}
-                    onChange={onVoiceInterruptChange}
-                  />
-                </div>
-              </div>
+            <li className='_mode'>
+              <Selector
+                options={[
+                  {
+                    label: '自然对话模式',
+                    value: 'normal',
+                  },
+                  {
+                    label: '对讲机模式',
+                    value: 'pushToTalk',
+                  },
+                ]}
+                value={[enablePushToTalk ? 'pushToTalk' : 'normal']}
+                onChange={(v) => {
+                  if (v.length) {
+                    onPushToTalkChange(v[0]);
+                  }
+                }}
+              />
             </li>
-            {agentType !== AICallAgentType.AvatarAgent && !controller?.shareConfig && (
+            {!enablePushToTalk && !updatingPushToTalk && (
               <li>
+                <div className='_itemBox'>
+                  <div className='_itemInfo'>
+                    <div className='_itemTitle'>智能打断</div>
+                    <div className='_itemDesc'>根据声音和环境智能打断AI机器人</div>
+                  </div>
+                  <div className='_itemSwitch'>
+                    <Switch
+                      checked={enableVoiceInterrupt}
+                      loading={updatingVoiceInterrupt}
+                      onChange={onVoiceInterruptChange}
+                    />
+                  </div>
+                </div>
+              </li>
+            )}
+            {agentType !== AICallAgentType.AvatarAgent && !controller?.config.fromShare && (
+              <li className='_voiceId'>
                 <div className='_itemBox'>
                   <div className='_itemInfo'>
                     <div className='_itemTitle'>选择音色</div>

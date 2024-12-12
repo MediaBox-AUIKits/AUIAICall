@@ -37,6 +37,7 @@ public class ARTCAICallRtcWrapper {
         public boolean enableRemoteVideo = false;
         public boolean enableLocalVideo = false;
         public boolean usePreEnv = false;
+        public boolean userSpecifiedAudioTips = false;
         public boolean useHighQualityPreview = false;
         /** 是否默认启动前置摄像头 */
         public boolean useFrontCameraDefault = false;
@@ -84,6 +85,10 @@ public class ARTCAICallRtcWrapper {
             if (mRtcConfig.usePreEnv) {
                 jsonObject.put("user_specified_environment", "PRE_RELEASE");
             }
+            if (mRtcConfig.userSpecifiedAudioTips) {
+                jsonObject.put("user_specified_audio_tips", "TRUE");
+            }
+            jsonObject.put("user_specified_codec_type", "CODEC_TYPE_HARDWARE_ENCODER_HARDWARE_DECODER");
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -132,6 +137,7 @@ public class ARTCAICallRtcWrapper {
                     cameraCapturerConfiguration.preference = ALIRTC_CAPTURER_OUTPUT_PREFERENCE_PREVIEW;
                 }
                 mAliRtcEngine.setCameraCapturerConfiguration(cameraCapturerConfiguration);
+                mAliRtcEngine.setCapturePipelineScaleMode(AliRtcEngine.AliRtcCapturePipelineScaleMode.AliRtcCapturePipelineScaleModePost);
 
                 AliRtcEngine.AliRtcVideoEncoderConfiguration aliRtcVideoEncoderConfiguration = new AliRtcEngine.AliRtcVideoEncoderConfiguration();
                 aliRtcVideoEncoderConfiguration.dimensions = new AliRtcEngine.AliRtcVideoDimensions(
@@ -218,6 +224,14 @@ public class ARTCAICallRtcWrapper {
             mAliRtcEngine.setRemoteAudioVolume(robotUserId, 100);
 
         }
+    }
+
+    public void unSubscribeRemoteUser(String uid) {
+        if(null != mAliRtcEngine) {
+            mAliRtcEngine.subscribeRemoteAudioStream(uid, false);
+            mAliRtcEngine.subscribeRemoteVideoStream(uid, AliRtcVideoTrackCamera, false);
+        }
+
     }
 
     public void subscribeVideoStream(String uid) {

@@ -67,7 +67,7 @@ dependencies {
 
 
     if(getBoolProperty('USE_AICALLKIT_AAR')) {
-        implementation 'com.aliyun.auikits.android:ARTCAICallKit:1.4.0'
+        implementation 'com.aliyun.auikits.android:ARTCAICallKit:1.5.0'
     } else {
         implementation project(':AUIAICallEngine')
         implementation project(':ARTCAICallKit')

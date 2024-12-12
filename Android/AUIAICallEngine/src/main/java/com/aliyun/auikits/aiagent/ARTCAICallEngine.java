@@ -28,6 +28,10 @@ public abstract class ARTCAICallEngine {
         InvalidParams,
         /** 无法启动通话 */
         StartFailed,
+        /** 发起通话，超出每天免费体验的额度 */
+        AgentSubscriptionRequired,
+        /** 智能体没找到*/
+        AgentNotFund,
         /** 通话认证过期 */
         TokenExpired,
         /** 链接出现问题 */
@@ -144,6 +148,7 @@ public abstract class ARTCAICallEngine {
         public boolean isMicrophoneOn = true;
         public boolean isCameraMute = false;
         public boolean enableAudioDump = false;
+        public boolean userSpecifiedAudioTips = false;
         public String appServerHost = "";
         /**
          * 是否使用全托管方案
@@ -151,11 +156,14 @@ public abstract class ARTCAICallEngine {
         public boolean useDeposit = false;
         public boolean useRtcPreEnv = false;
         public boolean enablePushToTalk = false;
-        public boolean enableVoicePrint = false;
+        public boolean enableVoicePrint = true;
+        /** 业务自定义扩展字段 */
+        public String userExtendData = null;
         /**
          * 视频相关配置
          */
         public ARTCAICallVideoConfig mAiCallVideoConfig = new ARTCAICallVideoConfig();
+
 
         @Override
         public String toString() {
@@ -300,7 +308,7 @@ public abstract class ARTCAICallEngine {
 
         /**
          * 当前智能体即将离开（结束当前通话）
-         * @param reason 原因：2001(闲时退出)  0(其他)
+         * @param reason 原因：2001(闲时退出), 2002(真人接管结束), 0(其他)
          * @param message 描述原因
          */
         public void onAgentWillLeave(int reason, String message) {}
@@ -310,6 +318,19 @@ public abstract class ARTCAICallEngine {
          * @param data 自定义消息体，使用json字符串
          */
         public void onReceivedAgentCustomMessage(String data) {}
+
+        /**
+         * 当真人即将接管当前智能体
+         * @param takeoverUid 真人uid
+         * @param takeoverMode 1：表示使用真人音色输出；0：表示使用智能体音色输出
+         */
+        public void onHumanTakeoverWillStart(String takeoverUid, int takeoverMode) {}
+
+        /**
+         * 当真人接管已经接通
+         * @param takeoverUid 真人uid
+         */
+        public void onHumanTakeoverConnected(String takeoverUid) {}
     }
 
     /**

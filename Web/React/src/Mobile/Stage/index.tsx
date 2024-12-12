@@ -147,6 +147,8 @@ function Stage({ agentType, onStateChange, onExit, onAuthFail, limitSecond, auto
       let toast = '通话已经结束';
       if (reason == 2001) {
         toast = '由于你长时间未进行通话，该通话已经结束';
+      } else if (reason == 2002) {
+        toast = '该通话已经结束';
       }
       Toast.show({
         content: toast,
@@ -157,6 +159,19 @@ function Stage({ agentType, onStateChange, onExit, onAuthFail, limitSecond, auto
     controller.on('AICallReceivedAgentCustomMessage', (data) => {
       Toast.show({
         content: '收到智能体自定义消息：' + JSON.stringify(data),
+        position: 'bottom',
+      });
+    });
+
+    controller.on('AICallHumanTakeoverWillStart', () => {
+      Toast.show({
+        content: i18n['humanTakeover.willStart'],
+        position: 'bottom',
+      });
+    });
+    controller.on('AICallHumanTakeoverConnected', () => {
+      Toast.show({
+        content: i18n['humanTakeover.connected'],
         position: 'bottom',
       });
     });

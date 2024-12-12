@@ -69,7 +69,8 @@ import ARTCAICallKit
             }
         }
     }
-    private var agentShareConfig: ARTCAICallAgentShareConfig? = nil {
+    
+    public private(set) var agentShareConfig: ARTCAICallAgentShareConfig? = nil {
         didSet {
             if let agentShareConfig = self.agentShareConfig {
                 self.config.agentId = agentShareConfig.shareId
@@ -133,14 +134,16 @@ import ARTCAICallKit
                 }
             }
             else {
-                if (error as? NSError)?.code == 403 {
-                    self.errorCode = .TokenExpired
-                    self.state = .Error
-                    self.delegate?.onAICallUserTokenExpired?()
+                var errorCode = ARTCAICallErrorCode.BeginCallFailed
+                if let error = error {
+                    if let ret = ARTCAICallErrorCode(rawValue: Int32(error.code)) {
+                        errorCode = ret
+                    }
                 }
-                else {
-                    self.errorCode = .BeginCallFailed
-                    self.state = .Error
+                self.errorCode = errorCode
+                self.state = .Error
+                if self.errorCode == .TokenExpired {
+                    self.delegate?.onAICallUserTokenExpired?()
                 }
             }
         }
@@ -397,6 +400,16 @@ extension AUIAICallStandardController: ARTCAICallEngineDelegate {
     public func onReceivedAgentCustomMessage(data: [String : Any]?) {
         debugPrint("AUIAICallStandardController onReceivedAgentCustomMessage:\(data ?? [:])")
     }
+    
+    public func onHumanTakeoverWillStart(takeoverUid: String, takeoverMode: Int) {
+        debugPrint("AUIAICallStandardController onHumanTakeoverWillStart:\(takeoverUid) , takeoverMode:\(takeoverMode)")
+        self.delegate?.onAICallHumanTakeoverWillStart?(takeoverUid: takeoverUid, takeoverMode: takeoverMode)
+    }
+    
+    public func onHumanTakeoverConnected(takeoverUid: String) {
+        debugPrint("AUIAICallStandardController onHumanTakeoverConnected:\(takeoverUid)")
+        self.delegate?.onAICallHumanTakeoverConnected?(takeoverUid: takeoverUid)
+    }
 }
 
 extension AUIAICallStandardController {
@@ -411,7 +424,23 @@ extension AUIAICallStandardController {
         return "VoiceChat"
     }
     
-    public func generateAIAgentCall(userId: String, config: AUIAICallConfig, completed: ((_ rsp: ARTCAICallAgentInfo?, _ token: String?, _ error: Error?, _ reqId: String) -> Void)?) {
+    private func handlerCallError(error: NSError?, data: [AnyHashable: Any]?) -> NSError? {
+        guard let error = error else { return nil }
+        if error.code == 403 {
+            return NSError.aicall_create(code: .TokenExpired)
+        }
+        if let ret = data?["error_code"] as? String {
+            if ret == "Forbidden.SubscriptionRequired" {
+                return NSError.aicall_create(code: .AgentSubscriptionRequired)
+            }
+            else if ret == "AgentNotFound" {
+                return NSError.aicall_create(code: .AgentNotFound)
+            }
+        }
+        return NSError.aicall_create(code: .BeginCallFailed)
+    }
+    
+    public func generateAIAgentCall(userId: String, config: AUIAICallConfig, completed: ((_ rsp: ARTCAICallAgentInfo?, _ token: String?, _ error: NSError?, _ reqId: String) -> Void)?) {
         
         if let agentShareConfig = self.agentShareConfig {
             self.engine.generateShareAgentCall(shareConfig: agentShareConfig, userId: userId) { rsp, token, error, reqId in
@@ -463,8 +492,11 @@ extension AUIAICallStandardController {
         if let region = config.region {
             body.updateValue(region, forKey: "region")
         }
+        if let userData = config.userData {
+            body.updateValue(userData.aicall_jsonString, forKey: "user_data")
+        }
 
-        self.appserver.request(path: "/api/v2/aiagent/generateAIAgentCall", body: body) { response, data, error in
+        self.appserver.request(path: "/api/v2/aiagent/generateAIAgentCall", body: body) { [weak self] response, data, error in
             let reqId = (data?["request_id"] as? String) ?? "unknow"
             if error == nil {
                 debugPrint("generateAIAgentCall response: success")
@@ -474,8 +506,9 @@ extension AUIAICallStandardController {
             }
             else {
                 debugPrint("generateAIAgentCall response: failed, error:\(error!)")
-                completed?(nil, nil, error, reqId)
+                completed?(nil, nil, self?.handlerCallError(error: error, data: data), reqId)
             }
         }
     }
+    
 }

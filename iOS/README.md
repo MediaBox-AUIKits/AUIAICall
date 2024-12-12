@@ -65,7 +65,7 @@ target '你的App target' do
     pod 'AliVCSDK_ARTC', '~> 6.17.0'
 
     # AI实时互动通话场景SDK
-    pod "ARTCAICallKit", '~> 1.4.0'
+    pod "ARTCAICallKit", '~> 1.5.0'
 
     # 基础UI组件源码
     pod 'AUIFoundation', :path => "./AUIAICall/AUIBaseKits/AUIFoundation/", :modular_headers => true
@@ -105,7 +105,7 @@ AVDeviceAuth.checkMicAuth { auth in
         return
     }
     
-    // 通过userId构建controller
+    // 通过userId构建controller，建议userId为当前登录的用户
     let controller = AUIAICallStandardController(userId: userId)
     // 设置通话的类型（语音或数字人通话），appserver根据agentType选择对应的agentId启动通话
     controller.config.agentType = agentType  
@@ -118,6 +118,32 @@ AVDeviceAuth.checkMicAuth { auth in
     self.present(vc, animated: true)
 }
 
+
+```
+
+### 通过控制台提供的Token快速启动AI通话（可选）
+如果你来不及或者不会集成Server源码并部署服务端，那么可以通过这种方式来跑通创建的智能体，这种模式下仅限于测试与体验使用，不适用于上线。
+
+- 前提条件：从控制台上获取启动通话的Token
+  * 打开控制台，进入智能体管理
+  * 找到自己的智能体，点击”Demo体验二维码“
+  * 选择过期时间后，点击生成，点击体验Token”拷贝按钮“
+
+- 下面代码可以启动一个智能体通话，可以把下面代码加入到你的按钮点击事件里
+``` Swift
+
+// 引入组件
+import AUIAICall
+import AUIFoundation
+
+AUIAICallManager.defaultManager.checkDeviceAuth(agentType: .VisionAgent) {
+    let topVC = viewController ?? UIViewController.av_top()
+    let controller = AUIAICallStandardController(userId: "123")   // 参数为当前登录用户的UserId
+    controller.agentShareInfo = "xxxxx"   // 从控制台上获取启动通话的Token
+    let vc = AUIAICallViewController(controller)
+    vc.enableVoiceIdSwitch = false
+    topVC.av_presentFullScreenViewController(vc, animated: true)
+}
 
 ```
 

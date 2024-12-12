@@ -33,12 +33,6 @@ function Vision() {
     };
   }, [cameraLoading, loaded]);
 
-  useEffect(() => {
-    if (previewRef.current) {
-      controller?.setAgentView(previewRef.current);
-    }
-  }, [controller]);
-
   return (
     <div className={`character vision  ${cameraMuted ? '' : 'has-camera'}`}>
       {cameraLoading && (

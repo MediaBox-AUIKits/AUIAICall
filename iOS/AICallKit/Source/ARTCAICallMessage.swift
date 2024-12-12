@@ -22,6 +22,8 @@ import UIKit
     case VoiceprintClearSucceed = 1009
     case AgentWillLeave = 1010
     case CustomMessageReceived = 1011
+    case HumanTakeoverWillStart = 1012
+    case HumanTakeoverConnected = 1013
 
     case StopAIAgent = 1100
     case InterruptSpeaking = 1101

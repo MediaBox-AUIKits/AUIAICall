@@ -58,23 +58,4 @@ public class VoiceServiceImpl implements VoiceService {
             return CosyVoiceCloneResponse.builder().code(500).message(e.getMessage()).build();
         }
     }
-
-
-    void testVoice(String voiceId) {
-        SpeechSynthesisParam param = SpeechSynthesisParam.builder()
-                .apiKey(apiKey)
-                .model(targetModel)
-                .voice(voiceId)
-                .build();
-        SpeechSynthesizer synthesizer = new SpeechSynthesizer(param, null);
-        ByteBuffer audio = synthesizer.call("今天天气怎么样？");
-        // 保存合成的语音到文件
-        File file = new File("output.mp3");
-        try (FileOutputStream fos = new FileOutputStream(file)) {
-            fos.write(audio.array());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-    }
 }

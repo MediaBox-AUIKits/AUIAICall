@@ -9,6 +9,14 @@ import UIKit
 import CommonCrypto
 
 extension String {
+    
+    public func aicall_jsonObj() -> [String: Any]? {
+        if let data = self.data(using: .utf8) {
+            return (try? JSONSerialization.jsonObject(with: data, options: .allowFragments)) as? [String : Any]
+        }
+        return nil
+    }
+    
     public func aicall_decodeBase64AndDeserialize() -> [String: Any]? {
         // Base64 Decode
         guard let decodedData = Data(base64Encoded: self, options: .ignoreUnknownCharacters) else {
@@ -17,7 +25,7 @@ extension String {
         
         // JSON Deserialize
         do {
-            let jsonObject = try JSONSerialization.jsonObject(with: decodedData, options: [])
+            let jsonObject = try JSONSerialization.jsonObject(with: decodedData, options: .allowFragments)
             if let jsonDictionary = jsonObject as? [String: Any] {
                 return jsonDictionary
             }

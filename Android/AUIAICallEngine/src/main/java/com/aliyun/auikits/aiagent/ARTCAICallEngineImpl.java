@@ -352,6 +352,39 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
                              */
                             String message = dataJson.optString("message");
                             notifyReceivedAgentCustomMessage(message);
+                        } else if (msgType == IMsgTypeDef.MSG_TYPE_AI_AGENT_HUMAN_WILL_TAKE_OVER_AGENT) {
+                            /**
+                             * human take over agent hosting will start soon
+                             * "data": {
+                             *     "takeoverUid": "human"   // 真人接管的uid
+                             *     "takeoverMode": 1//1:表示使用真人音色输出，0:表示使用智能体音色输出
+                             *   }
+                             */
+                            String remoteUserId = dataJson.optString("takeoverUid");
+                            int takeMode = dataJson.optInt("takeoverMode");
+                            //使用智能体音色输出，不需要订阅真人端
+                            if(!TextUtils.isEmpty(remoteUserId) && (takeMode == 0))
+                            {
+                                mCallbackHandler.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        mARTCAICallRtcWrapper.unSubscribeRemoteUser(remoteUserId);
+                                    }
+                                });
+                            }
+                            notifyHumanTakeOverWillStart(remoteUserId, takeMode);
+                        } else if (msgType == IMsgTypeDef.MSG_TYPE_AI_AGENT_HUMAN_CONNECT_TAKE_OVER_AGENT) {
+                            /**
+                             * human take over agent hosting connected
+                             * "data": {
+                             *     "takeoverUid": "human"   // 真人接管的uid
+                             *   }
+                             */
+                            String remoteUserId = dataJson.optString("takeoverUid");
+                            if(!TextUtils.isEmpty(remoteUserId))
+                            {
+                                notifyHumanTakeoverConnected(remoteUserId);
+                            }
                         } else if (msgType == IMsgTypeDef.MSG_TYPE_PUSH_TO_TALK_ENABLE_RESULT) {
                             boolean enable = dataJson.optBoolean("enable");
                             notifyPushToTalkEnableResult(enable);
@@ -368,6 +401,12 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
                     ex.printStackTrace();
                 }
             }
+        }
+
+        @Override
+        public void onAliRtcStats(AliRtcEngine.AliRtcStats aliRtcStats) {
+            super.onAliRtcStats(aliRtcStats);
+            Log.i(TAG, "onAliRtcStats: " + aliRtcStats);
         }
     };
 
@@ -427,6 +466,7 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
 
             ARTCAICallRtcWrapper.ARtcConfig rtcConfig = new ARTCAICallRtcWrapper.ARtcConfig();
             rtcConfig.enableAudioDump = mCallConfig.enableAudioDump;
+            rtcConfig.userSpecifiedAudioTips = mCallConfig.userSpecifiedAudioTips;
             rtcConfig.usePreEnv = mCallConfig.useRtcPreEnv;
             rtcConfig.enableRemoteVideo = mAgentType == ARTCAICallAgentType.AvatarAgent;
             rtcConfig.enableLocalVideo = mAgentType == ARTCAICallAgentType.VisionAgent;
@@ -692,8 +732,9 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
         if (isJoinedChannel()) {
             Logger.i("startToPushToTalk");
             switchMicrophone(true);
-            mARTCAICallRtcWrapper.publishLocalVideoStream(true);
-
+            if (mAgentType == ARTCAICallAgentType.VisionAgent) {
+                mARTCAICallRtcWrapper.publishLocalVideoStream(true);
+            }
             mARTCAICallService.startPushToTalk();
             return true;
         }
@@ -774,7 +815,7 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
     }
 
     protected IARTCAICallService generateAICallService(ARTCAICallConfig artcAiCallConfig) {
-        return new ARTCAICallServiceImpl(artcAiCallConfig.aiAgentRegion, artcAiCallConfig.appServerHost, artcAiCallConfig.loginUserId, artcAiCallConfig.loginAuthrization);
+        return new ARTCAICallServiceImpl(artcAiCallConfig);
     }
 
     private void setARTCAICallRobotState(ARTCAICallRobotState aRTCAICallRobotState) {
@@ -828,46 +869,42 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
     }
 
     private void notifyUserAsrSubtitle(String text, boolean isSentenceEnd, int sentenceId, int voicePrintFlag) {
-        if (!TextUtils.isEmpty(text)) {
-            mCallbackHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    if (null != mEngineCallback) {
-                        VoicePrintStatusCode voicePrintStatusCode = VoicePrintStatusCode.Unknown;
-                        switch (voicePrintFlag) {
-                            case 0:
-                                voicePrintStatusCode = VoicePrintStatusCode.Disable;
-                                break;
-                            case 1:
-                                voicePrintStatusCode = VoicePrintStatusCode.EnableWithoutRegister;
-                                break;
-                            case 2:
-                                voicePrintStatusCode = VoicePrintStatusCode.SpeakerRecognized;
-                                break;
-                            case 3:
-                                voicePrintStatusCode = VoicePrintStatusCode.SpeakerNotRecognized;
-                                break;
-                            default:
-                                break;
-                        }
-                        mEngineCallback.onUserAsrSubtitleNotify(text, isSentenceEnd, sentenceId, voicePrintStatusCode);
+        mCallbackHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                if (null != mEngineCallback) {
+                    VoicePrintStatusCode voicePrintStatusCode = VoicePrintStatusCode.Unknown;
+                    switch (voicePrintFlag) {
+                        case 0:
+                            voicePrintStatusCode = VoicePrintStatusCode.Disable;
+                            break;
+                        case 1:
+                            voicePrintStatusCode = VoicePrintStatusCode.EnableWithoutRegister;
+                            break;
+                        case 2:
+                            voicePrintStatusCode = VoicePrintStatusCode.SpeakerRecognized;
+                            break;
+                        case 3:
+                            voicePrintStatusCode = VoicePrintStatusCode.SpeakerNotRecognized;
+                            break;
+                        default:
+                            break;
                     }
+                    mEngineCallback.onUserAsrSubtitleNotify(text, isSentenceEnd, sentenceId, voicePrintStatusCode);
                 }
-            });
-        }
+            }
+        });
     }
 
     private void notifyRobotSubtitle(String text, boolean end, int userAsrSentenceId) {
-        if (!TextUtils.isEmpty(text)) {
-            mCallbackHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    if (null != mEngineCallback) {
-                        mEngineCallback.onAIAgentSubtitleNotify(text, end, userAsrSentenceId);
-                    }
+        mCallbackHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                if (null != mEngineCallback) {
+                    mEngineCallback.onAIAgentSubtitleNotify(text, end, userAsrSentenceId);
                 }
-            });
-        }
+            }
+        });
     }
 
     protected void notifyNetworkStatusChanged(String uid, AliRtcEngine.AliRtcNetworkQuality quality) {
@@ -1107,6 +1144,30 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
                 Logger.i("notifyReceivedAgentCustomMessage: " + data);
                 if (null != mEngineCallback) {
                     mEngineCallback.onReceivedAgentCustomMessage(data);
+                }
+            }
+        });
+    }
+
+    private void notifyHumanTakeOverWillStart(String takeoverUid, int takeMode) {
+        mCallbackHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                Logger.i("notifyHumanTakeOverWillStart: " + takeoverUid + ", mode: " + takeMode);
+                if (null != mEngineCallback) {
+                    mEngineCallback.onHumanTakeoverWillStart(takeoverUid, takeMode);
+                }
+            }
+        });
+    }
+
+    private void notifyHumanTakeoverConnected(String takeoverUid) {
+        mCallbackHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                Logger.i("notifyHumanTakeoverConnected: " + takeoverUid);
+                if (null != mEngineCallback) {
+                    mEngineCallback.onHumanTakeoverConnected(takeoverUid);
                 }
             }
         });

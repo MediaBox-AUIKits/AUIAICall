@@ -75,13 +75,8 @@ import ARTCAICallKit
         return icon
     }()
     
-    open lazy var voiceprintTipsLabel: UILabel = {
-        let label = UILabel()
-        label.textColor = AVTheme.text_weak
-        label.textAlignment = .center
-        label.font = AVTheme.regularFont(14)
-        label.text = AUIAICallBundle.getString("Detected speaking, but speaker could not be identified.")
-        label.isHidden = true
+    open lazy var voiceprintTipsLabel: AUIVoiceprintTipsView = {
+        let label = AUIVoiceprintTipsView()
         return label
     }()
 
@@ -113,6 +108,7 @@ import ARTCAICallKit
             view.isHidden = true
             self.insertSubview(view, at: 0)
             self.voiceAgentAniView = view
+            self.voiceprintTipsLabel.isSelected = false
         }
         else if agentType == .AvatarAgent {
             let view = UIView()
@@ -120,6 +116,7 @@ import ARTCAICallKit
             view.isHidden = true
             self.insertSubview(view, at: 0)
             self.avatarAgentView = view
+            self.voiceprintTipsLabel.isSelected = true
         }
         else if agentType == .VisionAgent {
             let cameraView = UIView()
@@ -134,6 +131,7 @@ import ARTCAICallKit
             agentView.isHidden = false
             self.visionCameraView?.addSubview(agentView)
             self.visionAgentView = agentView
+            self.voiceprintTipsLabel.isSelected = true
         }
         self.updateAgentLayout()
         
@@ -156,7 +154,7 @@ import ARTCAICallKit
             self.visionCameraView?.frame = self.bounds
             self.visionAgentView?.frame = CGRect(x: 0, y: UIView.av_safeTop + 44, width: self.av_width, height: hei - UIView.av_safeTop - 44)
         }
-        self.voiceprintTipsLabel.frame = CGRect(x: 0, y: tipsLabel.av_top - 22 - 10, width: self.av_width, height: 22)
+        self.voiceprintTipsLabel.layoutAt(frame: CGRect(x: 0, y: tipsLabel.av_top - 40 - 10, width: self.av_width, height: 40))
     }
     
     open func updateSubTitle(enable: Bool, isLLM: Bool, text: String, clear: Bool) {
@@ -332,4 +330,86 @@ import ARTCAICallKit
     @objc open func onClicked(recognizer: UIGestureRecognizer) {
         self.tappedAction?(self)
     }
+}
+
+
+@objcMembers open class AUIVoiceprintTipsView: UIView {
+    
+    public override init(frame: CGRect) {
+        super.init(frame: frame)
+        
+        self.addSubview(self.textLabel)
+        self.addSubview(self.clearBtn)
+        self.isHidden = true
+    }
+    
+    public required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    open func showTips() {
+        self.isHidden = false
+        NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(hideTips(_:)), object: nil)
+        self.perform(#selector(hideTips(_:)), with: nil, afterDelay: 8)
+    }
+    
+    open func hideTips() {
+        self.isHidden = true
+        NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(hideTips(_:)), object: nil)
+    }
+    
+    @objc func hideTips(_ myObject: Any?) {
+        self.isHidden = true
+    }
+    
+    open func layoutAt(frame: CGRect) {
+        self.textLabel.sizeToFit()
+        self.clearBtn.sizeToFit()
+        self.clearBtn.av_size = CGSize(width: self.clearBtn.av_width + 18, height: 18)
+
+        var width = self.textLabel.av_width + self.clearBtn.av_width + 24
+        if width > frame.width {
+            width = frame.width
+        }
+        self.textLabel.av_left = 8
+        self.textLabel.av_height = 40
+        self.clearBtn.av_left = self.textLabel.av_right + 8
+        self.clearBtn.av_centerY = 20
+        self.center = CGPoint(x: frame.midX, y: frame.midY)
+        self.av_size = CGSize(width: self.clearBtn.av_right + 8, height: 40)
+        self.layer.cornerRadius = 20
+        self.layer.masksToBounds = true
+    }
+    
+    open var isSelected = false {
+        didSet {
+            if self.isSelected {
+                self.backgroundColor = UIColor.av_color(withHexString: "#868686")
+            }
+            else {
+                self.backgroundColor = UIColor.clear
+            }
+        }
+    }
+    
+    open lazy var textLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = AVTheme.text_strong
+        label.font = AVTheme.regularFont(12)
+        label.text = AUIAICallBundle.getString("Detected other speaking, stop responded this question.")
+        label.numberOfLines = 0
+        return label
+    }()
+    
+    
+    open lazy var clearBtn: AVBlockButton = {
+        let btn = AVBlockButton()
+        btn.setTitle(AUIAICallBundle.getString("Restore"), for: .normal)
+        btn.setTitleColor(AVTheme.text_strong, for: .normal)
+        btn.setBorderColor(AVTheme.colourful_border_strong, for: .normal)
+        btn.titleLabel?.font = AVTheme.regularFont(10)
+        btn.layer.borderWidth = 1
+        btn.layer.cornerRadius = 9
+        return btn
+    }()
 }

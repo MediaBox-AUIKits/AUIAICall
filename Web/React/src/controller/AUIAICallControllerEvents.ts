@@ -51,6 +51,7 @@ interface AUIAICallControllerEvents {
 
   /**
    * 智能体即将结束通话
+   * @param reason 原因：2001(闲时退出) , 2002(真人接管结束)   0(其他)
    */
   AICallAgentWillLeave: (reason: number, message: string) => void;
 
@@ -60,6 +61,15 @@ interface AUIAICallControllerEvents {
   AICallReceivedAgentCustomMessage: (data: {
     [key: string]: string | number | boolean | object | null | undefined;
   }) => void;
+
+  /*
+   * 智能体转人工
+   */
+  AICallHumanTakeoverWillStart: (uid: string, takeoverMode: number) => void;
+  /**
+   * 智能体转人工成功
+   */
+  AICallHumanTakeoverConnected: (uid: string) => void;
 }
 
 export default AUIAICallControllerEvents;

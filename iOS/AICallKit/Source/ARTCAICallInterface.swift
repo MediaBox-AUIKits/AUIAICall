@@ -233,6 +233,16 @@ import UIKit
     case AvatarRoutesExhausted = -10202
     
     /**
+     * 发起通话，超出每天免费体验的额度
+     */
+    case AgentSubscriptionRequired = -10203
+    
+    /**
+     * 智能体未能找到（智能体ID不存在）
+     */
+    case AgentNotFound = -10204
+        
+    /**
      * 未知错误
      */
     case UnknowError = -40000
@@ -358,7 +368,7 @@ import UIKit
     
     /**
      * 当前智能体即将离开（结束当前通话）
-     * @param reason 原因：2001(闲时退出)  0(其他)
+     * @param reason 原因：2001(闲时退出) , 2002(真人接管结束)   0(其他)
      * @param message 描述原因
      */
     @objc optional func onAgentWillLeave(reason: Int32, message: String)
@@ -368,6 +378,19 @@ import UIKit
      * @param data 消息内容
      */
     @objc optional func onReceivedAgentCustomMessage(data: [String: Any]?)
+    
+    /**
+     * 当真人即将接管当前智能体
+     * @param takeoverUid 真人uid
+     * @param takeoverMode 1：表示使用真人音色输出；0：表示使用智能体音色输出
+     */
+    @objc optional func onHumanTakeoverWillStart(takeoverUid: String, takeoverMode: Int)
+    
+    /**
+     * 当真人接管已经接通
+     * @param takeoverUid 真人uid
+     */
+    @objc optional func onHumanTakeoverConnected(takeoverUid: String)
 }
 
 
@@ -422,14 +445,20 @@ import UIKit
     public let expireTime: Date?
     
     /**
-     * 模板配置（Json字符串）
-     */
-    public let templateConfig: String?
-    
-    /**
      * 服务所在区域
      */
     public let region: String?
+    
+    /**
+     * 模板配置（Json字符串）
+     */
+    public var templateConfig: String? = nil
+    
+    /**
+     * 用户自定义信息，该信息最终传给智能体
+     */
+    public var userData: [String: Any]? = nil
+
 }
 
 /**
@@ -519,24 +548,34 @@ import UIKit
     public let viewMode: ARTCAICallAgentViewMode
     
     /**
-     * 分辨率
+     * 推流分辨率
      */
     public let dimensions: CGSize
     
     /**
-     * 帧率
+     * 推流帧率
      */
     public let frameRate: Int
     
     /**
-     * 帧率
+     * 推流码率
      */
     public let bitrate: Int
     
     /**
-     * 关键帧间隔（毫秒）
+     * 推流关键帧间隔（毫秒）
      */
     public let keyFrameInterval: Int
+    
+    /**
+     * 是否使用高清预览，否则SDK根据推流分辨率自动调整
+     */
+    public var useHighQualityPreview: Bool = true
+    
+    /**
+     * 预览分辨率
+     */
+    public let cameraCaptureFrameRate: Int = 15
 }
 
 /**

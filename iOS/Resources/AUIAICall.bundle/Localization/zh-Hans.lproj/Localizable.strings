@@ -36,6 +36,8 @@
 "Call Failed, The Third Party Service of ASR Failed to Start" = "第三方ASR服务不可用";
 "Call Failed, Avatar Agent Service Failed to Start" = "数字人服务不可用";
 "Call Failed, Unknow Error" = "通话失败，发生未知错误";
+"Call Failed, Subscription Required" = "接通失败，请检查您账号是否正确订购套餐";
+"Call Failed, Agent Not Found" = "接通失败，请检查智能体ID是否正确";
 "You Talk, I'm Listening..." = "你说，我在听";
 "Thinking..." = "思考中...";
 "I'm Replying, Tap Screen or Speak to Interrupt Me" = "我正在回复中，可以轻触屏幕或说话打断我";
@@ -98,9 +100,13 @@
 "Failed to switch voiceprint" = "操作失败了";
 "Voiceprint is turned on" = "声纹识别已开启";
 "Voiceprint is turned off" = "声纹识别已关闭";
-"Detected speaking, but speaker could not be identified." = "检测到有人讲话，未识别到主讲人";
+"Detected other speaking, stop responded this question." = "（声纹）识别到不是常用对话人，暂未响应您的问题";
 "Failed to clear voiceprint's data." = "删除声纹数据失！";
 "Detected speaking" = "声纹已识别";
 "Remove Voiceprint" = "删除声纹";
 "Due to your prolonged inactivity, the call has ended." = "由于你长时间未进行通话，该通话已经结束";
 "The call has ended." = "通话已经结束";
+"Restore" = "恢复";
+
+"The current call will soon be handled by a real person." = "当前通话即将被真人接管";
+"The current call is now being handled by a real person." = "当前通话已经被真人接管";

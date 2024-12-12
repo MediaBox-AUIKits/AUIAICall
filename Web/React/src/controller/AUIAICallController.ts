@@ -1,5 +1,6 @@
 import EventEmitter from 'eventemitter3';
 import {
+  AICallAgentError,
   AICallAgentInfo,
   AICallAgentShareConfig,
   AICallAgentState,
@@ -11,7 +12,7 @@ import {
 import ARTCAICallEngine from 'aliyun-auikit-aicall';
 import AUIAICallConfig from './AUIAICallConfig';
 import AUIAICallControllerEvents from './AUIAICallControllerEvents';
-import { ServiceAuthError } from './service/interface';
+import logger from '@/common/logger';
 
 export default abstract class AUIAICallController extends EventEmitter<AUIAICallControllerEvents> {
   protected _userId: string;
@@ -73,9 +74,14 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
     return this._shareConfig;
   }
   public set shareConfig(shareToken: string) {
-    this._shareConfig = ARTCAICallEngine.parseShareAgentCall(shareToken);
-    if (this._shareConfig.agentType !== undefined) {
-      this.config.agentType = this._shareConfig.agentType;
+    logger.info('Controller', 'SetShareConfig', { shareToken });
+    try {
+      this._shareConfig = ARTCAICallEngine.parseShareAgentCall(shareToken);
+      if (this._shareConfig.agentType !== undefined) {
+        this.config.agentType = this._shareConfig.agentType;
+      }
+    } catch (error) {
+      logger.error('ParseShareAgentCallFailed', error as Error);
     }
   }
 
@@ -87,14 +93,17 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
    * 检查麦克风
    */
   async checkMicrophone() {
+    logger.info('Controller', 'CheckMicrophone');
     try {
       const microphoneList = await ARTCAICallEngine.getMicrophoneList();
       if (microphoneList?.length === 0) {
-        throw new Error('no microphone');
+        const error = new AICallAgentError('no microphone available', AICallErrorCode.LocalDeviceException);
+        throw error;
       }
     } catch (error) {
       this.state = AICallState.Error;
       this._errorCode = AICallErrorCode.LocalDeviceException;
+      logger.error('LocalDeviceException', error as Error);
       throw error;
     }
   }
@@ -102,6 +111,7 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
   abstract startAIAgent(): Promise<AICallAgentInfo>;
 
   async start(): Promise<void> {
+    logger.info('Controller', 'Start');
     if (this.state === AICallState.Connected || this.state === AICallState.Connecting) return;
     this.state = AICallState.Connecting;
 
@@ -110,19 +120,23 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
     this._currentEngine = new ARTCAICallEngine();
     let instanceInfo: AICallAgentInfo | undefined;
     try {
-      // 此处的 userId 应该从 AppServer 获取
+      const startTs = Date.now();
       instanceInfo = await this.startAIAgent();
-      if (!instanceInfo) {
-        this._errorCode = AICallErrorCode.BeginCallFailed;
-        throw new Error();
-      }
+      logger.setParams({
+        instanceId: instanceInfo.instanceId,
+        agentType: instanceInfo.agentType,
+        channelId: instanceInfo.channelId,
+        userId: instanceInfo.userId,
+        reqId: instanceInfo.reqId || '-',
+      });
+      logger.info('Controller', 'StartAIAgentSuccess', { value: Date.now() - startTs });
     } catch (error: unknown) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      this._errorCode = (error as any).code || AICallErrorCode.BeginCallFailed;
-      if (error instanceof ServiceAuthError) {
+      this._errorCode = (error as AICallAgentError).code || AICallErrorCode.BeginCallFailed;
+      if ((error as AICallAgentError).name === 'ServiceAuthError') {
         this.emit('AICallUserTokenExpired');
       }
       this.state = AICallState.Error;
+      logger.error('StartAIAgentFailed', error as Error);
       throw error;
     }
 
@@ -133,6 +147,7 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
       this._errorCode = errorCode;
       this.state = AICallState.Error;
       this.engine?.handup();
+      logger.error('AICallErrorOccurred', new Error(`code: ${errorCode}`));
     });
 
     // Agent 状态相关
@@ -181,6 +196,13 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
       this.emit('AICallAgentAudioSubscribed', audioElement);
     });
 
+    this._currentEngine.on('humanTakeoverWillStart', (uid: string, mode: number) => {
+      this.emit('AICallHumanTakeoverWillStart', uid, mode);
+    });
+    this._currentEngine.on('humanTakeoverConnected', (uid: string) => {
+      this.emit('AICallHumanTakeoverConnected', uid);
+    });
+
     try {
       await this.engine?.call(this.userId, instanceInfo, {
         muteMicrophone: this._config.muteMicrophone,
@@ -203,13 +225,14 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
 
       // @ts-expect-error state may change
       if (this.state === AICallState.Over) {
-        throw new Error();
+        throw new AICallAgentError('call has been over');
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       this._errorCode = error.errorCode || AICallErrorCode.BeginCallFailed;
       this.state = AICallState.Error;
       this.handup();
+      logger.error('StartCallFailed', error);
       throw error;
     }
 
@@ -220,6 +243,7 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
   abstract stopAIAgent(instanceId: string): Promise<void>;
 
   async handup(): Promise<void> {
+    logger.info('Controller', 'Handup');
     const agent = this.engine?.agentInfo;
     this.state = AICallState.Over;
     await this.engine?.handup();
@@ -233,6 +257,7 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
    * @param view Video标签或 id
    */
   setAgentView(view: HTMLVideoElement | string): void {
+    logger.info('Controller', 'SetAgentView', { view: typeof view === 'string' ? `#${view}` : view.nodeType });
     this._config.agentView = view;
     this.engine?.setAgentView(view);
   }
@@ -241,6 +266,7 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
    * 主动打断讲话
    */
   async interruptSpeaking(): Promise<void> {
+    logger.info('Controller', 'InterruptSpeaking');
     if (this.state === AICallState.Connected) {
       this.engine?.interruptSpeaking();
     }
@@ -268,6 +294,7 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
    * @param off 是否关闭
    */
   muteMicrophone(mute: boolean): boolean {
+    logger.info('Controller', 'MuteMicrophone', { mute: mute ? 'off' : 'on' });
     if (this.state === AICallState.Connected) {
       this.engine?.mute(mute);
       return true;
@@ -276,6 +303,7 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
   }
 
   switchMicrophone(deviceId: string): boolean {
+    logger.info('Controller', 'SwitchMicrophone', { deviceId });
     if (this.state === AICallState.Connected) {
       this.engine?.switchMicrophone(deviceId);
       return true;
@@ -284,6 +312,7 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
   }
 
   muteCamera(mute: boolean): boolean {
+    logger.info('Controller', 'MuteCamera', { mute: mute ? 'off' : 'on' });
     if (this.config.agentType === AICallAgentType.VisionAgent && this.state === AICallState.Connected) {
       this.engine?.muteLocalCamera(mute);
       return true;
@@ -292,6 +321,7 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
   }
 
   switchCamera(deviceId?: string): boolean {
+    logger.info('Controller', 'SwitchCamera', { deviceId: deviceId || '-' });
     if (this.config.agentType === AICallAgentType.VisionAgent && this.state === AICallState.Connected) {
       this.engine?.switchCamera(deviceId);
       return true;
@@ -300,6 +330,9 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
   }
 
   startPreview(elementOrId: string | HTMLVideoElement) {
+    logger.info('Controller', 'StartPreview', {
+      elementOrId: typeof elementOrId === 'string' ? `#${elementOrId}` : elementOrId.nodeType,
+    });
     this.config.previewView = elementOrId;
     this.engine?.startPreview(elementOrId);
   }
@@ -312,6 +345,7 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
    * 开启/关闭对讲机模式，对讲机模式下，只有在finishPushToTalk被调用后，智能体才会播报结果
    */
   async enablePushToTalk(enable: boolean): Promise<boolean> {
+    logger.info('Controller', 'EnablePushToTalk', { enable: enable ? 'on' : 'off' });
     if (this.state === AICallState.Connected) {
       return this.engine?.enablePushToTalk(enable) || false;
     }
@@ -322,6 +356,7 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
    * 开始讲话
    */
   startPushToTalk(): boolean {
+    logger.info('Controller', 'StartPushToTalk');
     if (this.state === AICallState.Connected) {
       return this.engine?.startPushToTalk() || false;
     }
@@ -332,6 +367,7 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
    * 结束讲话
    */
   finishPushToTalk(): boolean {
+    logger.info('Controller', 'FinishPushToTalk');
     if (this.state === AICallState.Connected) {
       return this.engine?.finishPushToTalk() || false;
     }
@@ -342,6 +378,7 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
    * 取消这次讲话
    */
   cancelPushToTalk(): boolean {
+    logger.info('Controller', 'CancelPushToTalk');
     if (this.state === AICallState.Connected) {
       return this.engine?.cancelPushToTalk() || false;
     }
@@ -352,6 +389,7 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
    * 销毁引擎
    */
   destory() {
+    logger.info('Controller', 'Destory');
     this._currentEngine?.destory();
     this._currentEngine?.removeAllListeners();
     this.removeAllListeners();

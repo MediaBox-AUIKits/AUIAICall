@@ -39,7 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AICallSettingDialog {
-    private static final boolean IS_VOICE_PRINT_FUNCTION_SHOWN = BuildConfig.TEST_ENV_MODE;
+    private static final boolean IS_VOICE_PRINT_FUNCTION_SHOWN = true;
 
     CardListAdapter mCardListAdapter;
     AudioToneContentModel mAudioToneContentModel;

@@ -88,6 +88,7 @@ import ARTCAICallKit
     
     public let controller: AUIAICallControllerInterface
     public var enableVoiceIdSwitch: Bool = true
+    public var enableVoiceprintSwitch: Bool = true
     
     open lazy var titleLabel: UILabel = {
         let label = UILabel()
@@ -103,6 +104,15 @@ import ARTCAICallKit
     
     open lazy var callContentView: AUIAICallContentView = {
         let view = AUIAICallContentView()
+        view.voiceprintTipsLabel.clearBtn.clickBlock = { [weak self] btn in
+            guard let self = self else { return }
+            if self.controller.clearVoiceprint() == true {
+                self.callContentView.voiceprintTipsLabel.hideTips()
+            }
+            else {
+                AVToastView.show(AUIAICallBundle.getString("Failed to clear voiceprint's data"), view: self.view, position: .mid)
+            }
+        }
         self.view.addSubview(view)
         return view
     }()
@@ -232,7 +242,6 @@ import ARTCAICallKit
                 currAgentPrintedText.append(self.currAgentSpeakingTokens[i])
             }
             self.callContentView.updateSubTitle(enable: true, isLLM: true, text: currAgentPrintedText, clear: false)
-            self.callContentView.voiceprintTipsLabel.isHidden = true
             self.self.nextAgentSpeakingTokenIndex += 1
         }
     }
@@ -279,6 +288,7 @@ extension AUIAICallViewController {
         }
         let panel = AUIAICallSettingPanel(frame: CGRect(x: 0, y: 0, width: self.view.av_width, height: 0))
         panel.enableVoiceIdSwitch = self.enableVoiceIdSwitch
+        panel.enableVoiceprintSwitch = self.enableVoiceprintSwitch
         panel.config = self.controller.config
         panel.isVoiceprintRegisted = self.controller.isVoiceprintRegisted
         panel.applyPlayBlock = { [weak self] item in
@@ -366,7 +376,9 @@ extension AUIAICallViewController: AUIAICallControllerDelegate {
             self.controller.setAgentView(view: self.callContentView.avatarAgentView, mode: .Auto)
         }
         else if self.controller.config.agentType == .VisionAgent {
-            let visionConfig = ARTCAICallVisionConfig(preview: self.callContentView.visionCameraView, viewMode: .Auto)
+            // 这里frameRate设置为5，需要根据控制台上的智能体的抽帧帧率（一般为2）进行调整，最大不建议超过15fps
+            // bitrate: frameRate超过10可以设置为512
+            let visionConfig = ARTCAICallVisionConfig(preview: self.callContentView.visionCameraView, viewMode: .Auto, frameRate: 5, bitrate: 340)
             self.controller.currentEngine.visionConfig = visionConfig
         }
         self.updateTitle()
@@ -458,6 +470,12 @@ extension AUIAICallViewController: AUIAICallControllerDelegate {
             case .AvatarRoutesExhausted:
                 msg = AUIAICallBundle.getString("Call Ended")
                 break
+            case .AgentSubscriptionRequired:
+                msg = AUIAICallBundle.getString("Call Failed, Subscription Required")
+                break
+            case .AgentNotFound:
+                msg = AUIAICallBundle.getString("Call Failed, Agent Not Found")
+                break
             case .UnknowError:
                 msg = AUIAICallBundle.getString("Call Failed, Unknow Error")
                 break
@@ -545,10 +563,7 @@ extension AUIAICallViewController: AUIAICallControllerDelegate {
 #endif
         self.callContentView.updateSubTitle(enable: true, isLLM: false, text: text, clear: false)
         if isSentenceEnd && voiceprintResult == .UndetectedSpeaker {
-            self.callContentView.voiceprintTipsLabel.isHidden = false
-        }
-        else {
-            self.callContentView.voiceprintTipsLabel.isHidden = true
+            self.callContentView.voiceprintTipsLabel.showTips()
         }
     }
     
@@ -583,6 +598,14 @@ extension AUIAICallViewController: AUIAICallControllerDelegate {
             }
             AVToastView.show(toast, view: keyWindow, position: .mid)
         }
+    }
+    
+    public func onAICallHumanTakeoverWillStart(takeoverUid: String, takeoverMode: Int) {
+        AVToastView.show(AUIAICallBundle.getString("The current call will soon be handled by a real person."), view: self.view, position: .mid)
+    }
+    
+    public func onAICallHumanTakeoverConnected(takeoverUid: String) {
+        AVToastView.show(AUIAICallBundle.getString("The current call is now being handled by a real person."), view: self.view, position: .mid)
     }
 }
 

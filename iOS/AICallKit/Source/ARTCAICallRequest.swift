@@ -93,6 +93,7 @@ import UIKit
     }
 }
 
+let ARTCAICallShareServerDomain = "ShareServer域名"
 extension ARTCAICallRequest {
-    static let defaultRequest = ARTCAICallRequest(serverDomain: "https://ice-smart-aiagent-fcapp.aliyun-inc.com")
+    static let defaultRequest = ARTCAICallRequest(serverDomain: ARTCAICallShareServerDomain)
 }

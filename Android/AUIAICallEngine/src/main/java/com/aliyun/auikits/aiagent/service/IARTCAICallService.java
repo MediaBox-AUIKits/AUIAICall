@@ -12,6 +12,19 @@ public interface IARTCAICallService extends IARTCAICallIMCallback {
     String AI_AGENT_TYPE_VOICE = "VoiceChat";
     String AI_AGENT_TYPE_VISION = "VisionChat";
 
+    /**
+     * 业务自定义错误
+     */
+    int ERROR_CODE_CUSTOM_BUSINESS_ERROR = -1;
+    /**
+     * 业务未知错误
+     */
+    int ERROR_CODE_UNKNOWN_BUSINESS_ERROR = -2;
+    /**
+     * 网络错误
+     */
+    int ERROR_CODE_NETWORK_ERROR = -3;
+
     interface IARTCAICallServiceCallback {
         void onSuccess(JSONObject jsonObject);
         void onFail(int errorCode, String errorMsg);

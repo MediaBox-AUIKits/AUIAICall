@@ -1,7 +1,7 @@
 {
   "name": "amaui-web-aicall",
   "private": true,
-  "version": "1.6.0",
+  "version": "1.7.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -18,9 +18,10 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "zustand": "^4.5.5",
-    "aliyun-auikit-aicall": "^1.4.0"
+    "aliyun-auikit-aicall": "^1.5.2"
   },
   "devDependencies": {
+    "@arms/rum-browser": "^0.0.33",
     "@eslint/js": "^9.8.0",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
@@ -36,6 +37,7 @@
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.0",
     "vite": "^5.4.0",
+    "vite-plugin-css-injected-by-js": "^3.5.2",
     "vite-plugin-dts": "^4.2.2",
     "vite-plugin-svgr": "^4.2.0",
     "yargs-parser": "^21.1.1"

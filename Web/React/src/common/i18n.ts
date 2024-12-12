@@ -42,9 +42,14 @@ const i18n = {
   'error.agentASRFailed': '第三方ASR服务不可用',
   'error.avatarServiceFailed': '数字人服务不可用',
   'error.avatarRoutesExhausted': '数字人通话火爆，请稍后尝试或先享AI音频通话新体验。',
+  'error.subscriptionRequired': '接通失败，请检查您账号是否正确订购套餐',
+  'error.agentNotFound': '接通失败，请检查智能体ID是否正确',
   'error.unknown': '通话失败，发生未知错误',
 
   'avatar.timeLimit': '通话结束，数字人通话仅可以体验5分钟。',
+
+  'humanTakeover.willStart': '当前通话即将被真人接管',
+  'humanTakeover.connected': '当前通话已经被真人接管',
 };
 
 const ErrorCodeMessageMap: { [key: number]: string } = {
@@ -58,6 +63,8 @@ const ErrorCodeMessageMap: { [key: number]: string } = {
   [AICallErrorCode.AvatarServiceFailed]: i18n['error.avatarServiceFailed'],
   [AICallErrorCode.AvatarRoutesExhausted]: i18n['error.avatarRoutesExhausted'],
   [AICallErrorCode.TokenExpired]: i18n['error.tokenExpired'],
+  [AICallErrorCode.AgentSubscriptionRequired]: i18n['error.subscriptionRequired'],
+  [AICallErrorCode.AgentNotFound]: i18n['error.agentNotFound'],
 };
 
 export const getErrorMessage = (errorCode?: number) => {

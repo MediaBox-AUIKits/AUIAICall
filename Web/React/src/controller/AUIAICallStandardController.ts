@@ -1,9 +1,10 @@
-import { AICallAgentInfo, AICallAgentType, AICallState } from 'aliyun-auikit-aicall';
+import { AICallAgentError, AICallAgentInfo, AICallAgentType, AICallState } from 'aliyun-auikit-aicall';
 import AUIAICallController from './AUIAICallController';
 
 import standardService from './service/standard';
 import AUIAICallConfig from './AUIAICallConfig';
 import { APP_SERVER } from './service/interface';
+import logger from '@/common/logger';
 
 class AUIAICallStandardController extends AUIAICallController {
   constructor(userId: string, token: string, config?: AUIAICallConfig) {
@@ -15,11 +16,28 @@ class AUIAICallStandardController extends AUIAICallController {
   }
 
   async startAIAgent(): Promise<AICallAgentInfo> {
-    let agentInfo: AICallAgentInfo;
-    if (this.shareConfig) {
-      agentInfo = await this.engine?.generateShareAgentCall(this.shareConfig, this.userId);
-    } else {
-      agentInfo = await standardService.generateAIAgent(this.userId, this.token, this.config);
+    logger.info('StandardController', 'StartAIAgent');
+    let agentInfo: AICallAgentInfo | null = null;
+
+    try {
+      if (this.shareConfig) {
+        logger.info('StandardController', 'StartAIAgent', {
+          config: JSON.stringify(this.shareConfig),
+        });
+
+        agentInfo = await this.engine?.generateShareAgentCall(this.shareConfig, this.userId);
+      } else {
+        agentInfo = await standardService.generateAIAgent(this.userId, this.token, this.config);
+      }
+    } catch (error) {
+      logger.error('GenerateAIAgentFailed', error as Error);
+      throw error;
+    }
+
+    if (!agentInfo) {
+      const error = new AICallAgentError('generate ai agent failed');
+      logger.error('NoAIAgent', error);
+      throw error;
     }
 
     try {
@@ -32,6 +50,7 @@ class AUIAICallStandardController extends AUIAICallController {
         }
       }
     } catch (error) {
+      logger.error('DescribeAIAgentFailed', error as Error);
       console.log(error);
     }
 
@@ -39,6 +58,7 @@ class AUIAICallStandardController extends AUIAICallController {
   }
 
   async stopAIAgent(): Promise<void> {
+    logger.info('StandardController', 'StopAIAgent');
     this.engine?.stopAgent();
     await new Promise((resolve) => {
       setTimeout(() => {
@@ -48,6 +68,7 @@ class AUIAICallStandardController extends AUIAICallController {
   }
 
   async enableVoiceInterrupt(enable: boolean): Promise<boolean> {
+    logger.info('StandardController', 'EnableVoiceInterrupt', { enable });
     if (this.state === AICallState.Connected) {
       this.engine?.enableVoiceInterrupt(enable);
     }
@@ -55,6 +76,7 @@ class AUIAICallStandardController extends AUIAICallController {
   }
 
   async switchVoiceId(voiceId: string): Promise<boolean> {
+    logger.info('StandardController', 'SwitchVoiceId', { voiceId });
     if (this.state === AICallState.Connected) {
       this.engine?.switchVoiceId(voiceId);
     }
@@ -62,6 +84,7 @@ class AUIAICallStandardController extends AUIAICallController {
   }
 
   async requestRTCToken(): Promise<string> {
+    logger.info('StandardController', 'RequestRTCToken');
     if (this.state === AICallState.Connected) {
       this.engine?.requestRTCToken();
 
@@ -76,6 +99,7 @@ class AUIAICallStandardController extends AUIAICallController {
   }
 
   destory() {
+    logger.info('StandardController', 'Destory');
     super.destory();
     this.appServer = APP_SERVER;
   }

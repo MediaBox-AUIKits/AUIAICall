@@ -27,7 +27,7 @@ import okhttp3.ResponseBody;
 
 public class ARTCAICallServiceImpl implements IARTCAICallService {
     // 内置appServer
-    private static final String DEFAULT_HOST = "https://ice-smart-aiagent-fcapp.aliyun-inc.com";
+    private static final String DEFAULT_HOST = "https://ice-smart-aiagent-fcapp-appserver.aliyuncs.com";
 
     protected IARTCAICallIMService mAiCallIMService = null;
     private AppServerService mAppServerService = null;
@@ -35,12 +35,14 @@ public class ARTCAICallServiceImpl implements IARTCAICallService {
     protected String mAiAgentRegion = null;
     protected String mLoginUserId;
     protected String mLoginAuthorization;
+    protected String mUserData;
 
-    public ARTCAICallServiceImpl(String aiAgentRegion, String appServerHost, String loginUserId, String loginAuthorization) {
-        mAiAgentRegion = aiAgentRegion;
-        mAppServerService = new AppServerService(appServerHost);
-        mLoginUserId = loginUserId;
-        mLoginAuthorization = loginAuthorization;
+    public ARTCAICallServiceImpl(ARTCAICallEngine.ARTCAICallConfig artcAiCallConfig) {
+        mAiAgentRegion = artcAiCallConfig.aiAgentRegion;
+        mAppServerService = new AppServerService(artcAiCallConfig.appServerHost);
+        mLoginUserId = artcAiCallConfig.loginUserId;
+        mLoginAuthorization = artcAiCallConfig.loginAuthrization;
+        mUserData = artcAiCallConfig.userExtendData;
     }
 
     private String agentTypeId(ARTCAICallEngine.ARTCAICallAgentType aiAgentType) {
@@ -89,6 +91,9 @@ public class ARTCAICallServiceImpl implements IARTCAICallService {
             if (!TextUtils.isEmpty(mAiAgentRegion)) {
                 jsonObject.put("region", mAiAgentRegion);
             }
+            if (!TextUtils.isEmpty(mUserData)) {
+                jsonObject.put("user_data", mUserData);
+            }
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -121,6 +126,9 @@ public class ARTCAICallServiceImpl implements IARTCAICallService {
             if (!TextUtils.isEmpty(mAiAgentRegion)) {
                 jsonObject.put("region", mAiAgentRegion);
             }
+            if (!TextUtils.isEmpty(mUserData)) {
+                jsonObject.put("user_data", mUserData);
+            }
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -145,6 +153,9 @@ public class ARTCAICallServiceImpl implements IARTCAICallService {
                             null != artcaiCallConfig ? artcaiCallConfig.loginUserId : null)
             );
             jsonObject.put("user_id", mLoginUserId);
+            if (!TextUtils.isEmpty(mUserData)) {
+                jsonObject.put("user_data", mUserData);
+            }
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -408,7 +419,7 @@ public class ARTCAICallServiceImpl implements IARTCAICallService {
                 @Override
                 public void onFailure(@NonNull Call call, @NonNull IOException e) {
                     if (null != callback) {
-                        callback.onFail(-1, e.getMessage());
+                        callback.onFail(ERROR_CODE_NETWORK_ERROR, e.getMessage());
                     }
                 }
 
@@ -433,17 +444,17 @@ public class ARTCAICallServiceImpl implements IARTCAICallService {
                                 }
                             } else {
                                 if (null != callback) {
-                                    callback.onFail(-1, "[bizResponseCode: " + bizResponseCode + "]");
+                                    callback.onFail(ERROR_CODE_CUSTOM_BUSINESS_ERROR, bodyString);
                                 }
                             }
                         } else {
                             if (null != callback) {
-                                callback.onFail(-1, "[code: " + response.code() + ", msg: " + response.message() + ", body: " + bodyString + "]");
+                                callback.onFail(ERROR_CODE_UNKNOWN_BUSINESS_ERROR, bodyString);
                             }
                         }
                     } else {
                         if (null != callback) {
-                            callback.onFail(-1, "[code: " + response.code() + ", msg: " + response.message() + ", body: " + bodyString + "]");
+                            callback.onFail(response.code(), "[msg: " + response.message() + ", body: " + bodyString + "]");
                         }
                     }
                 }

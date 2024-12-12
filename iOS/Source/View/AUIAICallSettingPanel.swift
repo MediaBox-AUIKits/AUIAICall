@@ -29,8 +29,6 @@ public typealias AUIAICallSettingDefaultBlock = (_ sender: AUIAICallSettingPanel
         self.collectionHeaderView.addSubview(self.interruptSwitch)
         self.collectionHeaderView.addSubview(self.voiceprintSettingView)
         self.collectionHeaderView.addSubview(self.voiceIdSwitch)
-        
-        self.voiceIdSwitch.isHidden = !self.enableVoiceIdSwitch
     }
     
     open override func layoutSubviews() {
@@ -53,7 +51,11 @@ public typealias AUIAICallSettingDefaultBlock = (_ sender: AUIAICallSettingPanel
         }
     }
     
-    public static var enableVoiceprintSwitch: Bool = false
+    public var enableVoiceprintSwitch: Bool = true {
+        didSet {
+            self.voiceprintSettingView.isHidden = !self.enableVoiceprintSwitch
+        }
+    }
     
     
     public var isVoiceprintRegisted: Bool = true {
@@ -134,7 +136,6 @@ public typealias AUIAICallSettingDefaultBlock = (_ sender: AUIAICallSettingPanel
                 self.clearVoiceprintBlock?(self)
             }
         }
-        view.isHidden = !AUIAICallSettingPanel.enableVoiceprintSwitch
         return view
     }()
     

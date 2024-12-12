@@ -27,6 +27,7 @@ import com.acker.simplezxing.activity.CaptureActivity;
 import com.alibaba.android.arouter.facade.annotation.Route;
 import com.aliyun.auikits.aiagent.ARTCAICallEngine;
 import com.aliyun.auikits.aiagent.util.ARTCAIAgentUtil;
+import com.aliyun.auikits.aicall.controller.ARTCAICallController;
 import com.aliyun.auikits.aicall.util.PermissionUtils;
 import com.aliyun.auikits.aicall.util.SettingStorage;
 import com.aliyun.auikits.aicall.util.ToastHelper;
@@ -124,24 +125,18 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
     }
 
     private void jumpToInCallActivity() {
-        boolean canJump = true;
-        Intent intent = new Intent(AUIAICallEntranceActivity.this, AUIAICallInCallActivity.class);
-        intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_LOGIN_USER_ID, mLoginUserId);
-        intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_LOGIN_AUTHORIZATION, mLoginAuthorization);
         if (mLayoutHolder.isOfficial()) {
+            Intent intent = new Intent(AUIAICallEntranceActivity.this, AUIAICallInCallActivity.class);
+            intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_LOGIN_USER_ID, mLoginUserId);
+            intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_LOGIN_AUTHORIZATION, mLoginAuthorization);
             intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_AI_AGENT_TYPE, mLayoutHolder.getOfficialLayerHolder().getAICallAgentType());
+            startActivity(intent);
         } else {
             if (System.currentTimeMillis() <= mLayoutHolder.getCustomLayerHolder().getExpireTimestamp()) {
-                intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_AI_AGENT_TYPE, mLayoutHolder.getCustomLayerHolder().getExperienceTokenCallType());
-                intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_AI_AGENT_ID, mLayoutHolder.getCustomLayerHolder().getAiAgentId());
-                intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_AI_AGENT_REGION, mLayoutHolder.getCustomLayerHolder().getExperienceRegion());
+                ARTCAICallController.launchCallActivity(this, mLayoutHolder.getCustomLayerHolder().getExperienceToken(), mLoginUserId, mLoginAuthorization);
             } else {
-                canJump = false;
                 ToastHelper.showToast(AUIAICallEntranceActivity.this, R.string.token_expired_tips, Toast.LENGTH_SHORT);
             }
-        }
-        if (canJump) {
-            startActivity(intent);
         }
     }
 
@@ -156,12 +151,14 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
 
         ((EditText)view.findViewById(R.id.et_robot_id)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_ROBOT_ID));
         ((Switch)view.findViewById(R.id.sv_deposit)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_DEPOSIT_SWITCH, SettingStorage.DEFAULT_DEPOSIT_SWITCH));
-        ((Switch)view.findViewById(R.id.sv_audio_dump_tip)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_AUDIO_DUMP_SWITCH));
+        ((Switch)view.findViewById(R.id.sv_audio_dump)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_AUDIO_DUMP_SWITCH));
+        ((Switch)view.findViewById(R.id.sv_audio_tip)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_AUDIO_TIPS_SWITCH));
         ((Switch)view.findViewById(R.id.sv_server_type)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_APP_SERVER_TYPE, SettingStorage.DEFAULT_APP_SERVER_TYPE));
         ((Switch)view.findViewById(R.id.sv_use_rtc_pre_env)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_USE_RTC_PRE_ENV_SWITCH, SettingStorage.DEFAULT_USE_RTC_PRE_ENV));
         ((Switch)view.findViewById(R.id.sv_boot_push_to_talk)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_PUSH_TO_TALK, SettingStorage.DEFAULT_ENABLE_PUSH_TO_TALK));
         ((Switch)view.findViewById(R.id.sv_boot_use_voice_print)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_VOICE_PRINT, SettingStorage.DEFAULT_ENABLE_VOICE_PRINT));
         ((Switch)view.findViewById(R.id.sv_share_boot_use_demo_app_server)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_SHARE_BOOT_USE_DEMO_APP_SERVER, SettingStorage.DEFAULT_SHARE_BOOT_USE_DEMO_APP_SERVER));
+        ((EditText)view.findViewById(R.id.et_boot_user_data)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_USER_EXTEND_DATA));
 
         if (!showExtraDebugConfig) {
             view.findViewById(R.id.ll_audio_dump).setVisibility(View.GONE);
@@ -179,8 +176,11 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
                         String robotId = ((EditText)findViewById(R.id.et_robot_id)).getText().toString();
                         SettingStorage.getInstance().set(SettingStorage.KEY_ROBOT_ID, robotId);
 
-                        boolean isAudioDumpEnable = ((Switch)view.findViewById(R.id.sv_audio_dump_tip)).isChecked();
+                        boolean isAudioDumpEnable = ((Switch)view.findViewById(R.id.sv_audio_dump)).isChecked();
                         SettingStorage.getInstance().setBoolean(SettingStorage.KEY_AUDIO_DUMP_SWITCH, isAudioDumpEnable);
+
+                        boolean isAudioTipsEnable = ((Switch)view.findViewById(R.id.sv_audio_tip)).isChecked();
+                        SettingStorage.getInstance().setBoolean(SettingStorage.KEY_AUDIO_TIPS_SWITCH, isAudioTipsEnable);
 
                         boolean usePreAppServer = ((Switch)view.findViewById(R.id.sv_server_type)).isChecked();
                         SettingStorage.getInstance().setBoolean(SettingStorage.KEY_APP_SERVER_TYPE, usePreAppServer);
@@ -199,6 +199,9 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
 
                         boolean shareBootUseDemoAppServer = ((Switch)view.findViewById(R.id.sv_share_boot_use_demo_app_server)).isChecked();
                         SettingStorage.getInstance().setBoolean(SettingStorage.KEY_SHARE_BOOT_USE_DEMO_APP_SERVER, shareBootUseDemoAppServer);
+
+                        String bootUserExtendData = ((EditText)view.findViewById(R.id.et_boot_user_data)).getText().toString();
+                        SettingStorage.getInstance().set(SettingStorage.KEY_BOOT_USER_EXTEND_DATA, bootUserExtendData);
                     }
                     if (v.getId() == R.id.btn_confirm || v.getId() == R.id.btn_cancel) {
                         dialog1.dismiss();
@@ -245,6 +248,7 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
 
     private void onExtraDebugConfigDisable() {
         SettingStorage.getInstance().setBoolean(SettingStorage.KEY_AUDIO_DUMP_SWITCH, false);
+        SettingStorage.getInstance().setBoolean(SettingStorage.KEY_AUDIO_TIPS_SWITCH, false);
         SettingStorage.getInstance().setBoolean(SettingStorage.KEY_APP_SERVER_TYPE, false);
         SettingStorage.getInstance().setBoolean(SettingStorage.KEY_USE_RTC_PRE_ENV_SWITCH, false);
     }

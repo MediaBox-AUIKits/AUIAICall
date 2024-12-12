@@ -27,20 +27,7 @@ import ARTCAICallKit
     
     public var voiceprintId: String? {
         get {
-            if self.enableVoiceprint {
-                return self.userId
-            }
-            return nil
-        }
-    }
-    
-    // 邀测阶段，如需体验，请联系相关人员
-    public var enableVoiceprint: Bool = false {
-        didSet {
-#if DEMO_FOR_DEBUG
-            AUIAICallDebugPanel.enableVoiceprintSwitch = self.enableVoiceprint
-#endif
-            AUIAICallSettingPanel.enableVoiceprintSwitch = self.enableVoiceprint
+            return self.userId
         }
     }
     
@@ -137,6 +124,7 @@ import ARTCAICallKit
             controller.agentShareInfo = agentShareInfo
             let vc = AUIAICallViewController(controller)
             vc.enableVoiceIdSwitch = false
+            vc.enableVoiceprintSwitch = false
             vc.onUserTokenExpiredBlcok = self.onUserTokenExpiredBlcok
             topVC.av_presentFullScreenViewController(vc, animated: true)
         }

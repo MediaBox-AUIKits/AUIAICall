@@ -61,6 +61,26 @@ class AUIAICallConfig {
    * 智能体视频渲染视图
    */
   agentView?: HTMLVideoElement | string;
+
+  /**
+   * 智能体所在区域
+   */
+  region?: string;
+
+  /**
+   * 智能体模板配置
+   */
+  templateConfig?: string;
+
+  /**
+   * 用户自定义信息，该信息最终传给智能体
+   */
+  userData?: string;
+
+  /**
+   * 是否来自分享链接
+   */
+  fromShare?: boolean;
 }
 
 export default AUIAICallConfig;

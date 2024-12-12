@@ -1,15 +1,19 @@
 package com.aliyun.auikits.aicall.controller;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
+import android.view.ViewGroup;
 
 import com.aliyun.auikits.aiagent.ARTCAICallEngine;
 import com.aliyun.auikits.aiagent.service.IARTCAICallService;
 import com.aliyun.auikits.aiagent.util.ARTCAIAgentUtil;
+import com.aliyun.auikits.aicall.AUIAICallInCallActivity;
 import com.aliyun.auikits.aicall.util.BizStatHelper;
 import com.aliyun.auikits.aiagent.util.Logger;
 
@@ -199,6 +203,19 @@ public abstract class ARTCAICallController {
                 mBizCallEngineCallback.onReceivedAgentCustomMessage(data);
             }
         }
+        @Override
+        public void onHumanTakeoverWillStart(String takeoverUid, int takeoverMode) {
+            if (null != mBizCallEngineCallback) {
+                mBizCallEngineCallback.onHumanTakeoverWillStart(takeoverUid, takeoverMode);
+            }
+        }
+
+        @Override
+        public void onHumanTakeoverConnected(String takeoverUid) {
+            if (null != mBizCallEngineCallback) {
+                mBizCallEngineCallback.onHumanTakeoverConnected(takeoverUid);
+            }
+        }
     };
 
     protected ARTCAICallController(Context context, String userId) {
@@ -333,6 +350,12 @@ public abstract class ARTCAICallController {
         }
     }
 
+    public void showARTCDebugView(ViewGroup viewGroup, int showType, String userId) {
+        if (null != mARTCAICallEngine && null != mARTCAICallEngine.getRtcEngine()) {
+            mARTCAICallEngine.getRtcEngine().showDebugView(viewGroup, showType, userId);
+        }
+    }
+
     protected void setCallState(AICallState callState, ARTCAICallEngine.AICallErrorCode aiCallErrorCode) {
         Log.i("AUIAICall", "setCallState: [callState: " + callState + ", aiCallErrorCode: " + aiCallErrorCode + "]");
         mCallbackHandler.post(new Runnable() {
@@ -366,8 +389,6 @@ public abstract class ARTCAICallController {
                         mChannelId = aiAgentInfo.channelId;
                         mARTCAiCallConfig.aiAgentRequestId = aiAgentInfo.requestId;
 
-                        mARTCAICallEngine.setAICallAgentType(aiAgentInfo.aiCallAgentType);
-
                         Log.i("AUIAICall", "StartActionCallback succ result: " + jsonObject);
                         mARTCAICallEngine.call(mRtcAuthToken, mAIAgentInstanceId, mAIAgentUserId, mChannelId);
                     }
@@ -377,8 +398,54 @@ public abstract class ARTCAICallController {
             @Override
             public void onFail(int errorCode, String errorMsg) {
                 Log.i("AUIAICall", "StartActionCallback fail [errorCode: " + errorCode + ", errorMsg: " + errorMsg + "]");
-                setCallState(AICallState.Error, ARTCAICallEngine.AICallErrorCode.StartFailed);
+                boolean hasSet = false;
+                if (errorCode == IARTCAICallService.ERROR_CODE_CUSTOM_BUSINESS_ERROR) {
+                    try {
+                        JSONObject bodyJson = new JSONObject(errorMsg);
+                        String customBusinessErrorCode = bodyJson.optString("error_code");
+                        if ("Forbidden.SubscriptionRequired".equals(customBusinessErrorCode)) {
+                            setCallState(AICallState.Error, ARTCAICallEngine.AICallErrorCode.AgentSubscriptionRequired);
+                            hasSet = true;
+                        } else if("AgentNotFound".equals(customBusinessErrorCode)) {
+                            setCallState(AICallState.Error, ARTCAICallEngine.AICallErrorCode.AgentNotFund);
+                            hasSet = true;
+                        }
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                }
+                if (!hasSet) {
+                    setCallState(AICallState.Error, ARTCAICallEngine.AICallErrorCode.StartFailed);
+                }
             }
         };
+    }
+
+    public static void launchCallActivity(Activity currentActivity, String shareToken, String loginUserId,
+                                          String loginAuthorization) {
+        ARTCAIAgentUtil.ARTCAIAgentShareInfo shareInfo =
+                ARTCAIAgentUtil.parseAiAgentShareInfo(shareToken);
+        // 智能体ID
+        String aiAgentId = shareInfo.aiAgentId;
+        String aiAgentRegion = shareInfo.region;
+        // 智能体类型
+        ARTCAICallEngine.ARTCAICallAgentType aiCallAgentType =
+                ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent;
+        if ("AvatarChat3D".equals(shareInfo.workflowType)) {
+            aiCallAgentType = ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent;
+        } else if ("VisionChat".equals(shareInfo.workflowType)) {
+            aiCallAgentType = ARTCAICallEngine.ARTCAICallAgentType.VisionAgent;
+        }
+
+        Intent intent = new Intent(currentActivity, AUIAICallInCallActivity.class);
+
+        // 进入rtc的用户id，建议使用业务的登录用户id
+        intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_LOGIN_USER_ID, loginUserId);
+        intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_LOGIN_AUTHORIZATION, loginAuthorization);
+        intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_AI_AGENT_TYPE, aiCallAgentType);
+        intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_AI_AGENT_ID, aiAgentId);
+        intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_AI_AGENT_REGION, aiAgentRegion);
+
+        currentActivity.startActivity(intent);
     }
 }

@@ -42,3 +42,9 @@
 * Android&iOS&Web：CallKit SDK可以对分享出来的智能体启动通话，无需通过AppServer
 * Web：支持移动端
 
+## v1.7.0
+发布时间：2024-12-09
+* Android&iOS&Web：通话限额失败反馈
+* Android&iOS&Web：启动通话支持传递userData
+* Android&iOS&Web：真人接管
+

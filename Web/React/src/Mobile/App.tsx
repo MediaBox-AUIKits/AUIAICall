@@ -1,13 +1,18 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import ControllerContext from '@/common/ControlerContext';
 import AUIAICallStandardController from '@/controller/AUIAICallStandardController';
 import Stage from './Stage';
 import Welcome from './Welcome';
+import { AICallAgentType } from 'aliyun-auikit-aicall';
 
 import useCallStore from '@/common/store';
 
 import './App.css';
 import { Toast } from 'antd-mobile';
+
+Toast.config({
+  position: 'bottom',
+});
 
 interface AppProps {
   userId?: string;
@@ -15,10 +20,28 @@ interface AppProps {
   shareToken?: string;
   appServer?: string;
   onAuthFail?: () => void;
+  agentType?: AICallAgentType;
+  userData?: string;
 }
 
-function App({ userId = 'YourUserId', userToken = 'YourToken', shareToken, appServer, onAuthFail }: AppProps) {
-  const agentType = useCallStore((state) => state.agentType);
+function App({
+  userId = 'YourUserId',
+  userToken = 'YourToken',
+  shareToken,
+  appServer,
+  onAuthFail,
+  agentType,
+  userData,
+}: AppProps) {
+  const storeAgentType = useCallStore((state) => state.agentType);
+
+  useEffect(() => {
+    if (agentType !== undefined) {
+      useCallStore.setState({
+        agentType,
+      });
+    }
+  }, [agentType]);
 
   const controller = useMemo(() => {
     if (!userId) return null;
@@ -26,6 +49,9 @@ function App({ userId = 'YourUserId', userToken = 'YourToken', shareToken, appSe
 
     if (appServer) {
       _controller.appServer = appServer;
+    }
+    if (userData) {
+      _controller.config.userData = userData;
     }
 
     const urlParams = new URLSearchParams(location.search);
@@ -47,9 +73,16 @@ function App({ userId = 'YourUserId', userToken = 'YourToken', shareToken, appSe
     }
 
     return _controller;
-  }, [userId, userToken, shareToken, appServer]);
+  }, [userId, userToken, shareToken, appServer, userData]);
 
-  if (agentType === undefined)
+  const resultAgentType = useMemo(() => {
+    if (agentType !== undefined) {
+      return agentType;
+    }
+    return storeAgentType;
+  }, [agentType, storeAgentType]);
+
+  if (resultAgentType === undefined)
     return (
       <Welcome
         onAgentTypeSelected={(type) => {
@@ -63,7 +96,7 @@ function App({ userId = 'YourUserId', userToken = 'YourToken', shareToken, appSe
   return (
     <ControllerContext.Provider value={controller}>
       <Stage
-        agentType={agentType}
+        agentType={resultAgentType}
         onExit={() => {}}
         autoCall
         onAuthFail={() => {

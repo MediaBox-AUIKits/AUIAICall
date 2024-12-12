@@ -115,14 +115,16 @@ import ARTCAICallKit
                 }
             }
             else {
-                if (error as? NSError)?.code == 403 {
-                    self.errorCode = .TokenExpired
-                    self.state = .Error
-                    self.delegate?.onAICallUserTokenExpired?()
+                var errorCode = ARTCAICallErrorCode.BeginCallFailed
+                if let error = error {
+                    if let ret = ARTCAICallErrorCode(rawValue: Int32(error.code)) {
+                        errorCode = ret
+                    }
                 }
-                else {
-                    self.errorCode = .BeginCallFailed
-                    self.state = .Error
+                self.errorCode = errorCode
+                self.state = .Error
+                if self.errorCode == .TokenExpired {
+                    self.delegate?.onAICallUserTokenExpired?()
                 }
             }
         }
@@ -362,4 +364,13 @@ extension AUIAICallCustomController: ARTCAICallEngineDelegate {
     public func onReceivedAgentCustomMessage(data: [String : Any]?) {
         
     }
+    
+    public func onHumanTakeoverWillStart(takeoverUid: String, takeoverMode: Int) {
+        self.delegate?.onAICallHumanTakeoverWillStart?(takeoverUid: takeoverUid, takeoverMode: takeoverMode)
+    }
+    
+    public func onHumanTakeoverConnected(takeoverUid: String) {
+        self.delegate?.onAICallHumanTakeoverConnected?(takeoverUid: takeoverUid)
+    }
+
 }

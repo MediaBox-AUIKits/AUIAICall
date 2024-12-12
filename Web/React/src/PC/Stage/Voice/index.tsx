@@ -1,8 +1,9 @@
 import useCallStore from '@/common/store';
 import { AICallAgentState } from 'aliyun-auikit-aicall';
-import { useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 
 import './index.less';
+import ControllerContext from '@/common/ControlerContext';
 
 const AgentStateClassMap = {
   [AICallAgentState.Listening]: '_is-listening',
@@ -11,6 +12,8 @@ const AgentStateClassMap = {
 };
 
 function Voice() {
+  const controller = useContext(ControllerContext);
+
   const watcherElementRef = useRef<HTMLDivElement>(null);
   const [animating, setAnimating] = useState(false);
   const [agentState, setAgentState] = useState(AICallAgentState.Listening);
@@ -19,6 +22,8 @@ function Voice() {
   const [showSpeaking, setShowSpeaking] = useState(false);
   const speakingTimerRef = useRef(0);
   const animationTimerRef = useRef(0);
+
+  const avatarUrl = controller?.config.voiceAvatarUrl;
 
   // 先停止动画，再执行切换状态进行 transition
   useEffect(() => {
@@ -68,21 +73,36 @@ function Voice() {
   return (
     <div className='voice-show'>
       <div className='_box'>
-        <div
-          className={`voice-agent-status ${AgentStateClassMap[agentState || AICallAgentState.Listening]} ${
-            animating ? 'animating' : ''
-          }`}
-        >
-          <div></div>
-          <div></div>
-          <div></div>
-          <div></div>
-          <div ref={watcherElementRef}></div>
-          <div></div>
-          <div></div>
-          <div></div>
-          <div></div>
-        </div>
+        {avatarUrl ? (
+          <div className={`voice-agent-status _is-listening animating`}>
+            <img src={avatarUrl} />
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div ref={watcherElementRef}></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+          </div>
+        ) : (
+          <div
+            className={`voice-agent-status ${AgentStateClassMap[agentState || AICallAgentState.Listening]} ${
+              animating ? 'animating' : ''
+            }`}
+          >
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div ref={watcherElementRef}></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+          </div>
+        )}
 
         <div className={`voice-user-status ${isSpeaking ? '_is-talking' : ''}`}>
           <div></div>

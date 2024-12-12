@@ -53,7 +53,7 @@ dependencies {
     implementation 'com.google.android.material:material:x.x.x'             //修改x.x.x为你工程适配的版本
     androidTestImplementation 'androidx.test.espresso:espresso-core:x.x.x'  //修改x.x.x为你工程适配的版本
     implementation 'com.aliyun.aio:AliVCSDK_Standard:x.x.x'                  //修改x.x.x为你工程适配的版本
-    implementation 'com.aliyun.auikits.android:ARTCAICallKit:1.4.0'
+    implementation 'com.aliyun.auikits.android:ARTCAICallKit:1.5.0'
 }
 ```
 3. 等待gradle同步完成，完成源码集成。
@@ -70,17 +70,40 @@ String HOST = "你的应用服务器域名";
 ```java
 /** 启动之前保证麦克风、摄像头权限已授权 */
 
-// 是否语音聊天：true则为语音智能体，false则为数字人
-boolean isVoiceAgent = false;
-// 智能体id，
-String aiAgentId = "";
+// 智能体类型
+ARTCAICallEngine.ARTCAICallAgentType aiCallAgentType = 
+    ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent;
+// 进入rtc的用户id，建议使用业务的登录用户id
+String loginUserId = "123";
+
 Context currentActivity = AUIAICallEntranceActivity.this;
 Intent intent = new Intent(currentActivity, AUIAICallInCallActivity.class);
-
-intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_AI_AGENT_TYPE, isVoiceAgent);
-intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_AI_AGENT_ID, aiAgentId);
-
+intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_LOGIN_USER_ID, loginUserId);
+intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_AI_AGENT_TYPE, aiCallAgentType);
 currentActivity.startActivity(intent);
+```
+
+
+### 通过控制台提供的Token快速启动AI通话（可选）
+如果你来不及或者不会集成Server源码并部署服务端，那么可以通过这种方式来跑通创建的智能体，这种模式下仅限于测试与体验使用，不适用于上线。
+
+- 前提条件：从控制台上获取启动通话的Token
+  * 打开控制台，进入智能体管理
+  * 找到自己的智能体，点击”Demo体验二维码“
+  * 选择过期时间后，点击生成，点击体验Token”拷贝按钮“
+
+- 下面代码可以启动一个智能体通话，可以把下面代码加入到你的按钮点击事件里
+```java
+/** 启动之前保证麦克风、摄像头权限已授权 */
+
+Context currentActivity = AUIAICallEntranceActivity.this;
+// 进入rtc的用户id，建议使用业务的登录用户id
+String loginUserId = "123";
+// shareToken是从步骤1中解二维码出来的结果
+String shareToken = "xxxxx";
+ARTCAICallController.launchCallActivity(currentActivity, 
+                                        shareToken, loginUserId, "");
+
 ```
 
 ## 常见问题

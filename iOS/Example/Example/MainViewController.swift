@@ -18,7 +18,6 @@ class MainViewController: UIViewController {
         
         
 #endif
-        AUIAICallManager.defaultManager.enableVoiceprint = false
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             self.showListViewController(ani: false)

@@ -3,6 +3,7 @@
     <color name="layout_base_background">#1C1D22</color>
     <color name="layout_base_white_default">#FCFCFD</color>
     <color name="layout_base_gray">#747A8C</color>
+    <color name="layout_base_light_gray">#80868686</color>
     <color name="layout_base_dialog_background">#23262F</color>
     <color name="layout_base_iv_border">#3A3D48</color>
     <color name="layout_base_iv_border_half">#2E313B</color>

@@ -3,6 +3,7 @@
   z-index: 3;
   height: 126px;
   text-align: center;
+  user-select: none;
 
   ._action-list {
     display: flex;
@@ -13,7 +14,7 @@
 
     li {
       position: relative;
-      margin: 0 12px;
+      margin: 0 10px;
       width: 52px;
       padding-bottom: 40px;
     }
@@ -81,6 +82,20 @@
           & > span {
             transform: rotate(0);
           }
+        }
+      }
+    }
+
+    ._microphone.is-push-to-talk {
+      width: 82px;
+      .adm-button {
+        width: 70px;
+        &::before {
+          display: none;
+        }
+        &.is-pushing {
+          background: var(--adm-color-primary);
+          color: #fff;
         }
       }
     }

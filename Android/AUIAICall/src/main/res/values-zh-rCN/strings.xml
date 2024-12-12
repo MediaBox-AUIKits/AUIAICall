@@ -23,6 +23,8 @@
     <string name="call_error_kicked_by_user_replace">通话失败，当前用户可能使用了其他设备</string>
     <string name="call_error_kicked_by_system">通话失败，被系统结束通话</string>
     <string name="call_error_local_device_exception">通话失败，本地设备出现了错误</string>
+    <string name="call_error_agent_subscription_required">接通失败，请检查您账号是否正确订购套餐</string>
+    <string name="call_error_agent_not_found">接通失败，请检查智能体ID是否正确</string>
 
     <string name="user_mute_tips">你已静音</string>
     <string name="robot_pause_tips">通话暂停，轻触开启</string>
@@ -115,11 +117,15 @@
     <string name="delete_voiceprint">删除声纹</string>
     <string name="voiceprint_enable">声纹已识别已开启</string>
     <string name="voiceprint_disable">声纹识别已关闭</string>
-    <string name="main_speaker_not_recognized">检测到有人讲话，未识别到主讲人</string>
+    <string name="main_speaker_not_recognized">（声纹）识别到不是常用对话人，暂未响应您的问题</string>
+    <string name="reset_voiceprint">恢复</string>
 
     <string name="push_to_talk">按住说话</string>
     <string name="release_to_send">松开发送</string>
 
     <string name="ai_agent_leave_notify_long_time_idle">由于你长时间未进行通话，该通话已经结束</string>
     <string name="ai_agent_leave_notify_default">通话已经结束</string>
+
+    <string name="ai_agent_human_takeover_will_start">当前通话即将被真人接管</string>
+    <string name="ai_agent_human_takeover_connect">当前通话已经被真人接管</string>
 </resources>

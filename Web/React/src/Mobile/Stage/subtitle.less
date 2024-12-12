@@ -6,8 +6,6 @@
   display: flex;
   padding: 16px;
   margin: 0 32px;
-  height: 100px;
-  overflow-y: auto;
 
   & ._source {
     width: 20px;
@@ -18,7 +16,7 @@
     margin-top: 4px;
     width: 20px;
     height: 30px;
-    background-image: url(../assets/agent-icon.png);
+    background-image: url(https://img.alicdn.com/imgextra/i1/O1CN01fLZLq91Wpr2yasQMB_!!6000000002838-2-tps-35-40.png);
     background-repeat: no-repeat;
     background-size: 17.5px 20px;
   }
@@ -31,8 +29,38 @@
     line-height: 18px;
     color: #26244c;
   }
+
+  ._more {
+    padding: 0 4px;
+  }
+
+  ._detail {
+    color: #fff;
+    color: #fff;
+    font-size: 14px;
+    line-height: 22px;
+  }
 }
 
 .has-video .subtitle ._text {
   color: #747a8c;
+}
+
+.subtitle-mask {
+  .adm-button {
+    background: transparent;
+    border: none;
+    outline: none;
+  }
+  .adm-mask-content {
+    max-height: 100%;
+    overflow-y: auto;
+    ._detail {
+      margin: 50px 25px;
+    }
+    ._detail-close {
+      text-align: right;
+      margin-right: -10px;
+    }
+  }
 }

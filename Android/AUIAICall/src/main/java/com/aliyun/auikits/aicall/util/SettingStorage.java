@@ -16,6 +16,7 @@ public class SettingStorage {
 
     public static final String KEY_ROBOT_ID = "KEY_ROBOT_ID";
     public static final String KEY_AUDIO_DUMP_SWITCH = "KEY_AUDIO_DUMP_SWITCH";
+    public static final String KEY_AUDIO_TIPS_SWITCH = "KEY_AUDIO_TIPS_SWITCH";
     public static final String KEY_SHOW_EXTRA_DEBUG_CONFIG = "KEY_SHOW_EXTRA_DEBUG_CONFIG";
     public static final String KEY_APP_SERVER_TYPE = "KEY_APP_SERVER_TYPE";
     public static final String KEY_DEPOSIT_SWITCH = "KEY_DEPOSIT_SWITCH";
@@ -23,6 +24,7 @@ public class SettingStorage {
     public static final String KEY_BOOT_ENABLE_PUSH_TO_TALK = "KEY_BOOT_ENABLE_PUSH_TO_TALK";
     public static final String KEY_BOOT_ENABLE_VOICE_PRINT = "KEY_BOOT_ENABLE_VOICE_PRINT";
     public static final String KEY_SHARE_BOOT_USE_DEMO_APP_SERVER = "KEY_SHARE_BOOT_USE_DEMO_APP_SERVER";
+    public static final String KEY_BOOT_USER_EXTEND_DATA = "KEY_BOOT_USER_EXTEND_DATA";
 
     public static final boolean DEFAULT_DEPOSIT_SWITCH = BuildConfig.TEST_ENV_MODE ?
             true :
@@ -40,8 +42,8 @@ public class SettingStorage {
             false :
             false;  // 发布包默认要为false
     public static final boolean DEFAULT_ENABLE_VOICE_PRINT = BuildConfig.TEST_ENV_MODE ?
-            false :
-            false;  // 发布包默认要为false
+            true :
+            true;  // 发布包默认要为true
     public static final boolean DEFAULT_SHARE_BOOT_USE_DEMO_APP_SERVER = BuildConfig.TEST_ENV_MODE ?
             false :
             false; // 发布包默认改为false

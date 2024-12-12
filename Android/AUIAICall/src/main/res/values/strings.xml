@@ -22,6 +22,8 @@
     <string name="call_error_kicked_by_user_replace">Call failed, the user might be using another device</string>
     <string name="call_error_kicked_by_system">Call failed, ended by the system</string>
     <string name="call_error_local_device_exception">Call failed, a local device error occurred</string>
+    <string name="call_error_agent_subscription_required">Call Failed, Subscription Required</string>
+    <string name="call_error_agent_not_found">Call Failed, agent not found</string>
 
     <string name="user_mute_tips">You are muted</string>
     <string name="robot_pause_tips">Call paused, tap to start</string>
@@ -114,11 +116,15 @@
     <string name="delete_voiceprint">Delete Voiceprint</string>
     <string name="voiceprint_enable">Voiceprint recognition enabled</string>
     <string name="voiceprint_disable">Voiceprint recognition disabled</string>
-    <string name="main_speaker_not_recognized">Detected someone speaking, did not recognize the speaker</string>
+    <string name="main_speaker_not_recognized">(voiceprint) No response without regular speaker recognized</string>
+    <string name="reset_voiceprint">Reset</string>
 
     <string name="push_to_talk">Push to Speak</string>
     <string name="release_to_send">Release to Send</string>
 
     <string name="ai_agent_leave_notify_long_time_idle">Due to your prolonged inactivity, the call has ended.</string>
     <string name="ai_agent_leave_notify_default">The call has ended.</string>
+
+    <string name="ai_agent_human_takeover_will_start">The current call will soon be handled by a real person.</string>
+    <string name="ai_agent_human_takeover_connect">The current call is now being handled by a real person.</string>
 </resources>

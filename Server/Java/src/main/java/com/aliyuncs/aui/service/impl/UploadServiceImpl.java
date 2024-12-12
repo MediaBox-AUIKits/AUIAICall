@@ -117,16 +117,4 @@ public class UploadServiceImpl implements UploadService {
             return null;
         }
     }
-
-    private String createSignedUrl(String ObjectKey) {
-        String endpoint = "oss-" + region + ".aliyuncs.com";
-        UploadSTSInfoResponse response = get(new UploadConfigGetRequestDto());
-        OSS ossClient = new OSSClientBuilder().build(endpoint, response.getAccessKeyId(), response.getAccessKeySecret(), response.getStsToken());
-
-        Date expiration = new Date(new Date().getTime() + 3600 * 1000);
-        URL url = ossClient.generatePresignedUrl(bucket, basePath + "/" + ObjectKey, expiration);
-        System.out.println(url);
-        ossClient.shutdown();
-        return url.toString();
-    }
 }
