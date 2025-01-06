@@ -12,7 +12,7 @@
         android:id="@+id/iv_audio_tone"
         android:layout_width="32dp"
         android:layout_height="32dp"
-        android:src="@drawable/ic_audio_tone" />
+        android:src="@drawable/ic_audio_tone_0" />
 
     <TextView
         android:id="@+id/tv_audio_tone_title"

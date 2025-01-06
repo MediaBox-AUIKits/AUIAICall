@@ -34,6 +34,8 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
     private ARTCAICallRobotState mARTCAICallRobotState = ARTCAICallRobotState.Listening;
     private ViewGroup mAvatarViewGroup = null;
     private ViewGroup.LayoutParams mAvatarLayoutParams = null;
+    private ARTCAICallVideoCanvas mPreviewVideoCanvas = new ARTCAICallVideoCanvas();
+    private ARTCAICallVideoCanvas mAvatarViewCanvas = new ARTCAICallVideoCanvas();
 
     private ViewGroup mVisionViewGroup = null;
     private ViewGroup.LayoutParams mVisionLayoutParams = null;
@@ -385,6 +387,10 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
                             {
                                 notifyHumanTakeoverConnected(remoteUserId);
                             }
+                        } else if(msgType == IMsgTypeDef.MSG_TYPE_AI_AGENT_EMOTION_NOTIFY) {
+                            String motionStr = dataJson.optString("emotion");
+                            int sentenceId = dataJson.optInt("sentenceId");
+                            notifyAgentEmotionNotify(motionStr, sentenceId);
                         } else if (msgType == IMsgTypeDef.MSG_TYPE_PUSH_TO_TALK_ENABLE_RESULT) {
                             boolean enable = dataJson.optBoolean("enable");
                             notifyPushToTalkEnableResult(enable);
@@ -408,6 +414,7 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
             super.onAliRtcStats(aliRtcStats);
             Log.i(TAG, "onAliRtcStats: " + aliRtcStats);
         }
+
     };
 
     private AliRtcEngine.AliRtcAudioVolumeObserver mAudioVolumeObserver = new AliRtcEngine.AliRtcAudioVolumeObserver() {
@@ -434,6 +441,17 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
             }
         }
     };
+
+    private AliRtcEngine.AliRtcAudioDelayObserver mAudioDelayObserver = new AliRtcEngine.AliRtcAudioDelayObserver() {
+        @Override
+        public void onAudioDelayInfo(int id, long questionEndTime, long answerStartTime) {
+            int delay_ms = (int)(answerStartTime - questionEndTime);
+            super.onAudioDelayInfo(id, questionEndTime, answerStartTime);
+            Log.i(TAG, "onAudioDelayInfo: id:" + id + ", delay: " + delay_ms);
+            notifyAudioDelayInfo(id, delay_ms);
+        }
+    };
+
     public ARTCAICallEngineImpl(Context context, String userId) {
         mContext = context;
         mUserId = userId;
@@ -465,9 +483,6 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
             mChannelId = channelId;
 
             ARTCAICallRtcWrapper.ARtcConfig rtcConfig = new ARTCAICallRtcWrapper.ARtcConfig();
-            rtcConfig.enableAudioDump = mCallConfig.enableAudioDump;
-            rtcConfig.userSpecifiedAudioTips = mCallConfig.userSpecifiedAudioTips;
-            rtcConfig.usePreEnv = mCallConfig.useRtcPreEnv;
             rtcConfig.enableRemoteVideo = mAgentType == ARTCAICallAgentType.AvatarAgent;
             rtcConfig.enableLocalVideo = mAgentType == ARTCAICallAgentType.VisionAgent;
             rtcConfig.useHighQualityPreview = mCallConfig.mAiCallVideoConfig.useHighQualityPreview;
@@ -478,10 +493,17 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
             rtcConfig.videoEncoderFrameRate = mCallConfig.mAiCallVideoConfig.videoEncoderFrameRate;
             rtcConfig.videoEncoderBitRate = mCallConfig.mAiCallVideoConfig.videoEncoderBitRate;
             rtcConfig.videoEncoderKeyFrameInterval = mCallConfig.mAiCallVideoConfig.videoEncoderKeyFrameInterval;
+            rtcConfig.enableAudioDelayInfo = mCallConfig.enableAudioDelayInfo;
+            rtcConfig.mLocalRenderMode = getRenderMode(mPreviewVideoCanvas.renderMode);
+            rtcConfig.mLocalMirrorMode = getRenderMirrorMode(mPreviewVideoCanvas.mirrorMode);
+            rtcConfig.mLocalRotationMode = getRotationMode(mPreviewVideoCanvas.rotationMode);
+            rtcConfig.mRemoteRenderMode = getRenderMode(mAvatarViewCanvas.renderMode);
+            rtcConfig.mRemoteMirrorMode = getRenderMirrorMode(mAvatarViewCanvas.mirrorMode);
+            rtcConfig.mRemoteRotationMode = getRotationMode(mAvatarViewCanvas.rotationMode);
             mARTCAICallRtcWrapper.setAvatarViewGroup(mAvatarViewGroup, mAvatarLayoutParams);
             mARTCAICallRtcWrapper.setVisionPreviewView(mVisionViewGroup, mVisionLayoutParams);
             mARTCAICallRtcWrapper.init(mContext, rtcConfig, mRtcEngineEventListener,
-                    mRtcEngineRemoteNotify, mAudioVolumeObserver);
+                    mRtcEngineRemoteNotify, mAudioVolumeObserver, mAudioDelayObserver);
             mARTCAICallRtcWrapper.join(mRtcAuthToken);
         }
     }
@@ -548,10 +570,10 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
     @Override
     public boolean enableVoiceInterrupt(boolean enable) {
         if (isJoinedChannel()) {
-            mCallConfig.enableVoiceInterrupt = enable;
+            mCallConfig.mAiCallAgentTemplateConfig.enableVoiceInterrupt = enable;
 
             // 发送网络请求 修改智能打断开关
-            mARTCAICallService.enableVoiceInterrupt(mAIAgentInstanceId, mAgentType, enable, new IARTCAICallService.IARTCAICallServiceCallback() {
+            mARTCAICallService.enableVoiceInterrupt(mAIAgentInstanceId, mAgentType, mCallConfig, new IARTCAICallService.IARTCAICallServiceCallback() {
                 @Override
                 public void onSuccess(JSONObject jsonObject) {
                     if (null != jsonObject) {
@@ -587,10 +609,10 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
     @Override
     public boolean switchRobotVoice(String voiceId) {
         if (isJoinedChannel()) {
-            mCallConfig.aiAgentVoiceId = voiceId;
+            mCallConfig.mAiCallAgentTemplateConfig.aiAgentVoiceId = voiceId;
 
             // 发送网络请求 切换音色
-            mARTCAICallService.switchAiAgentVoice(mAIAgentInstanceId, mAgentType, voiceId, new IARTCAICallService.IARTCAICallServiceCallback() {
+            mARTCAICallService.switchAiAgentVoice(mAIAgentInstanceId, mAgentType, mCallConfig, new IARTCAICallService.IARTCAICallServiceCallback() {
                 @Override
                 public void onSuccess(JSONObject jsonObject) {
                     if (null != jsonObject) {
@@ -612,7 +634,7 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
 
     @Override
     public String getRobotVoiceId() {
-        return mCallConfig.aiAgentVoiceId;
+        return mCallConfig.mAiCallAgentTemplateConfig.aiAgentVoiceId;
     }
 
     @Override
@@ -627,7 +649,7 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
 
     @Override
     public boolean isVoiceInterruptEnable() {
-        return mCallConfig.enableVoiceInterrupt;
+        return mCallConfig.mAiCallAgentTemplateConfig.enableVoiceInterrupt;
     }
 
     @Override
@@ -637,9 +659,27 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
     }
 
     @Override
+    public void setAvatarAgentView(ViewGroup viewGroup, ViewGroup.LayoutParams avatarLayoutParams, ARTCAICallVideoCanvas canvas) {
+        mAvatarViewGroup = viewGroup;
+        mAvatarLayoutParams = avatarLayoutParams;
+        if(canvas != null) {
+            mAvatarViewCanvas = canvas;
+        }
+    }
+
+    @Override
     public void setVisionPreviewView(ViewGroup viewGroup, ViewGroup.LayoutParams visionLayoutParams) {
         mVisionViewGroup = viewGroup;
         mVisionLayoutParams = visionLayoutParams;
+    }
+
+    @Override
+    public  void setVisionPreviewView(ViewGroup viewGroup, ViewGroup.LayoutParams visionLayoutParams, ARTCAICallVideoCanvas canvas) {
+        mVisionViewGroup = viewGroup;
+        mVisionLayoutParams = visionLayoutParams;
+        if(canvas != null) {
+            mPreviewVideoCanvas = canvas;
+        }
     }
 
     @Override
@@ -688,7 +728,7 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
     public boolean useVoicePrint(boolean enable) {
         if (isJoinedChannel()) {
             Logger.i("enableVoicePrint: " + enable);
-            mCallConfig.enableVoicePrint = enable;
+            mCallConfig.mAiCallAgentTemplateConfig.enableVoicePrint = enable;
             mARTCAICallService.enableVoicePrint(enable);
             return true;
         }
@@ -697,7 +737,7 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
 
     @Override
     public boolean isUsingVoicePrint() {
-        return mCallConfig.enableVoicePrint;
+        return mCallConfig.mAiCallAgentTemplateConfig.enableVoicePrint;
     }
 
     @Override
@@ -714,7 +754,7 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
     public boolean enablePushToTalk(boolean enable) {
         if (isJoinedChannel()) {
             Logger.i("enablePushToTalk: " + enable);
-            mCallConfig.enablePushToTalk = enable;
+            mCallConfig.mAiCallAgentTemplateConfig.enablePushToTalk = enable;
             mARTCAICallService.enablePushToTalk(enable);
             onPushToTalkModeChanged();
             return true;
@@ -724,7 +764,7 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
 
     @Override
     public boolean isPushToTalkEnable() {
-        return mCallConfig.enablePushToTalk;
+        return mCallConfig.mAiCallAgentTemplateConfig.enablePushToTalk;
     }
 
     @Override
@@ -732,8 +772,13 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
         if (isJoinedChannel()) {
             Logger.i("startToPushToTalk");
             switchMicrophone(true);
-            if (mAgentType == ARTCAICallAgentType.VisionAgent) {
+            if (mCallConfig.enableAudioDelayInfo || mAgentType == ARTCAICallAgentType.VisionAgent) {
+                //visionAgent 或者需要AudioDelayInfo，都需要推送视频
                 mARTCAICallRtcWrapper.publishLocalVideoStream(true);
+            }
+            if(mCallConfig.enableAudioDelayInfo && mAgentType != ARTCAICallAgentType.VisionAgent) {
+                //如果不是visionAgent，需要把视频采集关掉
+                mARTCAICallRtcWrapper.enableLocalVideo(false);
             }
             mARTCAICallService.startPushToTalk();
             return true;
@@ -746,8 +791,14 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
         if (isJoinedChannel()) {
             Logger.i("finishToPushToTalk");
             switchMicrophone(false);
-            mARTCAICallRtcWrapper.publishLocalVideoStream(false);
-
+            if (mCallConfig.enableAudioDelayInfo || mAgentType == ARTCAICallAgentType.VisionAgent) {
+                //visionAgent 或者需要AudioDelayInfo，都需要推送视频
+                mARTCAICallRtcWrapper.publishLocalVideoStream(false);
+            }
+            if(mCallConfig.enableAudioDelayInfo && mAgentType != ARTCAICallAgentType.VisionAgent) {
+                //如果不是visionAgent，需要把视频采集关掉
+                mARTCAICallRtcWrapper.enableLocalVideo(false);
+            }
             mARTCAICallService.finishPushToTalk();
             return true;
         }
@@ -860,8 +911,13 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
             }
             switchMicrophone(mCallConfig.isMicrophoneOn);
             mARTCAICallRtcWrapper.publishLocalAudioStream(true);
-            if (mAgentType == ARTCAICallAgentType.VisionAgent) {
+            if (mCallConfig.enableAudioDelayInfo || mAgentType == ARTCAICallAgentType.VisionAgent) {
+                //visionAgent 或者需要AudioDelayInfo，都需要推送视频
                 mARTCAICallRtcWrapper.publishLocalVideoStream(true);
+            }
+            if(mCallConfig.enableAudioDelayInfo && mAgentType != ARTCAICallAgentType.VisionAgent) {
+                //如果不是visionAgent，需要把视频采集关掉
+                mARTCAICallRtcWrapper.enableLocalVideo(false);
             }
         }
 
@@ -1171,5 +1227,86 @@ public class ARTCAICallEngineImpl extends ARTCAICallEngine {
                 }
             }
         });
+    }
+
+    private void notifyAgentEmotionNotify(String emotion,int sentenceId ) {
+        mCallbackHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                Logger.i("notifyAgentEmotionNotify: emotion :" + emotion + ", sentenceId: " + sentenceId );
+                if (null != mEngineCallback) {
+                    mEngineCallback.onAgentEmotionNotify(emotion, sentenceId);
+                }
+            }
+        });
+    }
+
+    private void notifyAudioDelayInfo(int id, int delay_ms) {
+        mCallbackHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                Logger.i("notifyAudioDelayInfo: id :" + id + ", delay: " + delay_ms );
+                if (null != mEngineCallback) {
+                    mEngineCallback.onAudioDelayInfo(id, delay_ms);
+                }
+            }
+        });
+    }
+
+    private AliRtcEngine.AliRtcRenderMode getRenderMode(ARTCAICallVideoRenderMode renderMode) {
+        AliRtcEngine.AliRtcRenderMode aliRtcRenderMode = AliRtcEngine.AliRtcRenderMode.AliRtcRenderModeNoChange;
+        switch (renderMode) {
+            case ARTCAICallVideoRenderModeAuto:
+                aliRtcRenderMode = AliRtcEngine.AliRtcRenderMode.AliRtcRenderModeAuto;
+                break;
+            case ARTCAICallVideoRenderModeStretch:
+                aliRtcRenderMode = AliRtcEngine.AliRtcRenderMode.AliRtcRenderModeStretch;
+                break;
+            case ARTCAICallVideoRenderModeFill:
+                aliRtcRenderMode = AliRtcEngine.AliRtcRenderMode.AliRtcRenderModeFill;
+                break;
+            case ARTCAICallVideoRenderModeClip:
+                aliRtcRenderMode = AliRtcEngine.AliRtcRenderMode.AliRtcRenderModeClip;
+                break;
+            case ARTCAICallVideoRenderModeNoChange:
+                aliRtcRenderMode = AliRtcEngine.AliRtcRenderMode.AliRtcRenderModeNoChange;
+                break;
+        }
+        return aliRtcRenderMode;
+    }
+
+    private AliRtcEngine.AliRtcRenderMirrorMode getRenderMirrorMode(ARTCAICallVideoRenderMirrorMode mirrorMode) {
+        AliRtcEngine.AliRtcRenderMirrorMode aliRtcRenderMirrorMode = AliRtcEngine.AliRtcRenderMirrorMode.AliRtcRenderMirrorModeOnlyFront;
+        switch (mirrorMode) {
+            case ARTCAICallVideoRenderMirrorModeOnlyFront:
+                aliRtcRenderMirrorMode = AliRtcEngine.AliRtcRenderMirrorMode.AliRtcRenderMirrorModeOnlyFront;
+                break;
+            case ARTCAICallVideoRenderMirrorModeAllEnabled:
+                aliRtcRenderMirrorMode = AliRtcEngine.AliRtcRenderMirrorMode.AliRtcRenderMirrorModeAllEnabled;
+                break;
+            case ARTCAICallVideoRenderMirrorModeAllDisable:
+                aliRtcRenderMirrorMode = AliRtcEngine.AliRtcRenderMirrorMode.AliRtcRenderMirrorModeAllDisable;
+                break;
+        }
+        return aliRtcRenderMirrorMode;
+    }
+
+    private AliRtcEngine.AliRtcRotationMode getRotationMode(ARTCAICallVideoRotationMode rotationMode) {
+        AliRtcEngine.AliRtcRotationMode aliRtcRotationMode = AliRtcEngine.AliRtcRotationMode.AliRtcRotationMode_0;
+        switch (rotationMode) {
+            case ARTCAICallVideoRotationMode_0:
+                aliRtcRotationMode = AliRtcEngine.AliRtcRotationMode.AliRtcRotationMode_0;
+                break;
+            case ARTCAICallVideoRotationMode_90:
+                aliRtcRotationMode = AliRtcEngine.AliRtcRotationMode.AliRtcRotationMode_90;
+                break;
+            case ARTCAICallVideoRotationMode_180:
+                aliRtcRotationMode = AliRtcEngine.AliRtcRotationMode.AliRtcRotationMode_180;
+                break;
+            case ARTCAICallVideoRotationMode_270:
+                aliRtcRotationMode = AliRtcEngine.AliRtcRotationMode.AliRtcRotationMode_270;
+                break;
+        }
+        return aliRtcRotationMode;
     }
 }

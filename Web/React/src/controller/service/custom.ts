@@ -1,7 +1,7 @@
-import { AICallAgentError, AICallAgentInfo, AICallAgentType, AICallErrorCode } from 'aliyun-auikit-aicall';
+import { AICallAgentError, AICallAgentInfo, AICallErrorCode } from 'aliyun-auikit-aicall';
 import AUIAICallConfig from '../AUIAICallConfig';
 
-import { APP_SERVER, getWorkflowType, JSONData, TemplateConfig, WorkflowType } from './interface';
+import { APP_SERVER, getWorkflowType, JSONObject, TemplateConfig, WorkflowType } from './interface';
 
 class AppServerService {
   private _userId?: string;
@@ -23,30 +23,6 @@ class AppServerService {
   setToken(token: string) {
     this._token = token;
   }
-
-  private getInitTemplateConfig = (config: AUIAICallConfig): TemplateConfig => {
-    const templateConfig: TemplateConfig = {};
-    const configDict: JSONData = {
-      EnableVoiceInterrupt: config.enableVoiceInterrupt,
-      MaxIdleTime: config.agentMaxIdleTime,
-    };
-    if (config.agentVoiceId) {
-      configDict.VoiceId = config.agentVoiceId;
-    }
-    if (config.agentType === AICallAgentType.AvatarAgent && config.agentAvatarId) {
-      configDict.AvatarId = config.agentAvatarId;
-    }
-    if (config.enablePushToTalk !== undefined) {
-      configDict.EnablePushToTalk = config.enablePushToTalk;
-    }
-    if (config.userData) {
-      configDict.UserData = config.userData;
-    }
-
-    templateConfig[getWorkflowType(config.agentType)] = configDict;
-
-    return templateConfig;
-  };
 
   /**
    * 启动智能体实例
@@ -77,7 +53,7 @@ class AppServerService {
     } = {
       user_id: this._userId,
       expire: 24 * 60 * 60,
-      template_config: JSON.stringify(this.getInitTemplateConfig(config)),
+      template_config: config.templateConfig.getJsonString(config.agentType),
       workflow_type: getWorkflowType(config.agentType),
     };
 
@@ -135,7 +111,7 @@ class AppServerService {
       });
   };
 
-  describeAIAgent = async (instanceId: string, token: string, userId: string): Promise<JSONData> => {
+  describeAIAgent = async (instanceId: string, token: string, userId: string): Promise<JSONObject> => {
     if (!userId || !instanceId) {
       throw new AICallAgentError('userId or instanceId is empty');
     }

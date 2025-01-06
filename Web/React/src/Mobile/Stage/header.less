@@ -36,9 +36,18 @@
     }
 
     &._feedback {
-      right: 56px;
+      right: auto;
+      left: 10px;
+      width: auto;
       svg {
         vertical-align: -2px;
+      }
+      & > span {
+        font-size: 12px;
+        line-height: 20px;
+        vertical-align: top;
+        width: auto;
+        white-space: nowrap;
       }
     }
   }
@@ -64,6 +73,9 @@
   ul {
     list-style: none;
     padding: 4px 0 10px;
+    max-height: 300px;
+    max-height: 50vh;
+    overflow-y: auto;
   }
   li {
     padding: 0 20px;

@@ -1,31 +1,10 @@
-import { AICallAgentError, AICallAgentInfo, AICallAgentType, AICallErrorCode } from 'aliyun-auikit-aicall';
+import { AICallAgentError, AICallAgentInfo, AICallErrorCode } from 'aliyun-auikit-aicall';
 import AUIAICallConfig from '../AUIAICallConfig';
 
-import { APP_SERVER, getWorkflowType, JSONData, TemplateConfig, WorkflowType } from './interface';
+import { APP_SERVER, getWorkflowType, TemplateConfig, WorkflowType } from './interface';
 
 class StandardAppService {
   private appServer = APP_SERVER;
-
-  private getInitTemplateConfig = (config: AUIAICallConfig): TemplateConfig => {
-    const templateConfig: TemplateConfig = {};
-    const configDict: JSONData = {
-      EnableVoiceInterrupt: config.enableVoiceInterrupt,
-      MaxIdleTime: config.agentMaxIdleTime,
-    };
-    if (config.agentVoiceId) {
-      configDict.VoiceId = config.agentVoiceId;
-    }
-    if (config.agentType === AICallAgentType.AvatarAgent && config.agentAvatarId) {
-      configDict.AvatarId = config.agentAvatarId;
-    }
-    if (config.enablePushToTalk) {
-      configDict.EnablePushToTalk = config.enablePushToTalk;
-    }
-
-    templateConfig[getWorkflowType(config.agentType)] = configDict;
-
-    return templateConfig;
-  };
 
   setAppServer(appServer: string) {
     this.appServer = appServer;
@@ -55,7 +34,7 @@ class StandardAppService {
     } = {
       user_id: userId,
       expire: 24 * 60 * 60,
-      template_config: config.templateConfig || JSON.stringify(this.getInitTemplateConfig(config)),
+      template_config: config.templateConfig.getJsonString(config.agentType),
     };
 
     if (config.agentId) {

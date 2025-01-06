@@ -91,13 +91,17 @@ function CallSettingsPopover() {
       )}
 
       {/* 3D数字人不支持切换音色，防止出现声音与形象不符的情况 */}
-      {agentType !== AICallAgentType.AvatarAgent && (
+      {agentType !== AICallAgentType.AvatarAgent && (controller?.config.agentVoiceIdList.length || 0) > 0 && (
         <Form.Item label={i18n['setting.voiceIdTitle']} help={i18n['setting.voiceIdHelp']}>
           <Radio.Group name='voiceId' value={voiceId} disabled={updatingVoiceId} onChange={onVoiceChange}>
             <Space direction='vertical'>
-              <Radio value='zhixiaobai'>智小白</Radio>
-              <Radio value='zhixiaoxia'>智小夏</Radio>
-              <Radio value='abin'>阿斌</Radio>
+              {controller?.config.agentVoiceIdList.map((voiceId, index) => {
+                return (
+                  <Radio key={index} value={voiceId}>
+                    {voiceId}
+                  </Radio>
+                );
+              })}
             </Space>
           </Radio.Group>
         </Form.Item>

@@ -22,7 +22,12 @@ import UIKit
     public static var Debug_IsEnableTipsData: Bool = false
     
     /**
-     * 是否开启运行数据实时输出
+     * 是否开启音频回环延迟
+     */
+    public static var Debug_IsEnableAudioDelayInfo: Bool = false
+    
+    /**
+     * 是否开启预发环境
      */
     public static var Debug_IsEnablePreRelease: Bool = false
     

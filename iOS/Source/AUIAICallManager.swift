@@ -18,7 +18,6 @@ import ARTCAICallKit
     }
     
     public var userId: String? = nil
-    public var avatarId: String = ""
     public var userToken: String? = nil {
         didSet {
             AUIAICallAppServer.serverAuth = self.userToken
@@ -49,6 +48,13 @@ import ARTCAICallKit
                 }
             }
         }
+    }
+    
+    private func getDefaultTemplateConfig() -> ARTCAICallTemplateConfig {
+        let templateConfig = ARTCAICallTemplateConfig()
+        templateConfig.voiceprintId = self.voiceprintId
+        templateConfig.useVoiceprint = true
+        return templateConfig
     }
     
     open func startCall(agentShareInfo: String, viewController: UIViewController? = nil) {
@@ -96,16 +102,12 @@ import ARTCAICallKit
             
             let topVC = viewController ?? UIViewController.av_top()
             let controller = AUIAICallStandardController(userId: self.userId!)
-            controller.config.agentId = agentId
+            controller.config.agentId = agentId ?? AUIAICallAgentConfig.shared.getAgentID(agentType: agentType)
             controller.config.agentType = agentType
-            controller.config.agentVoiceId = ""
-            controller.config.agentAvatarId = self.avatarId
-            controller.config.voiceprintId = AUIAICallManager.defaultManager.voiceprintId
-            controller.config.useVoiceprint = true
+            controller.config.templateConfig = self.getDefaultTemplateConfig()
             controller.config.region = region
             controller.config.limitSecond = limitSecond
             let vc = AUIAICallViewController(controller)
-            vc.enableVoiceIdSwitch = agentType != .AvatarAgent
             vc.onUserTokenExpiredBlcok = self.onUserTokenExpiredBlcok
             topVC.av_presentFullScreenViewController(vc, animated: true)
         }
@@ -123,7 +125,6 @@ import ARTCAICallKit
             let controller = AUIAICallStandardController(userId: self.userId!)
             controller.agentShareInfo = agentShareInfo
             let vc = AUIAICallViewController(controller)
-            vc.enableVoiceIdSwitch = false
             vc.enableVoiceprintSwitch = false
             vc.onUserTokenExpiredBlcok = self.onUserTokenExpiredBlcok
             topVC.av_presentFullScreenViewController(vc, animated: true)
@@ -146,16 +147,12 @@ import ARTCAICallKit
             
             let topVC = viewController ?? UIViewController.av_top()
             let controller = AUIAICallCustomController(userId: self.userId!)
-            controller.config.agentId = agentId
+            controller.config.agentId = agentId ?? AUIAICallAgentConfig.shared.getAgentID(agentType: agentType)
             controller.config.agentType = agentType
-            controller.config.agentVoiceId = ""
-            controller.config.agentAvatarId = self.avatarId
-            controller.config.voiceprintId = AUIAICallManager.defaultManager.voiceprintId
-            controller.config.useVoiceprint = true
+            controller.config.templateConfig = self.getDefaultTemplateConfig()
             controller.config.region = region
             controller.config.limitSecond = limitSecond
             let vc = AUIAICallViewController(controller)
-            vc.enableVoiceIdSwitch = agentType != .AvatarAgent
             vc.onUserTokenExpiredBlcok = self.onUserTokenExpiredBlcok
             topVC.av_presentFullScreenViewController(vc, animated: true)
         }

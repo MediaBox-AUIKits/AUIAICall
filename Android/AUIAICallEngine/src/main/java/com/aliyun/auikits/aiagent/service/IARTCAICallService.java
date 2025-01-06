@@ -38,6 +38,8 @@ public interface IARTCAICallService extends IARTCAICallIMCallback {
     void startAIAgentService(String userId, ARTCAICallEngine.ARTCAICallAgentType aiAgentType, IARTCAICallServiceCallback callback);
     void startAIAgentService(String userId, ARTCAICallEngine.ARTCAICallAgentType aiAgentType, ARTCAICallEngine.ARTCAICallConfig artcaiCallConfig, IARTCAICallServiceCallback callback);
 
+    void describeAIAgentInstance(String userId, String aiAgentInstanceId,  IARTCAICallServiceCallback callback);
+
     /**
      *
      * @param robotInstanceId
@@ -48,9 +50,9 @@ public interface IARTCAICallService extends IARTCAICallIMCallback {
 
     void refreshRTCToken(String channelId, String userId, IARTCAICallServiceCallback callback);
 
-    void enableVoiceInterrupt(String robotInstanceId, ARTCAICallEngine.ARTCAICallAgentType aiAgentType, boolean enable, IARTCAICallServiceCallback callback);
+    void enableVoiceInterrupt(String robotInstanceId, ARTCAICallEngine.ARTCAICallAgentType aiAgentType, ARTCAICallEngine.ARTCAICallConfig artcaiCallConfig, IARTCAICallServiceCallback callback);
 
-    void switchAiAgentVoice(String robotInstanceId, ARTCAICallEngine.ARTCAICallAgentType aiAgentType, String soundId, IARTCAICallServiceCallback callback);
+    void switchAiAgentVoice(String robotInstanceId, ARTCAICallEngine.ARTCAICallAgentType aiAgentType, ARTCAICallEngine.ARTCAICallConfig artcaiCallConfig, IARTCAICallServiceCallback callback);
 
     void interruptAiAgentSpeak();
 

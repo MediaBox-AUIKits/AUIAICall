@@ -39,6 +39,13 @@ interface AUIAICallControllerEvents {
    * 智能体回答字幕通知
    */
   AICallAgentSubtitleNotify: (data: AICallSubtitleData) => void;
+
+  /**
+   * 智能体情绪结果通知
+   * @param emotion 情绪标签，例如：neutral\happy\angry\sad 等
+   * @param userAsrSentenceId 回答用户问题的句子ID
+   */
+  AICallAgentEmotionNotify: (emotion: string, userAsrSentenceId: number) => void;
   /**
    * 用户token过期
    */

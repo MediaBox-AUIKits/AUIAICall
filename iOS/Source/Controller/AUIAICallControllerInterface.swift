@@ -8,24 +8,38 @@
 import UIKit
 import ARTCAICallKit
 
+/**
+ * 定义启动通话的配置
+ */
 @objcMembers open class AUIAICallConfig: NSObject {
-    open var agentId: String? = nil                // 智能体Id
-    open var agentType: ARTCAICallAgentType = .VoiceAgent // 智能体类型
-    open var agentVoiceId: String = ""             // 智能体讲话音色Id
-    open var agentAvatarId: String = ""            // 数字人模型Id
-    open var agentGreeting: String? = nil          // 智能体欢迎语，AI智能体在用户入会后主动说的一句话
-    open var agentMaxIdleTime: UInt32 = 600        // 智能体闲时的最大等待时间(单位：秒)，超时智能体自动下线，设置为-1表示闲时不退出。
-    open var region: String? = nil                 // 智能体服务所在的区域，如果为空，Appserver会使用默认的region来启动智能体服务
-    open var enableVoiceInterrupt = true           // 是否开启智能打断
-    open var enablePushToTalk = false              // 是否开启对讲机模式
-    open var useVoiceprint = false                 // 当前断句是否使用声纹降噪识别
-    open var voiceprintId: String? = nil           // 声纹Id，如果不为空表示当前通话开启声纹降噪能力，为空表示不启用声纹降噪能力
-    open var userData: [String: Any]? = nil        // 用户自定义信息，该信息最终传给智能体
     
+    public override init() {
+        super.init()
+        self.templateConfig = ARTCAICallTemplateConfig()
+    }
+    
+    // =================== 启动通话智能体信息 ====================================
+    open var agentId: String? = nil                // 智能体Id，如果为nil，则使用在AppServer上配置好的智能体Id
+    open var agentType: ARTCAICallAgentType = .VoiceAgent // 智能体类型
+    open var expireSecond: UInt32 = 3600           // 用户入会后失效的时间，超过这个时间会触发onAICallUserTokenExpired事件
+    open var limitSecond: UInt32 = 0               // 通话限制时间，为0表示不限制，否则通话时间到达秒数后，会自动结束通话
+    open var region: String? = nil                 // 智能体服务所在的区域，如果为空，Appserver会使用默认的region来启动智能体服务
+    open var templateConfig: ARTCAICallTemplateConfig!        // 用户自定义信息，该信息最终传给智能体
+    open var userData: [String: Any]? = nil                   // 用户自定义信息，该信息最终传给智能体
+
+    
+    // =================== 端侧设备控制能力 ====================================
     open var enableSpeaker = true                  // 是否开启扬声器
     open var muteMicrophone = false                // 是否关闭麦克风（静音）
     open var muteLocalCamera = false               // 是否关闭摄像头
-    open var limitSecond: UInt32 = 0               // 通话限制时间，为0表示不限制，否则通话时间到达秒数后，会自动结束通话
+    
+    open func getWorkflowType() -> String {
+        return ARTCAICallTemplateConfig.getTemplateConfigKey(self.agentType)
+    }
+    
+    open func getTemplateConfigString() -> String {
+        return self.templateConfig.getJsonString(self.agentType)
+    }
 }
 
 @objc public enum AUIAICallState: Int32 {
@@ -81,6 +95,13 @@ import ARTCAICallKit
     @objc optional func onAICallAgentSubtitleNotify(text: String, isSentenceEnd: Bool, userAsrSentenceId: Int)
     
     /**
+     * 智能体情绪结果通知
+     * @param emotion 情绪标签，例如：neutral\happy\angry\sad 等
+     * @param userAsrSentenceId 回答用户问题的句子ID
+     */
+    @objc optional func onAICallAgentEmotionNotify(emotion: String, userAsrSentenceId: Int)
+    
+    /**
      * 智能体即将结束通话 
      * @param reason 原因：2001(闲时退出) , 2002(真人接管结束)   0(其他)
      */
@@ -130,6 +151,9 @@ import ARTCAICallKit
     // 当前智能体状态
     var agentState: ARTCAICallAgentState { get }
     
+    // 当前智能体音色列表
+    var agentVoiceIdList: [String] { get }
+    
     // 事件回调
     weak var delegate: AUIAICallControllerDelegate? { get set }
     
@@ -139,8 +163,8 @@ import ARTCAICallKit
     // 挂断
     func handup()
     
-    // 设置智能体渲染视图，及缩放模式
-    func setAgentView(view: UIView?, mode: ARTCAICallAgentViewMode)
+    // 设置智能体渲染视图配置
+    func setAgentViewConfig(viewConfig: ARTCAICallViewConfig?)
     
     // 打断智能体说话
     func interruptSpeaking()

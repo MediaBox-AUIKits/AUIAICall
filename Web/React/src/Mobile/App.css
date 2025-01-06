@@ -5,12 +5,37 @@ body {
 }
 
 #root {
+  position: relative;
   width: 100%;
   height: 100%;
+  z-index: 9;
   margin: 0 auto;
   box-sizing: border-box;
   background-color: #fff;
   max-width: 576px;
 
   --adm-color-primary: #624aff;
+  --adm-mask-z-index: 5;
+  .adm-popup {
+    position: static;
+  }
+  .adm-mask {
+    position: absolute;
+  }
+  .adm-center-popup {
+    position: static;
+    .adm-center-popup-mask {
+      z-index: 5;
+    }
+  }
+
+  .adm-center-popup-wrap,
+  .adm-popup-body {
+    position: absolute;
+    z-index: 5;
+  }
+
+  .adm-toast-mask .adm-toast-wrap {
+    position: absolute;
+  }
 }

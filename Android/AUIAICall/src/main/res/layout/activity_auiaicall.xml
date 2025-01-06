@@ -89,7 +89,7 @@
         android:layout_width="match_parent"
         app:layout_constraintTop_toBottomOf="@id/function_bar"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/btn_create_room"
+        app:layout_constraintBottom_toTopOf="@id/btn_create_room_layout"
         android:layout_height="0dp"
         android:visibility="visible"
         />
@@ -100,23 +100,73 @@
         android:layout_width="match_parent"
         app:layout_constraintTop_toBottomOf="@id/function_bar"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/btn_create_room"
+        app:layout_constraintBottom_toTopOf="@id/btn_create_room_layout"
         android:layout_height="0dp"
         android:visibility="gone"
         />
 
-    <Button
-        android:id="@+id/btn_create_room"
-        android:layout_width="match_parent"
-        android:layout_height="44dp"
-        android:layout_marginHorizontal="72dp"
-        android:layout_marginBottom="60dp"
-        android:text="@string/room_entrance_text"
-        style="@style/layout_base_text_style_16"
-        android:background="@drawable/btn_entrance_selector"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:textAllCaps="false"
-        />
+
+        <LinearLayout
+            android:id="@+id/btn_create_room_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_marginBottom="54dp"
+            android:layout_marginRight="25dp"
+            android:layout_marginLeft="25dp"
+            >
+
+            <Button
+                android:id="@+id/btn_create_room"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="44dp"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintRight_toLeftOf="@id/config_layout"
+                android:text="@string/room_entrance_text"
+                style="@style/layout_base_text_style_16"
+                android:background="@drawable/btn_entrance_selector"
+                android:textAllCaps="false"
+
+                />
+
+            <LinearLayout
+                android:id="@+id/config_layout"
+                android:layout_width="40dp"
+                android:layout_height="match_parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintLeft_toRightOf="@id/btn_create_room"
+                android:layout_marginLeft="8dp"
+                android:orientation="vertical">
+                <ImageView
+                    android:id="@+id/config_bgm_view"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:src="@drawable/ic_agent_config"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintBottom_toTopOf="@id/agent_config_title"
+                    />
+                <TextView
+                    android:id="@+id/agent_config_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/config_bgm_view"
+                    android:text="@string/ai_agent_config"
+                    android:singleLine="true"
+                    style="@style/layout_base_text_style_10_light_white"
+                    />
+            </LinearLayout>
+
+        </LinearLayout>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

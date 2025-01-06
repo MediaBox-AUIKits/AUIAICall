@@ -6,6 +6,7 @@ import './index.less';
 import { AICallAgentType } from 'aliyun-auikit-aicall';
 import { WorkflowType } from '@/controller/service/interface';
 
+
 const tabItems = [
   {
     key: WorkflowType.VoiceChat,
@@ -70,9 +71,10 @@ function Welcome({ onAgentTypeSelected }: WelcomeProps) {
         ))}
       </Swiper>
       <div className='welcome-btn'>
-        <Button block onClick={onClick}>
+        <Button color='primary' block onClick={onClick}>
           开始体验
         </Button>
+        
       </div>
       <SafeArea position='bottom' />
     </div>

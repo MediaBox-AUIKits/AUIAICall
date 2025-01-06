@@ -25,6 +25,24 @@ public class SettingStorage {
     public static final String KEY_BOOT_ENABLE_VOICE_PRINT = "KEY_BOOT_ENABLE_VOICE_PRINT";
     public static final String KEY_SHARE_BOOT_USE_DEMO_APP_SERVER = "KEY_SHARE_BOOT_USE_DEMO_APP_SERVER";
     public static final String KEY_BOOT_USER_EXTEND_DATA = "KEY_BOOT_USER_EXTEND_DATA";
+    public static final String KEY_BOOT_ENABLE_EMOTION = "KEY_BOOT_ENABLE_EMOTION";
+
+    public static final String KEY_ENABLE_VOICE_INTERRUPT = "KEY_ENABLE_VOICE_INTERRUPT";
+    public static final String KEY_VOICE_ID = "KEY_VOICE_ID";
+    public static final String KEY_USER_OFFLINE_TIMEOUT = "KEY_USER_OFFLINE_TIMEOUT";
+    public static final String KEY_MAX_IDLE_TIME = "KEY_MAX_IDLE_TIME";
+    public static final String KEY_WORK_FLOW_OVERRIDE_PARAMS = "KEY_WORK_FLOW_OVERRIDE_PARAMS";
+    public static final String KEY_BAILIAN_APP_PARAMS = "KEY_BAILIAN_APP_PARAMS";
+    public static final String KEY_VOLUME = "KEY_VOLUME";
+    public static final String KEY_GREETING = "KEY_GREETING";
+    public static final String KEY_VOICE_PRINT_ID = "KEY_VOICE_PRINT_ID";
+    public static final String KEY_ENABLE_INTELLIGENT_SEGMENT = "KEY_ENABLE_INTELLIGENT_SEGMENT";
+    public static final String KEY_AVATAR_ID = "KEY_AVATAR_ID";
+    public static final String KEY_ASR_MAX_SILENCE = "KEY_ASR_MAX_SILENCE";
+    public static final String KEY_USER_ONLINE_TIME_OUT = "KEY_USER_ONLINE_TIME_OUT";
+
+
+
 
     public static final boolean DEFAULT_DEPOSIT_SWITCH = BuildConfig.TEST_ENV_MODE ?
             true :
@@ -47,6 +65,11 @@ public class SettingStorage {
     public static final boolean DEFAULT_SHARE_BOOT_USE_DEMO_APP_SERVER = BuildConfig.TEST_ENV_MODE ?
             false :
             false; // 发布包默认改为false
+    public static final boolean DEFAULT_BOOT_ENABLE_EMOTION = BuildConfig.TEST_ENV_MODE ?
+            false :
+            false;
+
+
 
     private SharedPreferences mSP = null;
 
@@ -71,6 +94,12 @@ public class SettingStorage {
 
     public String get(String key) {
         String value = mSP.getString(key, "");
+        Log.i("SettingStorage", "get " + key + ": " + value);
+        return value;
+    }
+
+    public String get(String key, String defaultValue) {
+        String value = mSP.getString(key, defaultValue);
         Log.i("SettingStorage", "get " + key + ": " + value);
         return value;
     }

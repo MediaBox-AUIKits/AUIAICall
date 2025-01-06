@@ -164,7 +164,11 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
       if (this.state !== AICallState.Connected) return;
       this.emit('AICallUserSubtitleNotify', data);
     });
+    this._currentEngine.on('agentEmotionNotify', (emotion, sentenceId) => {
+      this.emit('AICallAgentEmotionNotify', emotion, sentenceId);
+    });
 
+    // 鉴权相关
     this._currentEngine.on('authInfoWillExpire', async () => {
       const token = await this.requestRTCToken();
       this.engine?.updateToken(token);
@@ -196,6 +200,7 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
       this.emit('AICallAgentAudioSubscribed', audioElement);
     });
 
+    // 真人接管相关
     this._currentEngine.on('humanTakeoverWillStart', (uid: string, mode: number) => {
       this.emit('AICallHumanTakeoverWillStart', uid, mode);
     });
@@ -207,8 +212,8 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
       await this.engine?.call(this.userId, instanceInfo, {
         muteMicrophone: this._config.muteMicrophone,
         muteCamera: this._config.muteCamera,
-        enablePushToTalk: this._config.enablePushToTalk,
         previewElement: this._config.previewView,
+        templateConfig: this._config.templateConfig,
       });
 
       if (this.config.agentView) {
@@ -388,9 +393,9 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
   /**
    * 销毁引擎
    */
-  destory() {
-    logger.info('Controller', 'Destory');
-    this._currentEngine?.destory();
+  destroy() {
+    logger.info('Controller', 'destroy');
+    this._currentEngine?.destroy();
     this._currentEngine?.removeAllListeners();
     this.removeAllListeners();
   }

@@ -26,6 +26,7 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -48,6 +49,7 @@ import com.aliyun.auikits.aicall.widget.AICallReportingDialog;
 import com.aliyun.auikits.aicall.widget.AICallSettingDialog;
 import com.aliyun.auikits.aicall.widget.SpeechAnimationView;
 import com.aliyun.auikits.aiagent.ARTCAICallEngine;
+import com.aliyun.auikits.aiagent.debug.ARTCAICallEngineDebuger;
 import com.aliyun.auikits.aicall.util.AppServiceConst;
 import com.orhanobut.dialogplus.DialogPlus;
 import com.orhanobut.dialogplus.OnDismissListener;
@@ -62,6 +64,7 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
     public static final String BUNDLE_KEY_AI_AGENT_ID = "BUNDLE_KEY_AI_AGENT_ID";
     public static final String BUNDLE_KEY_LOGIN_USER_ID = "BUNDLE_KEY_LOGIN_USER_ID";
     public static final String BUNDLE_KEY_LOGIN_AUTHORIZATION = "BUNDLE_KEY_LOGIN_AUTHORIZATION";
+    public static final String BUNDLE_KEY_IS_SHARED_AGENT = "BUNDLE_KEY_IS_SHARED_AGENT";
 
     private static final boolean IS_SUBTITLE_ENABLE = true;
     private static String sUserId = null;
@@ -172,6 +175,13 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                 mSubtitleHolder.updateSubtitle(false, end, text, userAsrSentenceId);
             } else {
                 mSubtitleHolder.setSubtitleLayoutVisibility(false);
+            }
+        }
+
+        @Override
+        public void onAgentEmotionNotify(String emotion,int userAsrSentenceId) {
+            if(BuildConfig.TEST_ENV_MODE) {
+                ToastHelper.showToast(AUIAICallInCallActivity.this, "The agent seems to be " + emotion, Toast.LENGTH_SHORT);
             }
         }
 
@@ -289,6 +299,13 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             ToastHelper.showToast(AUIAICallInCallActivity.this, R.string.ai_agent_human_takeover_connect, Toast.LENGTH_SHORT);
 
         }
+
+        @Override
+        public void onAudioDelayInfo(int id, int delay_ms) {
+            if(BuildConfig.TEST_ENV_MODE) {
+                ToastHelper.showToast(AUIAICallInCallActivity.this, "AudioDelayInfo: id :" + id + ", delay: " + delay_ms, Toast.LENGTH_SHORT);
+            }
+        }
     };
 
     @Override
@@ -345,7 +362,7 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             public void onClick(View view) {
                 AICallSettingDialog.show(AUIAICallInCallActivity.this, mARTCAICallEngine,
                         mAiAgentType== ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent,
-                        mIsVoicePrintRecognized, mIsSharedAgent);
+                        mIsVoicePrintRecognized, mIsSharedAgent, mARTCAICallController.getAgentVoiceList());
             }
         });
         findViewById(R.id.speech_animation_view).setOnClickListener(new View.OnClickListener() {
@@ -376,7 +393,7 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             aiAgentRegion = getIntent().getExtras().getString(BUNDLE_KEY_AI_AGENT_REGION, null);
             aiAgentId = getIntent().getExtras().getString(BUNDLE_KEY_AI_AGENT_ID, null);
             mAiAgentType = (ARTCAICallEngine.ARTCAICallAgentType) getIntent().getExtras().getSerializable(BUNDLE_KEY_AI_AGENT_TYPE);
-            mIsSharedAgent = !TextUtils.isEmpty(aiAgentId);
+            mIsSharedAgent =  getIntent().getExtras().getBoolean(BUNDLE_KEY_IS_SHARED_AGENT, false);
 
             loginUserId = getIntent().getExtras().getString(BUNDLE_KEY_LOGIN_USER_ID, null);
             loginAuthorization = getIntent().getExtras().getString(BUNDLE_KEY_LOGIN_AUTHORIZATION, null);
@@ -406,22 +423,24 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             }
         });
 
+
+        ARTCAICallEngineDebuger.enableDumpData = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_AUDIO_DUMP_SWITCH);
+        ARTCAICallEngineDebuger.enableUserSpecifiedAudioTips = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_AUDIO_TIPS_SWITCH);
+        ARTCAICallEngineDebuger.enableLabEnvironment = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_USE_RTC_PRE_ENV_SWITCH);
+
         boolean useDeposit = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_DEPOSIT_SWITCH, SettingStorage.DEFAULT_DEPOSIT_SWITCH);
         ARTCAICallEngine.ARTCAICallConfig artcaiCallConfig = new ARTCAICallEngine.ARTCAICallConfig();
-        artcaiCallConfig.aiAgentRegion = aiAgentRegion;
-        artcaiCallConfig.aiAgentId = aiAgentId;
-        artcaiCallConfig.enableAudioDump = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_AUDIO_DUMP_SWITCH);
-        artcaiCallConfig.userSpecifiedAudioTips = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_AUDIO_TIPS_SWITCH);
-        artcaiCallConfig.useRtcPreEnv = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_USE_RTC_PRE_ENV_SWITCH);
+        artcaiCallConfig.mAiCallAgentTemplateConfig.aiAgentRegion = aiAgentRegion;
+        artcaiCallConfig.mAiCallAgentTemplateConfig.aiAgentId = aiAgentId;
+        artcaiCallConfig.mAiCallAgentTemplateConfig.isSharedAgent = mIsSharedAgent;
         boolean usePreHost = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_APP_SERVER_TYPE, SettingStorage.DEFAULT_APP_SERVER_TYPE);
-        artcaiCallConfig.appServerHost = usePreHost ? AppServiceConst.PRE_HOST : AppServiceConst.HOST;
-        artcaiCallConfig.useDeposit = useDeposit;
-        artcaiCallConfig.loginUserId = loginUserId;
-        artcaiCallConfig.loginAuthrization = loginAuthorization;
+        artcaiCallConfig.mAiCallAgentTemplateConfig.appServerHost = usePreHost ? AppServiceConst.PRE_HOST : AppServiceConst.HOST;
+        artcaiCallConfig.mAiCallAgentTemplateConfig.loginUserId = loginUserId;
+        artcaiCallConfig.mAiCallAgentTemplateConfig.loginAuthrization = loginAuthorization;
         mIsPushToTalkMode = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_PUSH_TO_TALK, SettingStorage.DEFAULT_ENABLE_PUSH_TO_TALK);
-        artcaiCallConfig.enablePushToTalk = mIsPushToTalkMode;
-        artcaiCallConfig.enableVoicePrint = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_VOICE_PRINT, SettingStorage.DEFAULT_ENABLE_VOICE_PRINT);
-        artcaiCallConfig.userExtendData = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_USER_EXTEND_DATA);
+        artcaiCallConfig.mAiCallAgentTemplateConfig.enablePushToTalk = mIsPushToTalkMode;
+        artcaiCallConfig.mAiCallAgentTemplateConfig.enableVoicePrint = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_VOICE_PRINT, SettingStorage.DEFAULT_ENABLE_VOICE_PRINT);
+        artcaiCallConfig.mAiCallAgentTemplateConfig.userExtendData = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_USER_EXTEND_DATA);
         artcaiCallConfig.mAiCallVideoConfig.useHighQualityPreview = true;
         artcaiCallConfig.mAiCallVideoConfig.cameraCaptureFrameRate = 15;
         // 这里frameRate设置为5，需要根据控制台上的智能体的抽帧帧率（一般为2）进行调整，最大不建议超过15fps
@@ -429,12 +448,20 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         artcaiCallConfig.mAiCallVideoConfig.videoEncoderFrameRate = 5;
         artcaiCallConfig.mAiCallVideoConfig.videoEncoderBitRate = 340;
 
+        if(BuildConfig.TEST_ENV_MODE) {
+            updateTemplateConfig(artcaiCallConfig.mAiCallAgentTemplateConfig);
+        }
+
+        if(TextUtils.isEmpty(artcaiCallConfig.mAiCallAgentTemplateConfig.voiceprintId)) {
+            artcaiCallConfig.mAiCallAgentTemplateConfig.voiceprintId = loginUserId;
+        }
         mARTCAICallController = useDeposit ? new ARTCAICallDepositController(this, loginUserId) :
                 new ARTCAICustomController(this, loginUserId);
         mARTCAICallController.setBizCallEngineCallback(mARTCAIEngineCallback);
         mARTCAICallController.setCallStateCallback(mCallStateCallback);
         mARTCAICallController.init(artcaiCallConfig);
         mARTCAICallController.setAiAgentType(mAiAgentType);
+        mARTCAICallController.enableFetchVoiceIdList(false);
 
         mARTCAICallEngine = mARTCAICallController.getARTCAICallEngine();
         if (mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent) {
@@ -760,6 +787,26 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                                 SpeechAnimationView.AnimationType.WAITING
                 );
             }
+        }
+    }
+
+    private void updateTemplateConfig(ARTCAICallEngine.ARTCAICallAgentTemplateConfig templateConfig) {
+        try {
+            templateConfig.enableVoiceInterrupt =  SettingStorage.getInstance().get(SettingStorage.KEY_ENABLE_VOICE_INTERRUPT).equals("1") ? true:false;
+            templateConfig.aiAgentVoiceId = SettingStorage.getInstance().get(SettingStorage.KEY_VOICE_ID);
+            templateConfig.aiAgentUserOfflineTimeout = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_USER_OFFLINE_TIMEOUT));
+            templateConfig.aiAgentMaxIdleTime = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_MAX_IDLE_TIME));
+            templateConfig.aiAgentWorkflowOverrideParams = SettingStorage.getInstance().get(SettingStorage.KEY_WORK_FLOW_OVERRIDE_PARAMS);
+            templateConfig.aiAgentBailianAppParams = SettingStorage.getInstance().get(SettingStorage.KEY_BAILIAN_APP_PARAMS);
+            templateConfig.aiAgentVolume = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_VOLUME));
+            templateConfig.aiAgentGreeting = SettingStorage.getInstance().get(SettingStorage.KEY_GREETING);
+            templateConfig.voiceprintId = SettingStorage.getInstance().get(SettingStorage.KEY_VOICE_PRINT_ID);
+            templateConfig.enableIntelligentSegment = SettingStorage.getInstance().get(SettingStorage.KEY_ENABLE_INTELLIGENT_SEGMENT).equals("1") ? true:false;
+            templateConfig.aiAgentAvatarId = SettingStorage.getInstance().get(SettingStorage.KEY_AVATAR_ID);
+            templateConfig.aiAgentAsrMaxSilence = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_ASR_MAX_SILENCE));
+            templateConfig.aiAgentUserOnlineTimeout = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_USER_ONLINE_TIME_OUT));
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
     }
 

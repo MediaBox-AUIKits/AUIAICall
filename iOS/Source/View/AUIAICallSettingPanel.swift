@@ -45,18 +45,29 @@ public typealias AUIAICallSettingDefaultBlock = (_ sender: AUIAICallSettingPanel
         return 448
     }
     
-    public var enableVoiceIdSwitch: Bool = true {
+    private var voiceItemList: [AUIAICallVoiceItem] = []
+
+    public var voiceIdList: [String] = [] {
         didSet {
-            self.voiceIdSwitch.isHidden = !self.enableVoiceIdSwitch
+            self.voiceItemList.removeAll()
+            for i in 0 ..< self.voiceIdList.count {
+                let vid = self.voiceIdList[i]
+                let item = AUIAICallVoiceItem()
+                item.voiceId = vid
+                item.voiceName = vid
+                item.icon = "ic_sound_\(i % 3)"
+                self.voiceItemList.append(item)
+            }
+            self.voiceIdSwitch.isHidden = self.voiceItemList.count == 0
         }
     }
+    
     
     public var enableVoiceprintSwitch: Bool = true {
         didSet {
             self.voiceprintSettingView.isHidden = !self.enableVoiceprintSwitch
         }
     }
-    
     
     public var isVoiceprintRegisted: Bool = true {
         didSet {
@@ -148,28 +159,6 @@ public typealias AUIAICallSettingDefaultBlock = (_ sender: AUIAICallSettingPanel
         return view
     }()
     
-    open lazy var itemList: [AUIAICallVoiceItem] = {
-        var list = [AUIAICallVoiceItem]()
-        let item0 = AUIAICallVoiceItem()
-        item0.voiceId = "zhixiaobai"
-        item0.voiceName = AUIAICallBundle.getString("Zhi Xiaobai")
-        item0.icon = "ic_sound_bai"
-        list.append(item0)
-        
-        let item1 = AUIAICallVoiceItem()
-        item1.voiceId = "zhixiaoxia"
-        item1.voiceName = AUIAICallBundle.getString("Zhi Xiaoxia")
-        item1.icon = "ic_sound_xia"
-        list.append(item1)
-        
-        let item2 = AUIAICallVoiceItem()
-        item2.voiceId = "abin"
-        item2.voiceName = AUIAICallBundle.getString("Abin")
-        item2.icon = "ic_sound_bin"
-        list.append(item2)
-        
-        return list
-    }()
     
     private var selectItem: AUIAICallVoiceItem? = nil {
         didSet {
@@ -190,12 +179,12 @@ public typealias AUIAICallSettingDefaultBlock = (_ sender: AUIAICallSettingPanel
     }
 
     private func refreshUI() {
-        self.onPushToTalkSwitchChanged(ptt: self.config?.enablePushToTalk == true)
+        self.onPushToTalkSwitchChanged(ptt: self.config?.templateConfig.enablePushToTalk == true)
 
-        self.interruptSwitch.switchBtn.isOn = self.config?.enableVoiceInterrupt ?? true
-        self.voiceprintSettingView.voiceprintSwitch.switchBtn.isOn = self.config?.useVoiceprint ?? true
-        self.selectItem = self.itemList.first { item in
-            return item.voiceId == self.config?.agentVoiceId
+        self.interruptSwitch.switchBtn.isOn = self.config?.templateConfig.enableVoiceInterrupt ?? true
+        self.voiceprintSettingView.voiceprintSwitch.switchBtn.isOn = self.config?.templateConfig.useVoiceprint ?? true
+        self.selectItem = self.voiceItemList.first { item in
+            return item.voiceId == self.config?.templateConfig.agentVoiceId
         }
         
         self.setNeedsLayout()
@@ -237,10 +226,7 @@ public typealias AUIAICallSettingDefaultBlock = (_ sender: AUIAICallSettingPanel
 extension AUIAICallSettingPanel {
     
     open override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        if !self.enableVoiceIdSwitch {
-            return 0
-        }
-        return self.itemList.count
+        return self.voiceItemList.count
     }
     
     open override func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
@@ -261,7 +247,7 @@ extension AUIAICallSettingPanel {
     
     open override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = self.collectionView.dequeueReusableCell(withReuseIdentifier: "cell", for: indexPath) as! AUIAICallSoundCell
-        cell.item = self.itemList[indexPath.row]
+        cell.item = self.voiceItemList[indexPath.row]
         cell.isApplied = cell.item == self.selectItem
         cell.applyBtn.clickBlock = {[weak self, weak cell] sender in
             if let item = cell?.item {

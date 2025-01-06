@@ -48,6 +48,7 @@ import ARTCAICallKit
             self.delegate?.onAICallStateChanged?()
         }
     }
+    public internal(set) var agentVoiceIdList: [String] = []
     public internal(set) var errorCode: ARTCAICallErrorCode = .None
     public var agentInfo: ARTCAICallAgentInfo? {
         get {
@@ -97,7 +98,7 @@ import ARTCAICallKit
         ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "AgentId", value: self.config.agentId ?? "")
         ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "UserId", value: self.userId)
         
-        self.generateAIAgentCall(userId: self.userId, config: self.config) {[weak self] agent, token, error, reqId in
+        self.generateAIAgentCall(userId: self.userId) {[weak self] agent, token, error, reqId in
             
             ARTCAICallEngineLog.WriteLog("Start Call Result: \(error == nil ? "Success" : "Failed")")
             ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "RequestId", value: reqId)
@@ -117,10 +118,12 @@ import ARTCAICallKit
 
                 self.config.agentType = agent.agentType
                 self.delegate?.onAICallAIAgentStarted?(agentInfo: agent)
+                
+                self.fetchVoiceIdList(instanceId: agent.instanceId)
 
                 _ = self.engine.muteLocalCamera(mute: self.config.muteLocalCamera)
                 _ = self.engine.muteMicrophone(mute: self.config.muteMicrophone)
-                _ = self.engine.enablePushToTalk(enable: self.config.enablePushToTalk)
+                _ = self.engine.enablePushToTalk(enable: self.config.templateConfig.enablePushToTalk)
                 self.engine.call(userId: self.userId, token: token, agentInfo: agent) { [weak self] error in
                     guard let self = self else { return }
                     if self.state == .Over {
@@ -158,8 +161,8 @@ import ARTCAICallKit
     }
     
     // 设置智能体渲染视图，及缩放模式
-    public func setAgentView(view: UIView?, mode: ARTCAICallAgentViewMode) {
-        self.engine.setAgentView(view: view, mode: mode)
+    public func setAgentViewConfig(viewConfig: ARTCAICallViewConfig?) {
+        self.engine.setAgentViewConfig(viewConfig: viewConfig)
     }
     
     // 打断智能体说话
@@ -340,15 +343,20 @@ extension AUIAICallStandardController: ARTCAICallEngineDelegate {
         self.delegate?.onAICallAgentSubtitleNotify?(text: text, isSentenceEnd: isSentenceEnd, userAsrSentenceId: userAsrSentenceId)
     }
     
+    public func onAgentEmotionNotify(emotion: String, userAsrSentenceId: Int) {
+        debugPrint("AUIAICallStandardController onAgentEmotionNotify:\(emotion)  sentenceId: \(userAsrSentenceId)")
+        self.delegate?.onAICallAgentEmotionNotify?(emotion: emotion, userAsrSentenceId: userAsrSentenceId)
+    }
+    
     public func onVoiceIdChanged(voiceId: String) {
         debugPrint("AUIAICallStandardController onVoiceIdChanged:\(voiceId)")
-        if self.config.agentVoiceId == voiceId {
+        if self.config.templateConfig.agentVoiceId == voiceId {
             if let switchVoiceIdCompleted = self.switchVoiceIdCompleted {
                 switchVoiceIdCompleted(NSError.aicall_create(code: .InvalidAction))
             }
         }
         else {
-            self.config.agentVoiceId = voiceId
+            self.config.templateConfig.agentVoiceId = voiceId
             self.switchVoiceIdCompleted?(nil)
         }
         self.switchVoiceIdCompleted = nil
@@ -356,13 +364,13 @@ extension AUIAICallStandardController: ARTCAICallEngineDelegate {
     
     public func onVoiceInterrupted(enable: Bool) {
         debugPrint("AUIAICallStandardController onVoiceInterrupted:\(enable)")
-        if self.config.enableVoiceInterrupt == enable {
+        if self.config.templateConfig.enableVoiceInterrupt == enable {
             if let enableVoiceInterruptCompleted = self.enableVoiceInterruptCompleted {
                 enableVoiceInterruptCompleted(NSError.aicall_create(code: .InvalidAction))
             }
         }
         else {
-            self.config.enableVoiceInterrupt = enable
+            self.config.templateConfig.enableVoiceInterrupt = enable
             self.enableVoiceInterruptCompleted?(nil)
         }
         self.enableVoiceInterruptCompleted = nil
@@ -371,19 +379,19 @@ extension AUIAICallStandardController: ARTCAICallEngineDelegate {
     public func onPushToTalk(enable: Bool) {
         debugPrint("AUIAICallStandardController onPushToTalk:\(enable)")
         
-        self.config.enablePushToTalk = enable
+        self.config.templateConfig.enablePushToTalk = enable
         self.delegate?.onAICallAgentPushToTalkChanged?(enable: enable)
     }
     
     public func onVoiceprint(enable: Bool) {
         debugPrint("AUIAICallStandardController onVoiceprint:\(enable)")
-        if self.config.useVoiceprint == enable {
+        if self.config.templateConfig.useVoiceprint == enable {
             if let useVoiceprintCompleted = self.useVoiceprintCompleted {
                 useVoiceprintCompleted(NSError.aicall_create(code: .InvalidAction))
             }
         }
         else {
-            self.config.useVoiceprint = enable
+            self.config.templateConfig.useVoiceprint = enable
             self.useVoiceprintCompleted?(nil)
         }
         self.useVoiceprintCompleted = nil
@@ -414,16 +422,6 @@ extension AUIAICallStandardController: ARTCAICallEngineDelegate {
 
 extension AUIAICallStandardController {
     
-    private func agentTypeToString(_ agentType: ARTCAICallAgentType) -> String {
-        if agentType == .AvatarAgent {
-            return "AvatarChat3D"
-        }
-        else if agentType == .VisionAgent {
-            return "VisionChat"
-        }
-        return "VoiceChat"
-    }
-    
     private func handlerCallError(error: NSError?, data: [AnyHashable: Any]?) -> NSError? {
         guard let error = error else { return nil }
         if error.code == 403 {
@@ -440,7 +438,7 @@ extension AUIAICallStandardController {
         return NSError.aicall_create(code: .BeginCallFailed)
     }
     
-    public func generateAIAgentCall(userId: String, config: AUIAICallConfig, completed: ((_ rsp: ARTCAICallAgentInfo?, _ token: String?, _ error: NSError?, _ reqId: String) -> Void)?) {
+    public func generateAIAgentCall(userId: String, completed: ((_ rsp: ARTCAICallAgentInfo?, _ token: String?, _ error: NSError?, _ reqId: String) -> Void)?) {
         
         if let agentShareConfig = self.agentShareConfig {
             self.engine.generateShareAgentCall(shareConfig: agentShareConfig, userId: userId) { rsp, token, error, reqId in
@@ -449,50 +447,30 @@ extension AUIAICallStandardController {
             return
         }
         
-        var template_config: [String : Any] = [:]
-        var configDict: [String : Any] = [
-            "EnableVoiceInterrupt": config.enableVoiceInterrupt,
-            "EnablePushToTalk": config.enablePushToTalk,
-            "MaxIdleTime": config.agentMaxIdleTime,
-        ]
-        if let voiceprintId = config.voiceprintId {
-            configDict.updateValue(voiceprintId, forKey: "VoiceprintId")
-            configDict.updateValue(config.useVoiceprint, forKey: "UseVoiceprint")
-        }
-        if !config.agentVoiceId.isEmpty {
-            configDict.updateValue(config.agentVoiceId, forKey: "VoiceId")
-        }
-        if config.agentType == .AvatarAgent {
-            if config.agentAvatarId.isEmpty == false {
-                configDict.updateValue(config.agentAvatarId, forKey: "AvatarId")
-            }
-        }
-        let workflow_type = self.agentTypeToString(config.agentType)
-        template_config.updateValue(configDict, forKey: workflow_type)
-
+        let workflow_type = self.config.getWorkflowType()
+        let template_config = self.config.getTemplateConfigString()
         
         var body: [String: Any] = [:]
-        let expire: Int = 24 * 60 * 60
-        if let agentId = config.agentId {
+        if let agentId = self.config.agentId {
             body = [
                 "ai_agent_id": agentId,
                 "user_id": userId,
-                "expire": expire,
-                "template_config": template_config.aicall_jsonString
+                "expire": self.config.expireSecond,
+                "template_config": template_config
             ]
         }
         else {
             body = [
                 "workflow_type": workflow_type,
                 "user_id": userId,
-                "expire": expire,
-                "template_config": template_config.aicall_jsonString
+                "expire": self.config.expireSecond,
+                "template_config": template_config
             ]
         }
-        if let region = config.region {
+        if let region = self.config.region {
             body.updateValue(region, forKey: "region")
         }
-        if let userData = config.userData {
+        if let userData = self.config.userData {
             body.updateValue(userData.aicall_jsonString, forKey: "user_data")
         }
 
@@ -507,6 +485,44 @@ extension AUIAICallStandardController {
             else {
                 debugPrint("generateAIAgentCall response: failed, error:\(error!)")
                 completed?(nil, nil, self?.handlerCallError(error: error, data: data), reqId)
+            }
+        }
+    }
+    
+}
+
+
+// 获取音色列表
+extension AUIAICallStandardController {
+    
+    // 如果你的业务无需获取音色列表，请把这个开关关闭
+    static let EnableVoiceIdList: Bool = false
+    
+    public func fetchVoiceIdList(instanceId: String) {
+        
+        guard AUIAICallStandardController.EnableVoiceIdList else {
+            return
+        }
+           
+        let body: [String: Any] = [
+            "user_id": self.userId,
+            "ai_agent_instance_id": instanceId
+        ]
+        
+        self.appserver.request(path: "/api/v2/aiagent/describeAIAgentInstance", body: body) { [weak self] response, data, error in
+            guard let self = self else {
+                return
+            }
+            
+            if let template_config = data?["template_config"] as? String, let dict = template_config.aicall_jsonObj() {
+                if let agent_dict = dict[ARTCAICallTemplateConfig.getTemplateConfigKey(self.config.agentType)] as? Dictionary<String, Any> {
+                    if let voiceId  = agent_dict["VoiceId"] as? String {
+                        self.config.templateConfig.agentVoiceId = voiceId
+                    }
+                    if let voiceIdList  = agent_dict["VoiceIdList"] as? [String] {
+                        self.agentVoiceIdList = voiceIdList
+                    }
+                }
             }
         }
     }

@@ -3,7 +3,6 @@ import { message } from 'antd';
 import { AICallAgentType, AICallState } from 'aliyun-auikit-aicall';
 
 import Stage from './Stage';
-import Welcome from './Welcome';
 import Message from './Message';
 import useCallStore from '@/common/store';
 
@@ -30,12 +29,6 @@ function AICall(props: AICallProps) {
 
   const countdownRef = useRef(0);
   const startTimeRef = useRef(0);
-
-  // 切换 controller 后重置状态
-  useEffect(() => {
-    controller?.handup();
-    useCallStore.getState().reset();
-  }, [controller]);
 
   const stopPushToTalk = useMemo(
     () => () => {
@@ -109,8 +102,6 @@ function AICall(props: AICallProps) {
     return () => {
       document.removeEventListener('keydown', onKeyDown);
       document.removeEventListener('keyup', onKeyUp);
-      controller?.removeAllListeners();
-      controller?.handup();
     };
   }, [controller, onKeyDown, onKeyUp]);
 
@@ -189,6 +180,13 @@ function AICall(props: AICallProps) {
       }
     });
 
+    const currentTemplateConfig = controller.config.templateConfig;
+    useCallStore.setState({
+      enablePushToTalk: currentTemplateConfig.enablePushToTalk,
+      enableVoiceInterrupt: currentTemplateConfig.enableVoiceInterrupt,
+      voiceId: currentTemplateConfig.agentVoiceId || '',
+    });
+
     try {
       await controller.start();
     } catch (error) {
@@ -202,6 +200,11 @@ function AICall(props: AICallProps) {
     useCallStore.getState().reset();
   };
 
+  useEffect(() => {
+    if (agentType === undefined || agentType === null) return;
+    startCall(agentType);
+  }, [agentType]);
+
   return (
     <div
       className={`call ${
@@ -209,25 +212,19 @@ function AICall(props: AICallProps) {
       }`}
     >
       {contextHolder}
-      {callState === AICallState.Connected ? (
-        <>
-          <Stage
-            showMessage={showMessage}
-            onStop={stopCall}
-            onShowMessage={() => {
-              setShowMessage(true);
-            }}
-          />
-          <Message
-            showMessage={showMessage}
-            onHideMessage={() => {
-              setShowMessage(false);
-            }}
-          />
-        </>
-      ) : (
-        <Welcome onAgentTypeSelected={startCall} />
-      )}
+      <Stage
+        showMessage={showMessage}
+        onStop={stopCall}
+        onShowMessage={() => {
+          setShowMessage(true);
+        }}
+      />
+      <Message
+        showMessage={showMessage}
+        onHideMessage={() => {
+          setShowMessage(false);
+        }}
+      />
     </div>
   );
 }

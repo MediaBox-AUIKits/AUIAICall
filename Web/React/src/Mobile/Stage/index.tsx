@@ -11,7 +11,7 @@ import Vision from './Vision';
 
 import './index.less';
 import useCallStore from '@/common/store';
-import { debounce } from '@/common/utils';
+import { debounce, getRootElement } from '@/common/utils';
 import ARTCAICallEngine, { AICallAgentType, AICallState } from 'aliyun-auikit-aicall';
 import i18n, { getErrorMessage } from '@/common/i18n';
 import { Dialog, Toast } from 'antd-mobile';
@@ -102,6 +102,10 @@ function Stage({ agentType, onStateChange, onExit, onAuthFail, limitSecond, auto
       }
     });
 
+    controller.on('AICallAgentEmotionNotify', (emotion, sentenceId) => {
+      console.log(`智能体情绪：${emotion}, 语句：${sentenceId}`);
+    });
+
     // 实时字幕相关呢
     controller.on('AICallAgentSubtitleNotify', (data) => {
       useCallStore.getState().setCurrentSubtitle({
@@ -117,7 +121,7 @@ function Stage({ agentType, onStateChange, onExit, onAuthFail, limitSecond, auto
     });
 
     controller.on('AICallUserTokenExpired', () => {
-      Toast.show({ content: i18n['login.tokenExpired'], position: 'bottom' });
+      Toast.show({ content: i18n['login.tokenExpired'], getContainer: () => getRootElement() });
       onAuthFail?.();
     });
 
@@ -132,7 +136,7 @@ function Stage({ agentType, onStateChange, onExit, onAuthFail, limitSecond, auto
           if (delta > limitSecond * 1000) {
             Toast.show({
               content: i18n['avatar.timeLimit'],
-              position: 'bottom',
+              getContainer: () => getRootElement(),
             });
             stopCall();
             if (countdownRef.current) {
@@ -152,32 +156,44 @@ function Stage({ agentType, onStateChange, onExit, onAuthFail, limitSecond, auto
       }
       Toast.show({
         content: toast,
-        position: 'bottom',
+        getContainer: () => getRootElement(),
       });
     });
 
     controller.on('AICallReceivedAgentCustomMessage', (data) => {
       Toast.show({
         content: '收到智能体自定义消息：' + JSON.stringify(data),
-        position: 'bottom',
+        getContainer: () => getRootElement(),
       });
     });
 
     controller.on('AICallHumanTakeoverWillStart', () => {
       Toast.show({
         content: i18n['humanTakeover.willStart'],
-        position: 'bottom',
+        getContainer: () => getRootElement(),
       });
     });
     controller.on('AICallHumanTakeoverConnected', () => {
       Toast.show({
         content: i18n['humanTakeover.connected'],
-        position: 'bottom',
+        getContainer: () => getRootElement(),
       });
+    });
+
+    const currentTemplateConfig = controller.config.templateConfig;
+    useCallStore.setState({
+      enablePushToTalk: currentTemplateConfig.enablePushToTalk,
+      enableVoiceInterrupt: currentTemplateConfig.enableVoiceInterrupt,
+      voiceId: currentTemplateConfig.agentVoiceId || '',
     });
 
     try {
       await controller.start();
+      if (controller.config.templateConfig?.agentVoiceId) {
+        useCallStore.setState({
+          voiceId: controller.config.templateConfig.agentVoiceId,
+        });
+      }
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       useCallStore.setState({
@@ -218,6 +234,7 @@ function Stage({ agentType, onStateChange, onExit, onAuthFail, limitSecond, auto
         <Dialog
           visible
           closeOnMaskClick
+          getContainer={() => getRootElement()}
           onClose={() => {
             useCallStore.setState({
               callState: AICallState.None,

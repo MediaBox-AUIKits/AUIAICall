@@ -13,6 +13,7 @@ import android.widget.Toast;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.aliyun.auikits.aiagent.util.Logger;
 import com.aliyun.auikits.aicall.BuildConfig;
 import com.aliyun.auikits.aicall.R;
 import com.aliyun.auikits.aicall.base.card.CardEntity;
@@ -53,10 +54,9 @@ public class AICallSettingDialog {
     ViewGroup mVgInterruptConfig = null;
     ViewGroup mVgVoicePrintStatus = null;
 
-
-    public static void show(Context context, ARTCAICallEngine aRTCAICallEngine, boolean isAvatarAgent, boolean isVoicePrintRecognized, boolean isSharedAgent) {
+    public static void show(Context context, ARTCAICallEngine aRTCAICallEngine, boolean isAvatarAgent, boolean isVoicePrintRecognized, boolean isSharedAgent, List<AudioToneData> audioToneList) {
         View view = LayoutInflater.from(context).inflate(R.layout.dialog_aicall_setting, null, false);
-        AICallSettingDialog aiCallSettingDialog = new AICallSettingDialog(view, aRTCAICallEngine, isAvatarAgent, isVoicePrintRecognized, isSharedAgent);
+        AICallSettingDialog aiCallSettingDialog = new AICallSettingDialog(view, aRTCAICallEngine, isAvatarAgent, isVoicePrintRecognized, isSharedAgent, audioToneList);
         view.setTag(aiCallSettingDialog);
 
         ViewHolder viewHolder = new ViewHolder(view);
@@ -81,39 +81,18 @@ public class AICallSettingDialog {
 
     private static class AudioToneContentModel extends AbsContentModel<CardEntity> {
         private ARTCAICallEngine mARTCAiCallEngine = null;
+        List<AudioToneData> mAudioToneList;
 
-        public AudioToneContentModel(ARTCAICallEngine artcaiCallEngine) {
+        public AudioToneContentModel(ARTCAICallEngine artcaiCallEngine, List<AudioToneData> audioToneList) {
             mARTCAiCallEngine = artcaiCallEngine;
+            mAudioToneList = audioToneList;
         }
 
         @Override
         public void initData(BizParameter parameter, IBizCallback<CardEntity> callback) {
-            String currentAudioId = mARTCAiCallEngine.getRobotVoiceId();
-//            1、voiceId：longxiaochun   名称：龙小淳
-//            2、voiceId：longhua   名称：龙华
-//            3、voiceId：longcheng   名称：龙橙
-
-            List<AudioToneData> cardDataList = new ArrayList<>();
-//            AudioToneData audioToneData1 = new AudioToneData("longxiaochun", "龙小淳");
-            AudioToneData audioToneData1 = new AudioToneData("zhixiaobai", "Zhi Xiao Bai");
-            audioToneData1.setIconResId(R.drawable.ic_audio_tone);
-            audioToneData1.setUsing(currentAudioId.equals(audioToneData1.getAudioToneId()));
-            cardDataList.add(audioToneData1);
-
-//            AudioToneData audioToneData2 = new AudioToneData("longhua", "龙华");
-            AudioToneData audioToneData2 = new AudioToneData("zhixiaoxia", "Zhi Xiao Xia");
-            audioToneData2.setIconResId(R.drawable.ic_audio_tone);
-            audioToneData2.setUsing(currentAudioId.equals(audioToneData2.getAudioToneId()));
-            cardDataList.add(audioToneData2);
-
-//            AudioToneData audioToneData3 = new AudioToneData("longcheng", "龙橙");
-            AudioToneData audioToneData3 = new AudioToneData("abin", "A Bin");
-            audioToneData3.setIconResId(R.drawable.ic_audio_tone);
-            audioToneData3.setUsing(currentAudioId.equals(audioToneData3.getAudioToneId()));
-            cardDataList.add(audioToneData3);
 
             List<CardEntity> cardEntities = new ArrayList<>();
-            for (AudioToneData audioToneData : cardDataList) {
+            for (AudioToneData audioToneData : mAudioToneList) {
                 CardEntity cardEntity = new CardEntity();
                 cardEntity.cardType = CardTypeDef.AUDIO_TONE_CARD;
                 cardEntity.bizData = audioToneData;
@@ -133,7 +112,7 @@ public class AICallSettingDialog {
     }
 
     private AICallSettingDialog(View root, ARTCAICallEngine aRTCAICallEngine, boolean isAvatarAgent,
-                                boolean isVoicePrintRecognized, boolean isSharedAgent) {
+                                boolean isVoicePrintRecognized, boolean isSharedAgent, List<AudioToneData> voiceToneList) {
         mARTCAICallEngine = aRTCAICallEngine;
         mIsAvatarAgent = isAvatarAgent;
         mIsVoicePrintRecognized = isVoicePrintRecognized;
@@ -142,17 +121,20 @@ public class AICallSettingDialog {
         initVoicePrintButton(root);
         initConversionModeButton(root);
 
-        if (mIsAvatarAgent || isSharedAgent) {
+        if (mIsAvatarAgent || isSharedAgent || voiceToneList.isEmpty()) {
             root.findViewById(R.id.ll_audio_tone_config).setVisibility(View.GONE);
             root.findViewById(R.id.ll_audio_tone_list).setVisibility(View.GONE);
         } else {
             root.findViewById(R.id.ll_audio_tone_config).setVisibility(View.VISIBLE);
             root.findViewById(R.id.ll_audio_tone_list).setVisibility(View.VISIBLE);
+            root.findViewById(R.id.ll_audio_tone_list).getLayoutParams().height = DisplayUtil.dip2px((voiceToneList.size() * 48  + 24));
+
 
             SmartRefreshLayout srlAudioToneList = root.findViewById(R.id.srl_audio_tone_list);
             srlAudioToneList.setEnableLoadMore(false);
             srlAudioToneList.setEnableRefresh(false);
             RecyclerView rvAudioToneList = root.findViewById(R.id.rv_audio_tone_list);
+            rvAudioToneList.setNestedScrollingEnabled(false);
 
             DefaultCardViewFactory factory = new DefaultCardViewFactory();
             factory.registerCardView(CardTypeDef.AUDIO_TONE_CARD, AudioToneCard.class);
@@ -160,7 +142,7 @@ public class AICallSettingDialog {
             rvAudioToneList.setLayoutManager(new LinearLayoutManager(root.getContext(), RecyclerView.VERTICAL, false));
             rvAudioToneList.setAdapter(mCardListAdapter);
 
-            mAudioToneContentModel = new AudioToneContentModel(mARTCAICallEngine);
+            mAudioToneContentModel = new AudioToneContentModel(mARTCAICallEngine, voiceToneList);
             mContentViewModel = new ContentViewModel.Builder()
                     .setContentModel(mAudioToneContentModel)
                     .setBizParameter(mBizParameter)

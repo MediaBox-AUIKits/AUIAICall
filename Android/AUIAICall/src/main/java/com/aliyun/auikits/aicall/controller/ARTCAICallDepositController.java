@@ -21,10 +21,10 @@ public class ARTCAICallDepositController extends ARTCAICallController {
             public void run() {
                 setCallState(AICallState.Connecting, ARTCAICallEngine.AICallErrorCode.None);
                 boolean shareBootUseDemoAppServer = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_SHARE_BOOT_USE_DEMO_APP_SERVER, SettingStorage.DEFAULT_SHARE_BOOT_USE_DEMO_APP_SERVER);
-                if (TextUtils.isEmpty(mARTCAiCallConfig.aiAgentId) || shareBootUseDemoAppServer) {
-                    mARTCAICallEngine.getIARTCAICallService().generateAIAgentCall(mUserId, mARTCAiCallConfig.aiAgentId, mAiAgentType, mARTCAiCallConfig, getStartActionCallback());
+                if (!mARTCAiCallConfig.mAiCallAgentTemplateConfig.isSharedAgent || shareBootUseDemoAppServer) {
+                    mARTCAICallEngine.getIARTCAICallService().generateAIAgentCall(mUserId, mARTCAiCallConfig.mAiCallAgentTemplateConfig.aiAgentId, mAiAgentType, mARTCAiCallConfig, getStartActionCallback());
                 } else {
-                    mARTCAICallEngine.getIARTCAICallService().generateAIAgentShareCall(mUserId, mARTCAiCallConfig.aiAgentId, mAiAgentType, mARTCAiCallConfig, getStartActionCallback());
+                    mARTCAICallEngine.getIARTCAICallService().generateAIAgentShareCall(mUserId, mARTCAiCallConfig.mAiCallAgentTemplateConfig.aiAgentId, mAiAgentType, mARTCAiCallConfig, getStartActionCallback());
                 }
             }
         });

@@ -38,11 +38,11 @@ public class ARTCAICallServiceImpl implements IARTCAICallService {
     protected String mUserData;
 
     public ARTCAICallServiceImpl(ARTCAICallEngine.ARTCAICallConfig artcAiCallConfig) {
-        mAiAgentRegion = artcAiCallConfig.aiAgentRegion;
-        mAppServerService = new AppServerService(artcAiCallConfig.appServerHost);
-        mLoginUserId = artcAiCallConfig.loginUserId;
-        mLoginAuthorization = artcAiCallConfig.loginAuthrization;
-        mUserData = artcAiCallConfig.userExtendData;
+        mAiAgentRegion = artcAiCallConfig.mAiCallAgentTemplateConfig.aiAgentRegion;
+        mAppServerService = new AppServerService(artcAiCallConfig.mAiCallAgentTemplateConfig.appServerHost);
+        mLoginUserId = artcAiCallConfig.mAiCallAgentTemplateConfig.loginUserId;
+        mLoginAuthorization = artcAiCallConfig.mAiCallAgentTemplateConfig.loginAuthrization;
+        mUserData = artcAiCallConfig.mAiCallAgentTemplateConfig.userExtendData;
     }
 
     private String agentTypeId(ARTCAICallEngine.ARTCAICallAgentType aiAgentType) {
@@ -82,10 +82,7 @@ public class ARTCAICallServiceImpl implements IARTCAICallService {
             jsonObject.put("workflow_type", agentTypeId(aiAgentType));
             jsonObject.put("expire", 3600*24);
             jsonObject.put("template_config",
-                    composeAiAgentConfigJson(aiAgentType, defaultVoiceId(aiAgentType), null, null, null, null,
-                            null != artcaiCallConfig ? artcaiCallConfig.enablePushToTalk : null,
-                            null != artcaiCallConfig ? artcaiCallConfig.enableVoicePrint : null,
-                            null != artcaiCallConfig ? artcaiCallConfig.loginUserId : null)
+                    composeAiAgentTemplateConfigJson(aiAgentType, artcaiCallConfig.mAiCallAgentTemplateConfig, false)
             );
             jsonObject.put("user_id", mLoginUserId);
             if (!TextUtils.isEmpty(mAiAgentRegion)) {
@@ -116,11 +113,7 @@ public class ARTCAICallServiceImpl implements IARTCAICallService {
             jsonObject.put("user_id", userId);
             jsonObject.put("workflow_type", agentTypeId(aiAgentType));
             jsonObject.put("expire", 3600*24);
-            jsonObject.put("template_config",
-                    composeAiAgentConfigJson(aiAgentType, defaultVoiceId(aiAgentType), null, null, null, null,
-                            null != artcaiCallConfig ? artcaiCallConfig.enablePushToTalk : null,
-                            null != artcaiCallConfig ? artcaiCallConfig.enableVoicePrint : null,
-                            null != artcaiCallConfig ? artcaiCallConfig.loginUserId : null)
+            jsonObject.put("template_config",composeAiAgentTemplateConfigJson(aiAgentType, artcaiCallConfig.mAiCallAgentTemplateConfig, false)
             );
             jsonObject.put("user_id", mLoginUserId);
             if (!TextUtils.isEmpty(mAiAgentRegion)) {
@@ -146,12 +139,7 @@ public class ARTCAICallServiceImpl implements IARTCAICallService {
         try {
             jsonObject.put("user_id", userId);
             jsonObject.put("workflow_type", agentTypeId(aiAgentType));
-            jsonObject.put("template_config",
-                    composeAiAgentConfigJson(aiAgentType, defaultVoiceId(aiAgentType), null, null, null, null,
-                            null != artcaiCallConfig ? artcaiCallConfig.enablePushToTalk : null,
-                            null != artcaiCallConfig ? artcaiCallConfig.enableVoicePrint : null,
-                            null != artcaiCallConfig ? artcaiCallConfig.loginUserId : null)
-            );
+            jsonObject.put("template_config",composeAiAgentTemplateConfigJson(aiAgentType, artcaiCallConfig.mAiCallAgentTemplateConfig, false));
             jsonObject.put("user_id", mLoginUserId);
             if (!TextUtils.isEmpty(mUserData)) {
                 jsonObject.put("user_data", mUserData);
@@ -161,6 +149,20 @@ public class ARTCAICallServiceImpl implements IARTCAICallService {
         }
         mAppServerService.postAsync(null, AppServerService.API_START_AI_AGENT_PATH, mLoginAuthorization, jsonObject, callback);
     }
+
+    @Override
+    public void describeAIAgentInstance(String userId, String aiAgentInstanceId, IARTCAICallServiceCallback callback) {
+        JSONObject jsonObject = new JSONObject();
+        try {
+            jsonObject.put("user_id", userId);
+            jsonObject.put("ai_agent_instance_id", aiAgentInstanceId);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+        mAppServerService.postAsync(null, AppServerService.API_DESCRIBE_AI_AGENT_PATH, mLoginAuthorization, jsonObject, callback);
+    }
+
 
     @Override
     public boolean stopAIAgentService(String aiAgentInstanceId, IARTCAICallServiceCallback callback) {
@@ -201,12 +203,11 @@ public class ARTCAICallServiceImpl implements IARTCAICallService {
     }
 
     @Override
-    public void enableVoiceInterrupt(String aiAgentInstanceId, ARTCAICallEngine.ARTCAICallAgentType aiAgentType, boolean enable, IARTCAICallServiceCallback callback) {
+    public void enableVoiceInterrupt(String aiAgentInstanceId, ARTCAICallEngine.ARTCAICallAgentType aiAgentType, ARTCAICallEngine.ARTCAICallConfig artcaiCallConfig, IARTCAICallServiceCallback callback) {
         JSONObject jsonObject = new JSONObject();
         try {
             jsonObject.put("ai_agent_instance_id", aiAgentInstanceId);
-            jsonObject.put("template_config", composeAiAgentConfigJson(aiAgentType, null, null,
-                    enable, null, null, null, null, null));
+            jsonObject.put("template_config", composeAiAgentTemplateConfigJson(aiAgentType, artcaiCallConfig.mAiCallAgentTemplateConfig, true));
             jsonObject.put("user_id", mLoginUserId);
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -214,13 +215,13 @@ public class ARTCAICallServiceImpl implements IARTCAICallService {
         mAppServerService.postAsync(null, AppServerService.API_UPDATE_AI_AGENT_PATH, mLoginAuthorization, jsonObject, callback);
     }
 
+
     @Override
-    public void switchAiAgentVoice(String robotInstanceId, ARTCAICallEngine.ARTCAICallAgentType aiAgentType, String soundId, IARTCAICallServiceCallback callback) {
+    public void switchAiAgentVoice(String robotInstanceId, ARTCAICallEngine.ARTCAICallAgentType aiAgentType, ARTCAICallEngine.ARTCAICallConfig artcaiCallConfig, IARTCAICallServiceCallback callback) {
         JSONObject jsonObject = new JSONObject();
         try {
             jsonObject.put("ai_agent_instance_id", robotInstanceId);
-            jsonObject.put("template_config", composeAiAgentConfigJson(aiAgentType, soundId, null,
-                    null, null, null, null, null, null));
+            jsonObject.put("template_config", composeAiAgentTemplateConfigJson(aiAgentType, artcaiCallConfig.mAiCallAgentTemplateConfig, true));
             jsonObject.put("user_id", mLoginUserId);
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -308,74 +309,80 @@ public class ARTCAICallServiceImpl implements IARTCAICallService {
         }
     }
 
-    private static String composeAiAgentConfigJson(ARTCAICallEngine.ARTCAICallAgentType aiAgentType, String voiceId, String greeting, Boolean enableVoiceInterrupt,
-                                                   Boolean gracefulShutdown, Integer volume, Boolean enablePushToTalk, Boolean useVoicePrint, String voicePrintId) {
-        List<ARTCAICallEngine.ARTCAICallAgentType> aiAgentTypeList = new ArrayList<>();
-        aiAgentTypeList.add(aiAgentType);
-        return composeAiAgentConfigJson(aiAgentTypeList, voiceId, greeting, enableVoiceInterrupt, gracefulShutdown, volume, enablePushToTalk, useVoicePrint, voicePrintId);
-    }
+    private static String composeAiAgentTemplateConfigJson(ARTCAICallEngine.ARTCAICallAgentType aiAgentType, ARTCAICallEngine.ARTCAICallAgentTemplateConfig templateConfig, boolean isUpdate) {
 
-    private static String composeAiAgentConfigJson(List<ARTCAICallEngine.ARTCAICallAgentType> agentTypeList, String voiceId, String greeting, Boolean enableVoiceInterrupt,
-                                                   Boolean gracefulShutdown, Integer volume, Boolean enablePushToTalk, Boolean useVoicePrint, String voicePrintId) {
         JSONObject jsonObject = new JSONObject();
-        if (null != agentTypeList && !agentTypeList.isEmpty()) {
+        if (null != templateConfig) {
             try {
                 JSONObject configJsonObject = new JSONObject();
-                // 音色名称，修改后下句话生效
-                if (null != voiceId) {
-                    configJsonObject.put("VoiceId", voiceId);
-                }
                 // 问候语，修改后下次入会生效
-                if (null != greeting) {
-                    configJsonObject.put("Greeting", greeting);
+                if (!TextUtils.isEmpty(templateConfig.aiAgentGreeting)) {
+                    configJsonObject.put("Greeting", templateConfig.aiAgentGreeting);
                 }
-                // 是否支持语音打断
-                if (null != enableVoiceInterrupt) {
-                    configJsonObject.put("EnableVoiceInterrupt", enableVoiceInterrupt.booleanValue());
+                configJsonObject.put("UserOnlineTimeout", templateConfig.aiAgentUserOnlineTimeout);
+                configJsonObject.put("UserOfflineTimeout", templateConfig.aiAgentUserOfflineTimeout);
+                if(!TextUtils.isEmpty(templateConfig.aiAgentWorkflowOverrideParams)) {
+                    configJsonObject.put("WorkflowOverrideParams", templateConfig.aiAgentWorkflowOverrideParams);
+                }
+                if(!TextUtils.isEmpty(templateConfig.aiAgentBailianAppParams)) {
+                    configJsonObject.put("BailianAppParams", templateConfig.aiAgentBailianAppParams);
+                }
+                configJsonObject.put("AsrMaxSilence", templateConfig.aiAgentAsrMaxSilence);
+                if(templateConfig.aiAgentVolume >= 0) {
+                    configJsonObject.put("Volume", templateConfig.aiAgentVolume);
+                }
+                configJsonObject.put("EnableVoiceInterrupt", templateConfig.enableVoiceInterrupt);
+                configJsonObject.put("EnableIntelligentSegment", templateConfig.enableIntelligentSegment);
+                if(templateConfig.enableVoicePrint && !TextUtils.isEmpty(templateConfig.voiceprintId)) {
+                    configJsonObject.put("UseVoiceprint", templateConfig.enableVoicePrint);
+                    if (!isUpdate) {
+                        configJsonObject.put("VoiceprintId", templateConfig.voiceprintId);
+                    }
+                }
+                configJsonObject.put("MaxIdleTime", templateConfig.aiAgentMaxIdleTime);
+
+                // 音色名称，修改后下句话生效
+                if (!TextUtils.isEmpty(templateConfig.aiAgentVoiceId)) {
+                    configJsonObject.put("VoiceId", templateConfig.aiAgentVoiceId);
                 }
                 // 优雅下线
-                if (null != gracefulShutdown) {
-                    configJsonObject.put("GracefulShutdown", gracefulShutdown.booleanValue());
-                }
-                // 启动音量
-                if (null != volume) {
-                    configJsonObject.put("Volume", volume.intValue());
+                if (templateConfig.aiAgentGracefulShutdown) {
+                    configJsonObject.put("GracefulShutdown", templateConfig.aiAgentGracefulShutdown);
                 }
                 // 是否开启对讲机模式
-                if (null != enablePushToTalk) {
-                    configJsonObject.put("EnablePushToTalk", enablePushToTalk.booleanValue());
+                if (templateConfig.enablePushToTalk) {
+                    configJsonObject.put("EnablePushToTalk", templateConfig.enablePushToTalk);
                 }
-                // 是否开启声纹识别
-                if (null != useVoicePrint) {
-                    configJsonObject.put("UseVoiceprint", useVoicePrint.booleanValue());
-                }
-                if (null != voicePrintId) {
-                    configJsonObject.put("VoiceprintId", voicePrintId);
+
+                if(aiAgentType == ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent) {
+                    if(!TextUtils.isEmpty(templateConfig.aiAgentAvatarId)) {
+                        configJsonObject.put("AvatarId", templateConfig.aiAgentAvatarId);
+                    }
                 }
 
                 String agentTypeKey = null;
-
-                for (ARTCAICallEngine.ARTCAICallAgentType agentType: agentTypeList) {
-                    switch (agentType) {
-                        case VisionAgent:
-                            agentTypeKey = AI_AGENT_TYPE_VISION;
-                            break;
-                        case AvatarAgent:
-                            agentTypeKey = AI_AGENT_TYPE_AVATAR;
-                            break;
-                        case VoiceAgent:
-                        default:
-                            agentTypeKey = AI_AGENT_TYPE_VOICE;
-                            break;
-                    }
-                    jsonObject.put(agentTypeKey, configJsonObject);
+                switch (aiAgentType) {
+                    case VisionAgent:
+                        agentTypeKey = AI_AGENT_TYPE_VISION;
+                        break;
+                    case AvatarAgent:
+                        agentTypeKey = AI_AGENT_TYPE_AVATAR;
+                        break;
+                    case VoiceAgent:
+                    default:
+                        agentTypeKey = AI_AGENT_TYPE_VOICE;
+                        break;
                 }
+                jsonObject.put(agentTypeKey, configJsonObject);
+
+
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
         }
 
         return jsonObject.toString();
+
     }
 
     public static class AppServerService {
@@ -386,6 +393,7 @@ public class ARTCAICallServiceImpl implements IARTCAICallService {
         private static String API_START_AI_AGENT_PATH = "/api/v2/aiagent/startAIAgentInstance";
         private static String API_STOP_AI_AGENT_PATH = "/api/v2/aiagent/stopAIAgentInstance";
         private static String API_UPDATE_AI_AGENT_PATH = "/api/v2/aiagent/updateAIAgentInstance";
+        private static String API_DESCRIBE_AI_AGENT_PATH = "/api/v2/aiagent/describeAIAgentInstance";
 //        private static String API_REFRESH_TOKEN_PATH = "/api/v1/aiagent/getRtcAuthToken";
 
         private String mHost = "";

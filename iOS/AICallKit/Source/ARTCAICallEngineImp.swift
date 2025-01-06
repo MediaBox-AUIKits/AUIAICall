@@ -57,9 +57,6 @@ import UIKit
         self.setupRtcEngine()
         // 开启低延迟
         self.rtcEngine?.setParameter("{\"net\":{\"enable_ai_low_latency_channel_mode\":true}}")
-        if self.enableAIDelayDetection {
-            self.rtcEngine?.setParameter("{\"audio\":{\"user_specified_loop_delay\":true}}")
-        }
         ARTCAICallEngineLog.WriteLog("ARTCAICallEngine joinChannel begin")
         self.rtcEngine?.joinChannel(token, channelId: nil, userId: nil, name: nil) { [weak self] errCode, channel, userId, elapsed in
             var err : NSError? = nil
@@ -95,11 +92,6 @@ import UIKit
         self.stopPublish()
         self.stopPreview()
         if self.isJoined || self.isJoining {
-            if self.enableAIDelayDetection {
-                let delay = self.rtcEngine?.getParameter("{\"audio\":{\"user_specified_loop_delay\":0}}")
-                print("get aigc delay: \(delay ?? "null")")
-                ARTCAICallEngineLog.WriteLog("ARTCAICallEngine get aigc delay: \(delay ?? "null")")
-            }
             self.rtcEngine?.leaveChannel()
         }
         self.isJoining = false
@@ -109,13 +101,25 @@ import UIKit
     
     public func setAgentView(view: UIView?, mode: ARTCAICallAgentViewMode) {
         
+        var viewConfig: ARTCAICallViewConfig? = nil
+        if let view = view {
+            viewConfig = ARTCAICallViewConfig(view: view, viewMode: mode)
+        }
+        self.setAgentViewConfig(viewConfig: viewConfig)
+    }
+    
+    func setAgentViewConfig(viewConfig: ARTCAICallViewConfig?) {
         self.stopPullAgentVideo()
         
-        if let view = view {
-            let renderMode = AliRtcRenderMode(rawValue: UInt(mode.rawValue)) ?? .auto
+        if let viewConfig = viewConfig {
+            let renderMode = AliRtcRenderMode(rawValue: UInt(viewConfig.viewMode.rawValue)) ?? .auto
+            let mirrorMode = AliRtcRenderMirrorMode(rawValue: Int(viewConfig.viewMirrorMode.rawValue)) ?? .onlyFrontCameraPreviewEnabled
+            let rotationMode = self.getRtcRotationMode(viewRotationMode: viewConfig.viewRotationMode)
             let canvas = AliVideoCanvas()
-            canvas.view = view
+            canvas.view = viewConfig.view
             canvas.renderMode = renderMode
+            canvas.mirrorMode = mirrorMode
+            canvas.rotationMode = rotationMode
             self.agentCanvas = canvas
             
             self.startPullAgentVideo()
@@ -208,8 +212,10 @@ import UIKit
                 self.startPreview()
             }
             
-            self.rtcEngine?.publishLocalVideoStream(self.agentInfo?.agentType == .VisionAgent
-                                                    && !(self.isMuteLocalCamera || self.enablePushToTalk))
+            if self.agentInfo?.agentType == .VisionAgent {
+                self.rtcEngine?.publishLocalVideoStream(!(self.isMuteLocalCamera || self.enablePushToTalk))
+            }
+            
             return true
         }
         return false
@@ -272,8 +278,10 @@ import UIKit
         
         self.checkAudioCapturePushToTalkMode(start: true)
         self.rtcEngine?.muteLocalMic(false, mode: .allAudioMode)
-        self.rtcEngine?.publishLocalVideoStream(self.agentInfo?.agentType == .VisionAgent
-                                                && !(self.isMuteLocalCamera))
+        if self.agentInfo?.agentType == .VisionAgent {
+            self.rtcEngine?.publishLocalVideoStream(!(self.isMuteLocalCamera))
+        }
+        
         return true
     }
     
@@ -285,8 +293,9 @@ import UIKit
         
         self.checkAudioCapturePushToTalkMode(start: false)
         self.rtcEngine?.muteLocalMic(true, mode: .allAudioMode)
-        self.rtcEngine?.publishLocalVideoStream(self.agentInfo?.agentType == .VisionAgent
-                                                && !(self.isMuteLocalCamera))
+        if self.agentInfo?.agentType == .VisionAgent {
+            self.rtcEngine?.publishLocalVideoStream(false)
+        }
         
         let model = ARTCAICallMessageSendModel()
         model.type = .FinishPushToTalk
@@ -305,8 +314,9 @@ import UIKit
         
         self.checkAudioCapturePushToTalkMode(start: false)
         self.rtcEngine?.muteLocalMic(true, mode: .allAudioMode)
-        self.rtcEngine?.publishLocalVideoStream(self.agentInfo?.agentType == .VisionAgent
-                                                && !(self.isMuteLocalCamera))
+        if self.agentInfo?.agentType == .VisionAgent {
+            self.rtcEngine?.publishLocalVideoStream(false)
+        }
         
         let model = ARTCAICallMessageSendModel()
         model.type = .CancelPushToTalk
@@ -357,12 +367,6 @@ import UIKit
     
     private var rtcEngine: AliRtcEngine? = nil
     
-    #if DEBUG
-    private var enableAIDelayDetection: Bool = true  // 回环延迟检测开关
-    #else
-    private var enableAIDelayDetection: Bool = false  // 回环延迟检测开关
-    #endif
-    
     private var agentCanvas: AliVideoCanvas? = nil
     private var agentCanvasUid: String? = nil
     private var isMuteLocalCamera: Bool = false
@@ -393,6 +397,9 @@ extension ARTCAICallEngine {
         if ARTCAICallEngineDebuger.Debug_IsEnablePreRelease {
             extras.updateValue("PRE_RELEASE", forKey: "user_specified_environment")
         }
+        if ARTCAICallEngineDebuger.Debug_IsEnableAudioDelayInfo && self.agentInfo?.agentType == .VoiceAgent {
+            extras.updateValue(1, forKey: "enable_ai_audio_cumu_delay")
+        }
         let engine = AliRtcEngine.sharedInstance(self, extras:extras.aicall_jsonString)
         
         let parameter: [String: Any] = [
@@ -419,10 +426,12 @@ extension ARTCAICallEngine {
         engine.enableSpeakerphone(true)
         engine.setDefaultSubscribeAllRemoteAudioStreams(true)
         engine.subscribeAllRemoteAudioStreams(true)
-        
+        engine.publishLocalAudioStream(true)
+
         // 视频配置
         if self.agentInfo?.agentType == .AvatarAgent {
             engine.subscribeAllRemoteVideoStreams(true)
+            engine.publishLocalVideoStream(false)
         }
         else if self.agentInfo?.agentType == .VisionAgent {
             let captureConfig = AliRtcCameraCapturerConfiguration()
@@ -439,9 +448,20 @@ extension ARTCAICallEngine {
             config.keyFrameInterval = self.visionConfigPrivate.keyFrameInterval
             config.orientationMode = AliRtcVideoEncoderOrientationMode.fixedPortrait
             engine.setVideoEncoderConfiguration(config)
+            
+            engine.publishLocalVideoStream(!(self.isMuteLocalCamera || self.enablePushToTalk))
         }
         else {
-            engine.setAudioOnlyMode(true)
+            if ARTCAICallEngineDebuger.Debug_IsEnableAudioDelayInfo {
+                engine.subscribeAllRemoteVideoStreams(true)
+                engine.setDefaultSubscribeAllRemoteVideoStreams(true)
+                engine.publishLocalVideoStream(true)
+                engine.enableLocalVideo(false)
+            }
+            else {
+                engine.setAudioOnlyMode(true)
+                engine.publishLocalVideoStream(false)
+            }
         }
         
         if let debugView = ARTCAICallEngineDebuger.Debug_TipsView {
@@ -449,10 +469,6 @@ extension ARTCAICallEngine {
         }
         
         self.rtcEngine = engine
-        // 推流配置
-        self.rtcEngine?.publishLocalAudioStream(true)
-        self.rtcEngine?.publishLocalVideoStream(self.agentInfo?.agentType == .VisionAgent 
-                                                && !(self.isMuteLocalCamera || self.enablePushToTalk))
 
         // 设备控制
         self.rtcEngine?.muteLocalMic(self.isMuteLocalMic || self.enablePushToTalk, mode: .allAudioMode)
@@ -478,12 +494,29 @@ extension ARTCAICallEngine {
         self.rtcEngine = nil
     }
     
+    private func getRtcRotationMode(viewRotationMode: ARTCAICallAgentViewRotationMode) -> AliRtcRotationMode {
+        if viewRotationMode == .Rotation_270 {
+            return ._270
+        }
+        if viewRotationMode == .Rotation_180 {
+            return ._180
+        }
+        if viewRotationMode == .Rotation_90 {
+            return ._90
+        }
+        return ._0
+    }
+    
     private func startPreview() {
         guard let preview = self.visionConfigPrivate.preview else { return }
         let renderMode = AliRtcRenderMode(rawValue: UInt(self.visionConfigPrivate.viewMode.rawValue)) ?? .auto
+        let mirrorMode = AliRtcRenderMirrorMode(rawValue: Int(self.visionConfigPrivate.viewMirrorMode.rawValue)) ?? .onlyFrontCameraPreviewEnabled
+        let rotationMode = self.getRtcRotationMode(viewRotationMode: self.visionConfigPrivate.viewRotationMode)
         let canvas = AliVideoCanvas()
         canvas.view = preview
         canvas.renderMode = renderMode
+        canvas.mirrorMode = mirrorMode
+        canvas.rotationMode = rotationMode
         
         self.rtcEngine?.setLocalViewConfig(canvas, for: AliRtcVideoTrack.camera)
         self.rtcEngine?.startPreview()
@@ -540,8 +573,10 @@ extension ARTCAICallEngine {
             self.checkAudioCapturePushToTalkMode(start: true)
             self.rtcEngine?.muteLocalMic(self.isMuteLocalMic, mode: .allAudioMode)
         }
-        self.rtcEngine?.publishLocalVideoStream(self.agentInfo?.agentType == .VisionAgent
-                                                && !(self.isMuteLocalCamera || self.enablePushToTalk))
+        
+        if self.agentInfo?.agentType == .VisionAgent {
+            self.rtcEngine?.publishLocalVideoStream(!(self.isMuteLocalCamera || self.enablePushToTalk))
+        }
     }
     
     private func sendMsgToDataChannel(model: ARTCAICallMessageSendModel) -> Bool {
@@ -695,6 +730,13 @@ extension ARTCAICallEngine {
             if let takeoverUid = model.data?["takeoverUid"] as? String {
                 ARTCAICallEngineLog.WriteLog("ARTCAICallEngine Received[\(seqId)] HumanTakeoverConnected：\(takeoverUid)")
                 self.delegate?.onHumanTakeoverConnected?(takeoverUid: takeoverUid)
+            }
+        }
+        else if model.type == .AgentEmotionNotify {
+            if let emotion = model.data?["emotion"] as? String {
+                let sentenceId = model.data?["sentenceId"] as? Int ?? 0
+                ARTCAICallEngineLog.WriteLog(.Debug, "ARTCAICallEngine Received[\(seqId)] AgentEmotionNotify：\(emotion)  sentenceId=\(sentenceId)")
+                self.delegate?.onAgentEmotionNotify?(emotion: emotion, userAsrSentenceId: sentenceId)
             }
         }
     }
@@ -953,6 +995,15 @@ extension ARTCAICallEngine: AliRtcEngineDelegate {
     
     func onFirstLocalVideoFrameDrawn(_ width: Int32, height: Int32, elapsed: Int32) {
         ARTCAICallEngineLog.WriteLog("ARTCAICallEngine onFirstLocalVideoFrameDrawn")
+    }
+    
+    func onAudioDelayInfo(_ sentenceId: Int32, questionEndTime: Int64, answerStartTime: Int64) {
+        let delayMs = answerStartTime - questionEndTime
+        ARTCAICallEngineLog.WriteLog("ARTCAICallEngine onAudioDelayInfo: \(sentenceId) delay:\(delayMs)")
+        ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "onAudioDelayInfo", value: "id:\(sentenceId)  delay:\(delayMs)")
+        DispatchQueue.main.async {
+            self.delegate?.onAudioDelayInfo?(sentenceId: sentenceId, delayMs: delayMs)
+        }
     }
 }
 

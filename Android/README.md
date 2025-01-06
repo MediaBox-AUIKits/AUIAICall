@@ -52,8 +52,8 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:x.x.x'                     //修改x.x.x为你工程适配的版本
     implementation 'com.google.android.material:material:x.x.x'             //修改x.x.x为你工程适配的版本
     androidTestImplementation 'androidx.test.espresso:espresso-core:x.x.x'  //修改x.x.x为你工程适配的版本
-    implementation 'com.aliyun.aio:AliVCSDK_Standard:x.x.x'                  //修改x.x.x为你工程适配的版本
-    implementation 'com.aliyun.auikits.android:ARTCAICallKit:1.5.0'
+    implementation 'com.aliyun.aio:AliVCSDK_ARTC:x.x.x'                  //修改x.x.x为你工程适配的版本
+    implementation 'com.aliyun.auikits.android:ARTCAICallKit:1.6.0'
 }
 ```
 3. 等待gradle同步完成，完成源码集成。

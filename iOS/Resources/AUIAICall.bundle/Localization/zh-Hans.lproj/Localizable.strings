@@ -9,6 +9,12 @@
 "Please Scan Code to Get Authorized Token" = "请扫描二维码获取授权Token";
 "Invalid Token" = "请使用正确的Token";
 
+"Configuration" = "配置项";
+"Emotion Support" = "情绪音色";
+"Does agent support emotional label output?" = "用于选择智能体的音色是否包含情绪";
+"Unemotional" = "不含情绪";
+"Emotional" = "包含情绪";
+
 "Start" = "开始体验";
 "What integration way is used to start the call?" = "启动通话时使用哪种集成方式？";
 "Custom" = "自定义方式（自集成）";
@@ -54,9 +60,6 @@
 "Interrupt AI Based on Sound and Environment" = "据声音和环境智能打断AI智能体";
 "Choose Voice Tone" = "选择音色";
 "New Voice Tone Will Take Effect in Next Response" = "切换音色后，AI将在下一次回答中使用新的音色";
-"Zhi Xiaobai" = "智小白";
-"Zhi Xiaoxia" = "智小夏";
-"Abin" = "阿斌";
 "Use" = "使用";
 "Submmit" = "提交";
 "Skip" = "跳过";
@@ -82,7 +85,7 @@
 "The hold time is too short, sending has been canceled." = "按住时间太短，已取消发送";
 "You have canceled to send you talk." = "已取消发送";
 
-"Report" = "反馈";
+"Report Issues" = "问题反馈";
 "Issues" = "问题类型";
 "(Mutliple Selected)" = "(多选)";
 "Feature not available" = "功能不可用";
@@ -110,3 +113,5 @@
 
 "The current call will soon be handled by a real person." = "当前通话即将被真人接管";
 "The current call is now being handled by a real person." = "当前通话已经被真人接管";
+
+"The agent seems to be %@" = "智能体情绪：%@";

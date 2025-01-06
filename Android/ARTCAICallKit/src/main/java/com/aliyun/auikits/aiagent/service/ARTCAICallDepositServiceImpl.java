@@ -1,5 +1,7 @@
 package com.aliyun.auikits.aiagent.service;
 
+import android.text.TextUtils;
+
 import com.aliyun.auikits.aiagent.util.IMsgTypeDef;
 import com.aliyun.auikits.aiagent.ARTCAICallEngine;
 
@@ -11,12 +13,13 @@ public class ARTCAICallDepositServiceImpl extends ARTCAICallServiceImpl {
         super(artcAiCallConfig);
     }
 
+
     @Override
-    public void enableVoiceInterrupt(String aiAgentInstanceId, ARTCAICallEngine.ARTCAICallAgentType aiAgentType, boolean enable, IARTCAICallServiceCallback callback) {
+    public void enableVoiceInterrupt(String robotInstanceId, ARTCAICallEngine.ARTCAICallAgentType aiAgentType, ARTCAICallEngine.ARTCAICallConfig artcaiCallConfig, IARTCAICallServiceCallback callback) {
         if (null != mAiCallIMService) {
             try {
                 JSONObject jsonObject = new JSONObject();
-                jsonObject.put("enable", enable);
+                jsonObject.put("enable", artcaiCallConfig.mAiCallAgentTemplateConfig.enableVoiceInterrupt);
                 mAiCallIMService.sendMessage(
                         IMsgTypeDef.MSG_TYPE_SWITCH_VOICE_INTERRUPT,
                         jsonObject
@@ -28,12 +31,12 @@ public class ARTCAICallDepositServiceImpl extends ARTCAICallServiceImpl {
         }
     }
 
-    @Override
-    public void switchAiAgentVoice(String robotInstanceId, ARTCAICallEngine.ARTCAICallAgentType aiAgentType, String soundId, IARTCAICallServiceCallback callback) {
-        if (null != mAiCallIMService) {
+
+    public void switchAiAgentVoice(String robotInstanceId, ARTCAICallEngine.ARTCAICallAgentType aiAgentType, ARTCAICallEngine.ARTCAICallConfig artcaiCallConfig, IARTCAICallServiceCallback callback) {
+        if (null != mAiCallIMService && !TextUtils.isEmpty(artcaiCallConfig.mAiCallAgentTemplateConfig.aiAgentVoiceId)) {
             try {
                 JSONObject jsonObject = new JSONObject();
-                jsonObject.put("voiceId", soundId);
+                jsonObject.put("voiceId", artcaiCallConfig.mAiCallAgentTemplateConfig.aiAgentVoiceId);
                 mAiCallIMService.sendMessage(
                         IMsgTypeDef.MSG_TYPE_SWITCH_VOICE_ID,
                         jsonObject

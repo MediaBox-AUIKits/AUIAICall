@@ -1,9 +1,9 @@
-import { AICallAgentError, AICallAgentInfo, AICallAgentType, AICallState } from 'aliyun-auikit-aicall';
+import { AICallAgentError, AICallAgentInfo, AICallState, AICallTemplateConfig } from 'aliyun-auikit-aicall';
 import AUIAICallController from './AUIAICallController';
 
 import standardService from './service/standard';
 import AUIAICallConfig from './AUIAICallConfig';
-import { APP_SERVER } from './service/interface';
+import { APP_SERVER, TemplateConfig } from './service/interface';
 import logger from '@/common/logger';
 
 class AUIAICallStandardController extends AUIAICallController {
@@ -41,13 +41,21 @@ class AUIAICallStandardController extends AUIAICallController {
     }
 
     try {
-      if (agentInfo.agentType === AICallAgentType.VoiceAgent) {
-        // 每次先清空当前的 AvatarUrl
-        this.config.voiceAvatarUrl = '';
-        const templateConfig = await standardService.describeAIAgent(this.userId, this.token, agentInfo.instanceId);
-        if (templateConfig.VoiceChat?.AvatarUrl) {
-          this.config.voiceAvatarUrl = templateConfig.VoiceChat?.AvatarUrl as string;
-        }
+      // 每次先清空当前的配置
+      this.config.templateConfig.avatarUrl = '';
+      this.config.templateConfig.agentVoiceId = '';
+      this.config.agentVoiceIdList = [];
+      const templateConfig = await standardService.describeAIAgent(this.userId, this.token, agentInfo.instanceId);
+      const configKey = AICallTemplateConfig.getTemplateConfigKey(agentInfo.agentType) as keyof TemplateConfig;
+      const configValue = templateConfig[configKey];
+      if (configValue?.AvatarUrl) {
+        this.config.templateConfig.avatarUrl = configValue?.AvatarUrl as string;
+      }
+      if (configValue?.VoiceId) {
+        this.config.templateConfig.agentVoiceId = configValue?.VoiceId as string;
+      }
+      if (configValue?.VoiceIdList) {
+        this.config.agentVoiceIdList = configValue.VoiceIdList as string[];
       }
     } catch (error) {
       logger.error('DescribeAIAgentFailed', error as Error);
@@ -98,9 +106,9 @@ class AUIAICallStandardController extends AUIAICallController {
     return '';
   }
 
-  destory() {
-    logger.info('StandardController', 'Destory');
-    super.destory();
+  destroy() {
+    logger.info('StandardController', 'destroy');
+    super.destroy();
     this.appServer = APP_SERVER;
   }
 }

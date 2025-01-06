@@ -62,10 +62,10 @@ platform :ios, '10.0'
 
 target '你的App target' do
     # 根据自己的业务场景，集成合适的音视频终端SDK，支持：AliVCSDK_ARTC、AliVCSDK_Standard、AliVCSDK_InteractiveLive
-    pod 'AliVCSDK_ARTC', '~> 6.17.0'
+    pod 'AliVCSDK_ARTC', '~> 6.19.0'
 
     # AI实时互动通话场景SDK
-    pod "ARTCAICallKit", '~> 1.5.0'
+    pod "ARTCAICallKit", '~> 1.6.0'
 
     # 基础UI组件源码
     pod 'AUIFoundation', :path => "./AUIAICall/AUIBaseKits/AUIFoundation/", :modular_headers => true

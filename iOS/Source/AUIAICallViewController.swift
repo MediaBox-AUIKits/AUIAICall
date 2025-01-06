@@ -44,7 +44,7 @@ import ARTCAICallKit
         
         self.bottomView.frame = CGRect(x: 0, y: self.view.av_height - 308, width: self.view.av_width, height: 308)
         self.bottomView.isHidden = false
-        self.bottomView.enablePushToTalk = self.controller.config.enablePushToTalk
+        self.bottomView.enablePushToTalk = self.controller.config.templateConfig.enablePushToTalk
                 
         UIViewController.av_setIdleTimerDisabled(true)
         
@@ -87,7 +87,6 @@ import ARTCAICallKit
     }
     
     public let controller: AUIAICallControllerInterface
-    public var enableVoiceIdSwitch: Bool = true
     public var enableVoiceprintSwitch: Bool = true
     
     open lazy var titleLabel: UILabel = {
@@ -287,7 +286,7 @@ extension AUIAICallViewController {
             return
         }
         let panel = AUIAICallSettingPanel(frame: CGRect(x: 0, y: 0, width: self.view.av_width, height: 0))
-        panel.enableVoiceIdSwitch = self.enableVoiceIdSwitch
+        panel.voiceIdList = self.controller.agentVoiceIdList
         panel.enableVoiceprintSwitch = self.enableVoiceprintSwitch
         panel.config = self.controller.config
         panel.isVoiceprintRegisted = self.controller.isVoiceprintRegisted
@@ -300,12 +299,12 @@ extension AUIAICallViewController {
             self?.controller.enableVoiceInterrupt(enable: isOn, completed: { error in
                 if let self = self {
                     if error != nil {
-                        panel?.interruptSwitch.switchBtn.isOn = self.controller.config.enableVoiceInterrupt
+                        panel?.interruptSwitch.switchBtn.isOn = self.controller.config.templateConfig.enableVoiceInterrupt
                         AVToastView.show(AUIAICallBundle.getString("Failed to switch smart interruption"), view: self.view, position: .mid)
                         return
                     }
                     
-                    if self.controller.config.enableVoiceInterrupt {
+                    if self.controller.config.templateConfig.enableVoiceInterrupt {
                         AVToastView.show(AUIAICallBundle.getString("Smart interruption is turned on"), view: self.view, position: .mid)
                     }
                     else {
@@ -328,12 +327,12 @@ extension AUIAICallViewController {
             self?.controller.useVoiceprint(isUse: isOn, completed: { error in
                 if let self = self {
                     if error != nil {
-                        panel?.voiceprintSettingView.voiceprintSwitch.switchBtn.isOn = self.controller.config.useVoiceprint
+                        panel?.voiceprintSettingView.voiceprintSwitch.switchBtn.isOn = self.controller.config.templateConfig.useVoiceprint
                         AVToastView.show(AUIAICallBundle.getString("Failed to switch voiceprint"), view: self.view, position: .mid)
                         return
                     }
                     
-                    if self.controller.config.useVoiceprint {
+                    if self.controller.config.templateConfig.useVoiceprint {
                         AVToastView.show(AUIAICallBundle.getString("Voiceprint is turned on"), view: self.view, position: .mid)
                     }
                     else {
@@ -373,7 +372,8 @@ extension AUIAICallViewController: AUIAICallControllerDelegate {
     public func onAICallAIAgentStarted(agentInfo: ARTCAICallAgentInfo) {
         self.callContentView.updateAgentType(agentType: self.controller.config.agentType)
         if self.controller.config.agentType == .AvatarAgent {
-            self.controller.setAgentView(view: self.callContentView.avatarAgentView, mode: .Auto)
+            let viewConfig = ARTCAICallViewConfig(view: self.callContentView.avatarAgentView!)
+            self.controller.setAgentViewConfig(viewConfig: viewConfig)
         }
         else if self.controller.config.agentType == .VisionAgent {
             // 这里frameRate设置为5，需要根据控制台上的智能体的抽帧帧率（一般为2）进行调整，最大不建议超过15fps
@@ -513,7 +513,7 @@ extension AUIAICallViewController: AUIAICallControllerDelegate {
             self.callContentView.tipsLabel.text = AUIAICallBundle.getString("Thinking...")
         }
         else if self.controller.agentState == .Speaking {
-            if self.controller.config.enableVoiceInterrupt && !self.controller.config.enablePushToTalk {
+            if self.controller.config.templateConfig.enableVoiceInterrupt && !self.controller.config.templateConfig.enablePushToTalk {
                 self.callContentView.tipsLabel.text = AUIAICallBundle.getString("I'm Replying, Tap Screen or Speak to Interrupt Me")
             }
             else {
@@ -580,8 +580,8 @@ extension AUIAICallViewController: AUIAICallControllerDelegate {
     
     public func onAICallAgentPushToTalkChanged(enable: Bool) {
         self.settingPanel?.config = self.controller.config
-        self.bottomView.enablePushToTalk = self.controller.config.enablePushToTalk
-        if self.controller.config.enablePushToTalk {
+        self.bottomView.enablePushToTalk = self.controller.config.templateConfig.enablePushToTalk
+        if self.controller.config.templateConfig.enablePushToTalk {
             AVToastView.show(AUIAICallBundle.getString("Push to talk mode is turned on"), view: self.view, position: .mid)
         }
         else {
@@ -607,6 +607,12 @@ extension AUIAICallViewController: AUIAICallControllerDelegate {
     public func onAICallHumanTakeoverConnected(takeoverUid: String) {
         AVToastView.show(AUIAICallBundle.getString("The current call is now being handled by a real person."), view: self.view, position: .mid)
     }
+    
+    public func onAICallAgentEmotionNotify(emotion: String, userAsrSentenceId: Int) {
+#if DEMO_FOR_DEBUG
+        AVToastView.show(String(format: AUIAICallBundle.getString("The agent seems to be %@"), emotion), view: self.view, position: .mid)
+#endif
+    }
 }
 
 #if AICALL_ENABLE_FEEDBACK
@@ -631,14 +637,21 @@ extension AUIAICallViewController {
         AUIAICallReport.shared.setup()
         
         let btn = AVBlockButton()
+        /*
         btn.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
         btn.setImage(AUIAICallBundle.getCommonImage("ic_report"), for: .normal)
         btn.setImage(AUIAICallBundle.getCommonImage("ic_report_select"), for: .selected)
+         */
+        btn.titleLabel?.font = AVTheme.regularFont(12)
+        btn.setTitle(AUIAICallBundle.getString("Report Issues"), for: .normal)
+        btn.setTitleColor(AVTheme.text_weak, for: .normal)
+        //btn.setTitleColor(UIColor.av_color(withHexString: "#3A3D48FF"), for: .selected)
         btn.clickBlock = { [weak self] btn in
             self?.av_presentFullScreenViewController(AUIAICallReportViewController(), animated: true)
         }
         self.view.addSubview(btn)
-        btn.frame = CGRect(x: self.settingBtn.av_left - 6 - 44, y: UIView.av_safeTop, width: 44, height: 44)
+        btn.sizeToFit()
+        btn.frame = CGRect(x: 24, y: UIView.av_safeTop, width: btn.av_width, height: 44)
         return btn
     }
 }
@@ -662,7 +675,7 @@ extension AUIAICallViewController {
     }
     
     func getUserSubtitle(text: String, voiceprintResult: ARTCAICallVoiceprintResult) -> String {
-        if self.controller.config.voiceprintId != nil && self.controller.config.useVoiceprint {
+        if self.controller.config.templateConfig.voiceprintId != nil && self.controller.config.templateConfig.useVoiceprint {
             return "[\(voiceprintResult.rawValue)]\(text)"
         }
         return text

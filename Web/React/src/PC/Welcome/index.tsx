@@ -12,6 +12,7 @@ import useCallStore from '@/common/store';
 import './index.less';
 import i18n from '@/common/i18n';
 
+
 interface CallWelcomeProps {
   onAgentTypeSelected: (agentType: AICallAgentType) => void;
 }
@@ -49,43 +50,46 @@ function CallWelcome({ onAgentTypeSelected }: CallWelcomeProps) {
     );
   } else {
     content = (
-      <div className='_start-btns'>
-        <div>
-          <Button
-            className='_start-btn'
-            onClick={() => {
-              onAgentTypeSelected(AICallAgentType.VoiceAgent);
-            }}
-          >
-            <Icon component={Voice} />
-          </Button>
-          <div className='_tip'>{i18n['agent.voice']}</div>
+      <>
+        <div className='_start-btns'>
+          <div>
+            <Button
+              className='_start-btn'
+              onClick={() => {
+                onAgentTypeSelected(AICallAgentType.VoiceAgent);
+              }}
+            >
+              <Icon component={Voice} />
+            </Button>
+            <div className='_tip'>{i18n['agent.voice']}</div>
+          </div>
+          <div style={{ width: 28 }} />
+          <div>
+            <Button
+              className='_start-btn'
+              onClick={() => {
+                onAgentTypeSelected(AICallAgentType.AvatarAgent);
+              }}
+            >
+              <Icon component={Avatar} />
+            </Button>
+            <div className='_tip'>{i18n['agent.avatar']}</div>
+          </div>
+          <div style={{ width: 28 }} />
+          <div>
+            <Button
+              className='_start-btn'
+              onClick={() => {
+                onAgentTypeSelected(AICallAgentType.VisionAgent);
+              }}
+            >
+              <Icon component={Vision} />
+            </Button>
+            <div className='_tip'>{i18n['agent.vision']}</div>
+          </div>
         </div>
-        <div style={{ width: 28 }} />
-        <div>
-          <Button
-            className='_start-btn'
-            onClick={() => {
-              onAgentTypeSelected(AICallAgentType.AvatarAgent);
-            }}
-          >
-            <Icon component={Avatar} />
-          </Button>
-          <div className='_tip'>{i18n['agent.avatar']}</div>
-        </div>
-        <div style={{ width: 28 }} />
-        <div>
-          <Button
-            className='_start-btn'
-            onClick={() => {
-              onAgentTypeSelected(AICallAgentType.VisionAgent);
-            }}
-          >
-            <Icon component={Vision} />
-          </Button>
-          <div className='_tip'>{i18n['agent.vision']}</div>
-        </div>
-      </div>
+        
+      </>
     );
   }
 

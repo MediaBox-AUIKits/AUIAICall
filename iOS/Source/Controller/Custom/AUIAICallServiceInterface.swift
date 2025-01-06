@@ -22,4 +22,6 @@ import ARTCAICallKit
     @objc func updateAIAgent(userId: String, instanceId: String, agentType: ARTCAICallAgentType, enablePushToTalk: Bool, completed: ((_ error: NSError?) -> Void)?)
     
     @objc func updateAIAgent(userId: String, instanceId: String, agentType: ARTCAICallAgentType, useVoiceprint: Bool, completed: ((_ error: NSError?) -> Void)?)
+    
+    @objc func describeAIAgentInstance(userId: String, instanceId: String, agentType: ARTCAICallAgentType, completed: ((_ voiceId: String?, _ voiceIdList: [String]?, _ error: NSError?) -> Void)?)
 }

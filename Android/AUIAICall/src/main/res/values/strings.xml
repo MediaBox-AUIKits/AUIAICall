@@ -92,7 +92,7 @@
 
     <string name="tips_authorization_invalidate">Authentication information is missing, please log in and try again!</string>
 
-    <string name="reporting_title">Feedback</string>
+    <string name="reporting_title">Report issues</string>
     <string name="reporting_type">Issue Type</string>
     <string name="reporting_type_tips">(Multiple choices)</string>
     <string name="reporting_type_function_unavailable">Function unavailable</string>
@@ -127,4 +127,10 @@
 
     <string name="ai_agent_human_takeover_will_start">The current call will soon be handled by a real person.</string>
     <string name="ai_agent_human_takeover_connect">The current call is now being handled by a real person.</string>
+
+    <string name="ai_agent_config">Configuration</string>
+    <string name="ai_agent_config_emotional">Emotional Tone</string>
+    <string name="ai_agent_config_emotional_desc">Used to select whether the agent timbre contains emotions</string>
+    <string name="ai_agent_config_emotional_not">No emotions</string>
+    <string name="ai_agent_config_emotional_yes">Contains emotions</string>
 </resources>

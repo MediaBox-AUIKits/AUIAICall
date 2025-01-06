@@ -7,7 +7,7 @@ import useCallStore from '@/common/store';
 import { CallPhoneSVG, CameraClosedSVG, CameraSVG, CameraSwitchSVG, MicrophoneClosedSVG, MicrophoneSVG } from './Icons';
 
 import './footer.less';
-import { isMobile } from '@/common/utils';
+import { getRootElement, isMobile } from '@/common/utils';
 
 interface CallFooterProps {
   onCall: () => void;
@@ -24,6 +24,7 @@ function Footer({ onStop, onCall }: CallFooterProps) {
   const pushingToTalk = useCallStore((state) => state.pushingToTalk);
   const pushingStartTimeRef = useRef(0);
   const pushingTimerRef = useRef(0);
+  const isTouchSupported = 'ontouchstart' in window;
 
   const toggleMicrophoneMuted = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.stopPropagation();
@@ -58,7 +59,10 @@ function Footer({ onStop, onCall }: CallFooterProps) {
       }
       const duration = Date.now() - pushingStartTimeRef.current;
       if (duration < 500) {
-        Toast.show('说话时间太短');
+        Toast.show({
+          content: '说话时间太短',
+          getContainer: () => getRootElement(),
+        });
         controller?.cancelPushToTalk();
       } else {
         controller?.finishPushToTalk();
@@ -125,6 +129,8 @@ function Footer({ onStop, onCall }: CallFooterProps) {
         <Button
           onTouchStart={startPushToTalk}
           onTouchEnd={stopPushToTalk}
+          onMouseDown={!isTouchSupported ? startPushToTalk : undefined}
+          onMouseUp={!isTouchSupported ? stopPushToTalk : undefined}
           onClick={toggleMicrophoneMuted}
           className={pushingToTalk ? 'is-pushing' : ''}
         >

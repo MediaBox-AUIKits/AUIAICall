@@ -2,6 +2,9 @@ package com.aliyun.auikits.aiagent.service;
 
 import static com.alivc.rtc.AliRtcEngine.AliRtcCaptureOutputPreference.ALIRTC_CAPTURER_OUTPUT_PREFERENCE_PREVIEW;
 import static com.alivc.rtc.AliRtcEngine.AliRtcDataMsgType.AliEngineDataMsgCustom;
+import static com.alivc.rtc.AliRtcEngine.AliRtcRenderMirrorMode.AliRtcRenderMirrorModeOnlyFront;
+import static com.alivc.rtc.AliRtcEngine.AliRtcRenderMode.AliRtcRenderModeAuto;
+import static com.alivc.rtc.AliRtcEngine.AliRtcRotationMode.AliRtcRotationMode_0;
 import static com.alivc.rtc.AliRtcEngine.AliRtcVideoTrack.AliRtcVideoTrackCamera;
 
 import android.content.Context;
@@ -17,6 +20,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.nio.charset.StandardCharsets;
+import com.aliyun.auikits.aiagent.debug.ARTCAICallEngineDebuger;
 
 public class ARTCAICallRtcWrapper {
 
@@ -33,12 +37,10 @@ public class ARTCAICallRtcWrapper {
     private ViewGroup.LayoutParams mLocalLayoutParams = null;
 
     public static class ARtcConfig {
-        public boolean enableAudioDump = false;
         public boolean enableRemoteVideo = false;
         public boolean enableLocalVideo = false;
-        public boolean usePreEnv = false;
-        public boolean userSpecifiedAudioTips = false;
         public boolean useHighQualityPreview = false;
+        public boolean enableAudioDelayInfo = false;
         /** 是否默认启动前置摄像头 */
         public boolean useFrontCameraDefault = false;
         /** 摄像头采集帧率 */
@@ -53,6 +55,14 @@ public class ARTCAICallRtcWrapper {
         public int videoEncoderBitRate = 512;
         /** 关键帧间隔，单位毫秒。默认值0，表示SDK内部控制关键帧间隔。 */
         public int videoEncoderKeyFrameInterval = 1000;
+
+        public AliRtcEngine.AliRtcRenderMode mLocalRenderMode = AliRtcRenderModeAuto;
+        public AliRtcEngine.AliRtcRenderMirrorMode mLocalMirrorMode = AliRtcRenderMirrorModeOnlyFront;
+        public AliRtcEngine.AliRtcRotationMode mLocalRotationMode = AliRtcRotationMode_0;
+        public AliRtcEngine.AliRtcRenderMode mRemoteRenderMode = AliRtcRenderModeAuto;
+        public AliRtcEngine.AliRtcRenderMirrorMode mRemoteMirrorMode = AliRtcRenderMirrorModeOnlyFront;
+        public AliRtcEngine.AliRtcRotationMode mRemoteRotationMode = AliRtcRotationMode_0;
+
     }
 
     private String composeParams() {
@@ -65,7 +75,6 @@ public class ARTCAICallRtcWrapper {
             jsonData.put("enableSubDataChannel", true);
             jsonParam.put("data", jsonData);
 
-            jsonAudio.put("user_specified_loop_delay", true);
             jsonParam.put("audio", jsonAudio);
 
             jsonNet.put("enable_ai_low_latency_channel_mode", true);
@@ -79,16 +88,20 @@ public class ARTCAICallRtcWrapper {
     private String composeExtra() {
         JSONObject jsonObject = new JSONObject();
         try {
-            if (mRtcConfig.enableAudioDump) {
+            if (ARTCAICallEngineDebuger.enableDumpData) {
                 jsonObject.put("user_specified_audio_dump", "TRUE");
             }
-            if (mRtcConfig.usePreEnv) {
+            if (ARTCAICallEngineDebuger.enableLabEnvironment) {
                 jsonObject.put("user_specified_environment", "PRE_RELEASE");
             }
-            if (mRtcConfig.userSpecifiedAudioTips) {
+            if (ARTCAICallEngineDebuger.enableUserSpecifiedAudioTips) {
                 jsonObject.put("user_specified_audio_tips", "TRUE");
             }
+            if(mRtcConfig.enableAudioDelayInfo) {
+                jsonObject.put("enable_ai_audio_cumu_delay", 1);
+            }
             jsonObject.put("user_specified_codec_type", "CODEC_TYPE_HARDWARE_ENCODER_HARDWARE_DECODER");
+            jsonObject.put("user_specified_dynamic_encoder", 1);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -97,7 +110,7 @@ public class ARTCAICallRtcWrapper {
 
     public void init(Context context, ARtcConfig rtcConfig, AliRtcEngineEventListener aliRtcEngineEventListener,
                      AliRtcEngineNotify aliRtcEngineNotify,
-                     AliRtcEngine.AliRtcAudioVolumeObserver aliRtcAudioVolumeObserver) {
+                     AliRtcEngine.AliRtcAudioVolumeObserver aliRtcAudioVolumeObserver,  AliRtcEngine.AliRtcAudioDelayObserver aliRtcAudioDelayObserver) {
         mContext = context;
         mRtcConfig = rtcConfig;
 
@@ -107,13 +120,17 @@ public class ARTCAICallRtcWrapper {
         if (aliRtcEngine != null) {
             aliRtcEngine.setChannelProfile(AliRtcEngine.AliRTCSdkChannelProfile.AliRTCSdkInteractiveLive);
             boolean audioOnly = !mRtcConfig.enableRemoteVideo && !mRtcConfig.enableLocalVideo;
-            aliRtcEngine.setAudioOnlyMode(audioOnly);
+            if(audioOnly && !mRtcConfig.enableAudioDelayInfo) {
+                //不需要audioDelayinfo时才可以设置，audioDelayinfo是通过插入视频sei来实现的
+                aliRtcEngine.setAudioOnlyMode(audioOnly);
+            }
             aliRtcEngine.setAudioProfile(AliRtcEngine.AliRtcAudioProfile.AliRtcEngineHighQualityMode, AliRtcEngine.AliRtcAudioScenario.AliRtcSceneChatroomMode);
             aliRtcEngine.startAudioPlayer();
 
             aliRtcEngine.setRtcEngineEventListener(aliRtcEngineEventListener);
             aliRtcEngine.setRtcEngineNotify(aliRtcEngineNotify);
             aliRtcEngine.registerAudioVolumeObserver(aliRtcAudioVolumeObserver);
+            aliRtcEngine.registerAudioDelayObserver(aliRtcAudioDelayObserver);
             int ret = aliRtcEngine.enableAudioVolumeIndication(
                     500, /** 时间间隔 */
                     3, /** 平滑系数 */
@@ -122,8 +139,19 @@ public class ARTCAICallRtcWrapper {
             aliRtcEngine.setClientRole(AliRtcEngine.AliRTCSdkClientRole.AliRTCSdkInteractive);
             aliRtcEngine.setDefaultSubscribeAllRemoteAudioStreams(true);
             aliRtcEngine.subscribeAllRemoteAudioStreams(true);
-            aliRtcEngine.setDefaultSubscribeAllRemoteVideoStreams(mRtcConfig.enableRemoteVideo);
-            aliRtcEngine.subscribeAllRemoteVideoStreams(mRtcConfig.enableRemoteVideo);
+            if(mRtcConfig.enableRemoteVideo || mRtcConfig.enableAudioDelayInfo)
+            {
+                //audioDelayInfo(需要通过插入视频SEI来实现)
+                aliRtcEngine.setDefaultSubscribeAllRemoteVideoStreams(true);
+                aliRtcEngine.subscribeAllRemoteVideoStreams(true);
+            }
+            else
+            {
+                //不需要接收视频，也不需要收集audioDelayInfo(需要通过插入视频SEI来实现)
+                aliRtcEngine.setDefaultSubscribeAllRemoteVideoStreams(false);
+                aliRtcEngine.subscribeAllRemoteVideoStreams(false);
+            }
+
             aliRtcEngine.publishLocalAudioStream(false);
             aliRtcEngine.publishLocalVideoStream(false);
             aliRtcEngine.muteLocalMic(false, AliRtcEngine.AliRtcMuteLocalAudioMode.AliRtcMuteAllAudioMode);
@@ -257,6 +285,14 @@ public class ARTCAICallRtcWrapper {
         return ret;
     }
 
+    public int enableLocalVideo(boolean enable) {
+        int ret = -1;
+        if (null != mAliRtcEngine) {
+            ret = mAliRtcEngine.enableLocalVideo(enable);
+        }
+        return ret;
+    }
+
     public boolean publishLocalAudioStream(boolean enable) {
         boolean ret = false;
         if (null != mAliRtcEngine) {
@@ -300,9 +336,9 @@ public class ARTCAICallRtcWrapper {
                 avatarSurfaceView.setZOrderOnTop(true);
                 avatarSurfaceView.setZOrderMediaOverlay(true);
             }
-//        canvas.backgroundColor = mBackgroundColor;
-//        canvas.renderMode = mRtcCanvasRenderMode;
-//        canvas.rotationMode = mRemoteRotationMode;
+            mRemoteVideoCanvas.renderMode = mRtcConfig.mRemoteRenderMode;
+            mRemoteVideoCanvas.mirrorMode = mRtcConfig.mRemoteMirrorMode;
+            mRemoteVideoCanvas.rotationMode = mRtcConfig.mRemoteRotationMode;
 
             mRemoteViewGroup.addView(avatarSurfaceView, mRemoteVideoLayoutParams);
             mAliRtcEngine.setRemoteViewConfig(mRemoteVideoCanvas, uid, AliRtcVideoTrackCamera);
@@ -318,10 +354,11 @@ public class ARTCAICallRtcWrapper {
                 avatarSurfaceView.setZOrderOnTop(true);
                 avatarSurfaceView.setZOrderMediaOverlay(true);
             }
-//        canvas.backgroundColor = mBackgroundColor;
-//        canvas.renderMode = mRtcCanvasRenderMode;
-//        canvas.rotationMode = mRemoteRotationMode;
             mAliRtcEngine.startPreview();
+
+            mLocalVideoCanvas.renderMode = mRtcConfig.mLocalRenderMode;
+            mLocalVideoCanvas.mirrorMode = mRtcConfig.mLocalMirrorMode;
+            mLocalVideoCanvas.rotationMode = mRtcConfig.mLocalRotationMode;
 
             mLocalViewGroup.addView(avatarSurfaceView, mLocalLayoutParams);
             mAliRtcEngine.setLocalViewConfig(mLocalVideoCanvas, AliRtcVideoTrackCamera);

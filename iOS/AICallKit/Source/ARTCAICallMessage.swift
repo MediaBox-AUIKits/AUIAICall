@@ -24,7 +24,8 @@ import UIKit
     case CustomMessageReceived = 1011
     case HumanTakeoverWillStart = 1012
     case HumanTakeoverConnected = 1013
-
+    case AgentEmotionNotify = 1014
+    
     case StopAIAgent = 1100
     case InterruptSpeaking = 1101
     case EnableVoiceInterrupt = 1102

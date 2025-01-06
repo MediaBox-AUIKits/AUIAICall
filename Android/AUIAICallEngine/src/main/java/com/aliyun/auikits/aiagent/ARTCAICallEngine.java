@@ -1,5 +1,12 @@
 package com.aliyun.auikits.aiagent;
 
+import static com.alivc.rtc.AliRtcEngine.AliRtcRenderMirrorMode.AliRtcRenderMirrorModeOnlyFront;
+import static com.alivc.rtc.AliRtcEngine.AliRtcRenderMode.AliRtcRenderModeAuto;
+import static com.alivc.rtc.AliRtcEngine.AliRtcRotationMode.AliRtcRotationMode_0;
+import static com.aliyun.auikits.aiagent.ARTCAICallEngine.ARTCAICallVideoRenderMirrorMode.ARTCAICallVideoRenderMirrorModeOnlyFront;
+import static com.aliyun.auikits.aiagent.ARTCAICallEngine.ARTCAICallVideoRenderMode.ARTCAICallVideoRenderModeAuto;
+import static com.aliyun.auikits.aiagent.ARTCAICallEngine.ARTCAICallVideoRotationMode.ARTCAICallVideoRotationMode_0;
+
 import android.view.ViewGroup;
 
 import com.alivc.rtc.AliRtcEngine;
@@ -71,6 +78,38 @@ public abstract class ARTCAICallEngine {
         Unknow,
     }
 
+    public enum ARTCAICallVideoRenderMode{
+        /*! 自动模式 */
+        ARTCAICallVideoRenderModeAuto,
+        /*! 拉伸平铺模式 ，如果外部输入的视频宽高比和推流设置的宽高比不一致时，将输入视频拉伸到推流设置的比例，画面会变形*/
+        ARTCAICallVideoRenderModeStretch,
+        /*! 填充黑边模式，如果外部输入的视频宽高比和推流设置的宽高比不一致时，将输入视频上下或者左右填充黑边 */
+        ARTCAICallVideoRenderModeFill,
+        /*! 裁剪模式，如果外部输入的视频宽高比和推流设置的宽高比不一致时，将输入视频宽或者高进行裁剪，画面内容会丢失 */
+        ARTCAICallVideoRenderModeClip,
+        ARTCAICallVideoRenderModeNoChange,
+    }
+
+    public enum ARTCAICallVideoRotationMode {
+        /*! 0度 */
+        ARTCAICallVideoRotationMode_0 ,
+        /*! 90度 */
+        ARTCAICallVideoRotationMode_90 ,
+        /*! 180度 */
+        ARTCAICallVideoRotationMode_180 ,
+        /*! 270度 */
+        ARTCAICallVideoRotationMode_270 ,
+    }
+
+    public enum ARTCAICallVideoRenderMirrorMode{
+        /*! 只有前置摄像头预览镜像，其他不镜像 */
+        ARTCAICallVideoRenderMirrorModeOnlyFront,
+        /*! 全部镜像 */
+        ARTCAICallVideoRenderMirrorModeAllEnabled,
+        /*! 全部不镜像 */
+        ARTCAICallVideoRenderMirrorModeAllDisable;
+    }
+
     public enum ARTCAICallAgentType {
         /** 纯语音 */
         VoiceAgent,
@@ -101,6 +140,24 @@ public abstract class ARTCAICallEngine {
          * 未知状态
          */
         Unknown,
+    }
+
+    public static class ARTCAICallVideoCanvas {
+        /*! 渲染模式，默认值为 ARTCAICallVideoRenderModeAuto */
+        public ARTCAICallVideoRenderMode renderMode = ARTCAICallVideoRenderModeAuto;
+        /*! 镜像模式 ARTCAICallVideoRenderMirrorModeOnlyFront*/
+        public ARTCAICallVideoRenderMirrorMode mirrorMode = ARTCAICallVideoRenderMirrorModeOnlyFront;
+        /*! 旋转角度，默认值为 ARTCAICallVideoRotationMode_0 */
+        public ARTCAICallVideoRotationMode rotationMode = ARTCAICallVideoRotationMode_0;
+
+        @Override
+        public String toString() {
+            return "ARTCAICallVideoCanvas{" +
+                    "renderMode=" + renderMode +
+                    ", mirrorMode=" + mirrorMode +
+                    ", rotationMode=" + rotationMode +
+                    '}';
+        }
     }
 
     public static class ARTCAICallVideoConfig {
@@ -136,55 +193,99 @@ public abstract class ARTCAICallEngine {
         }
     }
 
-    public static class ARTCAICallConfig {
-        public String aiAgentRegion = null;
+    /**
+     * 创建一路AI通话可配置的参数项
+     * 部分字段可参考：https://help.aliyun.com/zh/ims/developer-reference/api-ice-2020-11-09-generateaiagentcall?spm=a2c4g.11186623.0.i3
+     */
+    public static class ARTCAICallAgentTemplateConfig {
+        public String aiAgentId = "";// 智能体Id
+        public String userExtendData = null;//业务自定义扩展字段
+        public String aiAgentGreeting = "";//智能体欢迎语，AI智能体在用户入会后主动说的一句话
+        public int aiAgentUserOnlineTimeout = 60;//用户未入会，智能体超时关闭任务的时间。单位：秒。默认值：60 秒
+        public int aiAgentUserOfflineTimeout = 5;//用户退会后，智能体超时关闭任务的时间。单位：秒。默认值：5 秒。
+        public String aiAgentWorkflowOverrideParams = null;//工作流覆盖参数，默认无
+        public String aiAgentBailianAppParams = null;//百炼应用中心参数。参数格式参考：https://help.aliyun.com/zh/ims/user-guide/parameters-of-bailian-application-center?spm=a2c4g.11186623.0.0.2267571d9cXxJQ
+        public int aiAgentAsrMaxSilence = 400;//语音断句检测阈值，静音时长超过该阈值会被认为断句，参数范围 200ms～1200ms，默认值 400ms
+        public int aiAgentVolume = -1;//智能体说话的音量, 若不填：默认使用阿里云推荐的自适应音量模式
+        public boolean enableVoiceInterrupt = true;//是否支持语音打断，默认 true
+        public boolean enableIntelligentSegment = true;//智能断句开关，开启智能断句后，用户说话的发生断句会智能合并成一句。默认为 true
+        public boolean enableVoicePrint = false;//是否使用声纹识别的开关。默认值：false
+        public String voiceprintId = "";//声纹Id，如果不为空表示当前通话开启声纹降噪能力，为空表示不启用声纹降噪能力
+        public String aiAgentVoiceId = "";//智能体讲话音色Id
+        public int aiAgentMaxIdleTime = 600;//智能体闲时的最大等待时间(单位：秒)，超时智能体自动下线，设置为-1表示闲时不退出。
+        public boolean aiAgentGracefulShutdown = false;//是否优雅下线，默认 false
+        public boolean enablePushToTalk = false;//是否开启对讲机模式。默认值：false
+        public String aiAgentAvatarId = "";//当智能体类型是AvatarAgent时，可以指定数字人模型Id
+
+        /**
+         * 客户自己部署的AppServer地址,如果接入方式是含UI的方式接入，需要设置该字段
+         * 服务端集成方式参考：https://help.aliyun.com/zh/ims/user-guide/app-server-reference?spm=a2c4g.11186623.help-menu-193643.d_2_5_5_1_0_4_0.7c112ea3kfQxhL&scm=20140722.H_2848445._.OR_help-T_cn#DAS#zh-V_1
+         */
+        public String appServerHost = "";//客户自己部署的AppServer地址
+
+        /**
+         * 以下参数共官方Demo使用，客户接入AUI及场景化可忽略
+         */
         public String loginUserId;
         public String loginAuthrization;
-        public String aiAgentRequestId = "";
-        public String aiAgentId = "";
-        public boolean enableVoiceInterrupt = true;
-        public String aiAgentVoiceId = "";
+        public String aiAgentRegion = null;// 智能体服务所在的区域，如果为空，Appserver会使用默认的region来启动智能体服务
+        public boolean isSharedAgent = false;// 是否是共享智能体
+
+
+        @Override
+        public String toString() {
+            return "ARTCAICallGenerateParameters{" +
+                    "aiAgentId='" + aiAgentId + '\'' +
+                    ", aiAgentAvatarId='" + aiAgentAvatarId + '\'' +
+                    ", aiAgentGreeting='" + aiAgentGreeting + '\'' +
+                    ", aiAgentUserOnlineTimeout='" + aiAgentUserOnlineTimeout + '\'' +
+                    ", aiAgentUserOfflineTimeout='" + aiAgentUserOfflineTimeout + '\'' +
+                    ", aiAgentWorkflowOverrideParams='" + aiAgentWorkflowOverrideParams + '\'' +
+                    ", aiAgentBailianAppParams='" + aiAgentBailianAppParams + '\'' +
+                    ", aiAgentAsrMaxSilence='" + aiAgentAsrMaxSilence + '\'' +
+                    ", aiAgentVolume='" + aiAgentVolume + '\'' +
+                    ", enableVoiceInterrupt='" + enableVoiceInterrupt + '\'' +
+                    ", enableIntelligentSegment='" + enableIntelligentSegment + '\'' +
+                    ", aiAgentVoiceId='" + aiAgentVoiceId + '\'' +
+                    ", aiAgentGracefulShutdown='" + aiAgentGracefulShutdown + '\'' +
+                    ", aiAgentMaxIdleTime='" + aiAgentMaxIdleTime + '\'' +
+                    ", aiAgentRegion=" + aiAgentRegion + '\'' +
+                    ", isSharedAgent=" + isSharedAgent + '\'' +
+                    ", userExtendData='" + userExtendData + '\'' +
+                    ", enableVoicePrint='" + enableVoicePrint + '\'' +
+                    ", voicePrintId='" + voiceprintId + '\'' +
+                    ", enablePushToTalk='" + enablePushToTalk + '\'' +
+                    ", appServerHost=" + appServerHost +
+                    ", loginUserId=" + loginUserId +
+                    ", loginAuthrization=" + loginAuthrization +
+                    '}';
+        }
+
+    }
+
+    public static class ARTCAICallConfig {
         public boolean enableSpeaker = true;
         public boolean isMicrophoneOn = true;
         public boolean isCameraMute = false;
-        public boolean enableAudioDump = false;
-        public boolean userSpecifiedAudioTips = false;
-        public String appServerHost = "";
-        /**
-         * 是否使用全托管方案
-         */
-        public boolean useDeposit = false;
-        public boolean useRtcPreEnv = false;
-        public boolean enablePushToTalk = false;
-        public boolean enableVoicePrint = true;
-        /** 业务自定义扩展字段 */
-        public String userExtendData = null;
+        public boolean enableAudioDelayInfo = true;
         /**
          * 视频相关配置
          */
         public ARTCAICallVideoConfig mAiCallVideoConfig = new ARTCAICallVideoConfig();
 
+        /**
+         * 如果使用不含UI方式接入，不需要设置mAiCallGenerateParameters
+         */
+        public ARTCAICallAgentTemplateConfig mAiCallAgentTemplateConfig = new ARTCAICallAgentTemplateConfig();
 
         @Override
         public String toString() {
             return "ARTCAICallConfig{" +
-                    "aiAgentRegion='" + aiAgentRegion + '\'' +
-                    ", loginUserId='" + loginUserId + '\'' +
-                    ", loginAuthrization='" + loginAuthrization + '\'' +
-                    ", aiAgentRequestId='" + aiAgentRequestId + '\'' +
-                    ", aiAgentId='" + aiAgentId + '\'' +
-                    ", enableVoiceInterrupt=" + enableVoiceInterrupt +
-                    ", aiAgentVoiceId='" + aiAgentVoiceId + '\'' +
                     ", enableSpeaker=" + enableSpeaker +
                     ", isMicrophoneOn=" + isMicrophoneOn +
                     ", isCameraMute=" + isCameraMute +
-                    ", enableAudioDump=" + enableAudioDump +
-                    ", appServerHost='" + appServerHost + '\'' +
-                    ", useDeposit=" + useDeposit +
-                    ", useRtcPreEnv=" + useRtcPreEnv +
-                    ", enablePushToTalk=" + enablePushToTalk +
-                    ", enableVoicePrint=" + enableVoicePrint +
                     ", mAiCallVideoConfig=" + mAiCallVideoConfig +
+                    ", ARTCAICallAgentTemplateConfig=" + mAiCallAgentTemplateConfig +
                     '}';
         }
     }
@@ -245,6 +346,13 @@ public abstract class ARTCAICallEngine {
          * @param userAsrSentenceId 表示回应对应sentenceId语音输入的的llm内容
          */
         public void onAIAgentSubtitleNotify(String text, boolean end, int userAsrSentenceId) {}
+
+        /**
+         * 智能体情绪结果通知
+         * @param emotion 情绪标签，例如：neutral\happy\angry\sad 等
+         * @param userAsrSentenceId 回答用户问题的句子ID
+         */
+        public void onAgentEmotionNotify(String emotion,int userAsrSentenceId) {}
 
         /**
          * 网络状态回调
@@ -331,6 +439,13 @@ public abstract class ARTCAICallEngine {
          * @param takeoverUid 真人uid
          */
         public void onHumanTakeoverConnected(String takeoverUid) {}
+
+        /**
+         * 音频回环延迟
+         *  @param id 语句ID
+         *  @param delay_ms 延迟
+         */
+        public void onAudioDelayInfo(int id, int delay_ms) {}
     }
 
     /**
@@ -421,9 +536,25 @@ public abstract class ARTCAICallEngine {
     /**
      * 设置数字人视图载体
      * @param viewGroup
+     * @param avatarLayoutParams
+     * @param canvas 视频渲染模式
+     */
+    public abstract void setAvatarAgentView(ViewGroup viewGroup, ViewGroup.LayoutParams avatarLayoutParams, ARTCAICallVideoCanvas canvas);
+
+    /**
+     * 设置数字人视图载体
+     * @param viewGroup
      * @param visionLayoutParams
      */
     public abstract void setVisionPreviewView(ViewGroup viewGroup, ViewGroup.LayoutParams visionLayoutParams);
+
+    /**
+     * 设置数字人视图载体
+     * @param viewGroup
+     * @param visionLayoutParams
+     * @param canvas 视频渲染模式
+     */
+    public abstract void setVisionPreviewView(ViewGroup viewGroup, ViewGroup.LayoutParams visionLayoutParams, ARTCAICallVideoCanvas canvas);
 
     /**
      * 关闭/取消关闭摄像头

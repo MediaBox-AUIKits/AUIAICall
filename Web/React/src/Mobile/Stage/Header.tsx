@@ -1,6 +1,6 @@
 import { useContext, useMemo, useState } from 'react';
 import { Button, Popup, Radio, SafeArea, Selector, Space, Switch, Toast } from 'antd-mobile';
-import { SettingSVG, VoiceAbinSVG, VoiceZhixiaobaiSVG, VoiceZhixiaoxiaSVG } from './Icons';
+import { SettingSVG, VoiceOneSVG, VoiceThreeSVG, VoiceTwoSVG } from './Icons';
 import useCallStore from '@/common/store';
 import i18n from '@/common/i18n';
 import { AICallAgentType, AICallState } from 'aliyun-auikit-aicall';
@@ -10,6 +10,7 @@ import ControllerContext from '@/common/ControlerContext';
 import { RadioValue } from 'antd-mobile/es/components/radio';
 
 import logger from '@/common/logger';
+import { getRootElement } from '@/common/utils';
 
 function Header() {
   const controller = useContext(ControllerContext);
@@ -33,7 +34,7 @@ function Header() {
     if (updated) {
       Toast.show({
         content: `智能打断成功已${checked ? '开启' : '关闭'}`,
-        position: 'bottom',
+        getContainer: () => getRootElement(),
       });
     }
     useCallStore.setState({ enableVoiceInterrupt: updated ? checked : original, updatingVoiceInterrupt: false });
@@ -48,7 +49,7 @@ function Header() {
     if (updated) {
       Toast.show({
         content: '音色切换成功',
-        position: 'bottom',
+        getContainer: () => getRootElement(),
       });
     }
     useCallStore.setState({ voiceId: updated ? voiceId : original, updatingVoiceId: false });
@@ -62,12 +63,12 @@ function Header() {
     if (updated) {
       Toast.show({
         content: `对讲机模式已${checked ? '开启' : '关闭'}`,
-        position: 'bottom',
+        getContainer: () => getRootElement(),
       });
     } else {
       Toast.show({
         content: '对讲机模式切换失败',
-        position: 'bottom',
+        getContainer: () => getRootElement(),
       });
     }
     // 退出对讲机模式，恢复音频静音状态
@@ -108,6 +109,7 @@ function Header() {
         <Popup
           className='header-pop setting-pop'
           visible={settingVisible}
+          getContainer={() => getRootElement()}
           onMaskClick={() => {
             setSettingVisible(false);
           }}
@@ -154,32 +156,32 @@ function Header() {
                 </div>
               </li>
             )}
-            {agentType !== AICallAgentType.AvatarAgent && !controller?.config.fromShare && (
-              <li className='_voiceId'>
-                <div className='_itemBox'>
-                  <div className='_itemInfo'>
-                    <div className='_itemTitle'>选择音色</div>
-                    <div className='_itemDesc'>切换音色后，AI将在下一次回答中使用新的角色</div>
+            {agentType !== AICallAgentType.AvatarAgent &&
+              !controller?.config.fromShare &&
+              (controller?.config.agentVoiceIdList.length || 0) > 0 && (
+                <li className='_voiceId'>
+                  <div className='_itemBox'>
+                    <div className='_itemInfo'>
+                      <div className='_itemTitle'>选择音色</div>
+                      <div className='_itemDesc'>切换音色后，AI将在下一次回答中使用新的角色</div>
+                    </div>
                   </div>
-                </div>
-                <Radio.Group value={voiceId} disabled={updatingVoiceId} onChange={onVoiceChange}>
-                  <Space direction='vertical' block>
-                    <Radio value='zhixiaobai'>
-                      <span className='_voiceIcon'>{VoiceZhixiaobaiSVG}</span>
-                      <span className='_voiceName'>智小白</span>
-                    </Radio>
-                    <Radio value='zhixiaoxia'>
-                      <span className='_voiceIcon'>{VoiceZhixiaoxiaSVG}</span>
-                      <span className='_voiceName'>智小夏</span>
-                    </Radio>
-                    <Radio value='abin'>
-                      <span className='_voiceIcon'>{VoiceAbinSVG}</span>
-                      <span className='_voiceName'>阿斌</span>
-                    </Radio>
-                  </Space>
-                </Radio.Group>
-              </li>
-            )}
+                  <Radio.Group value={voiceId} disabled={updatingVoiceId} onChange={onVoiceChange}>
+                    <Space direction='vertical' block>
+                      {controller?.config.agentVoiceIdList.map((voiceId, index) => {
+                        const iconIndex = index % 3;
+                        const VoiceSVG = [VoiceOneSVG, VoiceTwoSVG, VoiceThreeSVG][iconIndex];
+                        return (
+                          <Radio key={voiceId} value={voiceId}>
+                            <span className='_voiceIcon'>{VoiceSVG}</span>
+                            <span className='_voiceName'>{voiceId}</span>
+                          </Radio>
+                        );
+                      })}
+                    </Space>
+                  </Radio.Group>
+                </li>
+              )}
           </ul>
           <SafeArea position='bottom' />
         </Popup>

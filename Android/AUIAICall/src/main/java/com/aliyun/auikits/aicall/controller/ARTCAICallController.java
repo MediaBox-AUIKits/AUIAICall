@@ -14,11 +14,15 @@ import com.aliyun.auikits.aiagent.ARTCAICallEngine;
 import com.aliyun.auikits.aiagent.service.IARTCAICallService;
 import com.aliyun.auikits.aiagent.util.ARTCAIAgentUtil;
 import com.aliyun.auikits.aicall.AUIAICallInCallActivity;
+import com.aliyun.auikits.aicall.R;
+import com.aliyun.auikits.aicall.bean.AudioToneData;
 import com.aliyun.auikits.aicall.util.BizStatHelper;
 import com.aliyun.auikits.aiagent.util.Logger;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class ARTCAICallController {
@@ -59,6 +63,9 @@ public abstract class ARTCAICallController {
     protected String mAIAgentInstanceId = "";
     protected String mAIAgentUserId = "";
     protected String mRtcAuthToken = "";
+    protected String mAIAgentRequestId = "";
+    protected boolean mEnableVoiceIdList = false;//如果你的业务无需获取音色列表，请把这个开关关闭
+    protected List<AudioToneData> mAgentVoiceIdList = new ArrayList<AudioToneData>();
 
     protected ARTCAICallEngine.IARTCAICallEngineCallback mCallEngineCallbackWrapper = new ARTCAICallEngine.IARTCAICallEngineCallback() {
         @Override
@@ -110,6 +117,13 @@ public abstract class ARTCAICallController {
         public void onAIAgentSubtitleNotify(String text, boolean end, int userAsrSentenceId) {
             if (null != mBizCallEngineCallback) {
                 mBizCallEngineCallback.onAIAgentSubtitleNotify(text, end, userAsrSentenceId);
+            }
+        }
+
+        @Override
+        public void onAgentEmotionNotify(String emotion,int userAsrSentenceId) {
+            if(null != mBizCallEngineCallback) {
+                mBizCallEngineCallback.onAgentEmotionNotify(emotion, userAsrSentenceId);
             }
         }
 
@@ -216,6 +230,13 @@ public abstract class ARTCAICallController {
                 mBizCallEngineCallback.onHumanTakeoverConnected(takeoverUid);
             }
         }
+
+        @Override
+        public void onAudioDelayInfo(int id, int delay_ms) {
+            if(null != mBizCallEngineCallback) {
+                mBizCallEngineCallback.onAudioDelayInfo(id, delay_ms);
+            }
+        }
     };
 
     protected ARTCAICallController(Context context, String userId) {
@@ -265,8 +286,8 @@ public abstract class ARTCAICallController {
 
     public String getAiAgentRequestId() {
         String requestId = "0";
-        if (null != mARTCAiCallConfig && !TextUtils.isEmpty(mARTCAiCallConfig.aiAgentRequestId)) {
-            requestId = mARTCAiCallConfig.aiAgentRequestId;
+        if (!TextUtils.isEmpty(mAIAgentRequestId)) {
+            requestId = mAIAgentRequestId;
         }
         return requestId;
     }
@@ -283,7 +304,7 @@ public abstract class ARTCAICallController {
              * timbre	timbre	音色拟真度：1~5
              */
             args.put("atype", mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent ? "avatar" : "voice");
-            args.put("aid", mARTCAiCallConfig.aiAgentId);
+            args.put("aid", mARTCAiCallConfig.mAiCallAgentTemplateConfig.aiAgentId);
             args.put("ains", mAIAgentInstanceId);
             args.put("ach", mChannelId);
             args.put("auid", mAIAgentUserId);
@@ -308,8 +329,8 @@ public abstract class ARTCAICallController {
         try {
             {
                 JSONObject args = new JSONObject();
-                args.put("req_id", mARTCAiCallConfig.aiAgentRequestId);
-                args.put("aid", mARTCAiCallConfig.aiAgentId);
+                args.put("req_id", mAIAgentRequestId);
+                args.put("aid", mARTCAiCallConfig.mAiCallAgentTemplateConfig.aiAgentId);
                 args.put("ains", mAIAgentInstanceId);
                 args.put("auid", mAIAgentUserId);
                 args.put("uid", mUserId);
@@ -339,7 +360,7 @@ public abstract class ARTCAICallController {
             }
             {
                 JSONObject args = new JSONObject();
-                args.put("req_id", mARTCAiCallConfig.aiAgentRequestId);
+                args.put("req_id", mAIAgentRequestId);
 
                 String allLog = Logger.getAllLogRecordStr();
                 args.put("log_str", allLog);
@@ -354,6 +375,14 @@ public abstract class ARTCAICallController {
         if (null != mARTCAICallEngine && null != mARTCAICallEngine.getRtcEngine()) {
             mARTCAICallEngine.getRtcEngine().showDebugView(viewGroup, showType, userId);
         }
+    }
+
+    public void enableFetchVoiceIdList(boolean enable) {
+        mEnableVoiceIdList = enable;
+    }
+
+    public List<AudioToneData> getAgentVoiceList() {
+        return mAgentVoiceIdList;
     }
 
     protected void setCallState(AICallState callState, ARTCAICallEngine.AICallErrorCode aiCallErrorCode) {
@@ -373,6 +402,80 @@ public abstract class ARTCAICallController {
         });
     }
 
+    private void parseVoiceIdList(JSONObject jsonObject) {
+        try {
+            if (jsonObject.has("template_config")) {
+
+                JSONObject templateConfig = new JSONObject(jsonObject.optString("template_config"));
+                if(templateConfig.has(getAgentStrByType(mAiAgentType))) {
+                    JSONObject agentConfig = templateConfig.getJSONObject(getAgentStrByType(mAiAgentType));
+                    if(agentConfig.has("VoiceId")) {
+                        mARTCAiCallConfig.mAiCallAgentTemplateConfig.aiAgentVoiceId = agentConfig.optString("VoiceId");
+                    }
+                    if(agentConfig.has("VoiceIdList")) {
+                        JSONArray voiceIdList = agentConfig.getJSONArray("VoiceIdList");
+                        mAgentVoiceIdList.clear();
+                        for(int i = 0; i < voiceIdList.length(); i++) {
+                            String voiceId = (String) voiceIdList.get(i);
+                            AudioToneData audioTone = new AudioToneData(voiceId, voiceId);
+                            if(i % 3 == 0)
+                            {
+                                audioTone.setIconResId(R.drawable.ic_audio_tone_0);
+                            } else if(i % 3 == 1) {
+                                audioTone.setIconResId(R.drawable.ic_audio_tone_1);
+                            } else if(i % 3 == 2) {
+                                audioTone.setIconResId(R.drawable.ic_audio_tone_2);
+                            }
+                            audioTone.setUsing(mARTCAiCallConfig.mAiCallAgentTemplateConfig.aiAgentVoiceId.equals(audioTone.getAudioToneId()));
+                            mAgentVoiceIdList.add(audioTone);
+                        }
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    private String getAgentStrByType(ARTCAICallEngine.ARTCAICallAgentType type) {
+
+        String agentTypeStr;
+        switch (type) {
+            case AvatarAgent:
+                agentTypeStr = "AvatarChat3D";
+                break;
+            case VisionAgent:
+                agentTypeStr = "VisionChat";
+                break;
+            case VoiceAgent:
+            default:
+                agentTypeStr = "VoiceChat";
+                break;
+        }
+        return agentTypeStr;
+    }
+
+    protected IARTCAICallService.IARTCAICallServiceCallback getVoiceIdListCallback() {
+        return new IARTCAICallService.IARTCAICallServiceCallback() {
+            @Override
+            public void onSuccess(JSONObject jsonObject) {
+                mCallbackHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        parseVoiceIdList(jsonObject);
+                    }
+                });
+            }
+
+            @Override
+            public void onFail(int errorCode, String errorMsg) {
+                Log.i("AUIAICall", "getVoiceIdListCallback fail [errorCode: " + errorCode + ", errorMsg: " + errorMsg + "]");
+
+            }
+        };
+    }
+
+
     protected IARTCAICallService.IARTCAICallServiceCallback getStartActionCallback() {
         return new IARTCAICallService.IARTCAICallServiceCallback() {
             @Override
@@ -387,7 +490,11 @@ public abstract class ARTCAICallController {
                         mRtcAuthToken = aiAgentInfo.rtcAuthToken;
                         mAIAgentUserId = aiAgentInfo.aIAgentUserId;
                         mChannelId = aiAgentInfo.channelId;
-                        mARTCAiCallConfig.aiAgentRequestId = aiAgentInfo.requestId;
+                        mAIAgentRequestId = aiAgentInfo.requestId;
+
+                        if(mEnableVoiceIdList) {
+                            mARTCAICallEngine.getIARTCAICallService().describeAIAgentInstance(mUserId, mAIAgentInstanceId, getVoiceIdListCallback());
+                        }
 
                         Log.i("AUIAICall", "StartActionCallback succ result: " + jsonObject);
                         mARTCAICallEngine.call(mRtcAuthToken, mAIAgentInstanceId, mAIAgentUserId, mChannelId);
@@ -445,6 +552,7 @@ public abstract class ARTCAICallController {
         intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_AI_AGENT_TYPE, aiCallAgentType);
         intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_AI_AGENT_ID, aiAgentId);
         intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_AI_AGENT_REGION, aiAgentRegion);
+        intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_IS_SHARED_AGENT, true);
 
         currentActivity.startActivity(intent);
     }

@@ -47,6 +47,7 @@ import ARTCAICallKit
             self.delegate?.onAICallStateChanged?()
         }
     }
+    public internal(set) var agentVoiceIdList: [String] = []
     public internal(set) var errorCode: ARTCAICallErrorCode = .None
     public var agentInfo: ARTCAICallAgentInfo? {
         get {
@@ -98,9 +99,11 @@ import ARTCAICallKit
                 self.config.agentType = agent.agentType // 修改为最终的agentType
                 self.delegate?.onAICallAIAgentStarted?(agentInfo: agent)
                 
+                self.fetchVoiceIdList(instanceId: agent.instanceId)
+                
                 _ = self.engine.muteLocalCamera(mute: self.config.muteLocalCamera)
                 _ = self.engine.muteMicrophone(mute: self.config.muteMicrophone)
-                _ = self.engine.enablePushToTalk(enable: self.config.enablePushToTalk)
+                _ = self.engine.enablePushToTalk(enable: self.config.templateConfig.enablePushToTalk)
                 self.engine.call(userId: self.userId, token: token, agentInfo: agent) { [weak self] error in
                     guard let self = self else { return }
                     if self.state == .Over {
@@ -142,8 +145,8 @@ import ARTCAICallKit
     }
     
     // 设置智能体渲染视图，及缩放模式
-    public func setAgentView(view: UIView?, mode: ARTCAICallAgentViewMode) {
-        self.engine.setAgentView(view: view, mode: mode)
+    public func setAgentViewConfig(viewConfig: ARTCAICallViewConfig?) {
+        self.engine.setAgentViewConfig(viewConfig: viewConfig)
     }
     
     // 打断智能体说话
@@ -159,7 +162,7 @@ import ARTCAICallKit
             if let agent = self.engine.agentInfo {
                 self.callService.updateAIAgent(userId: self.userId, instanceId: agent.instanceId, agentType: self.config.agentType, enableVoiceInterrupt: enable) { [weak self] error in
                     if error == nil {
-                        self?.config.enableVoiceInterrupt = enable
+                        self?.config.templateConfig.enableVoiceInterrupt = enable
                     }
                     completed?(error)
                 }
@@ -175,7 +178,7 @@ import ARTCAICallKit
             if let agent = self.engine.agentInfo {
                 self.callService.updateAIAgent(userId: self.userId, instanceId: agent.instanceId, agentType: self.config.agentType, voiceId: voiceId) { [weak self] error in
                     if error == nil {
-                        self?.config.agentVoiceId = voiceId
+                        self?.config.templateConfig.agentVoiceId = voiceId
                     }
                     completed?(error)
                 }
@@ -327,27 +330,31 @@ extension AUIAICallCustomController: ARTCAICallEngineDelegate {
         self.delegate?.onAICallAgentSubtitleNotify?(text: text, isSentenceEnd: isSentenceEnd, userAsrSentenceId: userAsrSentenceId)
     }
     
+    public func onAgentEmotionNotify(emotion: String, userAsrSentenceId: Int) {
+        self.delegate?.onAICallAgentEmotionNotify?(emotion: emotion, userAsrSentenceId: userAsrSentenceId)
+    }
+    
     public func onVoiceIdChanged(voiceId: String) {
-        self.config.agentVoiceId = voiceId
+        self.config.templateConfig.agentVoiceId = voiceId
     }
     
     public func onVoiceInterrupted(enable: Bool) {
-        self.config.enableVoiceInterrupt = enable
+        self.config.templateConfig.enableVoiceInterrupt = enable
     }
     
     public func onPushToTalk(enable: Bool) {
-        self.config.enablePushToTalk = enable
+        self.config.templateConfig.enablePushToTalk = enable
         self.delegate?.onAICallAgentPushToTalkChanged?(enable: enable)
     }
     
     public func onVoiceprint(enable: Bool) {
-        if self.config.useVoiceprint == enable {
+        if self.config.templateConfig.useVoiceprint == enable {
             if let useVoiceprintCompleted = self.useVoiceprintCompleted {
                 useVoiceprintCompleted(NSError.aicall_create(code: .InvalidAction))
             }
         }
         else {
-            self.config.useVoiceprint = enable
+            self.config.templateConfig.useVoiceprint = enable
             self.useVoiceprintCompleted?(nil)
         }
         self.useVoiceprintCompleted = nil
@@ -373,4 +380,27 @@ extension AUIAICallCustomController: ARTCAICallEngineDelegate {
         self.delegate?.onAICallHumanTakeoverConnected?(takeoverUid: takeoverUid)
     }
 
+}
+
+
+// 获取音色列表
+extension AUIAICallCustomController {
+    
+    // 如果你的业务无需获取音色列表，请把这个开关关闭
+    static let EnableVoiceIdList: Bool = false
+    
+    public func fetchVoiceIdList(instanceId: String) {
+        
+        guard AUIAICallCustomController.EnableVoiceIdList else {
+            return
+        }
+             
+        self.callService.describeAIAgentInstance(userId: self.userId, instanceId: instanceId, agentType: self.config.agentType) { voiceId, voiceIdList, error in
+            if let voiceId = voiceId, let voiceIdList = voiceIdList {
+                self.config.templateConfig.agentVoiceId = voiceId
+                self.agentVoiceIdList = voiceIdList
+            }
+        }
+    }
+    
 }

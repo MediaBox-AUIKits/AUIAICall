@@ -77,6 +77,55 @@ import UIKit
 }
 
 /**
+ * 智能体视图镜像模式
+ */
+@objc public enum ARTCAICallAgentViewMirrorMode: Int32 {
+    
+    /**
+     * 只有前置摄像头预览镜像，其余不镜像
+     */
+    case OnlyFrontCameraPreviewEnabled = 0
+    
+    /**
+     * 镜像都开启
+     */
+    case AllEnabled = 1
+    
+    /**
+     * 镜像都关闭
+     */
+    case AllDisabled = 2
+}
+
+/**
+ * 智能体视图旋转模式
+ */
+@objc public enum ARTCAICallAgentViewRotationMode: Int32 {
+    
+    /**
+     * 视频视图旋转角度 - 0
+     */
+    case Rotation_0 = 0
+    
+    /**
+     * 视频视图旋转角度 - 90
+     */
+    case Rotation_90 = 1
+    
+    /**
+     * 视频视图旋转角度 - 180
+     */
+    case Rotation_180 = 2
+    
+    /**
+     * 视频视图旋转角度 - 270
+     */
+    case Rotation_270 = 3
+}
+
+
+
+/**
  * 网络状态
  */
 @objc public enum ARTCAICallNetworkQuality: Int32 {
@@ -336,6 +385,13 @@ import UIKit
     @objc optional func onVoiceAgentSubtitleNotify(text: String, isSentenceEnd: Bool, userAsrSentenceId: Int)
     
     /**
+     * 智能体情绪结果通知
+     * @param emotion 情绪标签，例如：neutral\happy\angry\sad 等
+     * @param userAsrSentenceId 回答用户问题的句子ID
+     */
+    @objc optional func onAgentEmotionNotify(emotion: String, userAsrSentenceId: Int)
+    
+    /**
      * 当前通话的音色发生了改变
      * @param voiceId 当前音色Id
      */
@@ -391,6 +447,14 @@ import UIKit
      * @param takeoverUid 真人uid
      */
     @objc optional func onHumanTakeoverConnected(takeoverUid: String)
+    
+    /**
+     * 音频回环延迟
+     *  @param idx 语句ID
+     *  @param delayMs 延迟（毫秒）
+     */
+    @objc optional func onAudioDelayInfo(sentenceId: Int32, delayMs: Int64)
+
 }
 
 
@@ -516,6 +580,46 @@ import UIKit
 }
 
 /**
+ * 智能体视图配置，当智能体需要渲染时（例如：数字人）需要通过该类进行设置
+ */
+@objcMembers open class ARTCAICallViewConfig: NSObject {
+    
+    /**
+     * 初始化
+     */
+    public init(view: UIView,
+                viewMode: ARTCAICallAgentViewMode = .Auto,
+                viewMirrorMode: ARTCAICallAgentViewMirrorMode = .OnlyFrontCameraPreviewEnabled,
+                viewRotationMode: ARTCAICallAgentViewRotationMode = .Rotation_0) {
+        self.view = view
+        self.viewMode = viewMode
+        self.viewMirrorMode = viewMirrorMode
+        self.viewRotationMode = viewRotationMode
+    }
+    
+    /**
+     * 渲染视图
+     */
+    public let view: UIView
+    
+    /**
+     * 画面渲染模式
+     */
+    public let viewMode: ARTCAICallAgentViewMode
+    
+    /**
+     * 画面镜像模式
+     */
+    public let viewMirrorMode: ARTCAICallAgentViewMirrorMode
+    
+    /**
+     * 画面旋转模式
+     */
+    public let viewRotationMode: ARTCAICallAgentViewRotationMode
+}
+
+
+/**
  * 视频理解智能体运行配置
  */
 @objcMembers open class ARTCAICallVisionConfig: NSObject {
@@ -524,13 +628,17 @@ import UIKit
      * 初始化
      */
     public init(preview: UIView? = nil,
-         viewMode: ARTCAICallAgentViewMode = .Auto,
+                viewMode: ARTCAICallAgentViewMode = .Auto,
+                viewMirrorMode: ARTCAICallAgentViewMirrorMode = .OnlyFrontCameraPreviewEnabled,
+                viewRotationMode: ARTCAICallAgentViewRotationMode = .Rotation_0,
          dimensions: CGSize = CGSize(width: 360, height: 640),
          frameRate: Int = 15,
          bitrate: Int = 512,
          keyFrameInterval: Int = 1000) {
         self.preview = preview
         self.viewMode = viewMode
+        self.viewMirrorMode = viewMirrorMode
+        self.viewRotationMode = viewRotationMode
         self.dimensions = dimensions
         self.frameRate = frameRate
         self.bitrate = bitrate
@@ -546,6 +654,16 @@ import UIKit
      * 预览画面渲染模式
      */
     public let viewMode: ARTCAICallAgentViewMode
+    
+    /**
+     * 预览画面镜像模式
+     */
+    public let viewMirrorMode: ARTCAICallAgentViewMirrorMode
+    
+    /**
+     * 预览画面旋转模式
+     */
+    public let viewRotationMode: ARTCAICallAgentViewRotationMode
     
     /**
      * 推流分辨率
@@ -624,9 +742,15 @@ import UIKit
     func handup(_ stopAIAgent: Bool)
     
     /**
-     * 设置智能体渲染视图，及缩放模式，AvatarAgent时有效
+     * 设置智能体渲染视图及渲染模式，当智能体有画面渲染时需要设置（当前仅针对数字人有效）
      */
+    @available(*, deprecated, message: "Use 'setAgentViewConfig(viewConfig: ARTCAICallViewConfig?)' instead.")
     func setAgentView(view: UIView?, mode: ARTCAICallAgentViewMode)
+    
+    /**
+     * 设置智能体渲染视图配置，当智能体有画面渲染时需要设置（当前仅针对数字人有效）
+     */
+    func setAgentViewConfig(viewConfig: ARTCAICallViewConfig?)
         
     /**
      * 打断智能体讲话

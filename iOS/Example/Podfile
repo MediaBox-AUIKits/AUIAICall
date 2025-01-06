@@ -7,8 +7,8 @@ AlivcSDK='AliVCSDK_ARTC'
 
 target 'Example' do
 
-  pod "#{AlivcSDK}", '~> 6.17.0'
-  pod "ARTCAICallKit", '~> 1.5.0'
+  pod "#{AlivcSDK}", '~> 6.19.0'
+  pod "ARTCAICallKit", '~> 1.6.0'
 
 
   pod 'AUIFoundation', :path => '../AUIBaseKits/AUIFoundation/', :modular_headers => true

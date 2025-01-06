@@ -35,7 +35,7 @@ import ARTCAICallKit
         self.agentTypeBgView.addSubview(self.cusAgentBtn)
 
         
-
+        self.contentView.addSubview(self.configCallBtn)
         self.contentView.addSubview(self.startCallBtn)
         
         self.contentView.addSubview(self.sysAgentTabView)
@@ -95,8 +95,26 @@ import ARTCAICallKit
         return btn
     }()
     
+    open lazy var configCallBtn: AVBaseButton = {
+        let btn = AVBaseButton.imageText(with: .bottom)
+        btn.frame = CGRect(x: self.contentView.av_width - 48 - 24, y: self.contentView.av_height - 36.0 - UIView.av_safeBottom - 44.0, width: 48, height: 44)
+        btn.title = AUIAICallBundle.getString("Configuration")
+        btn.image = AUIAICallBundle.getCommonImage("ic_agent_config")
+        btn.color = AVTheme.text_weak
+        btn.font = AVTheme.regularFont(10)
+        btn.action = { [weak self] sender in
+            guard let self = self else {
+                return
+            }
+            
+            let panel = AUIAICallAgentConfigPanel(frame: CGRect(x: 0, y: 0, width: self.view.av_width, height: 0))
+            panel.show(on: self.view, with: .clickToClose)
+        }
+        return btn
+    }()
+    
     open lazy var startCallBtn: UIButton = {
-        let btn = AVBlockButton(frame: CGRect(x: 36.0, y: self.contentView.av_height - 36.0 - UIView.av_safeBottom - 44.0, width: self.contentView.av_width - 36.0 - 36.0, height: 44.0))
+        let btn = AVBlockButton(frame: CGRect(x: 36.0, y: self.contentView.av_height - 36.0 - UIView.av_safeBottom - 44.0, width: self.contentView.av_width - 36.0 - 36.0 - 32 - 8, height: 44.0))
         btn.layer.cornerRadius = 22.0
         btn.layer.masksToBounds = true
         btn.setTitle(AUIAICallBundle.getString("Start"), for: .normal)

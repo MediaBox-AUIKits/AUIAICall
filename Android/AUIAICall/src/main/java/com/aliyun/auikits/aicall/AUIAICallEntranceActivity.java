@@ -28,9 +28,11 @@ import com.alibaba.android.arouter.facade.annotation.Route;
 import com.aliyun.auikits.aiagent.ARTCAICallEngine;
 import com.aliyun.auikits.aiagent.util.ARTCAIAgentUtil;
 import com.aliyun.auikits.aicall.controller.ARTCAICallController;
+import com.aliyun.auikits.aicall.util.AUIAICallAgentIdConfig;
 import com.aliyun.auikits.aicall.util.PermissionUtils;
 import com.aliyun.auikits.aicall.util.SettingStorage;
 import com.aliyun.auikits.aicall.util.ToastHelper;
+import com.aliyun.auikits.aicall.widget.AIAgentSettingDialog;
 import com.aliyun.auikits.aicall.widget.GradientTextView;
 import com.google.android.material.tabs.TabLayout;
 import com.orhanobut.dialogplus.DialogPlus;
@@ -89,6 +91,12 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
                 }
             }
         });
+        findViewById(R.id.config_bgm_view).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                AIAgentSettingDialog.show(AUIAICallEntranceActivity.this);
+            }
+        });
 
         PermissionX.init(this)
                 .permissions(PermissionUtils.getPermissions())
@@ -130,6 +138,20 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
             intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_LOGIN_USER_ID, mLoginUserId);
             intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_LOGIN_AUTHORIZATION, mLoginAuthorization);
             intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_AI_AGENT_TYPE, mLayoutHolder.getOfficialLayerHolder().getAICallAgentType());
+            boolean usePreHost = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_APP_SERVER_TYPE, SettingStorage.DEFAULT_APP_SERVER_TYPE);
+            boolean useEmotional = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_EMOTION, SettingStorage.DEFAULT_BOOT_ENABLE_EMOTION);
+            String agentId = "";
+            if(BuildConfig.TEST_ENV_MODE) {
+                agentId = usePreHost ? AUIAICallAgentIdConfig.getAIAgentIdForDebug(mLayoutHolder.getOfficialLayerHolder().getAICallAgentType(), useEmotional) :  AUIAICallAgentIdConfig.getAIAgentId(mLayoutHolder.getOfficialLayerHolder().getAICallAgentType(), useEmotional);
+            }
+            else {
+                agentId = AUIAICallAgentIdConfig.getAIAgentId(mLayoutHolder.getOfficialLayerHolder().getAICallAgentType(), useEmotional);
+            }
+
+            if(!TextUtils.isEmpty(agentId)) {
+                intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_AI_AGENT_ID, agentId);
+            }
+            intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_IS_SHARED_AGENT, false);
             startActivity(intent);
         } else {
             if (System.currentTimeMillis() <= mLayoutHolder.getCustomLayerHolder().getExpireTimestamp()) {
@@ -159,6 +181,20 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
         ((Switch)view.findViewById(R.id.sv_boot_use_voice_print)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_VOICE_PRINT, SettingStorage.DEFAULT_ENABLE_VOICE_PRINT));
         ((Switch)view.findViewById(R.id.sv_share_boot_use_demo_app_server)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_SHARE_BOOT_USE_DEMO_APP_SERVER, SettingStorage.DEFAULT_SHARE_BOOT_USE_DEMO_APP_SERVER));
         ((EditText)view.findViewById(R.id.et_boot_user_data)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_USER_EXTEND_DATA));
+
+        ((EditText) view.findViewById(R.id.enable_voice_interrupt_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_ENABLE_VOICE_INTERRUPT, "1"));
+        ((EditText) view.findViewById(R.id.voice_id_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_VOICE_ID));
+        ((EditText) view.findViewById(R.id.UserOfflineTimeout_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_USER_OFFLINE_TIMEOUT, "5"));
+        ((EditText) view.findViewById(R.id.MaxIdleTime_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_MAX_IDLE_TIME, "600"));
+        ((EditText) view.findViewById(R.id.WorkflowOverrideParams_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_WORK_FLOW_OVERRIDE_PARAMS));
+        ((EditText) view.findViewById(R.id.BailianAppParams_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_BAILIAN_APP_PARAMS));
+        ((EditText) view.findViewById(R.id.Volume_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_VOLUME, "100"));
+        ((EditText) view.findViewById(R.id.Greeting_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_GREETING));
+        ((EditText) view.findViewById(R.id.VoiceprintId_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_VOICE_PRINT_ID));
+        ((EditText) view.findViewById(R.id.EnableIntelligentSegment_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_ENABLE_INTELLIGENT_SEGMENT, "1"));
+        ((EditText) view.findViewById(R.id.AvatarId_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_AVATAR_ID));
+        ((EditText) view.findViewById(R.id.AsrMaxSilence_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_ASR_MAX_SILENCE, "400"));
+        ((EditText) view.findViewById(R.id.UserOnlineTimeout_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_USER_ONLINE_TIME_OUT, "60"));
 
         if (!showExtraDebugConfig) {
             view.findViewById(R.id.ll_audio_dump).setVisibility(View.GONE);
@@ -202,6 +238,46 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
 
                         String bootUserExtendData = ((EditText)view.findViewById(R.id.et_boot_user_data)).getText().toString();
                         SettingStorage.getInstance().set(SettingStorage.KEY_BOOT_USER_EXTEND_DATA, bootUserExtendData);
+
+                        String bootEnableVoiceInterrupt = ((EditText)view.findViewById(R.id.enable_voice_interrupt_input)).getText().toString();
+                        SettingStorage.getInstance().set(SettingStorage.KEY_ENABLE_VOICE_INTERRUPT, bootEnableVoiceInterrupt);
+
+                        String bootVoiceId = ((EditText)view.findViewById(R.id.voice_id_input)).getText().toString();
+                        SettingStorage.getInstance().set(SettingStorage.KEY_VOICE_ID, bootVoiceId);
+
+                        String bootUserOfflineTimeout = ((EditText)view.findViewById(R.id.UserOfflineTimeout_input)).getText().toString();
+                        SettingStorage.getInstance().set(SettingStorage.KEY_USER_OFFLINE_TIMEOUT, bootUserOfflineTimeout);
+
+                        String bootMaxIdleTime = ((EditText)view.findViewById(R.id.MaxIdleTime_input)).getText().toString();
+                        SettingStorage.getInstance().set(SettingStorage.KEY_MAX_IDLE_TIME, bootMaxIdleTime);
+
+                        String bootWorkflowOverrideParams = ((EditText)view.findViewById(R.id.WorkflowOverrideParams_input)).getText().toString();
+                        SettingStorage.getInstance().set(SettingStorage.KEY_WORK_FLOW_OVERRIDE_PARAMS, bootWorkflowOverrideParams);
+
+                        String bootBailianAppParams = ((EditText)view.findViewById(R.id.BailianAppParams_input)).getText().toString();
+                        SettingStorage.getInstance().set(SettingStorage.KEY_BAILIAN_APP_PARAMS, bootBailianAppParams);
+
+                        String bootVolume = ((EditText)view.findViewById(R.id.Volume_input)).getText().toString();
+                        SettingStorage.getInstance().set(SettingStorage.KEY_VOLUME, bootVolume);
+
+                        String bootGreeting = ((EditText)view.findViewById(R.id.Greeting_input)).getText().toString();
+                        SettingStorage.getInstance().set(SettingStorage.KEY_GREETING, bootGreeting);
+
+                        String bootVoiceprintId = ((EditText)view.findViewById(R.id.VoiceprintId_input)).getText().toString();
+                        SettingStorage.getInstance().set(SettingStorage.KEY_VOICE_PRINT_ID, bootVoiceprintId);
+
+                        String bootEnableIntelligentSegment = ((EditText)view.findViewById(R.id.EnableIntelligentSegment_input)).getText().toString();
+                        SettingStorage.getInstance().set(SettingStorage.KEY_ENABLE_INTELLIGENT_SEGMENT, bootEnableIntelligentSegment);
+
+                        String bootAvatarId = ((EditText)view.findViewById(R.id.AvatarId_input)).getText().toString();
+                        SettingStorage.getInstance().set(SettingStorage.KEY_AVATAR_ID, bootAvatarId);
+
+                        String bootAsrMaxSilence = ((EditText)view.findViewById(R.id.AsrMaxSilence_input)).getText().toString();
+                        SettingStorage.getInstance().set(SettingStorage.KEY_ASR_MAX_SILENCE, bootAsrMaxSilence);
+
+                        String bootUserOnlineTimeout = ((EditText)view.findViewById(R.id.UserOnlineTimeout_input)).getText().toString();
+                        SettingStorage.getInstance().set(SettingStorage.KEY_USER_ONLINE_TIME_OUT, bootUserOnlineTimeout);
+
                     }
                     if (v.getId() == R.id.btn_confirm || v.getId() == R.id.btn_cancel) {
                         dialog1.dismiss();

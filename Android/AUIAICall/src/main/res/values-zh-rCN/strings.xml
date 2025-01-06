@@ -93,7 +93,7 @@
 
     <string name="tips_authorization_invalidate">鉴权信息缺失，请登录后重试</string>
 
-    <string name="reporting_title">反馈</string>
+    <string name="reporting_title">问题反馈</string>
     <string name="reporting_type">问题类型</string>
     <string name="reporting_type_tips">(多选)</string>
     <string name="reporting_type_function_unavailable">功能不可用</string>
@@ -128,4 +128,10 @@
 
     <string name="ai_agent_human_takeover_will_start">当前通话即将被真人接管</string>
     <string name="ai_agent_human_takeover_connect">当前通话已经被真人接管</string>
+
+    <string name="ai_agent_config">配置项</string>
+    <string name="ai_agent_config_emotional">情绪音色</string>
+    <string name="ai_agent_config_emotional_desc">用于选择智能体的音色是否包含情绪</string>
+    <string name="ai_agent_config_emotional_not">不含情绪</string>
+    <string name="ai_agent_config_emotional_yes">包含情绪</string>
 </resources>

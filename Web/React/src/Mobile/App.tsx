@@ -3,7 +3,7 @@ import ControllerContext from '@/common/ControlerContext';
 import AUIAICallStandardController from '@/controller/AUIAICallStandardController';
 import Stage from './Stage';
 import Welcome from './Welcome';
-import { AICallAgentType } from 'aliyun-auikit-aicall';
+import { AICallAgentType, AICallTemplateConfig } from 'aliyun-auikit-aicall';
 
 import useCallStore from '@/common/store';
 
@@ -22,6 +22,7 @@ interface AppProps {
   onAuthFail?: () => void;
   agentType?: AICallAgentType;
   userData?: string;
+  templateConfig?: AICallTemplateConfig;
 }
 
 function App({
@@ -32,6 +33,7 @@ function App({
   onAuthFail,
   agentType,
   userData,
+  templateConfig,
 }: AppProps) {
   const storeAgentType = useCallStore((state) => state.agentType);
 
@@ -46,6 +48,9 @@ function App({
   const controller = useMemo(() => {
     if (!userId) return null;
     const _controller = new AUIAICallStandardController(userId, userToken);
+    if (templateConfig) {
+      _controller.config.templateConfig = templateConfig;
+    }
 
     if (appServer) {
       _controller.appServer = appServer;
@@ -67,13 +72,20 @@ function App({
         return null;
       }
 
+      if (_controller.shareConfig.templateConfig) {
+        _controller.config.templateConfig = AICallTemplateConfig.fromJsonString(
+          _controller.shareConfig.agentType || AICallAgentType.VoiceAgent,
+          _controller.shareConfig.templateConfig
+        );
+      }
+
       useCallStore.setState({
         agentType: _controller.shareConfig.agentType,
       });
     }
 
     return _controller;
-  }, [userId, userToken, shareToken, appServer, userData]);
+  }, [userId, userToken, shareToken, appServer, userData, templateConfig]);
 
   const resultAgentType = useMemo(() => {
     if (agentType !== undefined) {

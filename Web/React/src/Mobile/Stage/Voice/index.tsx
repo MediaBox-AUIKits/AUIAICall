@@ -16,7 +16,7 @@ function Voice() {
   const [showSpeaking, setShowSpeaking] = useState(false);
   const speakingTimerRef = useRef(0);
 
-  const avatarUrl = controller?.config.voiceAvatarUrl;
+  const avatarUrl = controller?.config.templateConfig?.avatarUrl;
 
   const listeningStyles = useSpring({
     opacity: agentState === AICallAgentState.Listening ? 1 : 0,

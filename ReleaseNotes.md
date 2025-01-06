@@ -48,3 +48,10 @@
 * Android&iOS&Web：启动通话支持传递userData
 * Android&iOS&Web：真人接管
 
+## v1.8.0
+发布时间：2024-12-31
+* Android&iOS&Web：支持情绪智能体
+* Android&iOS&Web：支持启动通话TemplateConfig配置，与OpenAPI参数对齐
+* Android&iOS&Web：通话过程中支持获取音色列表
+* Android&iOS：支持端到端回环延时统计
+* Android&iOS：数字人视图配置&视觉理解视图配置支持缩放模式、旋转及镜像模式
