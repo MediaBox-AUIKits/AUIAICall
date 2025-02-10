@@ -96,6 +96,7 @@ import ARTCAICallKit
         ARTCAICallEngineLog.StartLog(fileName: UUID().uuidString)
         ARTCAICallEngineLog.WriteLog("Start Call For Standard")
         ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "AgentId", value: self.config.agentId ?? "")
+        ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "AgentType", value: ARTCAICallTemplateConfig.getTemplateConfigKey(self.config.agentType))
         ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "UserId", value: self.userId)
         
         self.generateAIAgentCall(userId: self.userId) {[weak self] agent, token, error, reqId in
@@ -115,7 +116,8 @@ import ARTCAICallKit
                 ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "AgentUserId", value: agent.uid)
                 ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "InstanceId", value: agent.instanceId)
                 ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "JoinToken", value: token)
-
+                ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "AgentType", value: ARTCAICallTemplateConfig.getTemplateConfigKey(agent.agentType))
+                
                 self.config.agentType = agent.agentType
                 self.delegate?.onAICallAIAgentStarted?(agentInfo: agent)
                 
@@ -170,6 +172,14 @@ import ARTCAICallKit
         if self.state == .Connected {
             _ = self.engine.interruptSpeaking()
         }
+    }
+    
+    // 给智能体发送文本消息
+    public func sendTextToAgent(req: ARTCAICallSendTextToAgentRequest) -> Bool {
+        if self.state == .Connected {
+            return self.engine.sendTextToAgent(req: req)
+        }
+        return false
     }
     
     // 开启/关闭智能打断
@@ -423,19 +433,10 @@ extension AUIAICallStandardController: ARTCAICallEngineDelegate {
 extension AUIAICallStandardController {
     
     private func handlerCallError(error: NSError?, data: [AnyHashable: Any]?) -> NSError? {
-        guard let error = error else { return nil }
-        if error.code == 403 {
+        if error?.code == 403 {
             return NSError.aicall_create(code: .TokenExpired)
         }
-        if let ret = data?["error_code"] as? String {
-            if ret == "Forbidden.SubscriptionRequired" {
-                return NSError.aicall_create(code: .AgentSubscriptionRequired)
-            }
-            else if ret == "AgentNotFound" {
-                return NSError.aicall_create(code: .AgentNotFound)
-            }
-        }
-        return NSError.aicall_create(code: .BeginCallFailed)
+        return NSError.aicall_handlerErrorData(data: data) ?? NSError.aicall_create(code: .BeginCallFailed)
     }
     
     public func generateAIAgentCall(userId: String, completed: ((_ rsp: ARTCAICallAgentInfo?, _ token: String?, _ error: NSError?, _ reqId: String) -> Void)?) {

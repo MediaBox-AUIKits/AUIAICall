@@ -201,5 +201,29 @@ public class AIAgentController {
             return getErrorResult(response.getErrorCode(), response.getRequestId(), response.getCode(), response.getMessage());
         }
     }
+
+    @RequestMapping("generateMessageChatToken")
+    public Result generateMessageChatToken(@RequestBody GenerateMessageChatTokenRequestDto generateMessageChatTokenRequestDto) {
+        ValidatorUtils.validateEntity(generateMessageChatTokenRequestDto);
+        GenerateMessageChatTokenResponse response = imsService.generateMessageChatToken(generateMessageChatTokenRequestDto);
+        if(response == null) {
+            return Result.error();
+        }
+        if (200 == response.getCode()) {
+            Map<String, Object> map = new HashMap<>(1);
+            map.put("app_id", response.getAppId());
+            map.put("token", response.getToken());
+            map.put("user_id", response.getUserId());
+            map.put("nonce", response.getNonce());
+            map.put("role", response.getRole());
+            map.put("timestamp", response.getTimestamp());
+            map.put("app_sign", response.getAppSign());
+            map.put("request_id", response.getRequestId());
+            map.put("message", response.getMessage());
+            return Result.ok(map);
+        } else {
+            return getErrorResult(response.getErrorCode(), response.getRequestId(), response.getCode(), response.getMessage());
+        }
+    }
 }
 

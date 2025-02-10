@@ -1,0 +1,38 @@
+
+
+"Delete" = "删除";
+"Cancel" = "取消";
+
+"Settings" = "设置";
+"Choose Voice Tone" = "选择音色";
+"New Voice Tone Will Take Effect in Next Play" = "切换音色后，AI将在下一次朗读中使用新的音色";
+"Default" = "默认";
+
+"XiaoYun" = "小云";
+"Report Issues" = "问题反馈";
+"Not Connected" = "未连接";
+"Connecting" = "连接中";
+"Disconnected" = "已断开";
+"An error occurred, unable to continue receiving replies from the agent" = "出错了，无法继续接收来自智能体回复";
+"An error occurred, connection has been disconnected" = "出错了，已断开连接";
+"Authentication token is invalid, connection has been disconnected" = "鉴权Token无效，已断开连接";
+"Please check if the agent ID is correct" = "请检查智能体ID是否正确";
+"The current user may have been disconnected by the system" = "当前用户可能被系统断开连接";
+"The current user may be logged in on another device, connection has been disconnected" = "当前用户可能登录了其他设备，连接已断开";
+
+"Failed to retrieve historical messages" = "获取历史消息失败";
+"Message copied" = "消息已复制";
+"Confirm delete message?" = "确认删除消息？";
+"Messages deleted cannot be recovered" = "消息删除后，不可恢复";
+"Delete failed" = "删除失败";
+
+"Please enter content" = "请输入内容";
+"Press and hold to speak" = "按住说话";
+"User terminated this response" = "用户终止了本次回答";
+"Release to send, swipe up to cancel" = "松开发送，上滑取消";
+"Release to cancel" = "松开取消";
+"Failed to push voice message" = "发送语音消息失败";
+"No text recognized" = "未识别到文字";
+"Playback failed" = "播放失败";
+"Generating speech reading..." = "语音朗读生成中";
+

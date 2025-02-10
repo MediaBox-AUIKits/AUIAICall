@@ -2,14 +2,8 @@ package com.aliyuncs.aui.service.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.aliyuncs.aui.dto.req.AIAgentStartRequestDto;
-import com.aliyuncs.aui.dto.req.AiAgentStopRequestDto;
-import com.aliyuncs.aui.dto.req.AiAgentUpdateRequestDto;
-import com.aliyuncs.aui.dto.req.GenerateAIAgentCallRequestDto;
-import com.aliyuncs.aui.dto.res.AiAgentInstanceDescribeResponse;
-import com.aliyuncs.aui.dto.res.AiAgentStartResponse;
-import com.aliyuncs.aui.dto.res.CommonResponse;
-import com.aliyuncs.aui.dto.res.GenerateAIAgentCallResponse;
+import com.aliyuncs.aui.dto.req.*;
+import com.aliyuncs.aui.dto.res.*;
 import com.aliyuncs.aui.service.AiAgentService;
 import com.aliyuncs.aui.service.ImsService;
 import lombok.extern.slf4j.Slf4j;
@@ -81,6 +75,11 @@ public class ImsServiceImpl implements ImsService {
     @Override
     public AiAgentInstanceDescribeResponse describeAiAgentInstance(String aiAgentInstanceId) {
         return aiAgentService.describeAiAgentInstance(aiAgentInstanceId);
+    }
+
+    @Override
+    public GenerateMessageChatTokenResponse generateMessageChatToken(GenerateMessageChatTokenRequestDto request) {
+        return aiAgentService.generateMessageChatToken(request.getAiAgentId(),request.getRole(), request.getUserId(), request.getExpire(), request.getRegion());
     }
 
     private long getClientTimestamp() {

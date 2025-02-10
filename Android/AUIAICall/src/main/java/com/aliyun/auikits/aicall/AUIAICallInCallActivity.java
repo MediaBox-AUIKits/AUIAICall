@@ -26,7 +26,6 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -38,6 +37,7 @@ import com.aliyun.auikits.aicall.controller.ARTCAICallController;
 import com.aliyun.auikits.aicall.controller.ARTCAICustomController;
 import com.aliyun.auikits.aicall.controller.ARTCAICallDepositController;
 import com.aliyun.auikits.aicall.service.ForegroundAliveService;
+import com.aliyun.auikits.aicall.util.AUIAIConstStrKey;
 import com.aliyun.auikits.aicall.util.DisplayUtil;
 import com.aliyun.auikits.aicall.util.SettingStorage;
 import com.aliyun.auikits.aicall.util.TimeUtil;
@@ -59,12 +59,6 @@ import java.util.List;
 import java.util.UUID;
 
 public class AUIAICallInCallActivity extends AppCompatActivity {
-    public static final String BUNDLE_KEY_AI_AGENT_REGION = "BUNDLE_KEY_AI_AGENT_REGION";
-    public static final String BUNDLE_KEY_AI_AGENT_TYPE = "BUNDLE_KEY_AI_AGENT_TYPE";
-    public static final String BUNDLE_KEY_AI_AGENT_ID = "BUNDLE_KEY_AI_AGENT_ID";
-    public static final String BUNDLE_KEY_LOGIN_USER_ID = "BUNDLE_KEY_LOGIN_USER_ID";
-    public static final String BUNDLE_KEY_LOGIN_AUTHORIZATION = "BUNDLE_KEY_LOGIN_AUTHORIZATION";
-    public static final String BUNDLE_KEY_IS_SHARED_AGENT = "BUNDLE_KEY_IS_SHARED_AGENT";
 
     private static final boolean IS_SUBTITLE_ENABLE = true;
     private static String sUserId = null;
@@ -390,13 +384,13 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         String loginUserId = null;
         String loginAuthorization = null;
         if (null != getIntent() && null != getIntent().getExtras()) {
-            aiAgentRegion = getIntent().getExtras().getString(BUNDLE_KEY_AI_AGENT_REGION, null);
-            aiAgentId = getIntent().getExtras().getString(BUNDLE_KEY_AI_AGENT_ID, null);
-            mAiAgentType = (ARTCAICallEngine.ARTCAICallAgentType) getIntent().getExtras().getSerializable(BUNDLE_KEY_AI_AGENT_TYPE);
-            mIsSharedAgent =  getIntent().getExtras().getBoolean(BUNDLE_KEY_IS_SHARED_AGENT, false);
+            aiAgentRegion = getIntent().getExtras().getString(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_REGION, null);
+            aiAgentId = getIntent().getExtras().getString(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_ID, null);
+            mAiAgentType = (ARTCAICallEngine.ARTCAICallAgentType) getIntent().getExtras().getSerializable(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_TYPE);
+            mIsSharedAgent =  getIntent().getExtras().getBoolean(AUIAIConstStrKey.BUNDLE_KEY_IS_SHARED_AGENT, false);
 
-            loginUserId = getIntent().getExtras().getString(BUNDLE_KEY_LOGIN_USER_ID, null);
-            loginAuthorization = getIntent().getExtras().getString(BUNDLE_KEY_LOGIN_AUTHORIZATION, null);
+            loginUserId = getIntent().getExtras().getString(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_USER_ID, null);
+            loginAuthorization = getIntent().getExtras().getString(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_AUTHORIZATION, null);
         }
 
         TextView tvAICallTitle = findViewById(R.id.tv_ai_call_title);
@@ -427,6 +421,7 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         ARTCAICallEngineDebuger.enableDumpData = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_AUDIO_DUMP_SWITCH);
         ARTCAICallEngineDebuger.enableUserSpecifiedAudioTips = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_AUDIO_TIPS_SWITCH);
         ARTCAICallEngineDebuger.enableLabEnvironment = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_USE_RTC_PRE_ENV_SWITCH);
+        ARTCAICallEngineDebuger.enableAecPlugin = true;
 
         boolean useDeposit = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_DEPOSIT_SWITCH, SettingStorage.DEFAULT_DEPOSIT_SWITCH);
         ARTCAICallEngine.ARTCAICallConfig artcaiCallConfig = new ARTCAICallEngine.ARTCAICallConfig();
@@ -501,6 +496,9 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
      */
     private boolean handUp(boolean keepActivity) {
         if (!keepActivity) {
+            mARTCAICallEngine.handup();
+            finish();
+            /*
             AICallRatingDialog.show(this,
                     new AICallRatingDialog.IRatingDialogDismissListener() {
                         @Override
@@ -520,6 +518,7 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                     mARTCAICallEngine.handup();
                 }
             }, 300);
+             */
         } else {
             mARTCAICallEngine.handup();
         }
@@ -805,6 +804,7 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             templateConfig.aiAgentAvatarId = SettingStorage.getInstance().get(SettingStorage.KEY_AVATAR_ID);
             templateConfig.aiAgentAsrMaxSilence = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_ASR_MAX_SILENCE));
             templateConfig.aiAgentUserOnlineTimeout = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_USER_ONLINE_TIME_OUT));
+            templateConfig.asrLanguageId = SettingStorage.getInstance().get(SettingStorage.KEY_USER_ASR_LANGUAGE);
         } catch (Exception ex) {
             ex.printStackTrace();
         }

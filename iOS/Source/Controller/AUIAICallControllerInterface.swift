@@ -169,6 +169,9 @@ import ARTCAICallKit
     // 打断智能体说话
     func interruptSpeaking()
     
+    // 给智能体发送文本消息
+    func sendTextToAgent(req: ARTCAICallSendTextToAgentRequest) -> Bool
+    
     // 开启/关闭智能打断
     func enableVoiceInterrupt(enable: Bool, completed: ((_ error: Error?) -> Void)?)
     

@@ -1,0 +1,17 @@
+
+"AIAgent" = "AI智能体";
+"Official Agent" = "官方智能体";
+"Custom Agent" = "自定义智能体";
+"Configuration" = "配置项";
+"Start" = "开始体验";
+
+"Authorized AI Agent" = "授权AI智能体";
+"Please Scan Code to Get Authorized Token" = "请扫描二维码获取授权Token";
+"Invalid Token" = "请使用正确的Token";
+"Token Expire" = "Token已过期";
+
+
+"AI Voice Call" = "AI音频通话";
+"AI Avatar Call" = "数字人通话";
+"AI Vision Call" = "视觉理解通话";
+"AI Chat" = "消息对话";

@@ -16,4 +16,6 @@
     <color name="layout_base_light_blue">#4DCFE1</color>
     <color name="layout_base_light_white">#B2B7C4</color>
     <color name="layout_base_red">#F53F3F</color>
+    <color name="layout_base_chat_inut_background">#19191E</color>
+    <color name="layout_blank_color">#000000</color>
 </resources>

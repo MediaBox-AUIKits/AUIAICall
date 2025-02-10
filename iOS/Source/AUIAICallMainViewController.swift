@@ -9,6 +9,8 @@ import UIKit
 import AUIFoundation
 import ARTCAICallKit
 
+public let AUIAIMainBundle = AUIAICallTheme("AUIAIMain")
+
 @objcMembers open class AUIAICallMainViewController: AVBaseViewController {
     
     deinit {
@@ -20,7 +22,7 @@ import ARTCAICallKit
 
         // Do any additional setup after loading the view.
         self.view.backgroundColor = AVTheme.bg_medium
-        self.titleView.text = AUIAICallBundle.getString("Voice Agent")
+        self.titleView.text = AUIAIMainBundle.getString("AIAgent")
 #if DEMO_FOR_DEBUG
         self.hiddenMenuButton = false
         self.menuButton.addTarget(self, action: #selector(onMenuBtnClick), for: .touchUpInside)
@@ -42,11 +44,13 @@ import ARTCAICallKit
         self.contentView.addSubview(self.sysAgentContentView)
         self.contentView.addSubview(self.cusAgentContentView)
 
-        self.sysAgentTabView.agentWillChanged = { [weak self] agentType in
-            self?.sysAgentContentView.scrollToAgent(agentType)
+        self.sysAgentTabView.agentWillChanged = { [weak self] agentIndex in
+            self?.sysAgentContentView.scrollToAgent(agentIndex)
+            self?.updateConfigBtnVisible()
         }
         self.sysAgentContentView.pageChanged = { [weak self] agentType in
-            self?.sysAgentTabView.agentType = agentType
+            self?.sysAgentTabView.agentIndex = agentType
+            self?.updateConfigBtnVisible()
         }
         
         self.selectAgent(isCus: false, isAni: false)
@@ -73,7 +77,7 @@ import ARTCAICallKit
     
     open lazy var sysAgentBtn: AVBlockButton = {
         let btn = AVBlockButton(frame: CGRect(x: 0.0, y: 0.0, width: self.agentTypeBgView.av_width / 2.0, height: self.agentTypeBgView.av_height))
-        btn.setTitle(AUIAICallBundle.getString("Official Agent"), for: .normal)
+        btn.setTitle(AUIAIMainBundle.getString("Official Agent"), for: .normal)
         btn.setTitleColor(AVTheme.text_weak, for: .normal)
         btn.setTitleColor(AVTheme.colourful_text_strong, for: .selected)
         btn.titleLabel?.font = AVTheme.regularFont(14)
@@ -85,7 +89,7 @@ import ARTCAICallKit
     
     open lazy var cusAgentBtn: AVBlockButton = {
         let btn = AVBlockButton(frame: CGRect(x: self.agentTypeBgView.av_width / 2.0, y: 0.0, width: self.agentTypeBgView.av_width / 2.0, height: self.agentTypeBgView.av_height))
-        btn.setTitle(AUIAICallBundle.getString("Custom Agent"), for: .normal)
+        btn.setTitle(AUIAIMainBundle.getString("Custom Agent"), for: .normal)
         btn.setTitleColor(AVTheme.text_weak, for: .normal)
         btn.setTitleColor(AVTheme.colourful_text_strong, for: .selected)
         btn.titleLabel?.font = AVTheme.regularFont(14)
@@ -98,8 +102,8 @@ import ARTCAICallKit
     open lazy var configCallBtn: AVBaseButton = {
         let btn = AVBaseButton.imageText(with: .bottom)
         btn.frame = CGRect(x: self.contentView.av_width - 48 - 24, y: self.contentView.av_height - 36.0 - UIView.av_safeBottom - 44.0, width: 48, height: 44)
-        btn.title = AUIAICallBundle.getString("Configuration")
-        btn.image = AUIAICallBundle.getCommonImage("ic_agent_config")
+        btn.title = AUIAIMainBundle.getString("Configuration")
+        btn.image = AUIAIMainBundle.getCommonImage("ic_agent_config")
         btn.color = AVTheme.text_weak
         btn.font = AVTheme.regularFont(10)
         btn.action = { [weak self] sender in
@@ -117,7 +121,7 @@ import ARTCAICallKit
         let btn = AVBlockButton(frame: CGRect(x: 36.0, y: self.contentView.av_height - 36.0 - UIView.av_safeBottom - 44.0, width: self.contentView.av_width - 36.0 - 36.0 - 32 - 8, height: 44.0))
         btn.layer.cornerRadius = 22.0
         btn.layer.masksToBounds = true
-        btn.setTitle(AUIAICallBundle.getString("Start"), for: .normal)
+        btn.setTitle(AUIAIMainBundle.getString("Start"), for: .normal)
         btn.setBackgroundColor(AVTheme.colourful_fill_strong, for: .normal)
         btn.setBackgroundColor(AVTheme.fill_medium, for: .disabled)
         btn.setTitleColor(AVTheme.text_strong, for: .normal)
@@ -131,14 +135,26 @@ import ARTCAICallKit
             if isCus {
                 let authToken = self.cusAgentContentView.inputField.text ?? ""
                 if authToken.isEmpty {
-                    AVAlertController.show(AUIAICallBundle.getString("Please Scan Code to Get Authorized Token"), vc: self)
+                    AVAlertController.show(AUIAIMainBundle.getString("Please Scan Code to Get Authorized Token"), vc: self)
                     return
                 }
-                self.startCall(agentShareInfo: authToken)
+                if let ret = AUIAICallMainViewController.checkAuthToken(authToken: authToken) {
+                    if ret.agentIndex == 3 {
+                        self.startChat(agentShareInfo: authToken)
+                    }
+                    else {
+                        self.startCall(agentShareInfo: authToken)
+                    }
+                }
             }
             else {
-                let agentType = self.sysAgentTabView.agentType
-                self.startCall(agentType: agentType)
+                let agentIndex = self.sysAgentTabView.agentIndex
+                if agentIndex == 3 {
+                    self.startChat()
+                }
+                else {
+                    self.startCall(agentType: ARTCAICallAgentType(rawValue: Int32(agentIndex))!)
+                }
             }
         }
         return btn
@@ -176,6 +192,18 @@ import ARTCAICallKit
     }
 #endif
     
+    open func updateConfigBtnVisible() {
+        var visible = false
+        if self.sysAgentBtn.isSelected == true {
+            let agentIndex = self.sysAgentTabView.agentIndex
+            if agentIndex != 3 {
+                visible = true
+            }
+        }
+        self.configCallBtn.isHidden = !visible
+        self.startCallBtn.frame = visible ? CGRect(x: 36.0, y: self.contentView.av_height - 36.0 - UIView.av_safeBottom - 44.0, width: self.contentView.av_width - 36.0 - 36.0 - 32 - 8, height: 44.0) : CGRect(x: 36.0, y: self.contentView.av_height - 36.0 - UIView.av_safeBottom - 44.0, width: self.contentView.av_width - 36.0 - 36.0, height: 44.0)
+    }
+    
     open func selectAgent(isCus: Bool, isAni: Bool) {
         if isCus {
             self.cusAgentBtn.isSelected = true
@@ -195,6 +223,7 @@ import ARTCAICallKit
             self.sysAgentContentView.isHidden = false
             self.cusAgentContentView.isHidden = true
         }
+        self.updateConfigBtnVisible()
         if isAni {
             UIView.animate(withDuration: 0.25) {
                 self.agentSeletctBgView.av_left = isCus ? self.cusAgentBtn.av_left : 0.0
@@ -221,48 +250,59 @@ import ARTCAICallKit
         AUIAICallManager.defaultManager.startCall(agentType: agentType, agentId: agentId, region: region, viewController: self)
     }
     
-    static func checkAuthToken(authToken: String) -> (agentId: String, agentType: ARTCAICallAgentType, region: String?)? {
+    open func startChat(agentId: String? = nil) {
+        AUIAICallManager.defaultManager.startChat(agentId: agentId, viewController: self)
+    }
+    
+    open func startChat(agentShareInfo: String) {
+        AUIAICallManager.defaultManager.startChat(agentShareInfo: agentShareInfo, viewController: self)
+    }
+    
+    static func checkAuthToken(authToken: String) -> (agentId: String, agentIndex: Int, region: String?)? {
         let json = authToken.aicall_decodeBase64AndDeserialize()
         guard let json = json else {
-            AVAlertController.show(AUIAICallBundle.getString("Invalid Token"))
+            AVAlertController.show(AUIAIMainBundle.getString("Invalid Token"))
             return nil
         }
         
         let expireTime = json["ExpireTime"] as? String
         guard let expireTime = expireTime else {
-            AVAlertController.show(AUIAICallBundle.getString("Invalid Token"))
+            AVAlertController.show(AUIAIMainBundle.getString("Invalid Token"))
             return nil
         }
         if expireTime.aicall_isDateStringExpired() {
-            AVAlertController.show(AUIAICallBundle.getString("Token Expire"))
+            AVAlertController.show(AUIAIMainBundle.getString("Token Expire"))
             return nil
         }
         
         let agentId = json["TemporaryAIAgentId"] as? String
         guard let agentId = agentId else {
-            AVAlertController.show(AUIAICallBundle.getString("Invalid Token"))
+            AVAlertController.show(AUIAIMainBundle.getString("Invalid Token"))
             return nil
         }
         
         let workflowType = json["WorkflowType"] as? String
-        var agentType: ARTCAICallAgentType? = nil
-        if workflowType == "AvatarChat3D" {
-            agentType = .AvatarAgent
+        var agentIndex: Int = 0
+        if workflowType == "VoiceChat" {
+            agentIndex = 0
         }
-        else if workflowType == "VoiceChat" {
-            agentType = .VoiceAgent
+        else if workflowType == "AvatarChat3D" {
+            agentIndex = 1
         }
         else if workflowType == "VisionChat" {
-            agentType = .VisionAgent
+            agentIndex = 2
         }
-        guard let agentType = agentType else {
-            AVAlertController.show(AUIAICallBundle.getString("Invalid Token"))
+        else if workflowType == "MessageChat" {
+            agentIndex = 3
+        }
+        else {
+            AVAlertController.show(AUIAIMainBundle.getString("Invalid Token"))
             return nil
         }
-        
+
         let region = json["Region"] as? String
         
-        return (agentId, agentType, region)
+        return (agentId, agentIndex, region)
     }
 }
 
@@ -272,20 +312,25 @@ import ARTCAICallKit
     public override init(frame: CGRect) {
         super.init(frame: frame)
         
+        let itemCount = 4.0
         self.audioCallBtn.sizeToFit()
-        self.audioCallBtn.av_centerX = self.av_width / 6.0
+        self.audioCallBtn.av_centerX = self.av_width / (itemCount * 2)
         self.addSubview(self.audioCallBtn)
         
         self.avatarCallBtn.sizeToFit()
-        self.avatarCallBtn.av_centerX = self.av_width / 6.0 * 3
+        self.avatarCallBtn.av_centerX = self.av_width / (itemCount * 2) * 3
         self.addSubview(self.avatarCallBtn)
         
         self.visionCallBtn.sizeToFit()
-        self.visionCallBtn.av_centerX = self.av_width / 6.0 * 5
+        self.visionCallBtn.av_centerX = self.av_width / (itemCount * 2) * 5
         self.addSubview(self.visionCallBtn)
         
+        self.chatBtn.sizeToFit()
+        self.chatBtn.av_centerX = self.av_width / (itemCount * 2) * 7
+        self.addSubview(self.chatBtn)
+        
         self.addSubview(self.lineView)
-        self.contentSize = CGSize(width: max(self.visionCallBtn.av_right + 20, self.av_width), height: self.av_height)
+        self.contentSize = CGSize(width: max(self.chatBtn.av_right + 20, self.av_width), height: self.av_height)
         self.showsHorizontalScrollIndicator = false
         self.showsHorizontalScrollIndicator = false
         
@@ -298,39 +343,56 @@ import ARTCAICallKit
     
     open lazy var audioCallBtn: AVBlockButton = {
         let btn = AVBlockButton(frame: CGRect(x: 20.0, y: 0, width: 0, height: 0))
-        btn.setTitle(AUIAICallBundle.getString("AI Voice Call"), for: .normal)
+        btn.setTitle(AUIAIMainBundle.getString("AI Voice Call"), for: .normal)
         btn.setTitleColor(AVTheme.text_weak, for: .normal)
         btn.setTitleColor(AVTheme.colourful_text_strong, for: .selected)
         btn.titleLabel?.font = AVTheme.mediumFont(12)
         btn.clickBlock = { [weak self] sender in
-            self?.agentType = .VoiceAgent
-            self?.agentWillChanged?(.VoiceAgent)
+            let agentIndex: Int8 = 0
+            self?.agentIndex = agentIndex
+            self?.agentWillChanged?(agentIndex)
         }
         return btn
     }()
     
     open lazy var avatarCallBtn: AVBlockButton = {
         let btn = AVBlockButton(frame: CGRect(x: self.audioCallBtn.av_right + 20.0, y: 0, width: 0, height: 0))
-        btn.setTitle(AUIAICallBundle.getString("AI Avatar Call"), for: .normal)
+        btn.setTitle(AUIAIMainBundle.getString("AI Avatar Call"), for: .normal)
         btn.setTitleColor(AVTheme.text_weak, for: .normal)
         btn.setTitleColor(AVTheme.colourful_text_strong, for: .selected)
         btn.titleLabel?.font = AVTheme.mediumFont(12)
         btn.clickBlock = { [weak self] sender in
-            self?.agentType = .AvatarAgent
-            self?.agentWillChanged?(.AvatarAgent)
+            let agentIndex: Int8 = 1
+            self?.agentIndex = agentIndex
+            self?.agentWillChanged?(agentIndex)
         }
         return btn
     }()
     
     open lazy var visionCallBtn: AVBlockButton = {
         let btn = AVBlockButton(frame: CGRect(x: self.avatarCallBtn.av_right + 20.0, y: 0, width: 0, height: 0))
-        btn.setTitle(AUIAICallBundle.getString("AI Vision Call"), for: .normal)
+        btn.setTitle(AUIAIMainBundle.getString("AI Vision Call"), for: .normal)
         btn.setTitleColor(AVTheme.text_weak, for: .normal)
         btn.setTitleColor(AVTheme.colourful_text_strong, for: .selected)
         btn.titleLabel?.font = AVTheme.mediumFont(12)
         btn.clickBlock = { [weak self] sender in
-            self?.agentType = .VisionAgent
-            self?.agentWillChanged?(.VisionAgent)
+            let agentIndex: Int8 = 2
+            self?.agentIndex = agentIndex
+            self?.agentWillChanged?(agentIndex)
+        }
+        return btn
+    }()
+    
+    open lazy var chatBtn: AVBlockButton = {
+        let btn = AVBlockButton(frame: CGRect(x: self.visionCallBtn.av_right + 20.0, y: 0, width: 0, height: 0))
+        btn.setTitle(AUIAIMainBundle.getString("AI Chat"), for: .normal)
+        btn.setTitleColor(AVTheme.text_weak, for: .normal)
+        btn.setTitleColor(AVTheme.colourful_text_strong, for: .selected)
+        btn.titleLabel?.font = AVTheme.mediumFont(12)
+        btn.clickBlock = { [weak self] sender in
+            let agentIndex: Int8 = 3
+            self?.agentIndex = agentIndex
+            self?.agentWillChanged?(agentIndex)
         }
         return btn
     }()
@@ -341,48 +403,65 @@ import ARTCAICallKit
         return view
     }()
     
-    open var agentType: ARTCAICallAgentType = .VoiceAgent {
+    open var agentIndex: Int8 = 0 {
         didSet {
             self.updateAgent()
         }
     }
     
     func updateAgent() {
-        let agentType = self.agentType
+        let agentIndex = self.agentIndex
         var rect = self.lineView.frame
-        if agentType == .VoiceAgent {
+        if agentIndex == 0 {
             self.audioCallBtn.isSelected = true
             self.audioCallBtn.titleLabel?.font = AVTheme.mediumFont(12)
             self.avatarCallBtn.isSelected = false
             self.avatarCallBtn.titleLabel?.font = AVTheme.regularFont(12)
             self.visionCallBtn.isSelected = false
             self.visionCallBtn.titleLabel?.font = AVTheme.regularFont(12)
+            self.chatBtn.isSelected = false
+            self.chatBtn.titleLabel?.font = AVTheme.regularFont(12)
             rect = CGRect(x: self.audioCallBtn.av_left, y: self.audioCallBtn.av_bottom + 4, width: self.audioCallBtn.av_width, height: 1)
         }
-        else if agentType == .AvatarAgent {
+        else if agentIndex == 1 {
             self.audioCallBtn.isSelected = false
             self.audioCallBtn.titleLabel?.font = AVTheme.regularFont(12)
             self.avatarCallBtn.isSelected = true
             self.avatarCallBtn.titleLabel?.font = AVTheme.mediumFont(12)
             self.visionCallBtn.isSelected = false
             self.visionCallBtn.titleLabel?.font = AVTheme.regularFont(12)
+            self.chatBtn.isSelected = false
+            self.chatBtn.titleLabel?.font = AVTheme.regularFont(12)
             rect = CGRect(x: self.avatarCallBtn.av_left, y: self.avatarCallBtn.av_bottom + 4, width: self.avatarCallBtn.av_width, height: 1)
         }
-        else if agentType == .VisionAgent {
+        else if agentIndex == 2 {
             self.audioCallBtn.isSelected = false
             self.audioCallBtn.titleLabel?.font = AVTheme.regularFont(12)
             self.avatarCallBtn.isSelected = false
             self.avatarCallBtn.titleLabel?.font = AVTheme.regularFont(12)
             self.visionCallBtn.isSelected = true
             self.visionCallBtn.titleLabel?.font = AVTheme.mediumFont(12)
+            self.chatBtn.isSelected = false
+            self.chatBtn.titleLabel?.font = AVTheme.regularFont(12)
             rect = CGRect(x: self.visionCallBtn.av_left, y: self.visionCallBtn.av_bottom + 4, width: self.visionCallBtn.av_width, height: 1)
+        }
+        else if agentIndex == 3 {
+            self.audioCallBtn.isSelected = false
+            self.audioCallBtn.titleLabel?.font = AVTheme.regularFont(12)
+            self.avatarCallBtn.isSelected = false
+            self.avatarCallBtn.titleLabel?.font = AVTheme.regularFont(12)
+            self.visionCallBtn.isSelected = false
+            self.visionCallBtn.titleLabel?.font = AVTheme.regularFont(12)
+            self.chatBtn.isSelected = true
+            self.chatBtn.titleLabel?.font = AVTheme.mediumFont(12)
+            rect = CGRect(x: self.chatBtn.av_left, y: self.chatBtn.av_bottom + 4, width: self.chatBtn.av_width, height: 1)
         }
         UIView.animate(withDuration: 0.3) {
             self.lineView.frame = rect
         }
     }
     
-    open var agentWillChanged: ((_ agentType: ARTCAICallAgentType) -> Void)? = nil
+    open var agentWillChanged: ((_ agentIndex: Int8) -> Void)? = nil
 }
 
 
@@ -394,7 +473,8 @@ import ARTCAICallKit
         self.addSubview(self.voiceView)
         self.addSubview(self.avatarView)
         self.addSubview(self.visionView)
-        self.contentSize = CGSize(width: self.visionView.av_right, height: self.av_height)
+        self.addSubview(self.chatView)
+        self.contentSize = CGSize(width: self.chatView.av_right, height: self.av_height)
         self.isPagingEnabled = true
         self.showsHorizontalScrollIndicator = false
         self.showsHorizontalScrollIndicator = false
@@ -408,7 +488,7 @@ import ARTCAICallKit
     open lazy var voiceView: UIImageView = {
         let view = UIImageView(frame: CGRect(x: 0, y: 0, width: self.av_width, height: self.av_height))
         view.contentMode = .scaleAspectFit
-        view.image = AUIAICallBundle.getCommonImage("bg_main_voice")
+        view.image = AUIAIMainBundle.getCommonImage("bg_main_voice")
         view.backgroundColor = UIColor.clear
         return view
     }()
@@ -416,7 +496,7 @@ import ARTCAICallKit
     open lazy var avatarView: UIImageView = {
         let view = UIImageView(frame: CGRect(x: self.voiceView.av_right, y: 0, width: self.av_width, height: self.av_height))
         view.contentMode = .scaleAspectFit
-        view.image = AUIAICallBundle.getCommonImage("bg_main_avatar")
+        view.image = AUIAIMainBundle.getCommonImage("bg_main_avatar")
         view.backgroundColor = UIColor.clear
         return view
     }()
@@ -424,16 +504,24 @@ import ARTCAICallKit
     open lazy var visionView: UIImageView = {
         let view = UIImageView(frame: CGRect(x: self.avatarView.av_right, y: 0, width: self.av_width, height: self.av_height))
         view.contentMode = .scaleAspectFit
-        view.image = AUIAICallBundle.getCommonImage("bg_main_vision")
+        view.image = AUIAIMainBundle.getCommonImage("bg_main_vision")
         view.backgroundColor = UIColor.clear
         return view
     }()
     
-    open var pageChanged: ((_ agentType: ARTCAICallAgentType) -> Void)? = nil
+    open lazy var chatView: UIImageView = {
+        let view = UIImageView(frame: CGRect(x: self.visionView.av_right, y: 0, width: self.av_width, height: self.av_height))
+        view.contentMode = .scaleAspectFit
+        view.image = AUIAIMainBundle.getCommonImage("bg_main_chat")
+        view.backgroundColor = UIColor.clear
+        return view
+    }()
     
-    open func scrollToAgent(_ agentType: ARTCAICallAgentType) {
+    open var pageChanged: ((_ agentIndex: Int8) -> Void)? = nil
+    
+    open func scrollToAgent(_ agentIndex: Int8) {
         let pageWidth = self.frame.size.width
-        let targetOffset = CGPoint(x: pageWidth * CGFloat(agentType.rawValue), y: 0)
+        let targetOffset = CGPoint(x: pageWidth * CGFloat(agentIndex), y: 0)
         self.setContentOffset(targetOffset, animated: true)
     }
 }
@@ -446,9 +534,9 @@ extension AUIAICallSysAgentContentView: UIScrollViewDelegate {
     
     public func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
         let pageWidth = scrollView.frame.size.width
-        let currentPage = Int32(scrollView.contentOffset.x / pageWidth)
+        let currentPage = Int8(scrollView.contentOffset.x / pageWidth)
         
-        self.pageChanged?(ARTCAICallAgentType(rawValue: currentPage) ?? .VoiceAgent)
+        self.pageChanged?(currentPage)
     }
 }
 
@@ -470,7 +558,7 @@ extension AUIAICallSysAgentContentView: UIScrollViewDelegate {
     
     open lazy var titleLabel: UILabel = {
         let title = UILabel(frame: CGRect(x: 0, y: 16, width: self.av_width, height: 24))
-        title.text = AUIAICallBundle.getString("Authorized AI Agent")
+        title.text = AUIAIMainBundle.getString("Authorized AI Agent")
         title.textColor = AVTheme.text_strong
         title.font = AVTheme.regularFont(14)
         return title
@@ -478,7 +566,7 @@ extension AUIAICallSysAgentContentView: UIScrollViewDelegate {
     
     open lazy var scanBtn: AVBlockButton = {
         let scan = AVBlockButton(frame: CGRect(x: self.av_width - 24, y: self.titleLabel.av_bottom + 2, width: 24, height: 42))
-        scan.setImage(AUIAICallBundle.getImage("ic_scan"), for: .normal)
+        scan.setImage(AUIAIMainBundle.getImage("ic_scan"), for: .normal)
         return scan
     }()
     
@@ -488,7 +576,7 @@ extension AUIAICallSysAgentContentView: UIScrollViewDelegate {
         input.keyboardType = .default
         input.returnKeyType = .done
         input.delegate = self
-        let placeholderText = AUIAICallBundle.getString("Please Scan Code to Get Authorized Token")
+        let placeholderText = AUIAIMainBundle.getString("Please Scan Code to Get Authorized Token")
         let placeholderColor = AVTheme.text_ultraweak
         let attributes: [NSAttributedString.Key: Any] = [
             .foregroundColor: placeholderColor,

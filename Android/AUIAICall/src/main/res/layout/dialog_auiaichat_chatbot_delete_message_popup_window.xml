@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/chatbot_message_item_delete_action"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@drawable/layout_dialog_chatbot_delete_message"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:paddingLeft="24dp"
+    android:paddingRight="24dp"
+    android:layout_marginTop="12dp"
+    android:layout_marginBottom="12dp"
+    >
+
+    <ImageView
+        android:id="@+id/chatbot_message_item_delete_img"
+        android:layout_width="match_parent"
+        android:layout_height="16dp"
+        android:layout_marginTop="12dp"
+        android:src="@drawable/ic_chatbot_delete_message"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/chatbot_message_item_delete_text"
+        />
+
+    <TextView
+        android:id="@+id/chatbot_message_item_delete_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="12dp"
+        android:textColor="#E6E7EC"
+        android:textSize="12sp"
+        android:text="@string/chat_bot_delete_message"
+        app:layout_constraintTop_toBottomOf="@id/chatbot_message_item_delete_img"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+    />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

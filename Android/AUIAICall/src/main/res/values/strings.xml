@@ -70,6 +70,7 @@
     <string name="ai_audio_call">AI Audio Call</string>
     <string name="digital_human_call">Digital Human Call</string>
     <string name="vision_agent_call">Vision Agent Call</string>
+    <string name="chat_bot">Agent Chat</string>
     <string name="temporary_experience_token">Entrusting authorized AI agents</string>
     <string name="et_token_hints">Please scan the QR code to obtain authorized AI agents</string>
     <string name="token_expired_tips">AI agent authorization has expired</string>
@@ -133,4 +134,29 @@
     <string name="ai_agent_config_emotional_desc">Used to select whether the agent timbre contains emotions</string>
     <string name="ai_agent_config_emotional_not">No emotions</string>
     <string name="ai_agent_config_emotional_yes">Contains emotions</string>
+
+    <string name="chat_bot_agent_name">xiao yun</string>
+    <string name="chat_bot_input_tips">Please enter content</string>
+    <string name="chat_bot_audio_tone_detail">After switching the voice, the AI will use the new character in the next reading</string>
+    <string name="chat_bot_delete_message_title">Confirm to delete message?</string>
+    <string name="chat_bot_delete_message_content">Once message is deleted, it cannot be restored</string>
+    <string name="chat_bot_delete_message">Delete</string>
+
+    <string name="chat_bot_connect_init_status">Not connected</string>
+    <string name="chat_bot_connecting_status">Connecting</string>
+    <string name="chat_bot_disconnect_status">Disconnected</string>
+    <string name="chat_bot_connect_failed_status">Connection Failed</string>
+    <string name="chat_bot_press_to_talk">Press to talk</string>
+    <string name="chat_bot_press_to_talk_title">Release to send and swipe up to cancel</string>
+    <string name="chat_bot_press_to_talk_over_time">the recording exceeds 3 minutes, it will be automatically cancelled.</string>
+    <string name="chat_bot_press_to_talk_title_cancel">Release to cancel</string>
+    <string name="chat_bot_press_to_talk_asr_null">No text recognized</string>
+    <string name="chat_bot_copy_text_tips">Text has copyed</string>
+    <string name="chat_bot_play_text_tips">Generating voice reading</string>
+    <string name="chat_bot_user_interruption_tips">The user interruption answering this question</string>
+    <string name="chat_bot_error">Error occur</string>
+    <string name="chat_bot_error_agent_not_found">Agent not found</string>
+    <string name="chat_bot_error_kick_by_system">The current user may be disconnected by the system and cannot continue chatting</string>
+    <string name="chat_bot_error_kick_by_user_replace">The current user may be logged in to another device and cannot continue chatting</string>
+    <string name="chat_bot_default_voice">Default</string>
 </resources>

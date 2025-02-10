@@ -1,9 +1,7 @@
 package com.aliyuncs.aui.service;
 
-import com.aliyuncs.aui.dto.res.AiAgentInstanceDescribeResponse;
-import com.aliyuncs.aui.dto.res.AiAgentStartResponse;
-import com.aliyuncs.aui.dto.res.CommonResponse;
-import com.aliyuncs.aui.dto.res.GenerateAIAgentCallResponse;
+import com.aliyuncs.aui.dto.req.GenerateMessageChatTokenRequestDto;
+import com.aliyuncs.aui.dto.res.*;
 
 /**
  * AiAgentService
@@ -21,4 +19,6 @@ public interface AiAgentService {
     GenerateAIAgentCallResponse generateAIAgentCall(String aiAgentId, String userId, Integer expire, String templateConfig, String workflowType, String region, String userData);
 
     AiAgentInstanceDescribeResponse describeAiAgentInstance(String aiAgentInstanceId);
+
+    GenerateMessageChatTokenResponse generateMessageChatToken(String aiAgentId, String role, String userId, Integer expire, String region);
 }

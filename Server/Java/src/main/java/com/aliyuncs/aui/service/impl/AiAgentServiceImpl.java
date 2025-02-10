@@ -7,10 +7,8 @@ import com.aliyun.teaopenapi.models.Config;
 import com.aliyun.teaopenapi.models.OpenApiRequest;
 import com.aliyun.teaopenapi.models.Params;
 import com.aliyun.teautil.models.RuntimeOptions;
-import com.aliyuncs.aui.dto.res.AiAgentInstanceDescribeResponse;
-import com.aliyuncs.aui.dto.res.AiAgentStartResponse;
-import com.aliyuncs.aui.dto.res.CommonResponse;
-import com.aliyuncs.aui.dto.res.GenerateAIAgentCallResponse;
+import com.aliyuncs.aui.dto.req.GenerateMessageChatTokenRequestDto;
+import com.aliyuncs.aui.dto.res.*;
 import com.aliyuncs.aui.service.AiAgentService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
@@ -481,5 +479,87 @@ public class AiAgentServiceImpl implements AiAgentService {
         }
         return AiAgentInstanceDescribeResponse.builder().code(code).message(message).requestId(requestId).errorCode(errCode).build();
 
+    }
+
+    @Override
+    public GenerateMessageChatTokenResponse generateMessageChatToken(String aiAgentId, String role, String userId, Integer expire, String region) {
+        Params params = new Params()
+                // 接口名称
+                .setAction("GenerateMessageChatToken")
+                // 接口版本
+                .setVersion("2020-11-09")
+                // 接口协议
+                .setProtocol("HTTPS")
+                // 接口 HTTP 方法
+                .setMethod("POST")
+                .setAuthType("AK")
+                .setStyle("HTTPS")
+                // 接口 PATH
+                .setPathname("/")
+                // 接口请求体内容格式
+                .setReqBodyType("json")
+                // 接口响应体内容格式
+                .setBodyType("json");
+
+        // runtime options
+        java.util.Map<String, Object> queries = new java.util.HashMap<>();
+        queries.put("AIAgentId", aiAgentId);
+        queries.put("Role", role);
+        queries.put("UserId", userId);
+        queries.put("Expire", expire);
+        com.aliyun.teautil.models.RuntimeOptions runtime = new com.aliyun.teautil.models.RuntimeOptions();
+        String requestId = StringUtils.EMPTY;
+        String message = StringUtils.EMPTY;
+        String errCode = StringUtils.EMPTY;
+
+        int code = 500;
+        try {
+            com.aliyun.teaopenapi.models.OpenApiRequest request = new com.aliyun.teaopenapi.models.OpenApiRequest()
+                    .setQuery(com.aliyun.openapiutil.Client.query(queries));
+            log.info("generateMessageChatToken, queries:{}", JSONObject.toJSONString(queries));
+            Client localClient = getClient(region);
+            Map<String, ?> response = localClient.callApi(params, request, runtime);
+            log.info("generateMessageChatToken, response:{}", JSONObject.toJSONString(response));
+            if (response != null) {
+                if (response.containsKey("statusCode")) {
+                    Integer statusCode = (Integer) response.get("statusCode");
+                    if (200 == statusCode) {
+                        Map<String, Object> body = (Map<String, Object>) response.get("body");
+                        String appId = (String) body.get("AppId");
+                        String token = (String) body.get("Token");
+                        String userIdResponse = (String) body.get("UserId");
+                        String nonce = (String) body.get("Nonce");
+                        String roleResponse = (String) body.get("Role");
+                        long timestamp = (Long) body.get("TimeStamp");
+                        String appSign = (String) body.get("AppSign");
+
+                        requestId = (String) body.get("RequestId");
+
+                        return GenerateMessageChatTokenResponse.builder()
+                                .appId(appId)
+                                .token(token)
+                                .userId(userIdResponse)
+                                .nonce(nonce)
+                                .role(roleResponse)
+                                .timestamp(timestamp)
+                                .appSign(appSign)
+                                .code(200)
+                                .message("success")
+                                .requestId(requestId)
+                                .build();
+                    }
+                }
+            }
+        } catch (TeaException e) {
+            log.error("generateMessageChatToken Tea error. e:{}", e.getMessage());
+            requestId = e.getData().get("RequestId").toString();
+            message = e.getMessage();
+            code = e.getStatusCode();
+            errCode = e.getCode();
+        } catch (Exception e) {
+            message = e.getMessage();
+            log.error("generateMessageChatToken error. e:{}", e.getMessage());
+        }
+        return GenerateMessageChatTokenResponse.builder().code(code).message(message).requestId(requestId).errorCode(errCode).build();
     }
 }

@@ -22,8 +22,8 @@ import com.aliyun.auikits.aicall.base.card.DefaultCardViewFactory;
 import com.aliyun.auikits.aicall.base.feed.AbsContentModel;
 import com.aliyun.auikits.aicall.base.feed.BizParameter;
 import com.aliyun.auikits.aicall.base.feed.ContentViewModel;
-import com.aliyun.auikits.aicall.base.feed.IBizCallback;
 import com.aliyun.auikits.aicall.bean.AudioToneData;
+import com.aliyun.auikits.aicall.model.AudioToneContentModel;
 import com.aliyun.auikits.aicall.util.DisplayUtil;
 import com.aliyun.auikits.aicall.util.ToastHelper;
 import com.aliyun.auikits.aicall.widget.card.AudioToneCard;
@@ -36,7 +36,6 @@ import com.orhanobut.dialogplus.OnDismissListener;
 import com.orhanobut.dialogplus.ViewHolder;
 import com.scwang.smart.refresh.layout.SmartRefreshLayout;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class AICallSettingDialog {
@@ -79,38 +78,6 @@ public class AICallSettingDialog {
         dialog.show();
     }
 
-    private static class AudioToneContentModel extends AbsContentModel<CardEntity> {
-        private ARTCAICallEngine mARTCAiCallEngine = null;
-        List<AudioToneData> mAudioToneList;
-
-        public AudioToneContentModel(ARTCAICallEngine artcaiCallEngine, List<AudioToneData> audioToneList) {
-            mARTCAiCallEngine = artcaiCallEngine;
-            mAudioToneList = audioToneList;
-        }
-
-        @Override
-        public void initData(BizParameter parameter, IBizCallback<CardEntity> callback) {
-
-            List<CardEntity> cardEntities = new ArrayList<>();
-            for (AudioToneData audioToneData : mAudioToneList) {
-                CardEntity cardEntity = new CardEntity();
-                cardEntity.cardType = CardTypeDef.AUDIO_TONE_CARD;
-                cardEntity.bizData = audioToneData;
-                cardEntities.add(cardEntity);
-            }
-            callback.onSuccess(cardEntities);
-        }
-
-        @Override
-        public void updateContent(CardEntity data, int pos) {
-            super.updateContent(data, pos);
-        }
-
-        @Override
-        public void fetchData(boolean isPullToRefresh, BizParameter parameter, IBizCallback<CardEntity> callback) {
-        }
-    }
-
     private AICallSettingDialog(View root, ARTCAICallEngine aRTCAICallEngine, boolean isAvatarAgent,
                                 boolean isVoicePrintRecognized, boolean isSharedAgent, List<AudioToneData> voiceToneList) {
         mARTCAICallEngine = aRTCAICallEngine;
@@ -142,7 +109,7 @@ public class AICallSettingDialog {
             rvAudioToneList.setLayoutManager(new LinearLayoutManager(root.getContext(), RecyclerView.VERTICAL, false));
             rvAudioToneList.setAdapter(mCardListAdapter);
 
-            mAudioToneContentModel = new AudioToneContentModel(mARTCAICallEngine, voiceToneList);
+            mAudioToneContentModel = new AudioToneContentModel(voiceToneList);
             mContentViewModel = new ContentViewModel.Builder()
                     .setContentModel(mAudioToneContentModel)
                     .setBizParameter(mBizParameter)

@@ -50,6 +50,9 @@ function Stage({ agentType, onStateChange, onExit, onAuthFail, limitSecond, auto
     return () => {
       controller?.handup();
       useCallStore.getState().reset();
+      if (countdownRef.current) {
+        window.clearInterval(countdownRef.current);
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -69,20 +72,41 @@ function Stage({ agentType, onStateChange, onExit, onAuthFail, limitSecond, auto
     const supportedResult = await ARTCAICallEngine.isSupported();
     if (!supportedResult.support) {
       Dialog.show({
-        content: '当前浏览器不支持WebRTC，建议您使用钉钉或微信打开',
+        closeOnMaskClick: true,
+        content: (
+          <div style={{ textAlign: 'center' }}>
+            {window.isSecureContext === false ? (
+              <>
+                由于浏览器安全限制，
+                <br />
+                您需要通过HTTPS访问页面。
+              </>
+            ) : (
+              <>
+                当前浏览器不支持WebRTC，
+                <br />
+                建议您使用钉钉或微信打开
+              </>
+            )}
+          </div>
+        ),
         actions: [],
       });
       return;
     }
 
-    controller.on('AICallStateChanged', (newState) => {
-      useCallStore.setState({
-        callState: newState,
-      });
+    // 保证事件只监听一次
+    controller.removeAllListeners();
+    controller.on('AICallStateChanged', async (newState) => {
       if (newState === AICallState.Error) {
-        controller?.handup();
+        await controller?.handup();
         useCallStore.setState({
+          callState: AICallState.Error,
           callErrorMessage: getErrorMessage(controller.errorCode),
+        });
+      } else {
+        useCallStore.setState({
+          callState: newState,
         });
       }
     });

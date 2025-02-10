@@ -36,7 +36,8 @@ public class SpeechAnimationView extends SurfaceView implements SurfaceHolder.Ca
         WAITING,
         LISTENING,
         ROBOT_THINKING,
-        ROBOT_SPEAKING
+        ROBOT_SPEAKING,
+        CHATBOT_THINKING
     }
 
     public SpeechAnimationView(Context context, AttributeSet attrs) {
@@ -112,6 +113,7 @@ public class SpeechAnimationView extends SurfaceView implements SurfaceHolder.Ca
             mAnimationDrawers.put(AnimationType.WAITING, new WaitingAnimationDrawer(mAnimationWaitingBmp));
             mAnimationDrawers.put(AnimationType.LISTENING, new ListeningAnimationDrawer(mAnimationWaitingBmp));
             mAnimationDrawers.put(AnimationType.ROBOT_THINKING, new ThinkingAnimationDrawer());
+            mAnimationDrawers.put(AnimationType.CHATBOT_THINKING, new ChatBotThinkingAnimationDrawer());
 
             SpeakingAnimationDrawer speakingAnimationDrawer = new SpeakingAnimationDrawer(1.0f, true);
             speakingAnimationDrawer.setTranslateFromCenter(0f, DisplayUtil.dip2px(16)/2f);
@@ -124,6 +126,9 @@ public class SpeechAnimationView extends SurfaceView implements SurfaceHolder.Ca
 
         public void setAnimationType(AnimationType mAnimationType) {
             this.mAnimationType.set(mAnimationType);
+            if(mAnimationType == AnimationType.CHATBOT_THINKING) {
+                mBackgroundColor = mContext.getResources().getColor(R.color.layout_base_dialog_background);
+            }
         }
 
         @Override
@@ -327,6 +332,138 @@ public class SpeechAnimationView extends SurfaceView implements SurfaceHolder.Ca
                     // 右边
                     canvas.drawCircle(mDrawerCenterPos.x+translateDistance, mDrawerCenterPos.y, mSmallCircleRadius, mPaint);
                 }
+            }
+        }
+
+        public long getAnimationDuration() {
+            return mAnimationDuration;
+        }
+    }
+
+    private class ChatBotThinkingAnimationDrawer extends AnimationDrawer {
+        protected int mRadiusSmall = DisplayUtil.dip2px(4);
+        protected int mRadiusBig = DisplayUtil.dip2px(8);
+        protected int mMargin = DisplayUtil.dip2px(8);
+        protected PointF[] mCirclePositionArray = null;
+
+        private long animationCycle = 1000;
+        private ChatListeningToThinkAnimationDrawer mListeningToThinkingAnimationDrawer = null;
+
+        public ChatBotThinkingAnimationDrawer() {
+            super();
+
+            mListeningToThinkingAnimationDrawer = new ChatListeningToThinkAnimationDrawer();
+            mListeningToThinkingAnimationDrawer.setSmallCircleRadius(mRadiusSmall);
+            mListeningToThinkingAnimationDrawer.setSmallCircleMargin(mMargin);
+            addChainDrawer(mListeningToThinkingAnimationDrawer);
+        }
+
+        @Override
+        public void draw(Canvas canvas) {
+            // 绘制过度动画
+            if (mProgress <= mListeningToThinkingAnimationDrawer.getAnimationDuration()) {
+                mListeningToThinkingAnimationDrawer.setDrawerCenterPos(canvas.getWidth()/2.0f, canvas.getHeight()/2.0f);
+                mListeningToThinkingAnimationDrawer.draw(canvas);
+                return;
+            }
+
+            initPosition(canvas);
+
+            long animationProgress = (mProgress- mListeningToThinkingAnimationDrawer.getAnimationDuration()) % animationCycle;
+            long stepDuration = animationCycle / 5;
+            int bigScaleIndex = -1;
+            int smallScaleIndex = -1;
+            long scaleProgress = 0;
+            if (animationProgress > 0 && animationProgress <= stepDuration) {
+                bigScaleIndex = 0;
+                smallScaleIndex = -1;
+                scaleProgress = animationProgress;
+            } else if (animationProgress > stepDuration && animationProgress <= stepDuration*2) {
+                bigScaleIndex = 1;
+                smallScaleIndex = 0;
+                scaleProgress = animationProgress-stepDuration;
+            } else if (animationProgress > stepDuration*2 && animationProgress <= stepDuration*3) {
+                bigScaleIndex = 2;
+                smallScaleIndex = 1;
+                scaleProgress = animationProgress-stepDuration*2;
+            } else if (animationProgress > stepDuration*3 && animationProgress <= stepDuration*4) {
+                bigScaleIndex = -1;
+                smallScaleIndex = 2;
+                scaleProgress = animationProgress-stepDuration*3;
+            } else if (animationProgress > stepDuration*4 && animationProgress <= animationCycle) {
+                bigScaleIndex = -1;
+                smallScaleIndex = -1;
+                scaleProgress = animationProgress-stepDuration*4;
+            }
+
+            for (int i = 0; i < 3; i++) {
+                PointF pos = mCirclePositionArray[i];
+                float radius = mRadiusSmall;
+                if (i == bigScaleIndex) {
+                    radius += (scaleProgress*1.0f/stepDuration)*(mRadiusBig-mRadiusSmall);
+                } else if (i == smallScaleIndex) {
+                    radius += ((stepDuration-scaleProgress)*1.0f/stepDuration)*(mRadiusBig-mRadiusSmall);
+                }
+                canvas.drawCircle(pos.x, pos.y, radius, mPaint);
+            }
+        }
+
+        private void initPosition(Canvas canvas) {
+            if (null == mCirclePositionArray) {
+                mCirclePositionArray = new PointF[3];
+                mCirclePositionArray[1] = new PointF();
+                mCirclePositionArray[1].x = canvas.getWidth() / 2.0f;
+                mCirclePositionArray[1].y = canvas.getHeight() / 2.0f;
+
+                mCirclePositionArray[0] = new PointF();
+                mCirclePositionArray[0].x = mCirclePositionArray[1].x - mMargin - mRadiusSmall*2;
+                mCirclePositionArray[0].y = mCirclePositionArray[1].y;
+
+                mCirclePositionArray[2] = new PointF();
+                mCirclePositionArray[2].x = mCirclePositionArray[1].x + mMargin + mRadiusSmall*2;
+                mCirclePositionArray[2].y = mCirclePositionArray[1].y;
+            }
+        }
+    }
+
+    private class ChatListeningToThinkAnimationDrawer extends WaitingAnimationDrawer {
+        private long mAnimationDuration = 500;
+        private long mHalfAnimationDuration = mAnimationDuration/2;
+        private int mBigCircleRadius = 0;
+        private int mSmallCircleRadius = 0;
+        private int mSmallCircleMargin = 0;
+        private PointF mDrawerCenterPos = new PointF();
+
+        public ChatListeningToThinkAnimationDrawer() {
+            super(null);
+            mBigCircleRadius = (int) (mBmpRenderSize / 2.0);
+        }
+
+        public void setSmallCircleMargin(int smallCircleMargin) {
+            this.mSmallCircleMargin = smallCircleMargin;
+        }
+
+        public void setSmallCircleRadius(int smallCircleRadius) {
+            this.mSmallCircleRadius = smallCircleRadius;
+        }
+
+        public void setDrawerCenterPos(float posX, float posY) {
+            this.mDrawerCenterPos.x = posX;
+            this.mDrawerCenterPos.y = posY;
+        }
+
+        @Override
+        public void draw(Canvas canvas) {
+            if (mProgress > 0 && mProgress <= mAnimationDuration) {
+                float translateSpeed = (mSmallCircleRadius*2 + mSmallCircleMargin)*1.0f/ (mAnimationDuration-mHalfAnimationDuration);
+                float translateDistance = (mProgress - mHalfAnimationDuration) * translateSpeed;
+
+                // 中间
+                canvas.drawCircle(mDrawerCenterPos.x, mDrawerCenterPos.y, mSmallCircleRadius, mPaint);
+                // 左边
+                canvas.drawCircle(mDrawerCenterPos.x-translateDistance, mDrawerCenterPos.y, mSmallCircleRadius, mPaint);
+                // 右边
+                canvas.drawCircle(mDrawerCenterPos.x+translateDistance, mDrawerCenterPos.y, mSmallCircleRadius, mPaint);
             }
         }
 

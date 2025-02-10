@@ -3,14 +3,6 @@ rootProject.name = "AUIAICall"
 include ':app'
 include ':AUIBaseKits:AUICommon'
 project(':AUIBaseKits:AUICommon').projectDir = new File(rootProject.projectDir, 'AUIBaseKits/AUICommon')
-include ':AUIBaseKits:AUIMessage'
-project(':AUIBaseKits:AUIMessage').projectDir = new File(rootProject.projectDir, 'AUIBaseKits/AUIMessage')
-include ':AUIBaseKits:AUIMessage:AUIMessageImpl-Internal'
-project(':AUIBaseKits:AUIMessage:AUIMessageImpl-Internal').projectDir = new File(rootProject.projectDir, 'AUIBaseKits/AUIMessage/AUIMessageImpl-Internal')
-include ':AUIBaseKits:AUIMessage:AUIMessageImpl-RongCloud'
-project(':AUIBaseKits:AUIMessage:AUIMessageImpl-RongCloud').projectDir = new File(rootProject.projectDir, 'AUIBaseKits/AUIMessage/AUIMessageImpl-RongCloud')
-include ':AUIBaseKits:AUIMessage:AUIMessageImpl-AliVCIM'
-project(':AUIBaseKits:AUIMessage:AUIMessageImpl-AliVCIM').projectDir = new File(rootProject.projectDir, 'AUIBaseKits/AUIMessage/AUIMessageImpl-AliVCIM')
 
 include ':AUIAICall'
 include ':AUIAICallEngine'

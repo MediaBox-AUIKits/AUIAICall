@@ -40,6 +40,7 @@ public class SettingStorage {
     public static final String KEY_AVATAR_ID = "KEY_AVATAR_ID";
     public static final String KEY_ASR_MAX_SILENCE = "KEY_ASR_MAX_SILENCE";
     public static final String KEY_USER_ONLINE_TIME_OUT = "KEY_USER_ONLINE_TIME_OUT";
+    public static final String KEY_USER_ASR_LANGUAGE = "KEY_USER_ASR_LANGUAGE";
 
 
 

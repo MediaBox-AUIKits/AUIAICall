@@ -46,6 +46,14 @@ NS_ASSUME_NONNULL_BEGIN
               okTitle:(NSString *)okTitle
           onCompleted:(void(^)(BOOL isCanced))completed;
 
++ (void)showWithTitle:(NSString *)title
+              message:(NSString *)message
+                 btn1:(NSString *)btn1
+      btn1Destructive:(BOOL)btn1Destructive
+                 btn2:(NSString *)btn2
+      btn2Destructive:(BOOL)btn2Destructive
+          onCompleted:(void(^)(BOOL isBtn2))completed;
+
 + (void)showSheet:(NSArray<NSString *> *)actionTitles
        alertTitle:(nullable NSString *)alertTitle
           message:(nullable NSString *)message

@@ -45,7 +45,12 @@ import AUIFoundation
     open var success_ultrastrong: UIColor {
         return UIColor.av_color(withHexString: "3BB346FF")
     }
+    
+    open var chat_bg: UIColor {
+        return UIColor.av_color(withHexString: "3295FBFF")
+    }
 }
 
 public let AUIAICallBundle = AUIAICallTheme("AUIAICall")
+public let AUIAIChatBundle = AUIAICallTheme("AUIAIChat")
 

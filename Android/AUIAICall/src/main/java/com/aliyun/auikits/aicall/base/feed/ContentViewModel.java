@@ -200,6 +200,11 @@ public class ContentViewModel extends ViewModel implements IContentObserver<Card
     }
 
     @Override
+    public void onContentHeaderInsert(List<CardEntity> data) {
+        cardListAdapter.addData(0, data);
+    }
+
+    @Override
     public void onContentRemove(List<CardEntity> dataList) {
         for(CardEntity entity : dataList) {
             cardListAdapter.remove(entity);

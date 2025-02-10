@@ -71,6 +71,7 @@
     <string name="ai_audio_call">AI音频通话</string>
     <string name="digital_human_call">数字人通话</string>
     <string name="vision_agent_call">视觉理解通话</string>
+    <string name="chat_bot">消息对话</string>
     <string name="temporary_experience_token">授权AI智能体</string>
     <string name="et_token_hints">请扫描二维码获取授权的AI智能体</string>
     <string name="token_expired_tips">AI智能体授权已经过期</string>
@@ -134,4 +135,29 @@
     <string name="ai_agent_config_emotional_desc">用于选择智能体的音色是否包含情绪</string>
     <string name="ai_agent_config_emotional_not">不含情绪</string>
     <string name="ai_agent_config_emotional_yes">包含情绪</string>
+    
+    <string name="chat_bot_agent_name">小云</string>
+    <string name="chat_bot_input_tips">请输入内容</string>
+    <string name="chat_bot_audio_tone_detail">切换音色后，AI将在下一次朗读中使用新的音色</string>
+    <string name="chat_bot_delete_message_title">确认删除信息？</string>
+    <string name="chat_bot_delete_message_content">信息删除后，不可恢复</string>
+    <string name="chat_bot_delete_message">删除</string>
+
+    <string name="chat_bot_connect_init_status">未连接</string>
+    <string name="chat_bot_connecting_status">连接中</string>
+    <string name="chat_bot_disconnect_status">链接断开</string>
+    <string name="chat_bot_connect_failed_status">链接失败</string>
+    <string name="chat_bot_press_to_talk">按住说话</string>
+    <string name="chat_bot_press_to_talk_title">松开发送，上滑取消</string>
+    <string name="chat_bot_press_to_talk_title_cancel">松开取消</string>
+    <string name="chat_bot_press_to_talk_over_time">录音超过3分钟，自动取消发送</string>
+    <string name="chat_bot_press_to_talk_asr_null">未识别到文字</string>
+    <string name="chat_bot_copy_text_tips">信息已复制</string>
+    <string name="chat_bot_play_text_tips">语音朗读生成中</string>
+    <string name="chat_bot_user_interruption_tips">用户停止本次回答</string>
+    <string name="chat_bot_error">出错啦</string>
+    <string name="chat_bot_error_agent_not_found">请检查智能体ID是否正确</string>
+    <string name="chat_bot_error_kick_by_system">当前用户可能被系统断开链接，无法继续聊天</string>
+    <string name="chat_bot_error_kick_by_user_replace">当前用户可能登录了其他设备，无法继续聊天</string>
+    <string name="chat_bot_default_voice">默认</string>
 </resources>

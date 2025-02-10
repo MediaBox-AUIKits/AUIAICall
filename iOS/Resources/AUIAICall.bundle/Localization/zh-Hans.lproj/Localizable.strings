@@ -1,13 +1,7 @@
 
-"Voice Agent" = "AI智能体";
-"Official Agent" = "官方智能体";
-"Custom Agent" = "自定义智能体";
 "AI Voice Call" = "AI音频通话";
 "AI Avatar Call" = "数字人通话";
 "AI Vision Call" = "视觉理解通话";
-"Authorized AI Agent" = "授权AI智能体";
-"Please Scan Code to Get Authorized Token" = "请扫描二维码获取授权Token";
-"Invalid Token" = "请使用正确的Token";
 
 "Configuration" = "配置项";
 "Emotion Support" = "情绪音色";
@@ -15,10 +9,6 @@
 "Unemotional" = "不含情绪";
 "Emotional" = "包含情绪";
 
-"Start" = "开始体验";
-"What integration way is used to start the call?" = "启动通话时使用哪种集成方式？";
-"Custom" = "自定义方式（自集成）";
-"Standard" = "标准方式（全托管）";
 "Cancel" = "取消";
 "Close" = "退出";
 "Copy" = "拷贝";

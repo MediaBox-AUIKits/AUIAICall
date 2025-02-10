@@ -6,6 +6,7 @@ import {
   AICallAgentState,
   AICallAgentType,
   AICallErrorCode,
+  AICallSendTextToAgentRequest,
   AICallState,
   AICallSubtitleData,
 } from 'aliyun-auikit-aicall';
@@ -89,47 +90,49 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
   public get agentAudioElement() {
     return this._agentAudioElement;
   }
-  /**
-   * 检查麦克风
-   */
-  async checkMicrophone() {
-    logger.info('Controller', 'CheckMicrophone');
-    try {
-      const microphoneList = await ARTCAICallEngine.getMicrophoneList();
-      if (microphoneList?.length === 0) {
-        const error = new AICallAgentError('no microphone available', AICallErrorCode.LocalDeviceException);
-        throw error;
-      }
-    } catch (error) {
-      this.state = AICallState.Error;
-      this._errorCode = AICallErrorCode.LocalDeviceException;
-      logger.error('LocalDeviceException', error as Error);
-      throw error;
-    }
-  }
 
   abstract startAIAgent(): Promise<AICallAgentInfo>;
 
+  private async initEngine() {
+    const startTs = Date.now();
+    if (!this._currentEngine) {
+      this._currentEngine = new ARTCAICallEngine();
+    }
+
+    try {
+      await this._currentEngine.init(this.config.agentType, {
+        muteMicrophone: this._config.muteMicrophone,
+        muteCamera: this._config.muteCamera,
+        previewElement: this._config.previewView,
+        templateConfig: this._config.templateConfig,
+      });
+      logger.info('Controller', 'InitEngineSuccess', { value: Date.now() - startTs });
+    } catch (error) {
+      logger.error('InitEngineFailed', error as Error);
+      throw error;
+    }
+    return;
+  }
+
   async start(): Promise<void> {
     logger.info('Controller', 'Start');
+    const startTs = Date.now();
     if (this.state === AICallState.Connected || this.state === AICallState.Connecting) return;
     this.state = AICallState.Connecting;
 
-    await this.checkMicrophone();
-
-    this._currentEngine = new ARTCAICallEngine();
     let instanceInfo: AICallAgentInfo | undefined;
     try {
-      const startTs = Date.now();
-      instanceInfo = await this.startAIAgent();
+      if (!this._currentEngine) {
+        this._currentEngine = new ARTCAICallEngine();
+      }
+      [instanceInfo] = await Promise.all([this.startAIAgent(), this.initEngine()]);
       logger.setParams({
         instanceId: instanceInfo.instanceId,
-        agentType: instanceInfo.agentType,
         channelId: instanceInfo.channelId,
         userId: instanceInfo.userId,
         reqId: instanceInfo.reqId || '-',
       });
-      logger.info('Controller', 'StartAIAgentSuccess', { value: Date.now() - startTs });
+      logger.info('Controller', 'GenerateAIAgentSuccess', { value: Date.now() - startTs });
     } catch (error: unknown) {
       this._errorCode = (error as AICallAgentError).code || AICallErrorCode.BeginCallFailed;
       if ((error as AICallAgentError).name === 'ServiceAuthError') {
@@ -142,6 +145,11 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
 
     this._agentInfo = instanceInfo;
     this.emit('AICallAIAgentStarted', instanceInfo);
+
+    if (!this._currentEngine) {
+      logger.error('StartCallFailed', new AICallAgentError('engine not init'));
+      throw new AICallAgentError('engine not init');
+    }
 
     this._currentEngine.on('errorOccurred', (errorCode: number) => {
       this._errorCode = errorCode;
@@ -209,12 +217,7 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
     });
 
     try {
-      await this.engine?.call(this.userId, instanceInfo, {
-        muteMicrophone: this._config.muteMicrophone,
-        muteCamera: this._config.muteCamera,
-        previewElement: this._config.previewView,
-        templateConfig: this._config.templateConfig,
-      });
+      await this.engine?.call(this.userId, instanceInfo);
 
       if (this.config.agentView) {
         this.engine?.setAgentView(this.config.agentView);
@@ -241,6 +244,7 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
       throw error;
     }
 
+    logger.info('Controller', 'StartSuccess', { value: Date.now() - startTs });
     this.emit('AICallBegin');
     this.state = AICallState.Connected;
   }
@@ -250,11 +254,12 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
   async handup(): Promise<void> {
     logger.info('Controller', 'Handup');
     const agent = this.engine?.agentInfo;
-    this.state = AICallState.Over;
-    await this.engine?.handup();
     if (agent) {
       await this.stopAIAgent(agent.instanceId);
     }
+    this.state = AICallState.Over;
+    await this.engine?.handup();
+    this.engine?.removeAllListeners();
     this.removeAllListeners();
   }
   /**
@@ -386,6 +391,15 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
     logger.info('Controller', 'CancelPushToTalk');
     if (this.state === AICallState.Connected) {
       return this.engine?.cancelPushToTalk() || false;
+    }
+    return false;
+  }
+
+  // 给智能体发送文本消息
+  sendTextToAgent(req: AICallSendTextToAgentRequest): boolean {
+    logger.info('Controller', 'SendTextToAgent');
+    if (this.state === AICallState.Connected) {
+      return !!this.engine?.sendTextToAgent(req);
     }
     return false;
   }

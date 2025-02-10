@@ -116,6 +116,8 @@ function AICall(props: AICallProps) {
       // enablePushToTalk: true,
     });
 
+    // 保证事件只监听一次
+    controller.removeAllListeners();
     controller.on('AICallStateChanged', (newState) => {
       useCallStore.setState({
         callState: newState,

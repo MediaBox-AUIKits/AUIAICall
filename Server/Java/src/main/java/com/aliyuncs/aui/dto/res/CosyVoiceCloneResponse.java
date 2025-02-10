@@ -23,6 +23,6 @@ public class CosyVoiceCloneResponse {
     @JsonProperty("error_code")
     private String errorCode;
 
-    @JsonProperty("requestId")
+    @JsonProperty("request_id")
     private String requestId;
 }

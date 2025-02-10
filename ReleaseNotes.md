@@ -55,3 +55,10 @@
 * Android&iOS&Web：通话过程中支持获取音色列表
 * Android&iOS：支持端到端回环延时统计
 * Android&iOS：数字人视图配置&视觉理解视图配置支持缩放模式、旋转及镜像模式
+
+## v2.0.0
+发布时间：2025-01-26
+* Android&iOS：支持消息对话智能体
+* Android&iOS&Web：支持实时互动通话时发送消息给智能体
+* Android&iOS&Web：TTS/STT集成三方插件时，可选选择对应的语种和音色
+* Android&iOS：支持实时互动通话集成AEC插件，支持端侧智能降噪

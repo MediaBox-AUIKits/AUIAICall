@@ -14,8 +14,10 @@ import com.aliyun.auikits.aiagent.ARTCAICallEngine;
 import com.aliyun.auikits.aiagent.service.IARTCAICallService;
 import com.aliyun.auikits.aiagent.util.ARTCAIAgentUtil;
 import com.aliyun.auikits.aicall.AUIAICallInCallActivity;
+import com.aliyun.auikits.aicall.AUIAIChatInChatActivity;
 import com.aliyun.auikits.aicall.R;
 import com.aliyun.auikits.aicall.bean.AudioToneData;
+import com.aliyun.auikits.aicall.util.AUIAIConstStrKey;
 import com.aliyun.auikits.aicall.util.BizStatHelper;
 import com.aliyun.auikits.aiagent.util.Logger;
 
@@ -336,6 +338,13 @@ public abstract class ARTCAICallController {
                 args.put("uid", mUserId);
                 args.put("ach", mChannelId);
                 args.put("rtc_base64_token", mRtcAuthToken);
+                if(mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent) {
+                    args.put("atype", "VoiceChat");
+                } else if(mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent) {
+                    args.put("atype", "AvatarChat3D");
+                } else if (mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VisionAgent) {
+                    args.put("atype", "VisionChat");
+                }
                 if (!TextUtils.isEmpty(mRtcAuthToken)) {
                     String decodeJson = new String(Base64.decode(mRtcAuthToken, Base64.DEFAULT));
                     JSONObject tokenJson = new JSONObject(decodeJson);
@@ -542,17 +551,26 @@ public abstract class ARTCAICallController {
             aiCallAgentType = ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent;
         } else if ("VisionChat".equals(shareInfo.workflowType)) {
             aiCallAgentType = ARTCAICallEngine.ARTCAICallAgentType.VisionAgent;
+        } else if("MessageChat".equals(shareInfo.workflowType)) {
+            aiCallAgentType = ARTCAICallEngine.ARTCAICallAgentType.ChatBot;
         }
+        Intent intent = null;
+        if(aiCallAgentType == ARTCAICallEngine.ARTCAICallAgentType.ChatBot) {
+            intent = new Intent(currentActivity, AUIAIChatInChatActivity.class);
+        } else {
+            intent = new Intent(currentActivity, AUIAICallInCallActivity.class);
+        }
+        long expireTimestamp = shareInfo.expireTimestamp;
 
-        Intent intent = new Intent(currentActivity, AUIAICallInCallActivity.class);
 
         // 进入rtc的用户id，建议使用业务的登录用户id
-        intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_LOGIN_USER_ID, loginUserId);
-        intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_LOGIN_AUTHORIZATION, loginAuthorization);
-        intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_AI_AGENT_TYPE, aiCallAgentType);
-        intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_AI_AGENT_ID, aiAgentId);
-        intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_AI_AGENT_REGION, aiAgentRegion);
-        intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_IS_SHARED_AGENT, true);
+        intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_USER_ID, loginUserId);
+        intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_AUTHORIZATION, loginAuthorization);
+        intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_TYPE, aiCallAgentType);
+        intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_ID, aiAgentId);
+        intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_REGION, aiAgentRegion);
+        intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_IS_SHARED_AGENT, true);
+        intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_TOKEN_EXPIRE_TIMESTAMP, expireTimestamp);
 
         currentActivity.startActivity(intent);
     }

@@ -14,6 +14,10 @@ import ARTCAICallKit
     public init(_ controller: AUIAICallControllerInterface) {
         self.controller = controller
         super.init(nibName: nil, bundle: nil)
+        
+#if AICALL_ENABLE_FEEDBACK
+        AUIAICallReport.shared.start()
+#endif
     }
     
     public required init?(coder: NSCoder) {
@@ -23,6 +27,10 @@ import ARTCAICallKit
     deinit {
         UIApplication.shared.isIdleTimerDisabled = false
         debugPrint("deinit: \(self)")
+        
+#if AICALL_ENABLE_FEEDBACK
+        AUIAICallReport.shared.finish()
+#endif
     }
     
     open override func viewDidLoad() {
@@ -634,8 +642,6 @@ extension AUIAICallViewController {
     }
     
     func setupReportBtn() -> UIButton {
-        AUIAICallReport.shared.setup()
-        
         let btn = AVBlockButton()
         /*
         btn.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)

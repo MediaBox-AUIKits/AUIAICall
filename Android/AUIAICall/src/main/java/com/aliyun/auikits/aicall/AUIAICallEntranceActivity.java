@@ -1,5 +1,7 @@
 package com.aliyun.auikits.aicall;
 
+import static com.aliyun.auikits.aiagent.ARTCAICallEngine.ARTCAICallAgentType.ChatBot;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -29,6 +31,7 @@ import com.aliyun.auikits.aiagent.ARTCAICallEngine;
 import com.aliyun.auikits.aiagent.util.ARTCAIAgentUtil;
 import com.aliyun.auikits.aicall.controller.ARTCAICallController;
 import com.aliyun.auikits.aicall.util.AUIAICallAgentIdConfig;
+import com.aliyun.auikits.aicall.util.AUIAIConstStrKey;
 import com.aliyun.auikits.aicall.util.PermissionUtils;
 import com.aliyun.auikits.aicall.util.SettingStorage;
 import com.aliyun.auikits.aicall.util.ToastHelper;
@@ -134,12 +137,12 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
 
     private void jumpToInCallActivity() {
         if (mLayoutHolder.isOfficial()) {
-            Intent intent = new Intent(AUIAICallEntranceActivity.this, AUIAICallInCallActivity.class);
-            intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_LOGIN_USER_ID, mLoginUserId);
-            intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_LOGIN_AUTHORIZATION, mLoginAuthorization);
-            intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_AI_AGENT_TYPE, mLayoutHolder.getOfficialLayerHolder().getAICallAgentType());
-            boolean usePreHost = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_APP_SERVER_TYPE, SettingStorage.DEFAULT_APP_SERVER_TYPE);
+            Intent intent = new Intent(AUIAICallEntranceActivity.this, mLayoutHolder.getOfficialLayerHolder().getAICallAgentType() == ChatBot ? AUIAIChatInChatActivity.class:AUIAICallInCallActivity.class);
+            intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_USER_ID, mLoginUserId);
+            intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_AUTHORIZATION, mLoginAuthorization);
+            intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_TYPE, mLayoutHolder.getOfficialLayerHolder().getAICallAgentType());
             boolean useEmotional = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_EMOTION, SettingStorage.DEFAULT_BOOT_ENABLE_EMOTION);
+            boolean usePreHost = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_APP_SERVER_TYPE, SettingStorage.DEFAULT_APP_SERVER_TYPE);
             String agentId = "";
             if(BuildConfig.TEST_ENV_MODE) {
                 agentId = usePreHost ? AUIAICallAgentIdConfig.getAIAgentIdForDebug(mLayoutHolder.getOfficialLayerHolder().getAICallAgentType(), useEmotional) :  AUIAICallAgentIdConfig.getAIAgentId(mLayoutHolder.getOfficialLayerHolder().getAICallAgentType(), useEmotional);
@@ -147,11 +150,10 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
             else {
                 agentId = AUIAICallAgentIdConfig.getAIAgentId(mLayoutHolder.getOfficialLayerHolder().getAICallAgentType(), useEmotional);
             }
-
             if(!TextUtils.isEmpty(agentId)) {
-                intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_AI_AGENT_ID, agentId);
+                intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_ID, agentId);
             }
-            intent.putExtra(AUIAICallInCallActivity.BUNDLE_KEY_IS_SHARED_AGENT, false);
+            intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_IS_SHARED_AGENT, false);
             startActivity(intent);
         } else {
             if (System.currentTimeMillis() <= mLayoutHolder.getCustomLayerHolder().getExpireTimestamp()) {
@@ -195,6 +197,7 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
         ((EditText) view.findViewById(R.id.AvatarId_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_AVATAR_ID));
         ((EditText) view.findViewById(R.id.AsrMaxSilence_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_ASR_MAX_SILENCE, "400"));
         ((EditText) view.findViewById(R.id.UserOnlineTimeout_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_USER_ONLINE_TIME_OUT, "60"));
+        ((EditText) view.findViewById(R.id.asrLanguage_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_USER_ASR_LANGUAGE, ""));
 
         if (!showExtraDebugConfig) {
             view.findViewById(R.id.ll_audio_dump).setVisibility(View.GONE);
@@ -277,6 +280,9 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
 
                         String bootUserOnlineTimeout = ((EditText)view.findViewById(R.id.UserOnlineTimeout_input)).getText().toString();
                         SettingStorage.getInstance().set(SettingStorage.KEY_USER_ONLINE_TIME_OUT, bootUserOnlineTimeout);
+
+                        String bootAsrLanguage = ((EditText)view.findViewById(R.id.asrLanguage_input)).getText().toString();
+                        SettingStorage.getInstance().set(SettingStorage.KEY_USER_ASR_LANGUAGE, bootAsrLanguage);
 
                     }
                     if (v.getId() == R.id.btn_confirm || v.getId() == R.id.btn_cancel) {
@@ -371,6 +377,8 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
                             aiCallAgentType = ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent;
                         } else if ("VisionChat".equals(shareInfo.workflowType)) {
                             aiCallAgentType = ARTCAICallEngine.ARTCAICallAgentType.VisionAgent;
+                        } else if("MessageChat".equals(shareInfo.workflowType)) {
+                            aiCallAgentType = ARTCAICallEngine.ARTCAICallAgentType.ChatBot;
                         }
                         mLayoutHolder.getCustomLayerHolder().setExperienceTokenCallType(aiCallAgentType);
                         mLayoutHolder.getCustomLayerHolder().setExperienceRegion(shareInfo.region);
@@ -569,6 +577,8 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
                 return context.getString(R.string.digital_human_call);
             case VisionAgent:
                 return context.getString(R.string.vision_agent_call);
+            case ChatBot:
+                return context.getString(R.string.chat_bot);
             default:
                 break;
         }
@@ -582,12 +592,15 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
         private ViewPager mViewPagerCallType = null;
         private List<ARTCAICallEngine.ARTCAICallAgentType> mCallTypeList =
                 new LinkedList<>();
+        private ViewGroup mMotionalLayout = null;
 
         private void init(Context context) {
             mCallTypeList.add(ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent);
             mCallTypeList.add(ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent);
             mCallTypeList.add(ARTCAICallEngine.ARTCAICallAgentType.VisionAgent);
+            mCallTypeList.add(ChatBot);
 
+            mMotionalLayout = findViewById(R.id.config_layout);
             mTabCallType = findViewById(R.id.tab_function_detail_call_type);
             mViewPagerCallType = findViewById(R.id.viewpager_function_detail_call_type);
 
@@ -610,6 +623,11 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
                 @Override
                 public void onTabSelected(TabLayout.Tab tab) {
                     mAICallAgentType = mCallTypeList.get(tab.getPosition());
+                    if(mAICallAgentType == ChatBot) {
+                        mMotionalLayout.setVisibility(View.GONE);
+                    } else {
+                        mMotionalLayout.setVisibility(View.VISIBLE);
+                    }
                 }
 
                 @Override
@@ -680,6 +698,8 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
                 mIvPreview.setImageResource(R.drawable.bg_entrance_avatar_agent);
             } else if (mCallAgentType == ARTCAICallEngine.ARTCAICallAgentType.VisionAgent) {
                 mIvPreview.setImageResource(R.drawable.bg_entrance_vision_agent);
+            } else if(mCallAgentType == ARTCAICallEngine.ARTCAICallAgentType.ChatBot) {
+                mIvPreview.setImageResource(R.drawable.bg_entrance_chatbot_agent);
             } else {
                 mIvPreview.setImageResource(R.drawable.bg_entrance_voice_agent);
             }

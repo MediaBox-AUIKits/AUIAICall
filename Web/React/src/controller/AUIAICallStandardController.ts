@@ -15,20 +15,45 @@ class AUIAICallStandardController extends AUIAICallController {
     standardService.setAppServer(appServerUrl);
   }
 
-  async startAIAgent(): Promise<AICallAgentInfo> {
-    logger.info('StandardController', 'StartAIAgent');
-    let agentInfo: AICallAgentInfo | null = null;
+  private async describeAIAgent(instanceId: string) {
+    const startTs = Date.now();
+    try {
+      // 每次先清空当前的配置
+      this.config.templateConfig.avatarUrl = '';
+      this.config.templateConfig.agentVoiceId = '';
+      this.config.agentVoiceIdList = [];
+      const templateConfig = await standardService.describeAIAgent(this.userId, this.token, instanceId);
+      const configKey = AICallTemplateConfig.getTemplateConfigKey(this.config.agentType) as keyof TemplateConfig;
+      const configValue = templateConfig[configKey];
+      if (configValue?.AvatarUrl) {
+        this.config.templateConfig.avatarUrl = configValue?.AvatarUrl as string;
+      }
+      if (configValue?.VoiceId) {
+        this.config.templateConfig.agentVoiceId = configValue?.VoiceId as string;
+      }
+      if (configValue?.VoiceIdList) {
+        this.config.agentVoiceIdList = configValue.VoiceIdList as string[];
+      }
+      logger.info('StandardController', 'DescribeAIAgent', { value: Date.now() - startTs });
+    } catch (error) {
+      logger.error('DescribeAIAgentFailed', error as Error);
+      console.log(error);
+    }
+  }
 
+  async startAIAgent(): Promise<AICallAgentInfo> {
+    let agentInfo: AICallAgentInfo | null = null;
+    const startTs = Date.now();
     try {
       if (this.shareConfig) {
-        logger.info('StandardController', 'StartAIAgent', {
-          config: JSON.stringify(this.shareConfig),
-        });
-
         agentInfo = await this.engine?.generateShareAgentCall(this.shareConfig, this.userId);
       } else {
         agentInfo = await standardService.generateAIAgent(this.userId, this.token, this.config);
       }
+      logger.info('StandardController', 'StartAIAgent', {
+        share: !!this.shareConfig,
+        value: Date.now() - startTs,
+      });
     } catch (error) {
       logger.error('GenerateAIAgentFailed', error as Error);
       throw error;
@@ -40,27 +65,8 @@ class AUIAICallStandardController extends AUIAICallController {
       throw error;
     }
 
-    try {
-      // 每次先清空当前的配置
-      this.config.templateConfig.avatarUrl = '';
-      this.config.templateConfig.agentVoiceId = '';
-      this.config.agentVoiceIdList = [];
-      const templateConfig = await standardService.describeAIAgent(this.userId, this.token, agentInfo.instanceId);
-      const configKey = AICallTemplateConfig.getTemplateConfigKey(agentInfo.agentType) as keyof TemplateConfig;
-      const configValue = templateConfig[configKey];
-      if (configValue?.AvatarUrl) {
-        this.config.templateConfig.avatarUrl = configValue?.AvatarUrl as string;
-      }
-      if (configValue?.VoiceId) {
-        this.config.templateConfig.agentVoiceId = configValue?.VoiceId as string;
-      }
-      if (configValue?.VoiceIdList) {
-        this.config.agentVoiceIdList = configValue.VoiceIdList as string[];
-      }
-    } catch (error) {
-      logger.error('DescribeAIAgentFailed', error as Error);
-      console.log(error);
-    }
+    // 不需要等待 describeAIAgent 接口返回
+    this.describeAIAgent(agentInfo.instanceId);
 
     return agentInfo;
   }

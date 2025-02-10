@@ -18,7 +18,6 @@ AUI Kits AI智能体集成工具适用于网络客服、AI助理、撮合助手�
 │   ├── Resources                                 // 资源文件
 │   ├── Example                                   // Demo代码
 │   ├── AUIBaseKits                               // 基础UI组件 
-│   ├── AICallKit                                 // AICallKit组件（使用自定义实现） 
 │   ├── README.md                                 // Readme  
 
 ```
@@ -42,19 +41,24 @@ AUI Kits AI智能体集成工具适用于网络客服、AI助理、撮合助手�
 // AUIAICallAppServer.swift
 public let AICallServerDomain = "你的应用服务器域名"
 ```
-
+- 配置消息对话智能体Id，进入文件AUIAICallAgentConfig.swift
+```swift
+// AUIAICallAgentConfig.swift
+let ChatAgentId = "你的消息对话智能体Id"
+```
 - 选择”Example“Target 进行编译运行
 
 ## 快速开发自己的AI通话功能
-可通过以下几个步骤快速集成AUIAICall到你的APP中，让你的APP具备语AI通话功能
+可通过以下几个步骤快速集成AUIAICall到你的APP中，让你的APP具备语AI通话&消息对话功能
 
 ### 集成源码
 - 导入AUIAICall：仓库代码下载后，拷贝iOS文件夹到你的APP代码目录下，改名为AUIAICall，与你的Podfile文件在同一层级，可以删除Example和AICallKit目录
 - 修改你的Podfile，引入：
-  - AliVCSDK_ARTC：适用于实时互动的音视频终端SDK，也可以使用：AliVCSDK_Standard或AliVCSDK_InteractiveLive，参考[快速集成](https://help.aliyun.com/document_detail/2412571.htm)
-  - ARTCAICallKit：AI实时互动通话场景SDK
+  - AliVCSDK_ARTC：适用于AI实时互动通话的音视频终端SDK，也可以使用：AliVCSDK_Standard或AliVCSDK_InteractiveLive，参考[快速集成](https://help.aliyun.com/document_detail/2412571.htm)
+  - AliVCInteractionMessage：适用于消息对话的音互动消息SDK，如果你已经集成，请使用1.5.0版本及以上，参考[快速集成](https://help.aliyun.com/zh/live/user-guide/live-interactive-messages-new)
+  - ARTCAICallKit：AI实时互动通话场景&消息对话场景的SDK
   - AUIFoundation：基础UI组件
-  - AUIAICall：AI通话场景UI组件源码
+  - AUIAICall：AI通话场景&消息对话场景的UI组件源码
 ```ruby
 
 #需要iOS10.0及以上才能支持
@@ -62,16 +66,22 @@ platform :ios, '10.0'
 
 target '你的App target' do
     # 根据自己的业务场景，集成合适的音视频终端SDK，支持：AliVCSDK_ARTC、AliVCSDK_Standard、AliVCSDK_InteractiveLive
-    pod 'AliVCSDK_ARTC', '~> 6.19.0'
+    pod 'AliVCSDK_ARTC', '~> 6.21.0'
 
     # AI实时互动通话场景SDK
-    pod "ARTCAICallKit", '~> 1.6.0'
+    # 如果你的业务还需要支持消息对话，则使用“ARTCAICallKit/Chatbot”进行集成，把下面一行改为：pod 'ARTCAICallKit/Chatbot', '~> 2.0.0'
+    pod 'ARTCAICallKit', '~> 2.0.0'
 
     # 基础UI组件源码
     pod 'AUIFoundation', :path => "./AUIAICall/AUIBaseKits/AUIFoundation/", :modular_headers => true
 
     # AI通话场景UI组件源码
+    # 如果你的业务还需要支持消息对话，则使用“AUIAICall/Chatbot”进行集成，把下面这一行改为：pod 'AUIAICall/Chatbot',  :path => "./AUIAICall/"
     pod 'AUIAICall',  :path => "./AUIAICall/"
+
+    # 如果你的业务还需要支持消息对话，还需要集成AliVCInteractionMessage，版本最低是1.5.0
+    pod 'AliVCInteractionMessage', '~> 1.5.0'
+
 end
 ```
 - 执行“pod install --repo-update”
@@ -88,16 +98,22 @@ end
 // AUIAICallAppServer.swift
 public let AICallServerDomain = "你的应用服务器域名"
 ```
+- 如果你的业务还需要支持消息对话，需要配置消息对话智能体Id，进入文件AUIAICallAgentConfig.swift
+```swift
+// AUIAICallAgentConfig.swift
+let ChatAgentId = "你的消息对话智能体Id"
+```
 
 ### 调用API
 前面工作完成后，接下来可以根据自身的业务场景和交互，可以在你APP其他模块或主页上通过组件接口启动AI通话，也可以根据自身的需求修改源码。
 
+- 启动AI通话
 ``` Swift
 
 // 引入组件
 import AUIAICall
+import ARTCAICallKit
 import AUIFoundation
-
 
 // 检查是否开启麦克风权限
 AVDeviceAuth.checkMicAuth { auth in
@@ -105,10 +121,14 @@ AVDeviceAuth.checkMicAuth { auth in
         return
     }
     
+    // userId推荐使用你的App登录后的用户id
+    let userId = "123"
     // 通过userId构建controller，建议userId为当前登录的用户
     let controller = AUIAICallStandardController(userId: userId)
-    // 设置通话的类型（语音或数字人通话），appserver根据agentType选择对应的agentId启动通话
-    controller.config.agentType = agentType  
+    // 设置智能体Id，如果为nil，则使用在AppServer上配置的智能体id
+    controller.config.agentId = nil
+    // 设置通话的类型（语音、数字人或视觉理解），如果设置AgentId则需要与AgentId的类型对应，否则appserver根据agentType选择对应的agentId启动通话
+    controller.config.agentType = agentType
     // 创建通话ViewController
     let vc = AUIAICallViewController(controller)
     // 全屏方式打开通话界面
@@ -118,6 +138,30 @@ AVDeviceAuth.checkMicAuth { auth in
     self.present(vc, animated: true)
 }
 
+```
+
+- 启动AI消息对话
+``` Swift
+
+// 引入组件
+import AUIAICall
+import ARTCAICallKit
+import AUIFoundation
+
+// userId推荐使用你的App登录后的用户id
+let userId = "123"
+// 设置deviceId
+let deviceId = UIDevice.current.identifierForVendor?.uuidString
+let userInfo = ARTCAIChatUserInfo(userId, deviceId)
+
+// 设置智能体，智能体Id不能为nil
+let agentId = "xxxxx"
+let agentInfo = ARTCAIChatAgentInfo(agentId: agentId)
+
+// 创建消息对话的ViewController
+let vc = AUIAIChatViewController(userInfo: userInfo, agentInfo: agentInfo)
+// 打开通话界面
+self.navigationController?.pushViewController(vc, animated: true)
 
 ```
 

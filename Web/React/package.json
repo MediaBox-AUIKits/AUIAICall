@@ -18,7 +18,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "zustand": "^4.5.5",
-    "aliyun-auikit-aicall": "1.6.1"
+    "aliyun-auikit-aicall": "1.6.3"
   },
   "devDependencies": {
     "@arms/rum-browser": "^0.0.33",

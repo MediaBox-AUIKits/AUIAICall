@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'AUIAICall'
-  s.version          = '1.8.0'
+  s.version          = '2.0.0'
   s.summary          = 'A short description of AUIAICall.'
 
 # This description is used to generate tags and improve search results.
@@ -37,47 +37,40 @@ TODO: Add long description of the pod here.
 
   
   s.subspec 'Standard' do |ss|
-    ss.resource = 'Resources/AUIAICall.bundle'
+    ss.resources = 'Resources/AUIAICall.bundle'
     ss.source_files = 'Source/**/*.{swift,h,m,mm}'
-    ss.exclude_files = 'Source/AUIAICallMainViewController.swift', 'Source/Controller/Custom/**/*.{swift,h,m,mm}'
+    ss.exclude_files = 'Source/AUIAICallMainViewController.swift', 'Source/ChatBot/**/*.{swift,h,m,mm}'
     ss.dependency 'AUIFoundation'
     ss.dependency 'ARTCAICallKit'
-    ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => '$(inherited) AICALL_INTEGRATION_STANDARD'}
+    ss.dependency 'MJRefresh'
+    ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => '$(inherited)'}
   end
   
-  s.subspec 'Custom' do |ss|
-    ss.resource = 'Resources/AUIAICall.bundle'
+  s.subspec 'Chatbot' do |ss|
+    ss.resources = 'Resources/AUIAICall.bundle', 'Resources/AUIAIChat.bundle'
     ss.source_files = 'Source/**/*.{swift,h,m,mm}'
-    ss.exclude_files = 'Source/AUIAICallMainViewController.swift', 'Source/Controller/Standard/**/*.{swift,h,m,mm}'
+    ss.exclude_files = 'Source/AUIAICallMainViewController.swift'
     ss.dependency 'AUIFoundation'
-    ss.dependency 'ARTCAICallKit'
-    ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => '$(inherited) AICALL_INTEGRATION_CUSTOM'}
+    ss.dependency 'ARTCAICallKit/Chatbot'
+    ss.dependency 'MJRefresh'
+    ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => '$(inherited) AICALL_ENABLE_CHATBOT'}
   end
   
   s.subspec 'Demo' do |ss|
-    ss.resource = 'Resources/AUIAICall.bundle'
+    ss.resources = 'Resources/**/*.bundle'
     ss.source_files = 'Source/**/*.{swift,h,m,mm}'
-    ss.exclude_files = 'Source/Controller/Custom/**/*.{swift,h,m,mm}'
     ss.dependency 'AUIFoundation'
-    ss.dependency 'ARTCAICallKit'
-    ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => '$(inherited) AICALL_INTEGRATION_STANDARD '}
+    ss.dependency 'ARTCAICallKit/Chatbot'
+    ss.dependency 'MJRefresh'
+    ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => '$(inherited) AICALL_ENABLE_CHATBOT '}
   end
-  
-  s.subspec 'Demo_For_Custom' do |ss|
-    ss.resource = 'Resources/AUIAICall.bundle'
-    ss.source_files = 'Source/**/*.{swift,h,m,mm}'
-    ss.exclude_files = 'Source/Controller/Standard/**/*.{swift,h,m,mm}'
-    ss.dependency 'AUIFoundation'
-    ss.dependency 'ARTCAICallKit'
-    ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => '$(inherited) AICALL_INTEGRATION_CUSTOM '}
-  end
-  
   
   s.subspec 'Demo_For_Debug' do |ss|
-    ss.resource = 'Resources/AUIAICall.bundle'
+    ss.resources = 'Resources/**/*.bundle'
     ss.source_files = 'Source/**/*.{swift,h,m,mm}'
     ss.dependency 'AUIFoundation'
-    ss.dependency 'ARTCAICallKit'
+    ss.dependency 'ARTCAICallKit/Chatbot'
+    ss.dependency 'MJRefresh'
     ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => '$(inherited) DEMO_FOR_DEBUG '}
   end
   

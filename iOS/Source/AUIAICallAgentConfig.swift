@@ -13,6 +13,7 @@ import ARTCAICallKit
 let VoiceAgentId = ""
 let AvatarAgentId = ""
 let VisionAgentId = ""
+let ChatAgentId = ""
 
 let VoiceAgentEmotionalId = ""
 let AvatarAgentEmotionalId = ""
@@ -50,6 +51,10 @@ let VisionAgentEmotionalId = ""
             return nil
         }
         return ret
+    }
+    
+    public func getChatAgentId() -> String {
+        return ChatAgentId
     }
 }
 

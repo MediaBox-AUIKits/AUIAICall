@@ -28,6 +28,13 @@ public abstract class AbsContentModel<T> implements IContentModel<T> {
         }
     }
 
+    protected void insertContentHeader(List<T> dataList) {
+        for(IContentObserver<T> o : observers) {
+            o.onContentHeaderInsert(dataList);
+        }
+    }
+
+
     protected void updateContent(List<T> dataList) {
         for(IContentObserver<T> o : observers) {
             o.onContentUpdate(dataList);

@@ -106,13 +106,23 @@
 }
 
 + (void)showWithTitle:(NSString *)title message:(NSString *)message cancelTitle:(NSString *)cancelTitle okTitle:(NSString *)okTitle onCompleted:(void(^)(BOOL isCanced))completed {
+    [self showWithTitle:title message:message btn1:okTitle btn1Destructive:NO btn2:cancelTitle btn2Destructive:NO onCompleted:completed];
+}
+
++ (void)showWithTitle:(NSString *)title
+              message:(NSString *)message
+                 btn1:(NSString *)btn1
+      btn1Destructive:(BOOL)btn1Destructive
+                 btn2:(NSString *)btn2
+      btn2Destructive:(BOOL)btn2Destructive
+          onCompleted:(void(^)(BOOL isBtn2))completed {
     UIAlertController *alertController = [UIAlertController alertControllerWithTitle:title
                                                                    message:message
                                                             preferredStyle:UIAlertControllerStyleAlert];
     [AVTheme updateRootViewControllerInterfaceStyle:alertController];
     
-    UIAlertAction *okAction = [UIAlertAction actionWithTitle:okTitle
-                                                       style:UIAlertActionStyleDefault
+    UIAlertAction *okAction = [UIAlertAction actionWithTitle:btn1
+                                                       style:btn1Destructive ? UIAlertActionStyleDestructive : UIAlertActionStyleDefault
                                                      handler:^(UIAlertAction *action) {
         if (completed) {
             completed(NO);
@@ -120,9 +130,9 @@
     }];
     [alertController addAction:okAction];
     
-    if (cancelTitle.length > 0) {
-        UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:cancelTitle
-                                                               style:UIAlertActionStyleDefault
+    if (btn2.length > 0) {
+        UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:btn2
+                                                               style:btn2Destructive ? UIAlertActionStyleDestructive : UIAlertActionStyleDefault
                                                              handler:^(UIAlertAction * _Nonnull action) {
             if (completed) {
                 completed(YES);
