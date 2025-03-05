@@ -62,3 +62,17 @@
 * Android&iOS&Web：支持实时互动通话时发送消息给智能体
 * Android&iOS&Web：TTS/STT集成三方插件时，可选选择对应的语种和音色
 * Android&iOS：支持实时互动通话集成AEC插件，支持端侧智能降噪
+
+
+## v2.1.0
+发布时间：2025-02-28
+* Web：支持消息对话智能体
+* Android&iOS：消息对话聊天记录联动音视频通话
+* Android&iOS：消息对话智能体支持deepseek及返回深度思考过程
+* Android&iOS：消息对话智能体支持业务参数透传至下一业务系统
+* Android&iOS：消息对话支持主动发送自定义消息
+* Android&iOS&Web：通话智能体支持通过设定特定词进行打断
+* Android&iOS&Web：通话智能体支持实例级别的设定大模型提示词
+* Android&iOS&Web：视觉理解通话支持选取特定时间和特定截帧数量
+* Android&iOS&Web：通话智能体支持发送消息给客户注册的回调服务
+

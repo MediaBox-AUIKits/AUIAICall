@@ -33,6 +33,7 @@ public class SettingStorage {
     public static final String KEY_MAX_IDLE_TIME = "KEY_MAX_IDLE_TIME";
     public static final String KEY_WORK_FLOW_OVERRIDE_PARAMS = "KEY_WORK_FLOW_OVERRIDE_PARAMS";
     public static final String KEY_BAILIAN_APP_PARAMS = "KEY_BAILIAN_APP_PARAMS";
+    public static final String KEY_LLM_SYSTEM_PROMPT = "KEY_LLM_SYSTEM_PROMPT";
     public static final String KEY_VOLUME = "KEY_VOLUME";
     public static final String KEY_GREETING = "KEY_GREETING";
     public static final String KEY_VOICE_PRINT_ID = "KEY_VOICE_PRINT_ID";
@@ -41,6 +42,8 @@ public class SettingStorage {
     public static final String KEY_ASR_MAX_SILENCE = "KEY_ASR_MAX_SILENCE";
     public static final String KEY_USER_ONLINE_TIME_OUT = "KEY_USER_ONLINE_TIME_OUT";
     public static final String KEY_USER_ASR_LANGUAGE = "KEY_USER_ASR_LANGUAGE";
+    public static final String KEY_INTERRUPT_WORDS = "KEY_INTERRUPT_WORDS";
+    public static final String KEY_VAD_LEVEL = "KEY_VAD_LEVEL";
 
 
 
@@ -61,8 +64,8 @@ public class SettingStorage {
             false :
             false;  // 发布包默认要为false
     public static final boolean DEFAULT_ENABLE_VOICE_PRINT = BuildConfig.TEST_ENV_MODE ?
-            true :
-            true;  // 发布包默认要为true
+            false :
+            false;  // 发布包默认要为false
     public static final boolean DEFAULT_SHARE_BOOT_USE_DEMO_APP_SERVER = BuildConfig.TEST_ENV_MODE ?
             false :
             false; // 发布包默认改为false

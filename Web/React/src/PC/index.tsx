@@ -4,11 +4,11 @@ import { AICallAgentType, AICallState } from 'aliyun-auikit-aicall';
 
 import Stage from './Stage';
 import Message from './Message';
-import useCallStore from '@/common/store';
+import useCallStore from '@/Mobile/Call/store';
 
 import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { debounce } from '@/common/utils';
-import ControllerContext from '@/common/ControlerContext';
+import ControllerContext from '@/Mobile/Call/ControlerContext';
 import i18n, { getErrorMessage } from '@/common/i18n';
 
 import './call.less';

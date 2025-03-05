@@ -49,6 +49,7 @@ import AVFoundation
         
         self.agentShareConfig = agentShareConfig
         let agentInfo = ARTCAIChatAgentInfo(agentId: self.agentShareConfig?.shareId ?? "invalid_agent_id")
+        agentInfo.region = self.agentShareConfig?.region ?? "cn-shanghai"
         self.listMessage = AUIAIChatViewController.loadMessage(fileName: self.sessionId, senderId: userInfo.userId)
         self.engine.delegate = self
         self.engine.startChat(userInfo: userInfo, agentInfo: agentInfo, sessionId: self.sessionId)
@@ -154,10 +155,22 @@ import AVFoundation
     
     open lazy var bottomView: AUIAIChatBottomView = {
         let view = AUIAIChatBottomView()
+        view.callBtn.isHidden = self.agentShareConfig != nil
+        view.callBtn.clickBlock = {[weak self] btn in
+            guard let self = self else {
+                return
+            }
+            if self.engine.state != .Connected {
+                self.showToast(AUIAIChatBundle.getString("Unable to start call because there is not connected"))
+                return
+            }
+            let chatSyncConfig = ARTCAICallChatSyncConfig(sessionId: self.sessionId, agentId: self.engine.agentInfo?.agentId ?? "", receiverId: self.engine.userInfo?.userId ?? "")
+            AUIAICallManager.defaultManager.startCall(agentType: .VoiceAgent, chatSyncConfig: chatSyncConfig)
+        }
         view.onClickedStop = { [weak self] bottomView in
             guard let self = self else { return }
             self.engine.interruptAgentResponse()
-            self.showToast(AUIAIChatBundle.getString("用户终止了本次回答"))
+            self.showToast(AUIAIChatBundle.getString("User terminated this response"))
         }
         view.textView.onClickedInputText = { [weak self] textView in
             guard let self = self else { return }
@@ -338,6 +351,8 @@ import AVFoundation
                     self?.refreshMessageCellState(item: item)
                 }
                 if let _ = error {
+                    let msg = ARTCAIChatMessage(sendText: item.message.text, requestId: item.message.requestId, state: .Failed)
+                    item.message = msg
                     self?.refreshMessageCellState(item: item)
                 }
             })
@@ -471,17 +486,15 @@ extension AUIAIChatViewController {
     
     open override func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         let item = self.listMessage[indexPath.row]
-        var size = item.displaySize
-        if size == nil {
+        if item.displaySize == nil {
             if item.isLeft {
-                size = AUIAIChatMessageAgentTextCell.getAgentSize(item: item, maxWidth: self.collectionView.av_width - 40)
+                AUIAIChatMessageAgentTextCell.computeAgentSize(item: item, maxWidth: self.collectionView.av_width - 40)
             }
             else {
-                size = AUIAIChatMessageTextCell.getSize(item: item, maxWidth: self.collectionView.av_width - 72)
+                AUIAIChatMessageTextCell.computeSize(item: item, maxWidth: self.collectionView.av_width - 72)
             }
-            item.displaySize = size
         }
-        return CGSize(width: self.collectionView.av_width - 40, height: size!.height)
+        return CGSize(width: self.collectionView.av_width - 40, height: item.displaySize?.height ?? 0)
     }
         
     open override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
@@ -489,7 +502,13 @@ extension AUIAIChatViewController {
         if item.message.messageType == .Text {
             var textCell: AUIAIChatMessageTextCell? = nil
             if item.isLeft == true {
-                textCell = self.collectionView.dequeueReusableCell(withReuseIdentifier: "AgentTextCell", for: indexPath) as? AUIAIChatMessageAgentTextCell
+                let agentTextCell = self.collectionView.dequeueReusableCell(withReuseIdentifier: "AgentTextCell", for: indexPath) as? AUIAIChatMessageAgentTextCell
+                agentTextCell?.onReasonExpandBlock = {[weak self] cell in
+                    cell.item?.isExpandReasonText = cell.item?.isExpandReasonText == false
+                    cell.item?.reasonSize = nil
+                    self?.collectionView.reloadData()
+                }
+                textCell = agentTextCell
             }
             else {
                 textCell = self.collectionView.dequeueReusableCell(withReuseIdentifier: "TextCell", for: indexPath) as? AUIAIChatMessageTextCell
@@ -501,7 +520,7 @@ extension AUIAIChatViewController {
                     self.sendMessage(item: item)
                 }
                 textCell.onCopyBlock = { [weak self] item in
-                    guard let self = self else { return }
+                    guard let self = self, item.message.text.isEmpty == false else { return }
                     UIPasteboard.general.string = item.message.text
                     self.showToast(AUIAIChatBundle.getString("Message copied"))
                 }
@@ -514,6 +533,7 @@ extension AUIAIChatViewController {
                     self.showMenuView(position: locationInParentView, item: item)
                 }
                 textCell.onPlayBlock = { [weak self, weak textCell] item in
+                    guard item.message.text.isEmpty == false else { return }
                     if item.message.messageState == .Init || item.message.messageState == .Transfering || item.message.messageState == .Printing {
                         return
                     }
@@ -698,22 +718,29 @@ extension AUIAIChatViewController: ARTCAIChatEngineDelegate {
             return item.isLeft == false && item.message.requestId == message.requestId
         }
         if let item = item {
+            item.message = message
             debugPrint("onUserMessageUpdated:\(item.message.toData())")
             self.needSaveMessages = true
         }
     }
     
     public func onReceivedMessage(message: ARTCAIChatMessage) {
+        let isLeft = message.senderId == self.engine.agentInfo?.agentId
         let item = self.listMessage.last { item in
-            return item.isLeft == true && item.message.requestId == message.requestId
+            return item.isLeft == isLeft && item.message.requestId == message.requestId
         }
         
         if let item = item {
             item.message = message
-            item.displaySize = nil
+            if message.reasoningText != nil && message.isReasoningEnd == false {
+                item.reasonSize = nil
+            }
+            else {
+                item.contentSize = nil
+            }
             
             if (item.message.messageState == .Interrupted || item.message.messageState == .Failed)
-                && item.message.text.isEmpty {
+                && item.message.text.isEmpty && item.message.reasoningText?.isEmpty != false {
                 // 当前智能体消息被打断或者失败，且消息为空，需要从列表中移除
                 self.listMessage.removeAll { remove in
                     return remove == item
@@ -721,9 +748,9 @@ extension AUIAIChatViewController: ARTCAIChatEngineDelegate {
             }
         }
         else {
-            let agentItem = AUIAIChatMessageItem(message: message)
-            agentItem.isLeft = true
-            self.listMessage.append(agentItem)
+            let item = AUIAIChatMessageItem(message: message)
+            item.isLeft = isLeft
+            self.listMessage.append(item)
             self.canAutoScroll = true
         }
         self.collectionView.reloadData()
@@ -745,6 +772,11 @@ extension AUIAIChatViewController: ARTCAIChatEngineDelegate {
                 self.setPlayMessageLoadingViewVisible(visible: false)
             }
         }
+    }
+    
+    public func onReceivedCustomMessage(text: String) {
+        // 在这里处理自定义消息
+        AVToastView.show(String(format: AUIAICallBundle.getString("Received Custom Message: %@"), text) , view: self.view, position: .mid)
     }
 }
 

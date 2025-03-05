@@ -165,8 +165,7 @@ public class AIAgentController {
         }
         if(200 == response.getCode()){
             Map<String, Object> map = new HashMap<>(1);
-            map.put("voice_name", response.getVoiceId());
-            map.put("message", response.getMessage());
+            map.put("voice_id", response.getVoiceId());
             Result result = Result.ok();
             result.putAll(map);
             return result;

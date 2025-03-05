@@ -3,7 +3,7 @@
 "AI Avatar Call" = "数字人通话";
 "AI Vision Call" = "视觉理解通话";
 
-"Configuration" = "配置项";
+"Options" = "配置项";
 "Emotion Support" = "情绪音色";
 "Does agent support emotional label output?" = "用于选择智能体的音色是否包含情绪";
 "Unemotional" = "不含情绪";
@@ -94,6 +94,7 @@
 "Voiceprint is turned on" = "声纹识别已开启";
 "Voiceprint is turned off" = "声纹识别已关闭";
 "Detected other speaking, stop responded this question." = "（声纹）识别到不是常用对话人，暂未响应您的问题";
+"VAD detected other speaking, stop responded this question." = "（AIVad）识别到不是常用对话人，暂未响应您的问题";
 "Failed to clear voiceprint's data." = "删除声纹数据失！";
 "Detected speaking" = "声纹已识别";
 "Remove Voiceprint" = "删除声纹";
@@ -105,3 +106,6 @@
 "The current call is now being handled by a real person." = "当前通话已经被真人接管";
 
 "The agent seems to be %@" = "智能体情绪：%@";
+"Custom frame capture inspection mode has been enabled." = "已开启自定义截帧送检模式，语音输入将不起作用";
+"Exited custom frame capture inspection mode." = "已退出自定义截帧送检模式";
+"Speaking interrupted" = "当前讲话已被打断";

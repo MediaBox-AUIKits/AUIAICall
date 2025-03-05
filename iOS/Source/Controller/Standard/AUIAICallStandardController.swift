@@ -428,6 +428,16 @@ extension AUIAICallStandardController: ARTCAICallEngineDelegate {
         debugPrint("AUIAICallStandardController onHumanTakeoverConnected:\(takeoverUid)")
         self.delegate?.onAICallHumanTakeoverConnected?(takeoverUid: takeoverUid)
     }
+    
+    public func onVisionCustomCapture(enable: Bool) {
+        debugPrint("AUIAICallStandardController onVisionCustomCapture:\(enable)")
+        self.delegate?.onAICallVisionCustomCapture?(enable: enable)
+    }
+    
+    public func onSpeakingInterrupted(reason: ARTCAICallSpeakingInterruptedReason) {
+        debugPrint("AUIAICallStandardController onSpeakingInterrupted:\(reason)")
+        self.delegate?.onAICallSpeakingInterrupted?(reason: reason)
+    }
 }
 
 extension AUIAICallStandardController {
@@ -473,6 +483,10 @@ extension AUIAICallStandardController {
         }
         if let userData = self.config.userData {
             body.updateValue(userData.aicall_jsonString, forKey: "user_data")
+        }
+        if let chatSyncConfig = self.config.chatSyncConfig {
+            body.updateValue(chatSyncConfig.sessionId, forKey: "session_id")
+            body.updateValue(chatSyncConfig.getConfigString(), forKey: "chat_sync_config")
         }
 
         self.appserver.request(path: "/api/v2/aiagent/generateAIAgentCall", body: body) { [weak self] response, data, error in

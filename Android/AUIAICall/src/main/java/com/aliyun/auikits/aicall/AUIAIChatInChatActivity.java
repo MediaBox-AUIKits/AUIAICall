@@ -1,5 +1,7 @@
 package com.aliyun.auikits.aicall;
 
+import static com.aliyun.auikits.aiagent.ARTCAICallEngine.ARTCAICallAgentType.ChatBot;
+import static com.aliyun.auikits.aiagent.ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent;
 import static com.aliyun.auikits.aiagent.ARTCAIChatEngine.ARTCAIChatAgentState.Listening;
 import static com.aliyun.auikits.aiagent.ARTCAIChatEngine.ARTCAIChatAgentState.Thinking;
 import static com.aliyun.auikits.aicall.util.AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_ID;
@@ -12,6 +14,7 @@ import static com.aliyun.auikits.aicall.util.AUIAIConstStrKey.BUNDLE_KEY_TOKEN_E
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
@@ -53,8 +56,12 @@ import com.aliyun.auikits.aicall.base.card.CardListAdapter;
 import com.aliyun.auikits.aicall.base.card.DefaultCardViewFactory;
 import com.aliyun.auikits.aicall.base.feed.ContentViewModel;
 import com.aliyun.auikits.aicall.bean.AudioToneData;
+import com.aliyun.auikits.aicall.controller.ARTCAICallController;
 import com.aliyun.auikits.aicall.model.ChatBotChatMsgContentModel;
+import com.aliyun.auikits.aicall.util.AUIAICallAgentDebug;
+import com.aliyun.auikits.aicall.util.AUIAICallAgentIdConfig;
 import com.aliyun.auikits.aicall.util.AUIAIChatMessageCacheHelper;
+import com.aliyun.auikits.aicall.util.AUIAIConstStrKey;
 import com.aliyun.auikits.aicall.util.AppServiceConst;
 import com.aliyun.auikits.aicall.util.BizStatHelper;
 import com.aliyun.auikits.aicall.util.SettingStorage;
@@ -184,7 +191,11 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
         @Override
         public void onReceivedMessage(ARTCAIChatEngine.ARTCAIChatMessage message) {
             if(message.messageType == ARTCAIChatEngine.ARTCAIChatMessageType.Text) {
-                mLayoutHolder.handleAIChatMessage(message, true);
+                if(!TextUtils.isEmpty(message.senderId) && message.senderId.equals(mAgentId)) {
+                    mLayoutHolder.handleAIChatMessage(message, true);
+                } else {
+                    mLayoutHolder.handleAIChatMessage(message, false);
+                }
             }
         }
 
@@ -206,6 +217,14 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
             Logger.i("onMessagePlayStateChange: " + message.dialogueId + ", state " + state);
             playState = state;
             mLayoutHolder.messagePlayStateChaneged();
+        }
+
+        @Override
+        public void onReceivedCustomMessage(String  text) {
+            Logger.i("onReceivedCustomMessage: " + text);
+            if(BuildConfig.TEST_ENV_MODE) {
+                ToastHelper.showToast(AUIAIChatInChatActivity.this, "receive custom message: " + text, Toast.LENGTH_SHORT);
+            }
         }
     };
 
@@ -265,6 +284,8 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
             }
         });
 
+
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
@@ -287,16 +308,46 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
         mSessionId = mUserId + "_" +mAgentId;
 
         boolean usePreHost = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_APP_SERVER_TYPE, SettingStorage.DEFAULT_APP_SERVER_TYPE);
-        mAppServer = usePreHost ? AppServiceConst.PRE_HOST : AppServiceConst.HOST;
+        mAppServer = usePreHost ? AUIAICallAgentDebug.PRE_HOST : AppServiceConst.HOST;
         mAppServerService = new ARTCAICallServiceImpl.AppServerService(mAppServer);
 
+        ARTCAIChatEngine.ARTCAIChatAgentInfo agentInfo = new ARTCAIChatEngine.ARTCAIChatAgentInfo(mAgentId);
+        if(!mIsSharedAgent) {
+            mAgentRegion = AUIAICallAgentIdConfig.getRegion();
+        }
+        if(!TextUtils.isEmpty(mAgentRegion)) {
+            agentInfo.region = mAgentRegion;
+        }
         mChatEngine = new ARTCAIChatEngineImpl(AUIAIChatInChatActivity.this);
         mChatEngine.setEngineCallback(mAIChatEngineCallback);
+        if(BuildConfig.TEST_ENV_MODE) {
+            String userData = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_USER_EXTEND_DATA);
+            if(!TextUtils.isEmpty(userData)) {
+                mChatEngine.setUserData(userData);
+            }
+            String bailianParam = SettingStorage.getInstance().get(SettingStorage.KEY_BAILIAN_APP_PARAMS);
+            if(!TextUtils.isEmpty(bailianParam)) {
+                mChatEngine.setTemplateConfig(new ARTCAIChatEngine.ARTCAIChatTemplateConfig(bailianParam, ""));
+            }
+        }
+
         mChatEngine.startChat(
                 new ARTCAIChatEngine.ARTCAIChatUserInfo(mUserId, ""),
-                new ARTCAIChatEngine.ARTCAIChatAgentInfo(mAgentId), mSessionId);
+                agentInfo, mSessionId);
         mLayoutHolder.loadMessageFromCache();
         mLayoutHolder.changeConnectionStatusText(mChatEngine.getEngineState());
+
+        if(BuildConfig.TEST_ENV_MODE && !mIsSharedAgent) {
+            findViewById(R.id.btn_chatbot_call).setVisibility(View.VISIBLE);
+            findViewById(R.id.btn_chatbot_call).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    jumpToInCallActivity();
+                }
+            });
+        }else {
+            findViewById(R.id.btn_chatbot_call).setVisibility(View.GONE);
+        }
     }
 
     @Override
@@ -310,6 +361,28 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
             ToastHelper.showToast(this, R.string.tips_exit, Toast.LENGTH_SHORT);
         }
         mLastBackButtonExitMillis = nowMillis;
+    }
+
+    private void jumpToInCallActivity() {
+        Intent intent = new Intent(AUIAIChatInChatActivity.this, AUIAICallInCallActivity.class);
+        intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_USER_ID, mUserId);
+        intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_AUTHORIZATION, mUserLoginAuthorization);
+        intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_TYPE, VoiceAgent);
+        boolean useEmotional = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_EMOTION, SettingStorage.DEFAULT_BOOT_ENABLE_EMOTION);
+        boolean usePreHost = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_APP_SERVER_TYPE, SettingStorage.DEFAULT_APP_SERVER_TYPE);
+        String agentId = "";
+        if(BuildConfig.TEST_ENV_MODE) {
+            agentId = usePreHost ? AUIAICallAgentDebug.getAIAgentId(VoiceAgent, useEmotional) :  AUIAICallAgentIdConfig.getAIAgentId(VoiceAgent, useEmotional);
+        }
+        else {
+            agentId = AUIAICallAgentIdConfig.getAIAgentId(VoiceAgent, useEmotional);
+        }
+        if(!TextUtils.isEmpty(agentId)) {
+            intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_ID, agentId);
+        }
+        intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_IS_SHARED_AGENT, false);
+        intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_CHAT_SYNC_CONFIG, true);
+        startActivity(intent);
     }
 
     private void finishChat() {
@@ -912,7 +985,7 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
             boolean notifyChangedInstead = false;
             if(pos >= 0 && pos < mChatMessageListAdapter.getItemCount()) {
                 if(chatMessage.messageState != ARTCAIChatEngine.ARTCAIChatMessageState.Failed) {
-                    if(!TextUtils.isEmpty(chatMessage.text)) {
+                    if(!TextUtils.isEmpty(chatMessage.text) || !TextUtils.isEmpty(chatMessage.reasoningText)) {
                         CardEntity cardEntity = (CardEntity) mChatMessageListAdapter.getItem(pos);
                         if(cardEntity != null) {
                             ChatBotChatMessage uiMessage = (ChatBotChatMessage) cardEntity.bizData;
@@ -997,6 +1070,10 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
                 mSkipPlayStoppedMessage = true;
             }
             if(shouldStartPlay) {
+                if(TextUtils.isEmpty(message.text)) {
+                    ToastHelper.showToast(mContextRef.get(), "AI Response is null, can not play", Toast.LENGTH_SHORT);
+                    return;
+                }
                 ToastHelper.showToast(mContextRef.get(), R.string.chat_bot_play_text_tips, Toast.LENGTH_SHORT);
                 mChatEngine.startPlayMessage(message, voiceId, new ARTCAIChatEngine.IARTCAIChatMessageCallback() {
                     @Override
@@ -1117,19 +1194,23 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
                         if(cardEntity != null && cardEntity.bizData != null) {
                             ChatBotChatMessage uiMessage = (ChatBotChatMessage) cardEntity.bizData;
                             if(uiMessage.getMessage() != null) {
-                                copyToClipboard(mContextRef.get(), uiMessage.getMessage().text);
-                                ToastHelper.showToast(mContextRef.get(), "Text has copyed", Toast.LENGTH_SHORT);
-                                copyIcon.setImageResource(R.drawable.ic_chatbot_message_copyed);
-                                new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        if(uiMessage.getMessage().senderId.equals(mAgentId)) {
-                                            copyIcon.setImageResource(R.drawable.ic_chatbot_message_copy);
-                                        } else {
-                                            copyIcon.setImageResource(R.drawable.ic_chatbot_message_copy_highlight);
+                                if(!TextUtils.isEmpty(uiMessage.getMessage().text)) {
+                                    copyToClipboard(mContextRef.get(), uiMessage.getMessage().text);
+                                    ToastHelper.showToast(mContextRef.get(), "Text has copyed", Toast.LENGTH_SHORT);
+                                    copyIcon.setImageResource(R.drawable.ic_chatbot_message_copyed);
+                                    new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            if(uiMessage.getMessage().senderId.equals(mAgentId)) {
+                                                copyIcon.setImageResource(R.drawable.ic_chatbot_message_copy);
+                                            } else {
+                                                copyIcon.setImageResource(R.drawable.ic_chatbot_message_copy_highlight);
+                                            }
                                         }
-                                    }
-                                }, 2000);
+                                    }, 2000);
+                                } else {
+                                    ToastHelper.showToast(mContextRef.get(), "AI Response is null, can not copy", Toast.LENGTH_SHORT);
+                                }
                             }
                         }
                     }

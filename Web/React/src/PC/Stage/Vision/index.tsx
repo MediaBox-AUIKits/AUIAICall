@@ -1,7 +1,7 @@
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
-import ControllerContext from '@/common/ControlerContext';
+import ControllerContext from '@/Mobile/Call/ControlerContext';
 import './index.less';
-import useCallStore from '@/common/store';
+import useCallStore from '@/Mobile/Call/store';
 
 import noCameraUrl from './noCamera.png';
 

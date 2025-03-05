@@ -49,7 +49,8 @@ public class ImsServiceImpl implements ImsService {
         String robotRtcAuthToken = createBase64Token(channelId, robotUserId, getAigcTimestamp());
 
         AiAgentStartResponse aiAgentStartResponse = aiAgentService.startAiAgent(channelId, robotUserId, robotRtcAuthToken,
-                aiAgentStartRequestDto.getTemplateConfig(), aiAgentStartRequestDto.getWorkflowType(), aiAgentStartRequestDto.getUserData());
+                aiAgentStartRequestDto.getTemplateConfig(), aiAgentStartRequestDto.getWorkflowType(), aiAgentStartRequestDto.getUserData(),
+                aiAgentStartRequestDto.getSessionId(), aiAgentStartRequestDto.getChatSyncConfig());
         return AiAgentStartResponse.builder().aiAgentInstanceId(aiAgentStartResponse.getAiAgentInstanceId()).rtcAuthToken(rtcAuthToken)
                 .aiAgentUserId(robotUserId).channelId(channelId).requestId(aiAgentStartResponse.getRequestId())
                 .result(aiAgentStartResponse.isResult()).message(aiAgentStartResponse.getMessage())
@@ -69,7 +70,7 @@ public class ImsServiceImpl implements ImsService {
     @Override
     public GenerateAIAgentCallResponse generateAIAgentCall(GenerateAIAgentCallRequestDto requestDto) {
         return aiAgentService.generateAIAgentCall(requestDto.getAiAgentId(),requestDto.getUserId(), requestDto.getExpire(),
-                requestDto.getTemplateConfig(), requestDto.getWorkflowType(), requestDto.getRegion(), requestDto.getUserData());
+                requestDto.getTemplateConfig(), requestDto.getWorkflowType(), requestDto.getRegion(), requestDto.getUserData(), requestDto.getSessionId(), requestDto.getChatSyncConfig());
     }
 
     @Override

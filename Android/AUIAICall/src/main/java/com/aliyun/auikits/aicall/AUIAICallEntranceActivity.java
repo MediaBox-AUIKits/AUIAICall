@@ -30,6 +30,7 @@ import com.alibaba.android.arouter.facade.annotation.Route;
 import com.aliyun.auikits.aiagent.ARTCAICallEngine;
 import com.aliyun.auikits.aiagent.util.ARTCAIAgentUtil;
 import com.aliyun.auikits.aicall.controller.ARTCAICallController;
+import com.aliyun.auikits.aicall.util.AUIAICallAgentDebug;
 import com.aliyun.auikits.aicall.util.AUIAICallAgentIdConfig;
 import com.aliyun.auikits.aicall.util.AUIAIConstStrKey;
 import com.aliyun.auikits.aicall.util.PermissionUtils;
@@ -51,6 +52,7 @@ import java.util.List;
 public class AUIAICallEntranceActivity extends AppCompatActivity {
     private String mLoginUserId = null;
     private String mLoginAuthorization = null;
+    private boolean mInternalBuild = false;
 
     private long mLastSettingTapMillis = 0;
     private long mLastSettingTapCount = 0;
@@ -118,6 +120,7 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
         if (getIntent() != null && null != getIntent().getExtras()) {
             mLoginUserId = getIntent().getStringExtra("login_user_id");
             mLoginAuthorization = getIntent().getStringExtra("authorization");
+            mInternalBuild = getIntent().getBooleanExtra("international_build", false);
         }
         if (TextUtils.isEmpty(mLoginUserId)) {
             // 建议绑定为业务的登录用户id
@@ -145,7 +148,7 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
             boolean usePreHost = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_APP_SERVER_TYPE, SettingStorage.DEFAULT_APP_SERVER_TYPE);
             String agentId = "";
             if(BuildConfig.TEST_ENV_MODE) {
-                agentId = usePreHost ? AUIAICallAgentIdConfig.getAIAgentIdForDebug(mLayoutHolder.getOfficialLayerHolder().getAICallAgentType(), useEmotional) :  AUIAICallAgentIdConfig.getAIAgentId(mLayoutHolder.getOfficialLayerHolder().getAICallAgentType(), useEmotional);
+                agentId = usePreHost ? AUIAICallAgentDebug.getAIAgentId(mLayoutHolder.getOfficialLayerHolder().getAICallAgentType(), useEmotional) :  AUIAICallAgentIdConfig.getAIAgentId(mLayoutHolder.getOfficialLayerHolder().getAICallAgentType(), useEmotional);
             }
             else {
                 agentId = AUIAICallAgentIdConfig.getAIAgentId(mLayoutHolder.getOfficialLayerHolder().getAICallAgentType(), useEmotional);
@@ -198,6 +201,10 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
         ((EditText) view.findViewById(R.id.AsrMaxSilence_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_ASR_MAX_SILENCE, "400"));
         ((EditText) view.findViewById(R.id.UserOnlineTimeout_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_USER_ONLINE_TIME_OUT, "60"));
         ((EditText) view.findViewById(R.id.asrLanguage_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_USER_ASR_LANGUAGE, ""));
+        ((EditText) view.findViewById(R.id.llmSystemPrompt_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_LLM_SYSTEM_PROMPT));
+        ((EditText) view.findViewById(R.id.interrupt_words_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_INTERRUPT_WORDS, ""));
+        ((EditText) view.findViewById(R.id.vad_level_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_VAD_LEVEL, "1"));
+
 
         if (!showExtraDebugConfig) {
             view.findViewById(R.id.ll_audio_dump).setVisibility(View.GONE);
@@ -283,6 +290,10 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
 
                         String bootAsrLanguage = ((EditText)view.findViewById(R.id.asrLanguage_input)).getText().toString();
                         SettingStorage.getInstance().set(SettingStorage.KEY_USER_ASR_LANGUAGE, bootAsrLanguage);
+
+                        SettingStorage.getInstance().set(SettingStorage.KEY_LLM_SYSTEM_PROMPT, ((EditText)view.findViewById(R.id.llmSystemPrompt_input)).getText().toString());
+                        SettingStorage.getInstance().set(SettingStorage.KEY_INTERRUPT_WORDS, ((EditText)view.findViewById(R.id.interrupt_words_input)).getText().toString());
+                        SettingStorage.getInstance().set(SettingStorage.KEY_VAD_LEVEL, ((EditText)view.findViewById(R.id.vad_level_input)).getText().toString());
 
                     }
                     if (v.getId() == R.id.btn_confirm || v.getId() == R.id.btn_cancel) {
@@ -598,7 +609,9 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
             mCallTypeList.add(ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent);
             mCallTypeList.add(ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent);
             mCallTypeList.add(ARTCAICallEngine.ARTCAICallAgentType.VisionAgent);
-            mCallTypeList.add(ChatBot);
+            if(!mInternalBuild) {
+                mCallTypeList.add(ChatBot);
+            }
 
             mMotionalLayout = findViewById(R.id.config_layout);
             mTabCallType = findViewById(R.id.tab_function_detail_call_type);

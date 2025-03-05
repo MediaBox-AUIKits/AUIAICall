@@ -15,6 +15,7 @@ import ARTCAICallKit
         super.init(frame: CGRect.zero)
         
         self.backgroundColor = AVTheme.bg_weak
+        self.addSubview(self.callBtn)
         self.addSubview(self.textView)
         self.addSubview(self.audioView)
     }
@@ -26,9 +27,21 @@ import ARTCAICallKit
     open override func layoutSubviews() {
         super.layoutSubviews()
         
-        self.textView.frame = CGRect(x: 20, y: 14, width: self.av_width - 40, height: 40)
-        self.audioView.frame = CGRect(x: 20, y: 14, width: self.av_width - 40, height: 40)
+        self.callBtn.frame = CGRect(x: self.av_width - 40 - 14, y: 14, width: 40, height: 40)
+        var right = self.callBtn.av_left - 6
+        if self.callBtn.isHidden {
+            right = self.av_width - 20.0
+        }
+        
+        self.textView.frame = CGRect(x: 20, y: 14, width: right - 20.0, height: 40)
+        self.audioView.frame = CGRect(x: 20, y: 14, width: right - 20.0, height: 40)
     }
+    
+    open lazy var callBtn: AVBlockButton = {
+        let btn = AVBlockButton()
+        btn.setImage(AUIAIChatBundle.getImage("ic_call"), for: .normal)
+        return btn
+    }()
 
     open lazy var textView: AUIAIChatInputTextView = {
         let view = AUIAIChatInputTextView()

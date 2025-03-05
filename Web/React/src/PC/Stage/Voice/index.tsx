@@ -1,9 +1,9 @@
-import useCallStore from '@/common/store';
+import useCallStore from '@/Mobile/Call/store';
 import { AICallAgentState } from 'aliyun-auikit-aicall';
 import { useContext, useEffect, useRef, useState } from 'react';
 
 import './index.less';
-import ControllerContext from '@/common/ControlerContext';
+import ControllerContext from '@/Mobile/Call/ControlerContext';
 
 const AgentStateClassMap = {
   [AICallAgentState.Listening]: '_is-listening',

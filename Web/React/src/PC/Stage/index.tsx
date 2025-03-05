@@ -9,7 +9,7 @@ import Voice from './Voice';
 import Video from './Video';
 
 import './index.less';
-import useCallStore from '@/common/store';
+import useCallStore from '@/Mobile/Call/store';
 import ArrowBtn from '../components/ArrowBtn';
 import { useEffect, useState } from 'react';
 import Vision from './Vision';

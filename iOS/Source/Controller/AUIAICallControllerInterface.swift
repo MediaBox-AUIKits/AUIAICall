@@ -27,6 +27,7 @@ import ARTCAICallKit
     open var templateConfig: ARTCAICallTemplateConfig!        // 用户自定义信息，该信息最终传给智能体
     open var userData: [String: Any]? = nil                   // 用户自定义信息，该信息最终传给智能体
 
+    open var chatSyncConfig: ARTCAICallChatSyncConfig? = nil  // 关联的chat智能体配置，如果设置了，那么在通话过程中会把通话记录同步到chat智能体上
     
     // =================== 端侧设备控制能力 ====================================
     open var enableSpeaker = true                  // 是否开启扬声器
@@ -121,6 +122,16 @@ import ARTCAICallKit
      * 当真人接管已经接通
      */
     @objc optional func onAICallHumanTakeoverConnected(takeoverUid: String)
+    
+    /**
+     * 当前Vision通话是否启用了自定义截帧模式
+     */
+    @objc optional func onAICallVisionCustomCapture(enable: Bool)
+    
+    /**
+     * 当前智能体讲话被打断
+     */
+    @objc optional func onAICallSpeakingInterrupted(reason: ARTCAICallSpeakingInterruptedReason)
     
     /**
      * 用户Token过期

@@ -7,24 +7,33 @@ spring:
     date-format: yyyy-MM-dd'T'HH:mm:ss
     default-property-inclusion: non_null
 
-# pop配置
+# 参考 https://help.aliyun.com/zh/ims/user-guide/app-server-reference, 不需要的配置保留xxxx即可
 biz:
+  # 阿里云AK、SK，参考 https://help.aliyun.com/zh/ram/user-guide/create-an-accesskey-pair。 创建RAM用户时，最小权限为AliyunICEFullAccess
   openapi:
     access:
       key: "xxxxxxx"
       secret: "xxxxxxx"
+  # 实时音视频应用ID和AppKey。您可以前往 https://live.console.aliyun.com/?#/liveRtc/list 进行查看。该配置仅需在基于 ARTC SDK集成方案下进行配置
   live_mic:
     app_id: "xxxxxxx"
     app_key: "xxxxxxx"
+    # gslb配置勿动，生成rtc token必需
     gslb: https://gw.rtn.aliyuncs.com
+  # 智能媒体服务控制台创建的智能体实例Id，按照需要的场景配置即可
   ai_aent:
+    # 创建智能体时，绑定实时工作流为语音通话的智能体Id。
     voice_chat_ai_agent_id: "xxxxxxx"
+    # 创建智能体时，绑定实时工作流为3D数字人通话的智能体Id。
     avatar_ai_chat_3d_agent_id: "xxxxxxx"
+    # 创建智能体时，绑定实时工作流为视觉理解通话的智能体Id。
     vision_chat_ai_agent_id: "xxxxxxx"
+    # region请根据控制台所选地区进行更改，不匹配会提示 The specified agentId is not found。地域ID参考: https://help.aliyun.com/zh/ims/developer-reference/api-ice-2020-11-09-endpoint
     region: "cn-shanghai"
+
+  # 下方配置为复刻音色使用，无需使用保留即可。
   voice:
     api_key: "xxxxxx"
-
   upload:
     access_key: "xxxx"
     access_secret: "xxxx"
@@ -32,6 +41,7 @@ biz:
     region: "xxxx"
     bucket: "xxxx"
     base_path: "xxxx"
+# 处理跨域问题
 http:
   cors:
     host: "*"

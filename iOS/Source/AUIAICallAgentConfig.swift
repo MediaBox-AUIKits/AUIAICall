@@ -19,6 +19,8 @@ let VoiceAgentEmotionalId = ""
 let AvatarAgentEmotionalId = ""
 let VisionAgentEmotionalId = ""
 
+let Region = "cn-shanghai"
+
 @objcMembers open class AUIAICallAgentConfig: NSObject {
     
     public static let shared: AUIAICallAgentConfig = AUIAICallAgentConfig()
@@ -56,6 +58,10 @@ let VisionAgentEmotionalId = ""
     public func getChatAgentId() -> String {
         return ChatAgentId
     }
+    
+    public func getRegion() -> String {
+        return Region
+    }
 }
 
 
@@ -64,7 +70,7 @@ let VisionAgentEmotionalId = ""
     public override init(frame: CGRect) {
         super.init(frame: frame)
         
-        self.titleView.text = AUIAICallBundle.getString("Configuration")
+        self.titleView.text = AUIAICallBundle.getString("Options")
         self.contentView.addSubview(self.emotionLabel)
         self.contentView.addSubview(self.emotionInfoLabel)
         self.contentView.addSubview(self.unemotionalBtn)

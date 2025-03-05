@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'AUIAICall'
-  s.version          = '2.0.0'
+  s.version          = '2.1.0'
   s.summary          = 'A short description of AUIAICall.'
 
 # This description is used to generate tags and improve search results.
@@ -72,6 +72,11 @@ TODO: Add long description of the pod here.
     ss.dependency 'ARTCAICallKit/Chatbot'
     ss.dependency 'MJRefresh'
     ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => '$(inherited) DEMO_FOR_DEBUG '}
+  end
+  
+  s.subspec 'Demo_For_RTC' do |ss|
+    ss.dependency 'AliVCSDK_ARTC'  # 可以替换为AliVCSDK_InteractiveLive 或 AliVCSDK_Standard，取决于你的Podfile依赖的是哪个
+    ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => '$(inherited) DEMO_FOR_RTC'}
   end
   
 end

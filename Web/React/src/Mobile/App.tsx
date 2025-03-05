@@ -1,28 +1,39 @@
-import { useEffect, useMemo } from 'react';
-import ControllerContext from '@/common/ControlerContext';
-import AUIAICallStandardController from '@/controller/AUIAICallStandardController';
-import Stage from './Stage';
+import { useEffect, useState } from 'react';
 import Welcome from './Welcome';
-import { AICallAgentType, AICallTemplateConfig } from 'aliyun-auikit-aicall';
-
-import useCallStore from '@/common/store';
+import { AICallAgentType, AICallTemplateConfig, AIChatAgentType } from 'aliyun-auikit-aicall';
 
 import './App.css';
 import { Toast } from 'antd-mobile';
+import Call from './Call';
+import Chat from './Chat';
 
 Toast.config({
   position: 'bottom',
 });
 
+const defaultCallAgentIdMap = {
+  [AICallAgentType.VoiceAgent]: '',
+  [AICallAgentType.AvatarAgent]: '',
+  [AICallAgentType.VisionAgent]: '',
+};
+
+const defaultChatAgentId = '你的消息通话智能体的Id';
+
 interface AppProps {
   userId?: string;
   userToken?: string;
+
   shareToken?: string;
   appServer?: string;
-  onAuthFail?: () => void;
-  agentType?: AICallAgentType;
+  region?: string;
+
+  agentType?: AICallAgentType | AIChatAgentType;
+  agentId?: string;
+
   userData?: string;
   templateConfig?: AICallTemplateConfig;
+
+  onAuthFail?: () => void;
 }
 
 function App({
@@ -30,92 +41,66 @@ function App({
   userToken = 'YourToken',
   shareToken,
   appServer,
+  region,
   onAuthFail,
   agentType,
+  agentId,
   userData,
   templateConfig,
 }: AppProps) {
-  const storeAgentType = useCallStore((state) => state.agentType);
+  const [stateAgentType, setStateAgentType] = useState<AICallAgentType | AIChatAgentType | undefined>(agentType);
 
   useEffect(() => {
-    if (agentType !== undefined) {
-      useCallStore.setState({
-        agentType,
-      });
-    }
-  }, [agentType]);
+    const preventContextMenu = function (e: Event) {
+      e.preventDefault();
+    };
+    // 禁用右键菜单
+    document.addEventListener('contextmenu', preventContextMenu);
+    return () => {
+      document.removeEventListener('contextmenu', preventContextMenu);
+    };
+  }, []);
 
-  const controller = useMemo(() => {
-    if (!userId) return null;
-    const _controller = new AUIAICallStandardController(userId, userToken);
-    if (templateConfig) {
-      _controller.config.templateConfig = templateConfig;
-    }
-
-    if (appServer) {
-      _controller.appServer = appServer;
-    }
-    if (userData) {
-      _controller.config.userData = userData;
-    }
-
-    const urlParams = new URLSearchParams(location.search);
-    const _shareToken = shareToken || urlParams.get('token');
-    if (_shareToken) {
-      _controller.shareConfig = _shareToken;
-
-      if (!_controller.shareConfig) {
-        Toast.show({
-          content: '分享链接有误',
-          position: 'bottom',
-        });
-        return null;
-      }
-
-      if (_controller.shareConfig.templateConfig) {
-        _controller.config.templateConfig = AICallTemplateConfig.fromJsonString(
-          _controller.shareConfig.agentType || AICallAgentType.VoiceAgent,
-          _controller.shareConfig.templateConfig
-        );
-      }
-
-      useCallStore.setState({
-        agentType: _controller.shareConfig.agentType,
-      });
-    }
-
-    return _controller;
-  }, [userId, userToken, shareToken, appServer, userData, templateConfig]);
-
-  const resultAgentType = useMemo(() => {
-    if (agentType !== undefined) {
-      return agentType;
-    }
-    return storeAgentType;
-  }, [agentType, storeAgentType]);
-
-  if (resultAgentType === undefined)
+  if (stateAgentType === undefined)
     return (
       <Welcome
         onAgentTypeSelected={(type) => {
-          useCallStore.setState({
-            agentType: type,
-          });
+          setStateAgentType(type);
         }}
       />
     );
 
   return (
-    <ControllerContext.Provider value={controller}>
-      <Stage
-        agentType={resultAgentType}
-        onExit={() => {}}
-        autoCall
-        onAuthFail={() => {
-          onAuthFail?.();
-        }}
-      />
-    </ControllerContext.Provider>
+    <>
+      {stateAgentType === AIChatAgentType.MessageChat ? (
+        <Chat
+          userId={userId}
+          userToken={userToken}
+          agentId={agentId || defaultChatAgentId}
+          onExit={() => {
+            setStateAgentType(undefined);
+          }}
+        />
+      ) : (
+        <Call
+          userId={userId}
+          userToken={userToken}
+          agentType={stateAgentType}
+          shareToken={shareToken}
+          agentId={agentId || defaultCallAgentIdMap[stateAgentType]}
+          appServer={appServer}
+          region={region}
+          userData={userData}
+          templateConfig={templateConfig}
+          onExit={() => {
+            setStateAgentType(undefined);
+          }}
+          onAuthFail={() => {
+            onAuthFail?.();
+          }}
+        />
+      )}
+    </>
   );
 }
 

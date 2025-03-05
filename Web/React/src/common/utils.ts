@@ -2,11 +2,11 @@ export function debounce<F extends (...args: Parameters<F>) => ReturnType<F>>(
   func: F,
   waitFor: number
 ): (...args: Parameters<F>) => void {
-  let timeout: ReturnType<typeof setTimeout>;
+  let timeout: number;
 
   return (...args: Parameters<F>): void => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), waitFor);
+    window.clearTimeout(timeout);
+    timeout = window.setTimeout(() => func(...args), waitFor);
   };
 }
 
@@ -25,11 +25,45 @@ export const addRootClass = (element: HTMLElement) => {
   }
 };
 
-export const copyText = (text: string) => {
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    return navigator.clipboard.writeText(text);
-  } else {
-    throw new Error('clipboard is not supported');
+export const copyText = async (text: string) => {
+  try {
+    if (!navigator.clipboard || !window.isSecureContext) {
+      throw new Error('navigator.clipboard is not supported');
+    }
+    await navigator.clipboard.writeText(text);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (error) {
+    // 如果不支持 Clipboard API 或不在安全上下文中，使用回退方法
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+
+    // 防止iOS设备上使用缩放
+    textArea.style.position = 'fixed';
+    textArea.style.top = '0';
+    textArea.style.left = '0';
+    textArea.style.width = '2em';
+    textArea.style.height = '2em';
+    textArea.style.padding = '0';
+    textArea.style.border = 'none';
+    textArea.style.outline = 'none';
+    textArea.style.boxShadow = 'none';
+    textArea.style.background = 'transparent';
+
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+
+    try {
+      const successful = document.execCommand('copy');
+      if (!successful) {
+        throw new Error('copy command failed');
+      }
+      // eslint-disable-next-line no-useless-catch
+    } catch (err) {
+      throw err;
+    } finally {
+      document.body.removeChild(textArea);
+    }
   }
 };
 
@@ -42,4 +76,76 @@ export const isAndroidWeChatBrowser = () => {
 
   // 检查是否包含 Android 和 MicroMessenger
   return /Android/i.test(ua) && /MicroMessenger/i.test(ua);
+};
+
+interface ILongPressEventsProps {
+  onStartCallback: (
+    event: React.TouchEvent<HTMLDivElement | HTMLTextAreaElement | HTMLInputElement>['nativeEvent']['target']
+  ) => void;
+  onEndCallback?: (
+    event: React.TouchEvent<HTMLDivElement | HTMLTextAreaElement | HTMLInputElement>['nativeEvent']['target']
+  ) => void;
+  ms?: number;
+}
+
+type ILongPressStartMethod = (event: React.TouchEvent | React.MouseEvent) => number;
+type ILongPressEndMethod = (event: React.TouchEvent | React.MouseEvent) => void;
+
+interface RLongPressTouchEventsReturnTypes {
+  onTouchStart: ILongPressStartMethod;
+  onTouchMove: ILongPressEndMethod;
+  onTouchEnd: ILongPressEndMethod;
+}
+interface RLongPressMouseEventsReturnTypes {
+  onMouseDown: ILongPressStartMethod;
+  onMouseUp: ILongPressEndMethod;
+  onMouseLeave: ILongPressEndMethod;
+}
+
+type RLongPressEventsReturnTypes = RLongPressTouchEventsReturnTypes | RLongPressMouseEventsReturnTypes;
+
+export const checkTouchSupport = () => 'ontouchstart' in window;
+
+export const longPressEvents = function ({
+  onStartCallback,
+  onEndCallback,
+  ms = 500,
+}: ILongPressEventsProps): RLongPressEventsReturnTypes {
+  let timeout: number;
+  let target: EventTarget | null;
+
+  const start: ILongPressStartMethod = (event) => {
+    if (event.nativeEvent instanceof TouchEvent || event.nativeEvent instanceof MouseEvent)
+      target = event.nativeEvent.target;
+    return (timeout = window.setTimeout(() => onStartCallback(target), ms));
+  };
+  const stop: ILongPressEndMethod = (event) => {
+    if (timeout) {
+      window.clearTimeout(timeout); // 合成事件，要先 clear，否则报 warning
+    }
+    // 下边的其实可以不用，如果不需要结束回调的话
+    if (event.nativeEvent instanceof TouchEvent) target = event.nativeEvent.target;
+    onEndCallback?.(target);
+  };
+
+  if (checkTouchSupport()) {
+    return {
+      onTouchStart: start,
+      onTouchMove: stop,
+      onTouchEnd: stop,
+    };
+  } else {
+    return {
+      onMouseDown: start,
+      onMouseUp: stop,
+      onMouseLeave: stop,
+    };
+  }
+};
+
+export const lastOfArray = <T>(array: T[]): T | undefined => {
+  if (array.length === 0) {
+    return undefined;
+  }
+  return array[array.length - 1];
 };

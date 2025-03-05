@@ -1,12 +1,12 @@
-import ControllerContext from '@/common/ControlerContext';
-import AUIAICallStandardController from '@/controller/AUIAICallStandardController';
+import ControllerContext from '@/Mobile/Call/ControlerContext';
+import AUIAICallStandardController from '@/controller/call/AUIAICallStandardController';
 import AICall from '.';
 import { useState } from 'react';
 
 import './App.css';
 import './call.less';
 import CallWelcome from './Welcome';
-import useCallStore from '@/common/store';
+import useCallStore from '@/Mobile/Call/store';
 
 function App() {
   const agentType = useCallStore((state) => state.agentType);

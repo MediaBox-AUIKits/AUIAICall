@@ -2,7 +2,7 @@ import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Dropdown, message } from 'antd';
 import Icon, { DownOutlined } from '@ant-design/icons';
 
-import useCallStore from '@/common/store';
+import useCallStore from '@/Mobile/Call/store';
 import ARTCAICallEngine, { AICallAgentState, AICallAgentType, AICallState } from 'aliyun-auikit-aicall';
 
 import Phone from './svg/phone.svg?react';
@@ -14,7 +14,7 @@ import CameraClosed from './svg/camera_closed.svg?react';
 
 import './footer.less';
 import i18n from '@/common/i18n';
-import ControllerContext from '@/common/ControlerContext';
+import ControllerContext from '@/Mobile/Call/ControlerContext';
 
 interface CallActionsProps {
   onStop: () => void;

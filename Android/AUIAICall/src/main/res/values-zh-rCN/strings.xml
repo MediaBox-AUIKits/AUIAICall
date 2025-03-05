@@ -31,6 +31,8 @@
     <string name="robot_waiting_tips">请开始说话</string>
     <string name="robot_listening_tips">你说，我在听</string>
     <string name="robot_thinking_tips">思考中...</string>
+    <string name="robot_thinking_finish_tips">思考完成</string>
+    <string name="robot_thinking_stop_tips">思考停止</string>
     <string name="robot_speaking_tips">我正在回复中，可以轻触屏幕或说话打断我</string>
     <string name="robot_speaking_tips_without_voice_interrupt">我正在回复中，可以轻触屏幕打断我</string>
 
@@ -119,6 +121,7 @@
     <string name="voiceprint_enable">声纹已识别已开启</string>
     <string name="voiceprint_disable">声纹识别已关闭</string>
     <string name="main_speaker_not_recognized">（声纹）识别到不是常用对话人，暂未响应您的问题</string>
+    <string name="aival_main_speaker_not_recognized">(AIVad）识别到不是常用对话人，暂未响应您的问题</string>
     <string name="reset_voiceprint">恢复</string>
 
     <string name="push_to_talk">按住说话</string>

@@ -35,4 +35,10 @@ public class GenerateAIAgentCallRequestDto {
     @JsonProperty("user_data")
     private String userData;
 
+    @JsonProperty("session_id")
+    private String sessionId;
+
+    @JsonProperty("chat_sync_config")
+    private String chatSyncConfig;
+
 }

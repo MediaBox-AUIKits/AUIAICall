@@ -56,6 +56,12 @@ public let AUIAIMainBundle = AUIAICallTheme("AUIAIMain")
         self.selectAgent(isCus: false, isAni: false)
     }
     
+    public static var isEnableChat: Bool {
+        get {
+            return ChatAgentId.isEmpty == false
+        }
+    }
+    
     open lazy var agentTypeBgView: UIView = {
         let view = UIView(frame: CGRect(x: 20.0, y: 16.0, width: self.contentView.av_width - 20.0 - 20.0, height: 46))
         view.layer.cornerRadius = view.av_height / 2.0
@@ -102,7 +108,7 @@ public let AUIAIMainBundle = AUIAICallTheme("AUIAIMain")
     open lazy var configCallBtn: AVBaseButton = {
         let btn = AVBaseButton.imageText(with: .bottom)
         btn.frame = CGRect(x: self.contentView.av_width - 48 - 24, y: self.contentView.av_height - 36.0 - UIView.av_safeBottom - 44.0, width: 48, height: 44)
-        btn.title = AUIAIMainBundle.getString("Configuration")
+        btn.title = AUIAIMainBundle.getString("Options")
         btn.image = AUIAIMainBundle.getCommonImage("ic_agent_config")
         btn.color = AVTheme.text_weak
         btn.font = AVTheme.regularFont(10)
@@ -312,25 +318,34 @@ public let AUIAIMainBundle = AUIAICallTheme("AUIAIMain")
     public override init(frame: CGRect) {
         super.init(frame: frame)
         
-        let itemCount = 4.0
+        let isEnableChat = AUIAICallMainViewController.isEnableChat
+        
+        let itemCount = isEnableChat ? 4.0 : 3.0
+        let itemWidth = self.av_width / itemCount
+        var centerX = itemWidth / 2.0
         self.audioCallBtn.sizeToFit()
-        self.audioCallBtn.av_centerX = self.av_width / (itemCount * 2)
+        self.audioCallBtn.av_centerX = itemWidth / 2.0
         self.addSubview(self.audioCallBtn)
         
+        centerX += itemWidth
         self.avatarCallBtn.sizeToFit()
-        self.avatarCallBtn.av_centerX = self.av_width / (itemCount * 2) * 3
+        self.avatarCallBtn.av_centerX = centerX
         self.addSubview(self.avatarCallBtn)
         
+        centerX += itemWidth
         self.visionCallBtn.sizeToFit()
-        self.visionCallBtn.av_centerX = self.av_width / (itemCount * 2) * 5
+        self.visionCallBtn.av_centerX = centerX
         self.addSubview(self.visionCallBtn)
         
-        self.chatBtn.sizeToFit()
-        self.chatBtn.av_centerX = self.av_width / (itemCount * 2) * 7
-        self.addSubview(self.chatBtn)
+        if isEnableChat {
+            centerX += itemWidth
+            self.chatBtn.sizeToFit()
+            self.chatBtn.av_centerX = centerX
+            self.addSubview(self.chatBtn)
+        }
         
         self.addSubview(self.lineView)
-        self.contentSize = CGSize(width: max(self.chatBtn.av_right + 20, self.av_width), height: self.av_height)
+        self.contentSize = CGSize(width: self.av_width, height: self.av_height)
         self.showsHorizontalScrollIndicator = false
         self.showsHorizontalScrollIndicator = false
         
@@ -470,11 +485,17 @@ public let AUIAIMainBundle = AUIAICallTheme("AUIAIMain")
     public override init(frame: CGRect) {
         super.init(frame: frame)
         
+        let isEnableChat = AUIAICallMainViewController.isEnableChat
         self.addSubview(self.voiceView)
         self.addSubview(self.avatarView)
         self.addSubview(self.visionView)
-        self.addSubview(self.chatView)
-        self.contentSize = CGSize(width: self.chatView.av_right, height: self.av_height)
+        var contentWidth = self.visionView.av_right
+        if isEnableChat {
+            self.addSubview(self.chatView)
+            contentWidth = self.chatView.av_right
+        }
+        
+        self.contentSize = CGSize(width: contentWidth, height: self.av_height)
         self.isPagingEnabled = true
         self.showsHorizontalScrollIndicator = false
         self.showsHorizontalScrollIndicator = false

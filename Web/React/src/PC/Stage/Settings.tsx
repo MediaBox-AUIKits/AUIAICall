@@ -1,9 +1,9 @@
 import { Button, Form, Popover, Radio, RadioChangeEvent, Space, Switch, message } from 'antd';
 
 import './settings.less';
-import useCallStore from '@/common/store';
+import useCallStore from '@/Mobile/Call/store';
 import { useContext } from 'react';
-import ControllerContext from '@/common/ControlerContext';
+import ControllerContext from '@/Mobile/Call/ControlerContext';
 import { AICallAgentType } from 'aliyun-auikit-aicall';
 import i18n from '@/common/i18n';
 import Icon from '@ant-design/icons';

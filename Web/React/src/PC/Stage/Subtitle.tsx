@@ -1,4 +1,4 @@
-import useCallStore from '@/common/store';
+import useCallStore from '@/Mobile/Call/store';
 
 import './subtitle.less';
 

@@ -1,5 +1,5 @@
 <resources>
-    <string name="entry_title">AI Virtual Human Call</string>
+    <string name="entry_title">AI Agent Call</string>
     <string name="room_entrance_text">Start Experience</string>
 
     <string name="in_call_text">AI Audio Call</string>
@@ -30,7 +30,9 @@
     <string name="robot_waiting_tips">Please start speaking</string>
     <string name="robot_listening_tips">I\'m listening to you</string>
     <string name="robot_thinking_tips">Thinking...</string>
-    <string name="robot_speaking_tips">I\'m replying, you can tap the screen or speak to interrupt me</string>
+    <string name="robot_thinking_finish_tips">Thinking finish</string>
+    <string name="robot_thinking_stop_tips">Thinking stop</string>
+    <string name="robot_speaking_tips">I am replying. You can interrupt me by tapping the screen or speaking</string>
     <string name="robot_speaking_tips_without_voice_interrupt">I\'m replying, you can tap the screen to interrupt me</string>
 
     <string name="setting_title">Settings</string>
@@ -67,10 +69,10 @@
 
     <string name="official_agent">Official Agent</string>
     <string name="custom_agent">Custom Agent</string>
-    <string name="ai_audio_call">AI Audio Call</string>
-    <string name="digital_human_call">Digital Human Call</string>
-    <string name="vision_agent_call">Vision Agent Call</string>
-    <string name="chat_bot">Agent Chat</string>
+    <string name="ai_audio_call">AI Voice Call</string>
+    <string name="digital_human_call">AI Avatar Call</string>
+    <string name="vision_agent_call">AI Vision Call</string>
+    <string name="chat_bot">AI Chat</string>
     <string name="temporary_experience_token">Entrusting authorized AI agents</string>
     <string name="et_token_hints">Please scan the QR code to obtain authorized AI agents</string>
     <string name="token_expired_tips">AI agent authorization has expired</string>
@@ -118,6 +120,7 @@
     <string name="voiceprint_enable">Voiceprint recognition enabled</string>
     <string name="voiceprint_disable">Voiceprint recognition disabled</string>
     <string name="main_speaker_not_recognized">(voiceprint) No response without regular speaker recognized</string>
+    <string name="aival_main_speaker_not_recognized">VAD detected other speaking, stop responded this question.</string>
     <string name="reset_voiceprint">Reset</string>
 
     <string name="push_to_talk">Push to Speak</string>

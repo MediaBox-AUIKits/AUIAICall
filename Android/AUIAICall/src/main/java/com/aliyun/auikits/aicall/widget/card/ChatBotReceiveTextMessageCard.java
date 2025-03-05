@@ -1,6 +1,7 @@
 package com.aliyun.auikits.aicall.widget.card;
 
 import android.content.Context;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -27,6 +28,14 @@ public class ChatBotReceiveTextMessageCard extends BaseCard {
     private PlayMessageAnimationView mReceiveTextMessagePlayImg;
     private Button mReceiveTextMessagePlayButton;
     private ConstraintLayout mReceiveTextMessageActionButtonLayout;
+    private ConstraintLayout mReceiveTextMessageLayout;
+    private ConstraintLayout mReceiveThinkTextMessageLayout;
+    private ImageView mReceiveThinkFinishImage;
+    private TextView mReceiveThinkTitle;
+    private TextView mReceiveThinkDesc;
+    private ImageView mReceiveThinkTitleButton;
+    private ConstraintLayout mReceiveThinkTextDescMessageLayout;
+    private boolean isThinkingShow = true;
 
     public ChatBotReceiveTextMessageCard(Context context) {
         super(context);
@@ -40,7 +49,29 @@ public class ChatBotReceiveTextMessageCard extends BaseCard {
         mReceiveTextMessageCopyImg = root.findViewById(R.id.chatbot_message_item_copy_ai);
         mReceiveTextMessagePlayImg = root.findViewById(R.id.ic_chatbot_message_play_ai);
         mReceiveTextMessageActionButtonLayout = root.findViewById(R.id.chat_msg_message_item_ai_button_layout);
+        mReceiveTextMessageLayout = root.findViewById(R.id.chat_msg_message_item_ai_text_layout);
         mReceiveInterruptionView = root.findViewById(R.id.chat_message_text_interruption_tips);
+        mReceiveThinkTextMessageLayout = root.findViewById(R.id.chat_msg_message_item_ai_thinking_layout);
+        mReceiveThinkFinishImage = root.findViewById(R.id.chat_msg_message_item_ai_thinking_finish_img);
+        mReceiveThinkTitle = root.findViewById(R.id.chat_msg_message_item_ai_thinking_title);
+        mReceiveThinkDesc = root.findViewById(R.id.chat_msg_message_item_ai_thinking_desc);
+        mReceiveThinkTitleButton = root.findViewById(R.id.chat_msg_message_item_ai_thinking_title_button);
+        mReceiveThinkTextDescMessageLayout = root.findViewById(R.id.chat_msg_message_item_ai_thinking_desc_layout);
+
+        mReceiveThinkTitleButton.setOnClickListener(new View.OnClickListener() {
+               @Override
+               public void onClick(View v) {
+                   isThinkingShow = !isThinkingShow;
+                   if(isThinkingShow) {
+                       mReceiveThinkTextDescMessageLayout.setVisibility(View.VISIBLE);
+                       mReceiveThinkTitleButton.setImageResource(R.drawable.ic_chatbot_think_open);
+                   } else {
+                       mReceiveThinkTextDescMessageLayout.setVisibility(View.GONE);
+                       mReceiveThinkTitleButton.setImageResource(R.drawable.ic_chatbot_think_close);
+                   }
+               }
+        });
+
     }
 
     @Override
@@ -48,22 +79,52 @@ public class ChatBotReceiveTextMessageCard extends BaseCard {
         super.onBind(entity);
         if(null != entity.bizData && entity.bizData instanceof ChatBotChatMessage) {
             ChatBotChatMessage chatMessage = (ChatBotChatMessage) entity.bizData;
+            String thinkText = chatMessage.getMessage().reasoningText;
+            boolean isThinkingEnd = chatMessage.getMessage().isReasoningEnd;
             if(chatMessage.getMessage() != null) {
                 if(chatMessage.getMessage().messageState == ARTCAIChatEngine.ARTCAIChatMessageState.Transfering) {
                     mThinkingView.setVisibility(View.VISIBLE);
                     mThinkingView.setAnimationType(SpeechAnimationView.AnimationType.CHATBOT_THINKING);
                     mReceiveTextMessageActionButtonLayout.setVisibility(View.GONE);
                     mReceiveTextContentView.setVisibility(View.GONE);
+                    mReceiveThinkTextMessageLayout.setVisibility(View.GONE);
                 }
                 else  {
-                    mReceiveTextContentView.setText(chatMessage.getMessage().text);
                     mThinkingView.setVisibility(View.GONE);
-                    mReceiveTextMessageActionButtonLayout.setVisibility(View.VISIBLE);
-                    mReceiveTextContentView.setVisibility(View.VISIBLE);
+                    if(!TextUtils.isEmpty(thinkText)) {
+                        //has thinking text
+                        mReceiveThinkTextMessageLayout.setVisibility(View.VISIBLE);
+                        if(isThinkingEnd) {
+                            //think end show response text
+                            mReceiveThinkFinishImage.setVisibility(View.VISIBLE);
+                            mReceiveThinkTitle.setText(R.string.robot_thinking_finish_tips);
+                            mReceiveTextContentView.setText(chatMessage.getMessage().text);
+                            mReceiveTextMessageLayout.setVisibility(View.VISIBLE);
+                            mReceiveTextMessageActionButtonLayout.setVisibility(View.VISIBLE);
+                            mReceiveTextContentView.setVisibility(View.VISIBLE);
+                        } else {
+                            mReceiveThinkFinishImage.setVisibility(View.GONE);
+                            mReceiveThinkTitle.setText(R.string.robot_thinking_tips);
+                            mReceiveTextMessageLayout.setVisibility(View.GONE);
+                            mReceiveTextMessageActionButtonLayout.setVisibility(View.GONE);
+                        }
+                        mReceiveThinkDesc.setText(thinkText);
+                    } else {
+                        //no thinking text
+                        mReceiveThinkTextMessageLayout.setVisibility(View.GONE);
+                        mReceiveTextContentView.setText(chatMessage.getMessage().text);
+                        mReceiveTextMessageActionButtonLayout.setVisibility(View.VISIBLE);
+                        mReceiveTextContentView.setVisibility(View.VISIBLE);
+                    }
                 }
 
                 if(chatMessage.getMessage().messageState == ARTCAIChatEngine.ARTCAIChatMessageState.Interrupted) {
-                    mReceiveInterruptionView.setVisibility(View.VISIBLE);
+                    if(!TextUtils.isEmpty(thinkText) && !isThinkingEnd) {
+                        mReceiveThinkTitle.setText(R.string.robot_thinking_stop_tips);
+                        mReceiveTextMessageActionButtonLayout.setVisibility(View.VISIBLE);
+                    } else {
+                        mReceiveInterruptionView.setVisibility(View.VISIBLE);
+                    }
                 } else {
                     mReceiveInterruptionView.setVisibility(View.GONE);
                 }

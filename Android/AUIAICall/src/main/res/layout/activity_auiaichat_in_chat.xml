@@ -64,6 +64,16 @@
             android:visibility="visible"
             />
 
+        <ImageView
+            android:id="@+id/btn_chatbot_call"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginRight="10dp"
+            android:src="@drawable/ic_chatbot_call"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintVertical_bias="0.5" />
 
         <ImageView
             android:id="@+id/btn_setting"
@@ -72,10 +82,9 @@
             android:padding="10dp"
             android:src="@drawable/ic_config"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintRight_toLeftOf="@id/btn_chatbot_call"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintVertical_bias="0.5" />
-
 
         <TextView
             android:id="@+id/btn_reporting"
@@ -84,7 +93,7 @@
             android:layout_height="wrap_content"
             android:text="@string/reporting_title"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintRight_toLeftOf="@+id/btn_setting"
+            app:layout_constraintRight_toLeftOf="@id/btn_setting"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintVertical_bias="0.5" />
 

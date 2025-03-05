@@ -11,14 +11,37 @@ import ARTCAICallKit
 
 @objcMembers open class AUIAIChatMessageItem: NSObject {
     
-    init(message: ARTCAIChatMessage) {
+    public init(message: ARTCAIChatMessage) {
         self.message = message
     }
     
-    var message: ARTCAIChatMessage
-    var displaySize: CGSize? = nil
-    var isLeft: Bool = false
-    var error: NSError? = nil
+    open var message: ARTCAIChatMessage
+    open var displaySize: CGSize? = nil  // 为空时表示需要计算大小
+    open var isLeft: Bool = false
+    open var error: NSError? = nil
+    
+    // 文本占位大小
+    open var contentSize: CGSize? = nil  {
+     didSet {
+         // 为空时表示需要计算大小
+         if self.contentSize == nil {
+             self.displaySize = nil
+         }
+     }
+ }
+    
+    // 深度思考属性，包括是否展开、占位大小
+    open var isExpandReasonText: Bool = true
+    open var reasonSize: CGSize? = nil   {
+        didSet {
+            // 为空时表示需要计算大小
+            if self.reasonSize == nil {
+                self.displaySize = nil
+            }
+        }
+    }
+
+    //
 }
 
 @objcMembers open class AUIAIChatMessageTextCell: UICollectionViewCell {
@@ -50,13 +73,22 @@ import ARTCAICallKit
         
         var x = self.item?.isLeft == true ? 0 : self.av_width - displaySize.width
         self.bgView.frame = CGRect(x: x, y: 0, width: displaySize.width, height: displaySize.height)
-        let actionViewHeight = self.actionView.isHidden ? 0.0 : 36.0
-        let bottomMargin = self.actionView.isHidden ? 12.0 : 0
-        self.textLabel.frame = CGRect(x: 12, y: 12, width: self.bgView.av_width - 24, height: self.bgView.av_height - 12 - actionViewHeight - bottomMargin)
-        self.actionView.frame = CGRect(x: 0, y: self.bgView.av_height - actionViewHeight, width: self.bgView.av_width, height: actionViewHeight)
+        self.textLabel.frame = CGRect(x: 12, y: self.getTextLabelPositionY(), width: self.bgView.av_width - 24, height: self.getTextLabelHeight())
+        self.actionView.frame = CGRect(x: 0, y: self.bgView.av_height - 36.0, width: self.bgView.av_width, height: 36.0)
         
         x = self.item?.isLeft == true ? self.bgView.av_right : self.bgView.av_left - 32
         self.stateBtn.center = CGPoint(x: x + 16, y: self.bgView.av_bottom - 16)
+    }
+    
+    internal func getTextLabelPositionY() -> CGFloat {
+        return 12
+    }
+    
+    internal func getTextLabelHeight() -> CGFloat {
+        let actionViewHeight = self.actionView.isHidden ? 0.0 : 36.0
+        let bottomMargin = self.actionView.isHidden ? 12.0 : 0
+        // bg高度 - 顶部边距 - 操作栏高度 - 底部边距高度
+        return self.bgView.av_height - 12 - actionViewHeight - bottomMargin
     }
 
     open lazy var bgView: AUIAIChatMessageBgView = {
@@ -196,9 +228,11 @@ extension AUIAIChatMessageTextCell {
         }
     }
     
-    public static func getSize(item: AUIAIChatMessageItem, maxWidth: CGFloat) -> CGSize {
+    // 计算item的占位大小
+    public static func computeSize(item: AUIAIChatMessageItem, maxWidth: CGFloat) {
         if item.message.messageType != .Text {
-            return self.minSize
+            item.displaySize = self.minSize
+            return
         }
         let text = item.message.text
         let font = AVTheme.regularFont(14)
@@ -208,7 +242,7 @@ extension AUIAIChatMessageTextCell {
         
         let width = max(boundingBox.width + 24, self.minSize.width)
         let height = 12 + boundingBox.height + 8 + 20 + 8
-        return CGSize(width: width, height: height)
+        item.displaySize = CGSize(width: width, height: height)
     }
 }
 

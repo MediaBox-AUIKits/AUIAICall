@@ -2,7 +2,7 @@
 "AIAgent" = "AI智能体";
 "Official Agent" = "官方智能体";
 "Custom Agent" = "自定义智能体";
-"Configuration" = "配置项";
+"Options" = "配置项";
 "Start" = "开始体验";
 
 "Authorized AI Agent" = "授权AI智能体";

@@ -143,3 +143,138 @@ import ARTCAICallKit
         }
     }
 }
+
+
+@objcMembers open class AUIAIChatMessageReasonView: UIView {
+    
+    public override init(frame: CGRect) {
+        super.init(frame: frame)
+        
+        self.addSubview(self.iconView)
+        self.addSubview(self.titleLabel)
+        self.addSubview(self.expandBtn)
+        self.addSubview(self.textLabel)
+        self.addSubview(self.lineView)
+    }
+    
+    public required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    open override func layoutSubviews() {
+        super.layoutSubviews()
+        
+        self.iconView.frame = CGRect(x: 12, y: 10, width: 16, height: 16)
+        
+        self.titleLabel.frame = CGRect(x: self.iconView.isHidden ? 12 : self.iconView.av_right + 8, y: 8, width: self.titleLabel.av_width, height: 20)
+        self.expandBtn.frame = CGRect(x: self.titleLabel.av_right, y: 8, width: 26, height: 20)
+        
+        let h = max(self.av_height - 36, 0.0)
+        self.lineView.frame = CGRect(x: 15, y: self.iconView.av_bottom + 12.0, width: 1, height: h)
+        self.textLabel.frame = CGRect(x: 28, y: 36, width: self.av_width - 28 - 12, height: h)
+    }
+    
+    open lazy var textLabel: UILabel = {
+        let label = UILabel()
+        label.font = AVTheme.regularFont(14)
+        label.textColor = AVTheme.text_ultraweak
+        label.numberOfLines = 0
+        label.lineBreakMode = .byWordWrapping
+        return label
+    }()
+    
+    open lazy var titleLabel: UILabel = {
+        let label = UILabel()
+        label.text = AUIAIChatBundle.getString("Reasoning...")
+        label.font = AVTheme.regularFont(14)
+        label.textColor = AVTheme.text_ultraweak
+        label.sizeToFit()
+        return label
+    }()
+    
+    open lazy var lineView: UIView = {
+        let view = UIView()
+        view.backgroundColor = AVTheme.text_ultraweak
+        return view
+    }()
+    
+    open lazy var iconView: UIImageView = {
+        let view = UIImageView()
+        view.image = AUIAIChatBundle.getImage("ic_msg_reasoning_end")
+        return view
+    }()
+    
+    open lazy var expandBtn: AVBlockButton = {
+        let btn = AVBlockButton()
+        btn.setImage(AUIAIChatBundle.getImage("ic_msg_reasoning_show"), for: .normal)
+        btn.setImage(AUIAIChatBundle.getImage("ic_msg_reasoning_hide"), for: .selected)
+        return btn
+    }()
+    
+    open func updateReasonType(type: ReasonType) {
+        if type == .Finished {
+            self.iconView.isHidden = false
+            self.titleLabel.text = AUIAIChatBundle.getString("Reasonging completed")
+        }
+        else if type == .Interrupted {
+            self.iconView.isHidden = true
+            self.titleLabel.text = AUIAIChatBundle.getString("Reasoning stopped")
+        }
+        else {
+            self.iconView.isHidden = true
+            self.titleLabel.text = AUIAIChatBundle.getString("Reasoning...")
+        }
+        self.titleLabel.sizeToFit()
+        self.setNeedsLayout()
+    }
+}
+
+
+extension AUIAIChatMessageReasonView {
+    
+    public enum ReasonType: Int32 {
+        case None
+        case Reasoning
+        case Finished
+        case Interrupted
+    }
+    
+    public static func isEnableReason(item: AUIAIChatMessageItem) -> Bool {
+        return item.message.reasoningText != nil
+    }
+
+    public static func getReasonType(item: AUIAIChatMessageItem) -> ReasonType {
+        if self.isEnableReason(item: item) == false {
+            return .None
+        }
+        if item.message.isReasoningEnd {
+            return .Finished
+        }
+        if item.message.messageState == .Failed || item.message.messageState == .Interrupted {
+            return .Interrupted
+        }
+        return .Reasoning
+    }
+    
+    public static func getHeight(reasoningText: String, maxWidth: CGFloat) -> CGSize {
+        let text = reasoningText
+        let font = AVTheme.regularFont(14)
+        let maxSize = CGSize(width: maxWidth - 28 - 12, height: CGFloat.greatestFiniteMagnitude) // 限制宽度，允许无限制高度
+        let attributes: [NSAttributedString.Key: Any] = [.font: font]
+        let boundingBox = (text as NSString).boundingRect(with: maxSize, options: [.usesLineFragmentOrigin, .usesFontLeading], attributes: attributes, context: nil)
+        
+        let width = boundingBox.width + 28 + 12
+        let height = 36 + (boundingBox.height + 0.1)
+        return CGSize(width: width, height: height)
+    }
+    
+    public static func getHeight(item: AUIAIChatMessageItem, maxWidth: CGFloat) -> CGSize {
+        if self.isEnableReason(item: item) == false {
+            return CGSize.zero
+        }
+        if item.isExpandReasonText == false {
+            return CGSize(width: maxWidth, height: 28)
+        }
+        return self.getHeight(reasoningText: item.message.reasoningText ?? "" , maxWidth: maxWidth)
+    }
+}

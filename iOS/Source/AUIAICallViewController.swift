@@ -392,6 +392,14 @@ extension AUIAICallViewController: AUIAICallControllerDelegate {
         self.updateTitle()
     }
     
+    public func onAICallBegin() {
+        
+#if DEMO_FOR_RTC
+        self.registerAudioFrameData()
+#endif
+        
+    }
+    
     public func onAICallStateChanged() {
         ARTCAICallEngineLog.WriteLog(.Debug, "Call State Changed: \(self.controller.state)")
         self.callContentView.callStateAni.updateState(newState: self.controller.state)
@@ -570,8 +578,15 @@ extension AUIAICallViewController: AUIAICallControllerDelegate {
         let text = self.getUserSubtitle(text: text, voiceprintResult: voiceprintResult)
 #endif
         self.callContentView.updateSubTitle(enable: true, isLLM: false, text: text, clear: false)
-        if isSentenceEnd && voiceprintResult == .UndetectedSpeaker {
-            self.callContentView.voiceprintTipsLabel.showTips()
+        if isSentenceEnd {
+            if voiceprintResult == .UndetectedSpeaker {
+                self.callContentView.voiceprintTipsLabel.showTips()
+            }
+            else if (voiceprintResult == .UndetectedSpeakerWithAIVad) {
+#if DEMO_FOR_DEBUG
+                AVToastView.show(AUIAICallBundle.getString("VAD detected other speaking, stop responded this question."), view: self.view, position: .mid)
+#endif
+            }
         }
     }
     
@@ -621,6 +636,21 @@ extension AUIAICallViewController: AUIAICallControllerDelegate {
         AVToastView.show(String(format: AUIAICallBundle.getString("The agent seems to be %@"), emotion), view: self.view, position: .mid)
 #endif
     }
+    
+    public func onAICallVisionCustomCapture(enable: Bool) {
+        var text = AUIAICallBundle.getString("Exited custom frame capture inspection mode.")
+        if enable {
+            text = AUIAICallBundle.getString("Custom frame capture inspection mode has been enabled.")
+        }
+        AVToastView.show(text, view: self.view, position: .mid)
+    }
+    
+    public func onAICallSpeakingInterrupted(reason: ARTCAICallSpeakingInterruptedReason) {
+#if DEMO_FOR_DEBUG
+        let text = AUIAICallBundle.getString("Speaking interrupted") + ": \(reason.rawValue)"
+        AVToastView.show(text, view: self.view, position: .mid)
+#endif
+    }
 }
 
 #if AICALL_ENABLE_FEEDBACK
@@ -667,24 +697,66 @@ extension AUIAICallViewController {
 extension AUIAICallViewController {
     
     func showDebugInfo() {
-        var info = "instanceId:\(self.controller.agentInfo?.instanceId ?? "")\n"
-        info.append("channelId:\(self.controller.agentInfo?.channelId ?? "")\n")
-        info.append("agentUid:\(self.controller.agentInfo?.uid ?? "")\n")
-        info.append("agentType:\(self.controller.agentInfo?.agentType.rawValue ?? 0)\n")
-        info.append("userId:\(self.controller.userId)\n")
-        
-        AVAlertController.show(withTitle: "Debug", message: info, cancelTitle: "Close", okTitle: "Copy") { isCancel in
-            if !isCancel {
-                UIPasteboard.general.string = info
-            }
-        }
+        AUIAICallDebugManager.shared.showDebugInfo(vc: self, controller: self.controller)
     }
     
     func getUserSubtitle(text: String, voiceprintResult: ARTCAICallVoiceprintResult) -> String {
-        if self.controller.config.templateConfig.voiceprintId != nil && self.controller.config.templateConfig.useVoiceprint {
+        if (self.controller.config.templateConfig.voiceprintId != nil && self.controller.config.templateConfig.useVoiceprint) || self.controller.config.templateConfig.vadLevel > 0 {
             return "[\(voiceprintResult.rawValue)]\(text)"
         }
         return text
+    }
+    
+}
+#endif
+
+
+#if DEMO_FOR_RTC
+
+#if canImport(AliVCSDK_ARTC)
+import AliVCSDK_ARTC
+#elseif canImport(AliVCSDK_InteractiveLive)
+import AliVCSDK_InteractiveLive
+#elseif canImport(AliVCSDK_Standard)
+import AliVCSDK_Standard
+#endif
+extension AUIAICallViewController: AliRtcAudioFrameDelegate {
+    
+    static let enableAudioFrameObserver = false
+    
+    func registerAudioFrameData() {
+        guard AUIAICallViewController.enableAudioFrameObserver else { return }
+        
+        let rtc = self.controller.currentEngine.getRTCInstance() as? AliRtcEngine
+        // 添加音频帧数据回调
+        rtc?.registerAudioFrameObserver(self)
+        // 监听采集到的裸数据，监听对应的类型，则需要实现它的回调接口并返回true，例如onCapturedAudioFrame
+        rtc?.enableAudioFrameObserver(true, audioSource: .captured, config: nil)
+    }
+    
+    public func onCapturedAudioFrame(_ frame: AliRtcAudioFrame) -> Bool {
+        // 这里处理返回的音频采集裸数据
+        return true
+    }
+    
+    public func onProcessCapturedAudioFrame(_ frame: AliRtcAudioFrame) -> Bool {
+        return false
+    }
+    
+    public func onPublishAudioFrame(_ frame: AliRtcAudioFrame) -> Bool {
+        return false
+    }
+    
+    public func onPlaybackAudioFrame(_ frame: AliRtcAudioFrame) -> Bool {
+        return false
+    }
+    
+    public func onMixedAllAudioFrame(_ frame: AliRtcAudioFrame) -> Bool {
+        return false
+    }
+    
+    public func onRemoteUserAudioFrame(_ uid: String?, frame: AliRtcAudioFrame) -> Bool {
+        return false
     }
     
 }

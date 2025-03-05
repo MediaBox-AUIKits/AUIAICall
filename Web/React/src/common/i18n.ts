@@ -6,6 +6,7 @@ const i18n = {
   'agent.voice': '语音通话',
   'agent.avatar': '数字人通话',
   'agent.vision': '视觉理解通话',
+  'agent.chatbot': '消息对话',
 
   'push.pushtoTalk': '按住讲话',
   'push.releaseToSend': '松开发送',
@@ -50,6 +51,11 @@ const i18n = {
 
   'humanTakeover.willStart': '当前通话即将被真人接管',
   'humanTakeover.connected': '当前通话已经被真人接管',
+
+  'vision.customCapture.enabled': '已开启自定义截帧送检模式，语音输入将不起作用',
+  'vision.customCapture.disabled': '已退出自定义截帧送检模式',
+
+  'speaking.interrupt': '当前讲话已被打断',
 };
 
 const ErrorCodeMessageMap: { [key: number]: string } = {

@@ -6,7 +6,7 @@ import { AICallAgentType } from 'aliyun-auikit-aicall';
 // import Icon from '@ant-design/icons';
 
 import './index.less';
-import useCallStore from '@/common/store';
+import useCallStore from '@/Mobile/Call/store';
 import ArrowBtn from '../components/ArrowBtn';
 
 const AutoScrollGap = 20;

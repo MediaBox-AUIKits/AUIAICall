@@ -7,7 +7,7 @@ import Voice from './svg/voice.svg?react';
 import Avatar from './svg/avatar.svg?react';
 import Vision from './svg/vision.svg?react';
 
-import useCallStore from '@/common/store';
+import useCallStore from '@/Mobile/Call/store';
 
 import './index.less';
 import i18n from '@/common/i18n';

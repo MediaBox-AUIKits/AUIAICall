@@ -58,7 +58,7 @@ public typealias AUIAIChatSettingSelectedBlock = (_ item: AUIAICallVoiceItem) ->
     private lazy var defaultVoiceItem: AUIAICallVoiceItem = {
         let item = AUIAICallVoiceItem()
         item.voiceId = ""
-        item.voiceName = AUIAIChatBundle.getString("默认")
+        item.voiceName = AUIAIChatBundle.getString("Default")
         item.icon = "ic_sound_2"
         return item
     }()

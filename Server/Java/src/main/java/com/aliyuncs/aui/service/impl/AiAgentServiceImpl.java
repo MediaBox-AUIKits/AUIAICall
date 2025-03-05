@@ -59,7 +59,7 @@ public class AiAgentServiceImpl implements AiAgentService {
     }
 
     @Override
-    public AiAgentStartResponse startAiAgent(String ChannelId, String userId, String rtcAuthToken, String templateConfig, String workflowType, String userData) {
+    public AiAgentStartResponse startAiAgent(String ChannelId, String userId, String rtcAuthToken, String templateConfig, String workflowType, String userData, String sessionId, String chatSyncConfig) {
         Params params = new Params()
                 // 接口名称
                 .setAction("StartAIAgentInstance")
@@ -115,6 +115,12 @@ public class AiAgentServiceImpl implements AiAgentService {
         if (StringUtils.isNotEmpty(userData)) {
             queries.put("UserData", userData);
         }
+        if(StringUtils.isNotEmpty(sessionId)) {
+            queries.put("SessionId", sessionId);
+        }
+        if(StringUtils.isNotEmpty(chatSyncConfig)) {
+            queries.put("ChatSyncConfig", chatSyncConfig);
+        }
         RuntimeOptions runtime = new RuntimeOptions();
         String requestId = StringUtils.EMPTY;
         String message = StringUtils.EMPTY;
@@ -127,7 +133,7 @@ public class AiAgentServiceImpl implements AiAgentService {
             // 复制代码运行请自行打印 API 的返回值
             // 返回值为 Map 类型，可从 Map 中获得三类数据：响应体 body、响应头 headers、HTTP 返回的状态码 statusCode。
             Map<String, ?> response = client.callApi(params, request, runtime);
-            log.info("startAiAgent, response:{}", JSONObject.toJSONString(response));
+            log.info("startAiAgent, response:{}, cost:{}ms", JSONObject.toJSONString(response), (System.currentTimeMillis() - start));
             if (response != null) {
                 if (response.containsKey("statusCode")) {
                     Integer statusCode = (Integer) response.get("statusCode");
@@ -201,7 +207,7 @@ public class AiAgentServiceImpl implements AiAgentService {
             long start = System.currentTimeMillis();
             log.info("stopAiAgent, queries:{}", JSONObject.toJSONString(queries));
             Map<String, ?> response = client.callApi(params, request, runtime);
-            log.info("stopAiAgent, response:{}", JSONObject.toJSONString(response));
+            log.info("stopAiAgent, response:{}, cost:{}ms", JSONObject.toJSONString(response), (System.currentTimeMillis() - start));
             if (response != null) {
                 if (response.containsKey("statusCode")) {
                     Integer statusCode = (Integer) response.get("statusCode");
@@ -262,7 +268,7 @@ public class AiAgentServiceImpl implements AiAgentService {
             long start = System.currentTimeMillis();
             log.info("updateAiAgent, queries:{}", JSONObject.toJSONString(queries));
             Map<String, ?> response = client.callApi(params, request, runtime);
-            log.info("updateAiAgent, response:{}", JSONObject.toJSONString(response));
+            log.info("updateAiAgent, response:{}, cost:{}ms", JSONObject.toJSONString(response), (System.currentTimeMillis() - start));
             if (response != null) {
                 if (response.containsKey("statusCode")) {
                     Integer statusCode = (Integer) response.get("statusCode");
@@ -288,7 +294,7 @@ public class AiAgentServiceImpl implements AiAgentService {
     }
 
     @Override
-    public GenerateAIAgentCallResponse generateAIAgentCall(String aiAgentId, String userId, Integer expire, String templateConfig, String workflowType, String region, String userData) {
+    public GenerateAIAgentCallResponse generateAIAgentCall(String aiAgentId, String userId, Integer expire, String templateConfig, String workflowType, String region, String userData, String sessionId, String chatSyncConfig) {
         Params params = new Params()
                 // 接口名称
                 .setAction("GenerateAIAgentCall")
@@ -329,6 +335,12 @@ public class AiAgentServiceImpl implements AiAgentService {
         if (StringUtils.isNotEmpty(userData)) {
             queries.put("UserData", userData);
         }
+        if(StringUtils.isNotEmpty(sessionId)) {
+            queries.put("SessionId", sessionId);
+        }
+        if(StringUtils.isNotEmpty(chatSyncConfig)) {
+            queries.put("ChatSyncConfig", chatSyncConfig);
+        }
         com.aliyun.teautil.models.RuntimeOptions runtime = new com.aliyun.teautil.models.RuntimeOptions();
         String requestId = StringUtils.EMPTY;
         String message = StringUtils.EMPTY;
@@ -337,11 +349,11 @@ public class AiAgentServiceImpl implements AiAgentService {
         try {
             com.aliyun.teaopenapi.models.OpenApiRequest request = new com.aliyun.teaopenapi.models.OpenApiRequest()
                     .setQuery(com.aliyun.openapiutil.Client.query(queries));
+            Client localClient = getClient(region);
             long start = System.currentTimeMillis();
             log.info("generateAIAgentCall, queries:{}, region:{}", JSONObject.toJSONString(queries), region);
-            Client localClient = getClient(region);
             Map<String, ?> response = localClient.callApi(params, request, runtime);
-            log.info("generateAIAgentCall, response:{}", JSONObject.toJSONString(response));
+            log.info("generateAIAgentCall, response:{}, cost:{}ms", JSONObject.toJSONString(response), (System.currentTimeMillis() - start));
             if (response != null) {
                 if (response.containsKey("statusCode")) {
                     Integer statusCode = (Integer) response.get("statusCode");
@@ -439,7 +451,7 @@ public class AiAgentServiceImpl implements AiAgentService {
             long start = System.currentTimeMillis();
             log.info("describeAiAgentInstance, queries:{}", JSONObject.toJSONString(queries));
             Map<String, ?> response = client.callApi(params, request, runtime);
-            log.info("describeAiAgentInstance, response:{}", JSONObject.toJSONString(response));
+            log.info("describeAiAgentInstance, response:{}, cost:{}ms", JSONObject.toJSONString(response), (System.currentTimeMillis() - start));
             if (response != null) {
                 if (response.containsKey("statusCode")) {
                     Integer statusCode = (Integer) response.get("statusCode");
@@ -516,10 +528,11 @@ public class AiAgentServiceImpl implements AiAgentService {
         try {
             com.aliyun.teaopenapi.models.OpenApiRequest request = new com.aliyun.teaopenapi.models.OpenApiRequest()
                     .setQuery(com.aliyun.openapiutil.Client.query(queries));
-            log.info("generateMessageChatToken, queries:{}", JSONObject.toJSONString(queries));
             Client localClient = getClient(region);
+            long start = System.currentTimeMillis();
+            log.info("generateMessageChatToken, queries:{}", JSONObject.toJSONString(queries));
             Map<String, ?> response = localClient.callApi(params, request, runtime);
-            log.info("generateMessageChatToken, response:{}", JSONObject.toJSONString(response));
+            log.info("generateMessageChatToken, response:{}, cost:{}ms", JSONObject.toJSONString(response), (System.currentTimeMillis() - start));
             if (response != null) {
                 if (response.containsKey("statusCode")) {
                     Integer statusCode = (Integer) response.get("statusCode");

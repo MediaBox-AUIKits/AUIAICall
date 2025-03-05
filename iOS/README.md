@@ -1,3 +1,5 @@
+[English](README_English.md)
+
 # AUIAICall
 阿里云 · AUI Kits AI智能体集成工具
 
@@ -41,10 +43,15 @@ AUI Kits AI智能体集成工具适用于网络客服、AI助理、撮合助手�
 // AUIAICallAppServer.swift
 public let AICallServerDomain = "你的应用服务器域名"
 ```
-- 配置消息对话智能体Id，进入文件AUIAICallAgentConfig.swift
+- 配置消息对话智能体Id及所在的区域，进入文件AUIAICallAgentConfig.swift
 ```swift
 // AUIAICallAgentConfig.swift
+
+// 配置智能体id 
 let ChatAgentId = "你的消息对话智能体Id"
+
+// 配置区域
+let Region = "cn-shanghai"
 ```
 - 选择”Example“Target 进行编译运行
 
@@ -54,11 +61,11 @@ let ChatAgentId = "你的消息对话智能体Id"
 ### 集成源码
 - 导入AUIAICall：仓库代码下载后，拷贝iOS文件夹到你的APP代码目录下，改名为AUIAICall，与你的Podfile文件在同一层级，可以删除Example和AICallKit目录
 - 修改你的Podfile，引入：
-  - AliVCSDK_ARTC：适用于AI实时互动通话的音视频终端SDK，也可以使用：AliVCSDK_Standard或AliVCSDK_InteractiveLive，参考[快速集成](https://help.aliyun.com/document_detail/2412571.htm)
-  - AliVCInteractionMessage：适用于消息对话的音互动消息SDK，如果你已经集成，请使用1.5.0版本及以上，参考[快速集成](https://help.aliyun.com/zh/live/user-guide/live-interactive-messages-new)
-  - ARTCAICallKit：AI实时互动通话场景&消息对话场景的SDK
-  - AUIFoundation：基础UI组件
-  - AUIAICall：AI通话场景&消息对话场景的UI组件源码
+  * AliVCSDK_ARTC：适用于AI实时互动通话的音视频终端SDK，也可以使用：AliVCSDK_Standard或AliVCSDK_InteractiveLive，参考[快速集成](https://help.aliyun.com/document_detail/2412571.htm)
+  * AliVCInteractionMessage：适用于消息对话的音互动消息SDK，如果你已经集成，请使用1.5.0版本及以上，参考[快速集成](https://help.aliyun.com/zh/live/user-guide/live-interactive-messages-new)
+  * ARTCAICallKit：AI实时互动通话场景&消息对话场景的SDK
+  * AUIFoundation：基础UI组件
+  * AUIAICall：AI通话场景&消息对话场景的UI组件源码
 ```ruby
 
 #需要iOS10.0及以上才能支持
@@ -69,8 +76,8 @@ target '你的App target' do
     pod 'AliVCSDK_ARTC', '~> 6.21.0'
 
     # AI实时互动通话场景SDK
-    # 如果你的业务还需要支持消息对话，则使用“ARTCAICallKit/Chatbot”进行集成，把下面一行改为：pod 'ARTCAICallKit/Chatbot', '~> 2.0.0'
-    pod 'ARTCAICallKit', '~> 2.0.0'
+    # 如果你的业务还需要支持消息对话，则使用“ARTCAICallKit/Chatbot”进行集成，把下面一行改为：pod 'ARTCAICallKit/Chatbot', '~> 2.1.0'
+    pod 'ARTCAICallKit', '~> 2.1.0'
 
     # 基础UI组件源码
     pod 'AUIFoundation', :path => "./AUIAICall/AUIBaseKits/AUIFoundation/", :modular_headers => true
@@ -97,11 +104,6 @@ end
 ```swift
 // AUIAICallAppServer.swift
 public let AICallServerDomain = "你的应用服务器域名"
-```
-- 如果你的业务还需要支持消息对话，需要配置消息对话智能体Id，进入文件AUIAICallAgentConfig.swift
-```swift
-// AUIAICallAgentConfig.swift
-let ChatAgentId = "你的消息对话智能体Id"
 ```
 
 ### 调用API
@@ -154,9 +156,11 @@ let userId = "123"
 let deviceId = UIDevice.current.identifierForVendor?.uuidString
 let userInfo = ARTCAIChatUserInfo(userId, deviceId)
 
-// 设置智能体，智能体Id不能为nil
+// 设置智能体，智能体Id不能为nil，region是智能体所在的区域
 let agentId = "xxxxx"
+let region = "xx-xxx"
 let agentInfo = ARTCAIChatAgentInfo(agentId: agentId)
+agentInfo.region = region
 
 // 创建消息对话的ViewController
 let vc = AUIAIChatViewController(userInfo: userInfo, agentInfo: agentInfo)

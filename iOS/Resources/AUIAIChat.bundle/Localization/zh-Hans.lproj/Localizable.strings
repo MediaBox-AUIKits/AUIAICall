@@ -28,11 +28,16 @@
 
 "Please enter content" = "请输入内容";
 "Press and hold to speak" = "按住说话";
-"User terminated this response" = "用户终止了本次回答";
+"User terminated this response" = "用户终止本次回答";
 "Release to send, swipe up to cancel" = "松开发送，上滑取消";
 "Release to cancel" = "松开取消";
 "Failed to push voice message" = "发送语音消息失败";
 "No text recognized" = "未识别到文字";
 "Playback failed" = "播放失败";
 "Generating speech reading..." = "语音朗读生成中";
+"Received Custom Message: %@" = "接收到自定义消息：%@";
+"Reasonging completed" = "思考完成";
+"Reasoning stopped" = "思考停止";
+"Reasoning..." = "思考中...";
 
+"Unable to start call because there is not connected" = "无法启动通话，因为当前未连接";

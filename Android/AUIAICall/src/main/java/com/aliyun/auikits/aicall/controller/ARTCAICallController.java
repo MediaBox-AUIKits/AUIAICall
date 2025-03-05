@@ -239,6 +239,20 @@ public abstract class ARTCAICallController {
                 mBizCallEngineCallback.onAudioDelayInfo(id, delay_ms);
             }
         }
+
+        @Override
+        public void onVisionCustomCapture(boolean enable) {
+            if(null != mBizCallEngineCallback) {
+                mBizCallEngineCallback.onVisionCustomCapture(enable);
+            }
+        }
+
+        @Override
+        public void onSpeakingInterrupted(ARTCAICallEngine.ARTCAICallSpeakingInterruptedReason reason) {
+            if(null != mBizCallEngineCallback) {
+                mBizCallEngineCallback.onSpeakingInterrupted(reason);
+            }
+        }
     };
 
     protected ARTCAICallController(Context context, String userId) {

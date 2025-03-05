@@ -69,17 +69,17 @@ import ARTCAICallKit
     }
 
     // 通过指定agentType（agentId为空时，由appserver配置的）发起通话，
-    open func startCall(agentType: ARTCAICallAgentType, agentId: String? = nil, region: String? = nil, limitSecond: UInt32 = 0, viewController: UIViewController? = nil) {
+    open func startCall(agentType: ARTCAICallAgentType, agentId: String? = nil, chatSyncConfig: ARTCAICallChatSyncConfig? = nil, region: String? = nil, limitSecond: UInt32 = 0, viewController: UIViewController? = nil) {
         
         if self.userId == nil {
             self.userId = NSString.av_random()
         }
         
-        self.startCallWithStandard(agentType: agentType, agentId: agentId, region: region, limitSecond: limitSecond, viewController: viewController)
+        self.startCallWithStandard(agentType: agentType, agentId: agentId, chatSyncConfig: chatSyncConfig, region: region, limitSecond: limitSecond, viewController: viewController)
     }
     
     // 全托管方式发起通话，通过指定agentType（agentId为空时，由appserver配置的）发起通话，
-    private func startCallWithStandard(agentType: ARTCAICallAgentType, agentId: String? = nil, region: String? = nil, limitSecond: UInt32 = 0, viewController: UIViewController? = nil) {
+    private func startCallWithStandard(agentType: ARTCAICallAgentType, agentId: String? = nil, chatSyncConfig: ARTCAICallChatSyncConfig? = nil, region: String? = nil, limitSecond: UInt32 = 0, viewController: UIViewController? = nil) {
         
         self.checkDeviceAuth(agentType: agentType) { [weak self] in
             guard let self = self else {return}
@@ -93,6 +93,8 @@ import ARTCAICallKit
             controller.config.agentId = agentId ?? AUIAICallAgentConfig.shared.getAgentID(agentType: agentType)
             // 设置通话的类型（语音、数字人或视觉理解），如果设置AgentId则需要与AgentId的类型对应，否则appserver根据agentType选择对应的agentId启动通话
             controller.config.agentType = agentType
+            // 关联的chat智能体配置(必须同一账号同一区域上)，如果设置了，那么在通话过程中会把通话记录同步到chat智能体上
+            controller.config.chatSyncConfig = chatSyncConfig
             // 通话配置
             controller.config.templateConfig = self.getDefaultTemplateConfig()
             // agent所在的区域
@@ -142,6 +144,7 @@ import ARTCAICallKit
         
         // 设置智能体，智能体Id不能为nil
         let agentInfo = ARTCAIChatAgentInfo(agentId: agentId ?? AUIAICallAgentConfig.shared.getChatAgentId())
+        agentInfo.region = AUIAICallAgentConfig.shared.getRegion() // 设置智能体所在区域，假设是上海区域："cn-shanghai"
         
         // 创建消息对话的ViewController
         let vc = AUIAIChatViewController(userInfo: userInfo, agentInfo: agentInfo)
@@ -189,13 +192,13 @@ extension AUIAICallManager {
     }
 
     // 通过指定agentType（agentId为空时，由appserver配置的）发起通话，
-    open func startCall(agentType: ARTCAICallAgentType, agentId: String? = nil, region: String? = nil, limitSecond: UInt32 = 0, viewController: UIViewController? = nil) {
+    open func startCall(agentType: ARTCAICallAgentType, agentId: String? = nil, chatSyncConfig: ARTCAICallChatSyncConfig? = nil, region: String? = nil, limitSecond: UInt32 = 0, viewController: UIViewController? = nil) {
         
         if self.userId == nil {
             self.userId = NSString.av_random()
         }
         
-        AUIAICallDebugManager.shared.startCall(agentType: agentType, agentId: agentId, region: region, limitSecond: limitSecond, viewController: viewController)
+        AUIAICallDebugManager.shared.startCall(agentType: agentType, agentId: agentId, chatSyncConfig: chatSyncConfig, region: region, limitSecond: limitSecond, viewController: viewController)
     }
     
     // 通过指定智能体Id，发起通话
