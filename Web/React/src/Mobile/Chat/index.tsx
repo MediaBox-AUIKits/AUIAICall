@@ -8,6 +8,7 @@ import {
   AIChatEngine,
   AIChatError,
   AIChatMessagePlayState,
+  AIChatTemplateConfig,
   AIChatUserInfo,
 } from 'aliyun-auikit-aicall';
 import ChatHeader from './Header';
@@ -26,15 +27,40 @@ import { getErrorMessage } from '@/common/i18n';
 interface ChatProps {
   userId: string;
   userToken: string;
+  appServer?: string;
   agentId?: string;
   shareToken?: string;
   region?: string;
+  templateConfig?: AIChatTemplateConfig;
   onExit: () => void;
   onAuthFail?: () => void;
 }
 
-function Chat({ userId, userToken, agentId, shareToken, region, onExit, onAuthFail }: ChatProps) {
+function Chat({
+  userId,
+  userToken,
+  appServer,
+  agentId,
+  shareToken,
+  region,
+  templateConfig,
+  onExit,
+  onAuthFail,
+}: ChatProps) {
   const [chatEngine, setChatEngine] = useState<AIChatEngine | null>(null);
+
+  useEffect(() => {
+    const pageUnload = () => {
+      useChatStore.getState().updateMessageList();
+    };
+    window.addEventListener('beforeunload', pageUnload);
+
+    return () => {
+      // 触发将当前未结束的消息缓存
+      useChatStore.getState().updateMessageList();
+      window.removeEventListener('beforeunload', pageUnload);
+    };
+  }, []);
 
   useEffect(() => {
     let _agentId = agentId;
@@ -57,8 +83,16 @@ function Chat({ userId, userToken, agentId, shareToken, region, onExit, onAuthFa
       Toast.show({ content: '智能体Id不能为空', getContainer: () => getRootElement() });
       return;
     }
+    if (appServer) {
+      standardService.setAppServer(appServer);
+    }
 
     const chatEngine = new AIChatEngine();
+
+    if (templateConfig) {
+      chatEngine.templateConfig = templateConfig;
+    }
+
     chatEngine.on('engineStateChange', (state) => {
       useChatStore.setState({
         chatState: state,
@@ -101,7 +135,11 @@ function Chat({ userId, userToken, agentId, shareToken, region, onExit, onAuthFa
     });
 
     chatEngine.on('receivedMessage', (message) => {
-      useChatStore.getState().receiveMessage(message);
+      if (message.senderId === chatEngine.agentInfo?.agentId) {
+        useChatStore.getState().receiveMessage(message);
+      } else {
+        useChatStore.getState().sendMessage(message);
+      }
     });
     chatEngine.on('voiceListUpdated', (voiceIdList) => {
       useChatStore.setState({
@@ -113,7 +151,16 @@ function Chat({ userId, userToken, agentId, shareToken, region, onExit, onAuthFa
       if ((error as AIChatError).code === AICallErrorCode.TokenExpired) {
         return;
       }
-      Toast.show({ content: `出错了(${(error as AIChatError).code}): ${(error as AIChatError).message}` });
+      Toast.show({
+        content: `出错了(${(error as AIChatError).code}): ${(error as AIChatError).message}`,
+        getContainer: getRootElement,
+      });
+    });
+    chatEngine.on('receivedCustomMessage', (message) => {
+      Toast.show({
+        content: `Received Custom Message: ${message}`,
+        getContainer: getRootElement,
+      });
     });
 
     (async () => {
@@ -141,7 +188,7 @@ function Chat({ userId, userToken, agentId, shareToken, region, onExit, onAuthFa
       chatEngine.endChat(false);
       useChatStore.getState().reset();
     };
-  }, [userId, userToken, agentId, region, onAuthFail, shareToken]);
+  }, [userId, userToken, agentId, region, appServer, onAuthFail, shareToken, templateConfig]);
 
   return (
     <ChatEngineContext.Provider value={chatEngine}>
@@ -149,7 +196,7 @@ function Chat({ userId, userToken, agentId, shareToken, region, onExit, onAuthFa
         <SafeArea position='top' />
         <ChatHeader onBack={onExit} />
         <ChatMessages />
-        <ChatFooter />
+        <ChatFooter userId={userId} userToken={userToken} />
         <SafeArea position='bottom' />
         <ChatState onExit={onExit} />
       </div>

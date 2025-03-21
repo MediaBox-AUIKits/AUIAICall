@@ -1,4 +1,4 @@
-import { AICallAgentType, AICallTemplateConfig } from 'aliyun-auikit-aicall';
+import { AICallAgentType, AICallTemplateConfig, AICallChatSyncConfig } from 'aliyun-auikit-aicall';
 
 class AUIAICallConfig {
   /**
@@ -58,6 +58,20 @@ class AUIAICallConfig {
    * 是否来自分享链接
    */
   fromShare?: boolean;
+
+  /**
+   * 关联的chat智能体配置，如果设置了，那么在通话过程中会把通话记录同步到chat智能体上
+   */
+  chatSyncConfig?: AICallChatSyncConfig;
+
+  /**
+   * RTC 引擎配置
+   */
+  rtcEngineConfig?: {
+    environment?: 'PRE' | 'PROD';
+    useAudioPlugin?: boolean;
+    dumpAudio?: boolean;
+  };
 }
 
 export default AUIAICallConfig;

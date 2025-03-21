@@ -50,6 +50,8 @@ class AppServerService {
       expire?: number;
       user_data?: string;
       region?: string;
+      session_id?: string;
+      chat_sync_config?: string;
     } = {
       user_id: this._userId,
       expire: 24 * 60 * 60,
@@ -62,6 +64,11 @@ class AppServerService {
     }
     if (config.region) {
       param.region = config.region;
+    }
+
+    if (config.chatSyncConfig) {
+      param.session_id = config.chatSyncConfig.sessionId;
+      param.chat_sync_config = config.chatSyncConfig.getConfigString();
     }
 
     return fetch(`${APP_SERVER}/api/v2/aiagent/startAIAgentInstance`, {

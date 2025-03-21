@@ -92,7 +92,7 @@ function Footer({ onStop, onCall }: CallFooterProps) {
 
   const onCallClick = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.stopPropagation();
-    if (callState === AICallState.Connected) {
+    if (callState === AICallState.Connected || callState === AICallState.Connecting) {
       onStop();
     } else {
       onCall();
@@ -108,9 +108,7 @@ function Footer({ onStop, onCall }: CallFooterProps) {
         callState === AICallState.Connected || callState === AICallState.Connecting ? 'is-connected' : ''
       }`}
     >
-      <Button onClick={onCallClick} disabled={callState === AICallState.Connecting}>
-        {CallPhoneSVG}
-      </Button>
+      <Button onClick={onCallClick}>{CallPhoneSVG}</Button>
       <div className='_label'>
         {callState === AICallState.Connected || callState === AICallState.Connecting ? '挂断' : '拨打'}
       </div>

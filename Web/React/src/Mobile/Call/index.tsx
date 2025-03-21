@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { AICallAgentType, AICallTemplateConfig } from 'aliyun-auikit-aicall';
+import { AICallAgentType, AICallChatSyncConfig, AICallTemplateConfig } from 'aliyun-auikit-aicall';
 import AUIAICallStandardController from '@/controller/call/AUIAICallStandardController';
 
 import './index.less';
@@ -13,6 +13,7 @@ export interface CallProps {
   agentType: AICallAgentType;
   userId?: string;
   userToken?: string;
+  autoCall?: boolean;
 
   shareToken?: string;
   fromShare?: boolean;
@@ -25,12 +26,19 @@ export interface CallProps {
   isShare?: boolean;
   onExit?: () => void;
   onAuthFail?: () => void;
+  chatSyncConfig?: AICallChatSyncConfig;
+  rtcEngineConfig?: {
+    environment?: 'PRE' | 'PROD';
+    useAudioPlugin?: boolean;
+    dumpAudio?: boolean;
+  };
   children?: React.ReactNode;
 }
 function Call({
   userId,
   userToken,
   agentId,
+  autoCall,
   shareToken,
   fromShare,
   appServer,
@@ -40,6 +48,8 @@ function Call({
   templateConfig,
   onExit,
   onAuthFail,
+  chatSyncConfig,
+  rtcEngineConfig,
   children,
 }: CallProps) {
   const controller = useMemo(() => {
@@ -72,9 +82,13 @@ function Call({
       if (agentId) {
         _controller.config.agentId = agentId;
       }
+      if (chatSyncConfig) {
+        _controller.config.chatSyncConfig = chatSyncConfig;
+      }
     }
 
     if (appServer) _controller.appServer = appServer;
+    if (rtcEngineConfig) _controller.config.rtcEngineConfig = rtcEngineConfig;
     if (region) _controller.config.region = region;
     if (userData) {
       _controller.config.userData = userData;
@@ -84,7 +98,19 @@ function Call({
     }
 
     return _controller;
-  }, [userId, userToken, shareToken, fromShare, appServer, region, agentId, userData, templateConfig, agentType]);
+  }, [
+    userId,
+    userToken,
+    shareToken,
+    fromShare,
+    appServer,
+    region,
+    agentId,
+    userData,
+    templateConfig,
+    agentType,
+    chatSyncConfig,
+  ]);
 
   return (
     <ControllerContext.Provider value={controller}>
@@ -92,10 +118,11 @@ function Call({
         // 微信安卓端自动播放会失败，分享场景需要手动点击通话
         agentType={agentType}
         autoCall={
-          new URLSearchParams(location.search).get('nocall') ||
+          autoCall ||
+          (new URLSearchParams(location.search).get('nocall') ||
           (controller?.config.fromShare && isAndroidWeChatBrowser())
             ? false
-            : true
+            : true)
         }
         onAuthFail={() => {
           onAuthFail?.();

@@ -10,6 +10,7 @@ import {
   AICallState,
   AICallSubtitleData,
   AICallVisionCustomCaptureRequest,
+  AICallVoiceprintResult,
 } from 'aliyun-auikit-aicall';
 import ARTCAICallEngine from 'aliyun-auikit-aicall';
 import AUIAICallConfig from './AUIAICallConfig';
@@ -106,6 +107,7 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
         muteCamera: this._config.muteCamera,
         previewElement: this._config.previewView,
         templateConfig: this._config.templateConfig,
+        rtcEngineConfig: this._config.rtcEngineConfig,
       });
       logger.info('Controller', 'InitEngineSuccess', { value: Date.now() - startTs });
     } catch (error) {
@@ -144,6 +146,9 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
       throw error;
     }
 
+    // 可能已经结束通话，不再继续
+    if (this.state !== AICallState.Connecting) return;
+
     this._agentInfo = instanceInfo;
     this.emit('AICallAIAgentStarted', instanceInfo);
 
@@ -169,10 +174,13 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
       if (this.state !== AICallState.Connected) return;
       this.emit('AICallAgentSubtitleNotify', data);
     });
-    this._currentEngine.on('userSubtitleNotify', (data: AICallSubtitleData) => {
-      if (this.state !== AICallState.Connected) return;
-      this.emit('AICallUserSubtitleNotify', data);
-    });
+    this._currentEngine.on(
+      'userSubtitleNotify',
+      (data: AICallSubtitleData, voiceprintResult: AICallVoiceprintResult) => {
+        if (this.state !== AICallState.Connected) return;
+        this.emit('AICallUserSubtitleNotify', data, voiceprintResult);
+      }
+    );
     this._currentEngine.on('agentEmotionNotify', (emotion, sentenceId) => {
       this.emit('AICallAgentEmotionNotify', emotion, sentenceId);
     });
@@ -241,6 +249,7 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
 
       // @ts-expect-error state may change
       if (this.state === AICallState.Over) {
+        this.handup();
         throw new AICallAgentError('call has been over');
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -261,11 +270,13 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
 
   async handup(): Promise<void> {
     logger.info('Controller', 'Handup');
+    const currentState = this.state;
+    if (this.state === AICallState.Over || this.state === AICallState.Error) return;
+    this.state = AICallState.Over;
     const agent = this.engine?.agentInfo;
-    if (agent) {
+    if (agent && currentState === AICallState.Connected) {
       await this.stopAIAgent(agent.instanceId);
     }
-    this.state = AICallState.Over;
     await this.engine?.handup();
     this.engine?.removeAllListeners();
     this.removeAllListeners();

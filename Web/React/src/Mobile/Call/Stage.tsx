@@ -115,11 +115,12 @@ function Stage({ agentType, onStateChange, onExit, onAuthFail, limitSecond, auto
         source: 'agent',
       });
     });
-    controller.on('AICallUserSubtitleNotify', (data) => {
+    controller.on('AICallUserSubtitleNotify', (data, voiceprintResult) => {
       useCallStore.getState().setCurrentSubtitle({
         data,
         source: 'user',
       });
+      console.log(`voiceprintResult to ${voiceprintResult}`);
     });
 
     controller.on('AICallUserTokenExpired', () => {
@@ -256,7 +257,6 @@ function Stage({ agentType, onStateChange, onExit, onAuthFail, limitSecond, auto
       {callState === AICallState.Error && (
         <Dialog
           visible
-          closeOnMaskClick
           getContainer={() => getRootElement()}
           onClose={() => {
             useCallStore.setState({
@@ -264,6 +264,24 @@ function Stage({ agentType, onStateChange, onExit, onAuthFail, limitSecond, auto
             });
           }}
           content={<div className='stage-error-message'>{useCallStore.getState().callErrorMessage}</div>}
+          actions={[
+            [
+              {
+                key: 'close',
+                text: '关闭',
+                onClick: () => {
+                  useCallStore.setState({
+                    callState: AICallState.None,
+                  });
+                },
+              },
+              {
+                key: 'exit',
+                text: '退出',
+                onClick: stopCall,
+              },
+            ],
+          ]}
         />
       )}
     </div>

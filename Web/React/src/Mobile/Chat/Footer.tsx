@@ -1,12 +1,13 @@
 import { useContext, useEffect, useRef, useState } from 'react';
-import { Button, ButtonRef, TextArea, TextAreaRef, Toast } from 'antd-mobile';
+import { Button, ButtonRef, Popup, TextArea, TextAreaRef, Toast } from 'antd-mobile';
 
 import './footer.less';
-import { cancelRecordSVG, interruptSVG, keyboardSVG, micSVG, recordingSVG, sendSVG } from './Icons';
+import { callSVG, cancelRecordSVG, interruptSVG, keyboardSVG, micSVG, recordingSVG, sendSVG } from './Icons';
 import ChatEngineContext from './ChatEngineContext';
 import useChatStore from './store';
-import { AIChatMessage, AIChatMessageState } from 'aliyun-auikit-aicall';
+import { AICallAgentType, AICallChatSyncConfig, AIChatMessage, AIChatMessageState } from 'aliyun-auikit-aicall';
 import { getRootElement } from '@/common/utils';
+import Call from '../Call';
 
 type OnTypeChange = (type: 'text' | 'voice') => void;
 
@@ -40,7 +41,6 @@ function SendText({ onTypeChange }: { onTypeChange: OnTypeChange }) {
   }, [focusing]);
 
   const sendMessage = async () => {
-    console.log(engine, 'sendMessage');
     const text = ref.current?.nativeElement?.value || '';
     if (!text.trim()) {
       return;
@@ -63,7 +63,6 @@ function SendText({ onTypeChange }: { onTypeChange: OnTypeChange }) {
   };
 
   const interruptMessage = async () => {
-    console.log(engine, 'interruptMessage');
     try {
       await engine?.interruptAgentResponse();
       useChatStore.getState().interruptAgent();
@@ -265,7 +264,6 @@ function SendVoice({ onTypeChange }: { onTypeChange: OnTypeChange }) {
   }, [engine]);
 
   const interruptMessage = async () => {
-    console.log(engine, 'interruptMessage');
     try {
       await engine?.interruptAgentResponse();
     } catch (error) {
@@ -316,17 +314,49 @@ function SendVoice({ onTypeChange }: { onTypeChange: OnTypeChange }) {
   );
 }
 
-function ChatFooter() {
+function ChatFooter({ userId, userToken }: { userId: string; userToken: string }) {
   const [mode, setMode] = useState<'text' | 'voice'>('text');
+  const engine = useContext(ChatEngineContext);
+  const [callVisible, setCallVisible] = useState(false);
 
   return (
-    <div className='chat-footer'>
-      {mode === 'voice' ? (
-        <SendVoice onTypeChange={(type) => setMode(type)} />
-      ) : (
-        <SendText onTypeChange={(type) => setMode(type)} />
-      )}
-    </div>
+    <>
+      <div className='chat-footer'>
+        <div className='_send-area'>
+          {mode === 'voice' ? (
+            <SendVoice onTypeChange={(type) => setMode(type)} />
+          ) : (
+            <SendText onTypeChange={(type) => setMode(type)} />
+          )}
+        </div>
+
+        <Button className='_call-btn' disabled={callVisible} onClick={() => setCallVisible(true)}>
+          {callSVG}
+        </Button>
+      </div>
+      <Popup
+        visible={callVisible}
+        onMaskClick={() => setCallVisible(false)}
+        destroyOnClose
+        getContainer={getRootElement}
+        bodyStyle={{ height: '100%' }}
+      >
+        <Call
+          userId={userId}
+          userToken={userToken}
+          agentType={AICallAgentType.VoiceAgent}
+          chatSyncConfig={
+            new AICallChatSyncConfig(
+              engine?.sessionId || '',
+              engine?.agentInfo?.agentId || '',
+              engine?.userInfo?.userId || ''
+            )
+          }
+          autoCall
+          onExit={() => setCallVisible(false)}
+        />
+      </Popup>
+    </>
   );
 }
 

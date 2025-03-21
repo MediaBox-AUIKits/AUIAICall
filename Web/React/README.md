@@ -40,6 +40,8 @@ export const APP_SERVER = '你的应用服务器域名';
 
 - 根据业务情况，完善获取 UserId / Token（用于 AppServer 接口鉴权） 的逻辑
 - 执行命令 `npm run dev` 启动本地服务
+  - 访问 http://localhost:5173 即可查看 PC Demo
+  - 访问 http://localhost:5173/mobile 即可查看 Mobile Demo
 
 ## 常见问题
 

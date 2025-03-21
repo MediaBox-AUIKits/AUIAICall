@@ -93,7 +93,6 @@ const useChatStore = create<ChatStore>((set) => ({
     }),
   updateSendMessage: (message: AIChatMessage) =>
     set((state: ChatStore) => {
-      console.log('updateSendMessage', message, state.currentMessage);
       const newState: Partial<ChatStore> = {};
       // 当前 Message 为发送且 requestId 一致
       if (state.currentMessage?.isSend && state.currentMessage?.message.requestId === message.requestId) {
@@ -116,7 +115,7 @@ const useChatStore = create<ChatStore>((set) => ({
       const newReceiveMessage: ChatMessageItem = { message, isProcessing: true };
       const currentMessage = state.currentMessage;
 
-      // 添加 Message
+      // 添加 Message 到展示列表
       // 1. 没有消息
       // 2. 当前消息为发送
       // 3. 当前消息 requestId 不相同
@@ -125,12 +124,9 @@ const useChatStore = create<ChatStore>((set) => ({
           flushMessage(state.messageList, currentMessage);
         }
         newState.messageList = [...state.messageList, newReceiveMessage];
-      }
-
-      // 当前消息明确已结束
-      if (message.isEnd && currentMessage?.message.requestId === message.requestId) {
-        flushMessage(state.messageList, currentMessage);
-        newState.messageList = [...state.messageList];
+      } else if (message.isEnd) {
+        // 如果 message 结束，标记为已结束
+        flushMessage(state.messageList, newReceiveMessage);
       }
 
       newState.currentMessage = newReceiveMessage;
@@ -181,6 +177,7 @@ useChatStore.subscribe((state, prevState) => {
         item.message.messageState = AIChatMessageState.Interrupted;
       }
     });
+
     localStorage.setItem(`${messageCachePrefix}${state.sessionId}`, JSON.stringify(last20items));
     return;
   }

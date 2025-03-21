@@ -4,6 +4,7 @@ import {
   AICallSpeakingInterruptedReason,
   AICallState,
   AICallSubtitleData,
+  AICallVoiceprintResult,
 } from 'aliyun-auikit-aicall';
 
 interface AUIAICallControllerEvents {
@@ -40,7 +41,7 @@ interface AUIAICallControllerEvents {
   /**
    * 用户提问被智能体识别字幕通知
    */
-  AICallUserSubtitleNotify: (data: AICallSubtitleData) => void;
+  AICallUserSubtitleNotify: (data: AICallSubtitleData, voiceprintResult: AICallVoiceprintResult) => void;
   /**
    * 智能体回答字幕通知
    */
