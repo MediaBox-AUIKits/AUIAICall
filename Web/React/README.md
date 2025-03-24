@@ -30,7 +30,7 @@ AUI Kits AI 智能体集成工具适用于网络客服、AI 助理、撮合助�
 ## 跑通 demo
 
 - 源码下载后，进入 React 目录
-- 在 React 目录里执行命令 `npm intall` ，自动安装依赖
+- 在 React 目录里执行命令 `npm install` ，自动安装依赖
 - 打开文件 src/controller/service/interface.ts，修改服务端域名
 
 ```typescript
