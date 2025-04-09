@@ -10,6 +10,9 @@ import AUIFoundation
 import ARTCAICallKit
 import MJRefresh
 import AVFoundation
+import MobileCoreServices
+import Photos
+import PhotosUI
 
 @objcMembers open class AUIAIChatViewController: AVBaseCollectionViewController {
     
@@ -27,9 +30,9 @@ import AVFoundation
         AUIAICallReport.shared.start()
 #endif
         
-        self.listMessage = AUIAIChatViewController.loadMessage(fileName: self.sessionId, senderId: userInfo.userId)
         self.engine.delegate = self
         self.engine.startChat(userInfo: userInfo, agentInfo: agentInfo, sessionId: self.sessionId)
+        self.doLoadMessage()
     }
     
     // 初始化
@@ -50,9 +53,9 @@ import AVFoundation
         self.agentShareConfig = agentShareConfig
         let agentInfo = ARTCAIChatAgentInfo(agentId: self.agentShareConfig?.shareId ?? "invalid_agent_id")
         agentInfo.region = self.agentShareConfig?.region ?? "cn-shanghai"
-        self.listMessage = AUIAIChatViewController.loadMessage(fileName: self.sessionId, senderId: userInfo.userId)
         self.engine.delegate = self
         self.engine.startChat(userInfo: userInfo, agentInfo: agentInfo, sessionId: self.sessionId)
+        self.doLoadMessage()
     }
     
     public required init?(coder: NSCoder) {
@@ -99,6 +102,7 @@ import AVFoundation
         
         self.collectionView.av_height = self.bottomView.av_top
         self.collectionView.register(AUIAIChatMessageTextCell.self, forCellWithReuseIdentifier: "TextCell")
+        self.collectionView.register(AUIAIChatMessageUserAttachmentCell.self, forCellWithReuseIdentifier: "UserAttachmentCell")
         self.collectionView.register(AUIAIChatMessageAgentTextCell.self, forCellWithReuseIdentifier: "AgentTextCell")
         
         let mjHeader = MJRefreshNormalHeader(refreshingTarget: self, refreshingAction: #selector(onFetchHistoryMessage))
@@ -114,7 +118,21 @@ import AVFoundation
         NotificationCenter.default.addObserver(self, selector: #selector(applicationDidEnterBackground), name: UIApplication.didEnterBackgroundNotification, object: nil)
         
         self.refreshEngineState()
-        self.asyncScrollLastMessage(ani: false)
+        
+        let maxWidth = self.getAgentCellMaxWidth()
+        self.listMessage.forEach { item in
+            if item.isLeft {
+                item.updateAgentContentInfo(computeQueue: self.agentComputeQueue, maxWidth: maxWidth) { [weak self] in
+                    self?.scrollToLast = 2
+                    self?.collectionView.reloadData()
+                }
+            }
+            else {
+                item.updateContentInfoSync(maxWidth: maxWidth)
+                self.scrollToLast = 2
+                self.collectionView.reloadData()
+            }
+        }
     }
     
     open override func viewWillDisappear(_ animated: Bool) {
@@ -139,6 +157,16 @@ import AVFoundation
         return .lightContent
     }
     
+    open override func disableInteractivePopGesture() -> Bool {
+        // 有附件上传时，禁止右滑关闭
+        return self.editingTextView.sendAttachmentsView != nil
+    }
+    
+    open override func goBack() {
+        self.hideEditingTextView(destroy: true)
+        super.goBack()
+    }
+    
     open lazy var agentBtn: UIButton = {
         let btn = UIButton()
         btn.imageEdgeInsets = UIEdgeInsets(top: 8, left: 0, bottom: 8, right: 0)
@@ -155,17 +183,22 @@ import AVFoundation
     
     open lazy var bottomView: AUIAIChatBottomView = {
         let view = AUIAIChatBottomView()
-        view.callBtn.isHidden = self.agentShareConfig != nil
-        view.callBtn.clickBlock = {[weak self] btn in
-            guard let self = self else {
-                return
-            }
-            if self.engine.state != .Connected {
-                self.showToast(AUIAIChatBundle.getString("Unable to start call because there is not connected"))
-                return
-            }
-            let chatSyncConfig = ARTCAICallChatSyncConfig(sessionId: self.sessionId, agentId: self.engine.agentInfo?.agentId ?? "", receiverId: self.engine.userInfo?.userId ?? "")
-            AUIAICallManager.defaultManager.startCall(agentType: .VoiceAgent, chatSyncConfig: chatSyncConfig)
+        view.enableCall = self.agentShareConfig == nil
+        view.voiceCallBtn.tappedAction = {[weak self] btn in
+            self?.tryStartCall(agentType: .VoiceAgent)
+            self?.bottomView.reset()
+        }
+        view.avatarCallBtn.tappedAction = {[weak self] btn in
+            self?.tryStartCall(agentType: .AvatarAgent)
+            self?.bottomView.reset()
+        }
+        view.visionCallBtn.tappedAction = {[weak self] btn in
+            self?.tryStartCall(agentType: .VisionAgent)
+            self?.bottomView.reset()
+        }
+        view.addPhotoBtn.tappedAction = {[weak self] btn in
+            self?.openPhotoLibrary()
+            self?.bottomView.reset()
         }
         view.onClickedStop = { [weak self] bottomView in
             guard let self = self else { return }
@@ -174,9 +207,8 @@ import AVFoundation
         }
         view.textView.onClickedInputText = { [weak self] textView in
             guard let self = self else { return }
-            self.editingTextView.frame = CGRect(x: 20, y: self.view.av_height - 40 - 12, width: self.view.av_width - 40, height: 40)
-            self.view.addSubview(self.editingTextView)
-            self.editingTextView.inputTextView.becomeFirstResponder()
+            self.showEditingTextView(item: nil)
+            self.bottomView.reset()
         }
         view.audioView.onTouchedRecordingArea = { [weak self] audioView in
             guard let self = self else { return }
@@ -184,12 +216,7 @@ import AVFoundation
         }
         view.audioView.onTouchingRecordingAreaAndDrag = { [weak self] audioView, isExit in
             guard let self = self else { return }
-            if !self.recordingAudioView.viewOnShow { return }
-            if isExit {
-                self.recordingAudioView.viewState = .CancelRecord
-            } else {
-                self.recordingAudioView.viewState = .Recording
-            }
+            self.onRecordingAudio(inside: !isExit)
         }
         view.audioView.onTouchUpRecordingArea = { [weak self] audioView, isInside in
             guard let self = self else { return }
@@ -208,22 +235,40 @@ import AVFoundation
         }
         view.onSendBlock = { [weak self] text in
             guard let self = self else { return }
+            if self.editingTextView.sendAttachmentsView?.uploadFailure == true {
+                self.showToast(AUIAIChatBundle.getString("Some images failed to upload"))
+                return
+            }
+            if self.editingTextView.sendAttachmentsView?.allUploadSuccess == false {
+                return
+            }
+            
             self.sendTextMessage(text: text)
             self.bottomView.textView.updatePlaceholderText(text: nil)
         }
         view.onPositionYChangedBlock = { [weak self] value in
             guard let self = self else { return }
             if value != 0 {
-                self.collectionView.av_height = self.bottomView.av_top + value + UIView.av_safeBottom
+                self.collectionView.av_height = self.contentView.av_height + value
             }
             else {
                 self.collectionView.av_height = self.bottomView.av_top
             }
-            self.canAutoScroll = true
+            debugPrint("collectionView frame:\(self.collectionView.frame)")
+            self.canScrollToLast = true
             self.asyncScrollLastMessage(ani: true)
         }
         view.onInputTextChangedBlock = { [weak self] text in
             self?.bottomView.textView.updatePlaceholderText(text: text?.trimmingCharacters(in: .whitespacesAndNewlines))
+        }
+        view.inputAudioView.touchDownBlock = { [weak self] btn in
+            self?.startRecordingAudio()
+        }
+        view.inputAudioView.touchUpBlock = { [weak self] btn, inside in
+            self?.finishRecordingAudio(inside, false)
+        }
+        view.inputAudioView.touchDragBlock = { [weak self] btn, inside in
+            self?.onRecordingAudio(inside: inside)
         }
         view.isStopped = self.engine.agentResponeState != .Listening
         return view
@@ -232,7 +277,7 @@ import AVFoundation
     open lazy var recordingAudioView: AUIAIChatRecordingAudioView = {
         let view = AUIAIChatRecordingAudioView()
         view.onTimeOutBlock = { [weak self] in
-            self?.finishRecordingAudio(true, false)
+            self?.finishRecordingAudio(false, false)
         }
         return view
     }()
@@ -262,6 +307,15 @@ import AVFoundation
     
     open var playMessageLoadingView: UIView? = nil
     
+    private func tryStartCall(agentType: ARTCAICallAgentType) {
+        if self.engine.state != .Connected {
+            self.showToast(AUIAIChatBundle.getString("Unable to start call because there is not connected"))
+            return
+        }
+        let chatSyncConfig = ARTCAICallChatSyncConfig(sessionId: self.sessionId, agentId: self.engine.agentInfo?.agentId ?? "", receiverId: self.engine.userInfo?.userId ?? "")
+        AUIAICallManager.defaultManager.startCall(agentType: agentType, chatSyncConfig: chatSyncConfig)
+    }
+    
     private func deleteMessage(item: AUIAIChatMessageItem) {
         AVAlertController.show(withTitle: AUIAIChatBundle.getString("Confirm delete message?"), message: AUIAIChatBundle.getString("Messages deleted cannot be recovered"), btn1: AUIAIChatBundle.getString("Delete"), btn1Destructive: true, btn2: AUIAIChatBundle.getString("Cancel"), btn2Destructive: false) { isCancel in
             if isCancel == false {
@@ -284,19 +338,19 @@ import AVFoundation
     private func startRecordingAudio() {
         if AVCaptureDevice.authorizationStatus(for: .audio) == .authorized {
             let req = ARTCAIChatSendMessageRequest(.Voice)
+            if let attachmentUploader =  self.editingTextView.sendAttachmentsView?.attachmentUploader {
+                if attachmentUploader.allUploadSuccess == true {
+                    req.attachmentUploader = attachmentUploader
+                }
+            }
             let pushEnabled = self.engine.startPushVoiceMessage(request: req)
             if pushEnabled {
-                var recordingAudioViewHeight = 144.0
-                if UIView.av_safeBottom > 0 {
-                    recordingAudioViewHeight += UIView.av_safeBottom
+                if self.editingTextView.viewOnShow {
+                    self.recordingAudioView.presentOnView(parent: self.editingTextView, bottom: self.editingTextView.getSendingBarHeight())
                 }
-                self.recordingAudioView.frame = CGRect(x: 0, y: self.view.av_height - recordingAudioViewHeight, width: self.view.av_width, height: recordingAudioViewHeight)
-                self.view.addSubview(self.recordingAudioView)
-                self.recordingAudioView.updateRecordingTime(0)
-                self.recordingAudioView.viewState = .Recording
-                self.recordingAudioView.viewOnShow = true
-                self.recordingAudioView.startTiming()
-                self.bottomView.isHidden = true
+                else {
+                    self.recordingAudioView.presentOnView(parent: self.bottomView, bottom: self.bottomView.av_height - UIView.av_safeBottom)
+                }
             } else {
                 self.showToast(AUIAIChatBundle.getString("Failed to push voice message"))
             }
@@ -308,10 +362,7 @@ import AVFoundation
     
     private func finishRecordingAudio(_ needPushVoiceMessage: Bool, _ interrupt: Bool) {
         if !self.recordingAudioView.viewOnShow { return }
-        self.recordingAudioView.updateRecordingTime(0)
-        self.recordingAudioView .removeFromSuperview()
-        self.bottomView.isHidden = false
-        self.recordingAudioView.viewOnShow = false
+        self.recordingAudioView.dismiss()
         if interrupt {
             return
         }
@@ -324,26 +375,59 @@ import AVFoundation
                 else {
                     let item = AUIAIChatMessageItem(message: msg)
                     item.isLeft = false
+                    item.updateContentInfoSync(maxWidth: self.getAgentCellMaxWidth())
+                    item.attachmentUploader = self.editingTextView.sendAttachmentsView?.attachmentUploader
                     self.addMessageToList(item: item)
+                    if self.editingTextView.viewOnShow {
+                        self.hideEditingTextView(destroy: false)
+                    }
                 }
             }
-        } else {
+        } 
+        else {
             self.engine.cancelPushVoiceMessage()
         }
     }
     
+    private func onRecordingAudio(inside: Bool) {
+        if !self.recordingAudioView.viewOnShow { return }
+        if inside {
+            self.recordingAudioView.viewState = .Recording
+        } 
+        else {
+            self.recordingAudioView.viewState = .CancelRecord
+        }
+    }
+    
     private func sendTextMessage(text: String) {
-        let msg = ARTCAIChatMessage(sendText: text, requestId: "")
+        var msg = ARTCAIChatMessage(sendText: text, requestId: "", senderId: self.engine.userInfo?.userId)
+        if let attachmentUploader =  self.editingTextView.sendAttachmentsView?.attachmentUploader {
+            if attachmentUploader.allUploadSuccess == false {
+                return
+            }
+            msg = ARTCAIChatMessage(sendText: text, requestId: "", attachmentList: attachmentUploader.attachmentList)
+        }
+        else if msg.text.isEmpty == true {
+            return
+        }
         let item = AUIAIChatMessageItem(message: msg)
         item.isLeft = false
+        item.updateContentInfoSync(maxWidth: self.getAgentCellMaxWidth())
+        item.attachmentUploader = self.editingTextView.sendAttachmentsView?.attachmentUploader
 
         self.sendMessage(item: item)
         self.addMessageToList(item: item)
+        if self.editingTextView.viewOnShow {
+            self.hideEditingTextView(destroy: false)
+        }
     }
     
     private func sendMessage(item: AUIAIChatMessageItem) {
         if item.isLeft == false, item.message.messageType == .Text {
-            let req = ARTCAIChatSendMessageRequest(text: item.message.text)
+            let req = ARTCAIChatSendMessageRequest(text: item.contentOriginText)
+            if let attachmentUploader =  item.attachmentUploader {
+                req.attachmentUploader = attachmentUploader
+            }
             self.engine.sendMessage(request: req, completed: {[weak item, weak self] msg, error in
                 guard let item = item else { return }
                 if let msg = msg {
@@ -351,8 +435,8 @@ import AVFoundation
                     self?.refreshMessageCellState(item: item)
                 }
                 if let _ = error {
-                    let msg = ARTCAIChatMessage(sendText: item.message.text, requestId: item.message.requestId, state: .Failed)
-                    item.message = msg
+                    let userMsg = msg ?? ARTCAIChatMessage(sendText: item.contentOriginText, requestId: item.message.requestId, senderId: self?.engine.userInfo?.userId, state: .Failed)
+                    item.message = userMsg
                     self?.refreshMessageCellState(item: item)
                 }
             })
@@ -363,11 +447,10 @@ import AVFoundation
     private func addMessageToList(item: AUIAIChatMessageItem) {
         
         self.listMessage.append(item)
-        self.collectionView.reloadData()
-        
-        self.canAutoScroll = true
-        self.asyncScrollLastMessage(ani: true)
         self.needSaveMessages = true
+
+        self.scrollToLast = 1
+        self.collectionView.reloadData()
     }
     
     private func playOrStopMessage(textCell: AUIAIChatMessageTextCell, item: AUIAIChatMessageItem) {
@@ -446,7 +529,7 @@ import AVFoundation
     
     private func asyncScrollLastMessage(ani: Bool) {
         DispatchQueue.main.async {
-            if self.isDraging {
+            guard self.canScrollToLast else {
                 return
             }
             let contentSize = self.collectionView.contentSize
@@ -455,11 +538,15 @@ import AVFoundation
             self.collectionView.scrollRectToVisible(rect, animated: ani)
         }
     }
+    
+    private func getAgentCellMaxWidth() -> CGFloat {
+        return self.collectionView.av_width - 40.0
+    }
 
     private var listMessage: [AUIAIChatMessageItem] = []
 
-    private var canAutoScroll: Bool = false
-    private var isDraging: Bool = false
+    private var scrollToLast: Int = 0  // 1: 动画  2：不用动画
+    private var canScrollToLast: Bool = true
     private var needSaveMessages: Bool = false
     
     public var onUserTokenExpiredBlcok: (()->Void)? = nil
@@ -467,11 +554,173 @@ import AVFoundation
     public let sessionId: String
     private var currentVoiceId: String = ""
     
-    private var appserver: AUIAICallAppServer = {
-        let appserver = AUIAICallAppServer()
-        return appserver
-    }()
     private var agentShareConfig: ARTCAIChatAgentShareConfig? = nil
+    
+    private lazy var agentComputeQueue: DispatchQueue = {
+        let queue = DispatchQueue(label: "com.auiaichat")
+        return queue
+    }()
+}
+
+// 处理附件
+extension AUIAIChatViewController: UIImagePickerControllerDelegate, UINavigationControllerDelegate, PHPickerViewControllerDelegate {
+    
+    private func showEditingTextView(item: AUIAIChatSendAttachmentItem?) {
+        if let item = item {
+            if let sendAttachmentsView = self.editingTextView.sendAttachmentsView {
+                sendAttachmentsView.addItem(item: item)
+                if self.editingTextView.viewOnShow {
+                    return
+                }
+            }
+        }
+        self.editingTextView.presentOnView(parent: self.view, isAudioMode: self.bottomView.isAudioMode, isEditing: item == nil)
+    }
+    
+    private func hideEditingTextView(destroy: Bool) {
+        if destroy == true, let attachmentUploader = self.editingTextView.sendAttachmentsView?.attachmentUploader {
+            // 如果attachmentUploader没有被发送消息，那么该attachmentUploader的附件需要进行销毁
+            attachmentUploader.attachmentList.forEach { [weak attachmentUploader] atta in
+                attachmentUploader?.removeAttachment(attachmentId: atta.attachmentId)
+            }
+        }
+        self.editingTextView.dismiss()
+    }
+    
+    private func startUploadImage(item: AUIAIChatSendAttachmentItem?) {
+        if self.editingTextView.sendAttachmentsView != nil {
+            self.showEditingTextView(item: item)
+            return
+        }
+        
+        if let uploader = self.engine.createAttachmentUploader() {
+            let sendAttachmentsView = AUIAIChatSendAttachmentView(frame: .zero, attachmentUploader: uploader)
+            sendAttachmentsView.willAddItemBlock = { [weak self] in
+                self?.openPhotoLibrary()
+            }
+            sendAttachmentsView.willRemoveItemBlock = { [weak self] item in
+                if let editingTextView = self?.editingTextView {
+                    editingTextView.sendAttachmentsView?.removeItem(item: item)
+                    if editingTextView.sendAttachmentsView?.itemList.isEmpty == true {
+                        self?.hideEditingTextView(destroy: true)
+                    }
+                }
+            }
+            sendAttachmentsView.uploadFailureBlock = { [weak self] item in
+                guard let self = self else { return }
+                AVToastView.show(AUIAIChatBundle.getString("Failed to upload image") , view: self.view, position: .mid)
+            }
+            self.editingTextView.sendAttachmentsView = sendAttachmentsView
+            self.showEditingTextView(item: item)
+            return
+        }
+        AVAlertController.show(AUIAIChatBundle.getString("Failed to upload image"), vc: self)
+    }
+    
+    // 打开相册
+    private func openPhotoLibrary() {
+        if #available(iOS 14.0, *) {
+            let count = self.editingTextView.sendAttachmentsView?.itemList.count ?? 0
+            var configuration = PHPickerConfiguration()
+            configuration.selectionLimit = 9 - count
+            configuration.filter = .images // 只选择图片
+
+            let picker = PHPickerViewController(configuration: configuration)
+            picker.delegate = self
+            present(picker, animated: true, completion: nil)
+        } else {
+            // Fallback on earlier versions
+            let imagePicker = UIImagePickerController()
+            imagePicker.sourceType = .photoLibrary // 设置为相册模式
+            imagePicker.mediaTypes = [kUTTypeImage as String] // 仅允许选择图片
+            imagePicker.delegate = self
+            imagePicker.allowsEditing = false // 是否允许编辑（可选）
+            self.present(imagePicker, animated: true, completion: nil)
+        }
+    }
+    
+    // 控制分辨率不超过maxResolution，超过的话按比例进行缩放
+    private func resizeImageIfNeeded(_ image: UIImage, maxResolution: CGSize) -> UIImage {
+        let originalSize = image.size
+        let maxWidth = maxResolution.width
+        let maxHeight = maxResolution.height
+        
+        // 检查是否需要缩放
+        if originalSize.width <= maxWidth && originalSize.height <= maxHeight {
+            return image // 不需要缩放，直接返回原图
+        }
+        
+        // 计算缩放比例
+        let widthRatio = maxWidth / originalSize.width
+        let heightRatio = maxHeight / originalSize.height
+        let scaleFactor = min(widthRatio, heightRatio) // 保持宽高比
+        
+        // 计算新的尺寸
+        let newSize = CGSize(
+            width: originalSize.width * scaleFactor,
+            height: originalSize.height * scaleFactor
+        )
+        
+        // 创建新的图片上下文
+        UIGraphicsBeginImageContextWithOptions(newSize, true, image.scale)
+        image.draw(in: CGRect(origin: .zero, size: newSize))
+        let resizedImage = UIGraphicsGetImageFromCurrentImageContext()!
+        UIGraphicsEndImageContext()
+        
+        return resizedImage
+    }
+    private func onPickerImageResult(image: UIImage?) -> Bool {
+        guard let image = image else { return false }
+        let selectedImage = self.resizeImageIfNeeded(image, maxResolution: CGSize(width: 1080, height: 1920))
+        let fileName = UUID().uuidString + ".png"
+        let fileURL = AUIAIChatViewController.getFileUrl(fileName: fileName, subDir: "attaments")
+        if let imageData = selectedImage.pngData() {
+            do {
+                try imageData.write(to: fileURL)
+                debugPrint("图片已保存到临时路径: \(fileURL.path)")
+                DispatchQueue.main.async {
+                    let attachment = ARTCAIChatAttachment(localFilePath: fileURL.path, type: .Image)
+                    let item = AUIAIChatSendAttachmentItem(image: selectedImage, attachment: attachment)
+                    self.startUploadImage(item: item)
+                }
+                return true
+            }
+            catch {
+                debugPrint("图片保存失败: \(error)")
+            }
+        }
+        return false
+    }
+    
+    // 处理用户选择的图片
+    public func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+        let selectedImage = info[.originalImage] as? UIImage
+        if self.onPickerImageResult(image: selectedImage) == false {
+            AVAlertController.show(AUIAIChatBundle.getString("Failed to load image"), vc: self)
+        }
+        picker.dismiss(animated: true, completion: nil)
+    }
+
+    // 用户取消选择
+    public func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        picker.dismiss(animated: true, completion: nil)
+    }
+    
+    @available(iOS 14, *)
+    public func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+        for result in results {
+            if result.itemProvider.canLoadObject(ofClass: UIImage.self) {
+                result.itemProvider.loadObject(ofClass: UIImage.self) { [weak self] object, error in
+                    if let image = object as? UIImage {
+                        if self?.onPickerImageResult(image: image) == false {
+                            debugPrint("Failed to load image")
+                        }
+                    }
+                }
+            }
+        }
+        picker.dismiss(animated: true, completion: nil)
+    }
 }
 
 extension AUIAIChatViewController {
@@ -488,13 +737,25 @@ extension AUIAIChatViewController {
         let item = self.listMessage[indexPath.row]
         if item.displaySize == nil {
             if item.isLeft {
-                AUIAIChatMessageAgentTextCell.computeAgentSize(item: item, maxWidth: self.collectionView.av_width - 40)
+                AUIAIChatMessageAgentTextCell.computeAgentSize(item: item, maxWidth: self.getAgentCellMaxWidth())
+            }
+            else if item.message.attachmentList?.isEmpty == false {
+                AUIAIChatMessageUserAttachmentCell.computeAttachmentSize(item: item, maxWidth: self.getAgentCellMaxWidth())
             }
             else {
-                AUIAIChatMessageTextCell.computeSize(item: item, maxWidth: self.collectionView.av_width - 72)
+                AUIAIChatMessageTextCell.computeSize(item: item, maxWidth: self.getAgentCellMaxWidth())
             }
         }
-        return CGSize(width: self.collectionView.av_width - 40, height: item.displaySize?.height ?? 0)
+        
+        // 当前计算好所有的item高度是，进行异步滚动到底部（如果需要）
+        if indexPath.row == self.listMessage.count - 1 {
+            if self.scrollToLast > 0 {
+                self.asyncScrollLastMessage(ani: self.scrollToLast == 1)
+            }
+            self.scrollToLast = 0
+        }
+        
+        return CGSize(width: self.getAgentCellMaxWidth(), height: item.displaySize?.height ?? 0)
     }
         
     open override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
@@ -510,6 +771,9 @@ extension AUIAIChatViewController {
                 }
                 textCell = agentTextCell
             }
+            else if item.message.attachmentList?.isEmpty == false {
+                textCell = self.collectionView.dequeueReusableCell(withReuseIdentifier: "UserAttachmentCell", for: indexPath) as? AUIAIChatMessageUserAttachmentCell
+            }
             else {
                 textCell = self.collectionView.dequeueReusableCell(withReuseIdentifier: "TextCell", for: indexPath) as? AUIAIChatMessageTextCell
             }
@@ -520,8 +784,8 @@ extension AUIAIChatViewController {
                     self.sendMessage(item: item)
                 }
                 textCell.onCopyBlock = { [weak self] item in
-                    guard let self = self, item.message.text.isEmpty == false else { return }
-                    UIPasteboard.general.string = item.message.text
+                    guard let self = self, item.contentOriginText.isEmpty == false else { return }
+                    UIPasteboard.general.string = item.contentOriginText
                     self.showToast(AUIAIChatBundle.getString("Message copied"))
                 }
                 textCell.onLongPressBlock = { [weak self] item, view, location in
@@ -529,11 +793,16 @@ extension AUIAIChatViewController {
                     if item.message.messageState == .Init || item.message.messageState == .Transfering || item.message.messageState == .Printing {
                         return
                     }
+                    // 触发反馈
+                    let generator = UIImpactFeedbackGenerator(style: .medium)
+                    generator.prepare()
+                    generator.impactOccurred()
+                    // 弹出菜单
                     let locationInParentView = view.convert(location, to: self.view)
                     self.showMenuView(position: locationInParentView, item: item)
                 }
                 textCell.onPlayBlock = { [weak self, weak textCell] item in
-                    guard item.message.text.isEmpty == false else { return }
+                    guard item.contentOriginText.isEmpty == false else { return }
                     if item.message.messageState == .Init || item.message.messageState == .Transfering || item.message.messageState == .Printing {
                         return
                     }
@@ -551,27 +820,17 @@ extension AUIAIChatViewController {
     
     open override func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
         debugPrint("scrollViewWillBeginDragging")
-        self.canAutoScroll = false
-        self.isDraging = true
+        self.canScrollToLast = false
+        NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(enableScrollToLast), object: nil)
     }
     
     open override func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        if self.isDraging {
-            return
-        }
-        
-        let offsetY = scrollView.contentOffset.y
-        let contentHeight = scrollView.contentSize.height
-        let frameHeight = scrollView.frame.size.height
-        if offsetY + frameHeight >= contentHeight - 0.0 {
-            // debugPrint("已滑动到底部")
-            self.canAutoScroll = true
-        }
+
     }
     
     open override func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
         debugPrint("scrollViewDidEndDragging decelerate: \(decelerate)")
-        self.isDraging = false
+        self.perform(#selector(enableScrollToLast), with: nil, afterDelay: 3.0)
     }
     
     open override func scrollViewWillBeginDecelerating(_ scrollView: UIScrollView) {
@@ -580,6 +839,10 @@ extension AUIAIChatViewController {
     
     open override func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
         debugPrint("scrollViewDidEndDecelerating")
+    }
+    
+    @objc func enableScrollToLast() {
+        self.canScrollToLast = true
     }
 }
 
@@ -633,15 +896,22 @@ extension AUIAIChatViewController {
                 if isEmpty {
                     self.needSaveMessages = true
                 }
+                let maxWidth = self.getAgentCellMaxWidth()
                 msgList?.forEach({ msg in
                     let item = AUIAIChatMessageItem(message: msg)
                     item.isLeft = self.engine.userInfo?.userId != msg.senderId
                     self.listMessage.insert(item, at: 0)
+                    
+                    if item.isLeft {
+                        item.updateAgentContentInfo(computeQueue: self.agentComputeQueue, maxWidth: maxWidth) { [weak self] in
+                            self?.collectionView.reloadData()
+                        }
+                    }
+                    else {
+                        item.updateContentInfoSync(maxWidth: maxWidth)
+                        self.collectionView.reloadData()
+                    }
                 })
-                self.collectionView.reloadData()
-                if isEmpty {
-                    self.asyncScrollLastMessage(ani: false)
-                }
             }
         }
     }
@@ -730,34 +1000,43 @@ extension AUIAIChatViewController: ARTCAIChatEngineDelegate {
             return item.isLeft == isLeft && item.message.requestId == message.requestId
         }
         
-        if let item = item {
+        let reloadBlock = { [weak self] in
+            self?.scrollToLast = 1
+            self?.collectionView.reloadData()
+            self?.needSaveMessages = true
+        }
+        
+        if let item = item {  // 处理智能体消息
             item.message = message
-            if message.reasoningText != nil && message.isReasoningEnd == false {
-                item.reasonSize = nil
-            }
-            else {
-                item.contentSize = nil
-            }
             
+            // 当前智能体消息被打断或者失败，且消息为空，需要从列表中移除
             if (item.message.messageState == .Interrupted || item.message.messageState == .Failed)
-                && item.message.text.isEmpty && item.message.reasoningText?.isEmpty != false {
-                // 当前智能体消息被打断或者失败，且消息为空，需要从列表中移除
+                && item.contentOriginText.isEmpty && item.message.reasoningText?.isEmpty != false {
                 self.listMessage.removeAll { remove in
                     return remove == item
                 }
             }
+            
+            if message.reasoningText != nil && message.isReasoningEnd == false {
+                // 子线程计算深度思考占位大小
+                item.updateAgentReasonInfo(computeQueue: self.agentComputeQueue, maxWidth: self.getAgentCellMaxWidth()) {
+                    reloadBlock()
+                }
+            }
+            else {
+                // 子线程计算回复内容占位大小
+                item.updateAgentContentInfo(computeQueue: self.agentComputeQueue, maxWidth: self.getAgentCellMaxWidth()) {
+                    reloadBlock()
+                }
+            }
         }
-        else {
+        else {               // 处理新消息
             let item = AUIAIChatMessageItem(message: message)
             item.isLeft = isLeft
+            item.updateContentInfoSync(maxWidth: self.getAgentCellMaxWidth())
             self.listMessage.append(item)
-            self.canAutoScroll = true
         }
-        self.collectionView.reloadData()
-        if self.canAutoScroll {
-            self.asyncScrollLastMessage(ani: true)
-        }
-        self.needSaveMessages = true
+        reloadBlock()
     }
     
     public func onAgentResponeStateChange(state: ARTCAIChatAgentResponseState, requestId: String?) {
@@ -783,9 +1062,12 @@ extension AUIAIChatViewController: ARTCAIChatEngineDelegate {
 extension AUIAIChatViewController {
     
     // 获取 Documents 目录的 URL
-    static func getFileUrl(fileName: String) -> URL {
+    static func getFileUrl(fileName: String, subDir: String? = nil) -> URL {
         var url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
         url = url.appendingPathComponent("aichat")
+        if let subDir = subDir {
+            url = url.appendingPathComponent(subDir)
+        }
         // 检查子目录是否存在，如果不存在则创建
         if !FileManager.default.fileExists(atPath: url.path) {
             do {
@@ -812,23 +1094,11 @@ extension AUIAIChatViewController {
             let data = try Data(contentsOf: fileURL)
             let loadedArray = try JSONDecoder().decode([String].self, from: data)
             loadedArray.forEach { jsonString in
-                var msg = ARTCAIChatMessage(data: jsonString.aicall_jsonObj())
-                if msg.messageState == .Transfering || msg.messageState == .Init {
-                    return
+                if let item = AUIAIChatMessageItem.load(dict: jsonString.aicall_jsonObj(), senderId: senderId) {
+                    if item.message.messageState == .Finished || item.message.messageState == .Interrupted {
+                        ret.append(item)
+                    }
                 }
-                if msg.messageState == .Printing {
-                    msg = ARTCAIChatMessage(dialogueId: msg.dialogueId,
-                                            requestId: msg.requestId,
-                                            state: .Interrupted,
-                                            type: msg.messageType,
-                                            sendTime: msg.sendTime,
-                                            text: msg.text,
-                                            senderId: msg.senderId,
-                                            isEnd: msg.isEnd)
-                }
-                let item = AUIAIChatMessageItem(message: msg)
-                item.isLeft = senderId != msg.senderId
-                ret.append(item)
             }
             debugPrint("loadMessage to \(fileURL)")
             return ret
@@ -844,7 +1114,7 @@ extension AUIAIChatViewController {
         if listMessage.isEmpty == false {
             for i in 0...(listMessage.count - 1) {
                 let index = listMessage.count - 1 - i
-                list.insert(listMessage[index].message.toData().aicall_jsonString, at: 0)
+                list.insert(listMessage[index].save().aicall_jsonString, at: 0)
                 if list.count >= 10 {
                     break
                 }
@@ -861,11 +1131,15 @@ extension AUIAIChatViewController {
         }
     }
 
-    @objc func doSaveMessage() {
+    func doSaveMessage() {
         if self.needSaveMessages {
             AUIAIChatViewController.saveMessage(fileName: self.sessionId, listMessage: self.listMessage)
         }
         self.needSaveMessages = false
+    }
+    
+    func doLoadMessage() {
+        self.listMessage = AUIAIChatViewController.loadMessage(fileName: self.sessionId, senderId: self.engine.userInfo!.userId)
     }
 }
 
@@ -906,61 +1180,22 @@ extension AUIAIChatViewController {
 
 extension AUIAIChatViewController {
         
-    func fetchAuthToken(userId: String, completed: ((_ authToken: ARTCAIChatAuthToken?, _ error: NSError?) -> Void)?) {
-        if AUIAIChatAuthTokenHelper.isDebug {
-            DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 0.1) {
-                completed?(AUIAIChatAuthTokenHelper.GenerateAuthToken(userId: userId), nil)
-            }
-        }
-        else {
-            self.generateMessageChatToken(userId: userId) { agentInfo, authToken, error, reqId in
-                ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "RequestId", value: reqId)
-                completed?(authToken, error)
-            }
-        }
-    }
-    
-    func generateMessageChatToken(userId: String, completed: ((_ agentInfo: ARTCAIChatAgentInfo?, _ authToken: ARTCAIChatAuthToken?, _ error: NSError?, _ reqId: String) -> Void)?) {
+    open func fetchAuthToken(userId: String, completed: ((_ authToken: ARTCAIChatAuthToken?, _ error: NSError?) -> Void)?) {
         
         if let agentShareConfig = self.agentShareConfig {
             self.engine.generateShareAgentChat(shareConfig: agentShareConfig, userId: userId) { agentInfo, token, error, reqId in
-                completed?(agentInfo, token, error, reqId)
+                completed?(token, error)
             }
             return
         }
         
-        let expire: Int = 1 * 60 * 60
-        var body: [String: Any] = [
-            "user_id": userId,
-            "expire": expire,
-        ]
-        if let agentId = self.engine.agentInfo?.agentId {
-            body.updateValue(agentId, forKey: "ai_agent_id")
-        }
-        if let region = self.engine.agentInfo?.region {
-            body.updateValue(region, forKey: "region")
-        }
-        
-        self.appserver.request(path: "/api/v2/aiagent/generateMessageChatToken", body: body) { [weak self] response, data, error in
-            let reqId = (data?["request_id"] as? String) ?? "unknow"
-            if error == nil {
-                debugPrint("generateMessageChatToken response: success")
-                let authToken = ARTCAIChatAuthToken(data: data as? [String: Any])
-                let agentInfo = self?.engine.agentInfo
-                completed?(agentInfo, authToken, nil, reqId)
+        AUIAIChatAuthTokenHelper.shared.fetchAuthToken(userId: userId, agentId: self.engine.agentInfo?.agentId, region: self.engine.agentInfo?.region) { [weak self] authToken, error in
+            if error?.code == 403 {
+                self?.onUserTokenExpiredBlcok?()
+                completed?(authToken, NSError.aicall_create(code: .TokenExpired))
+                return
             }
-            else {
-                debugPrint("generateMessageChatToken response: failed, error:\(error!)")
-                completed?(nil, nil, self?.handlerCallError(error: error, data: data), reqId)
-            }
+            completed?(authToken, error)
         }
-    }
-    
-    private func handlerCallError(error: NSError?, data: [AnyHashable: Any]?) -> NSError? {
-        if error?.code == 403 {
-            self.onUserTokenExpiredBlcok?()
-            return NSError.aicall_create(code: .TokenExpired)
-        }
-        return NSError.aicall_handlerErrorData(data: data) ?? error
     }
 }

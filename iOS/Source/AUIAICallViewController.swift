@@ -56,6 +56,17 @@ import ARTCAICallKit
                 
         UIViewController.av_setIdleTimerDisabled(true)
         
+        if self.controller.config.agentType == .AvatarAgent {
+            let viewConfig = ARTCAICallViewConfig(view: self.callContentView.avatarAgentView!)
+            self.controller.setAgentViewConfig(viewConfig: viewConfig)
+        }
+        else if self.controller.config.agentType == .VisionAgent {
+            // 这里frameRate设置为5，需要根据控制台上的智能体的抽帧帧率（一般为2）进行调整，最大不建议超过15fps
+            // bitrate: frameRate超过10可以设置为512
+            let visionConfig = ARTCAICallVisionConfig(preview: self.callContentView.visionCameraView, viewMode: .Auto, frameRate: 5, bitrate: 340)
+            self.controller.currentEngine.visionConfig = visionConfig
+        }
+        
         self.controller.delegate = self
         self.controller.start()
         
@@ -378,21 +389,14 @@ extension AUIAICallViewController {
 extension AUIAICallViewController: AUIAICallControllerDelegate {
     
     public func onAICallAIAgentStarted(agentInfo: ARTCAICallAgentInfo) {
-        self.callContentView.updateAgentType(agentType: self.controller.config.agentType)
-        if self.controller.config.agentType == .AvatarAgent {
-            let viewConfig = ARTCAICallViewConfig(view: self.callContentView.avatarAgentView!)
-            self.controller.setAgentViewConfig(viewConfig: viewConfig)
-        }
-        else if self.controller.config.agentType == .VisionAgent {
-            // 这里frameRate设置为5，需要根据控制台上的智能体的抽帧帧率（一般为2）进行调整，最大不建议超过15fps
-            // bitrate: frameRate超过10可以设置为512
-            let visionConfig = ARTCAICallVisionConfig(preview: self.callContentView.visionCameraView, viewMode: .Auto, frameRate: 5, bitrate: 340)
-            self.controller.currentEngine.visionConfig = visionConfig
-        }
-        self.updateTitle()
+
     }
     
-    public func onAICallBegin() {
+    public func onAICallBegin(elapsedTime: TimeInterval) {
+        
+#if DEMO_FOR_DEBUG
+        AVToastView.show(AUIAICallBundle.getString("Connected Time: \(elapsedTime)s"), view: self.view, position: .mid)
+#endif
         
 #if DEMO_FOR_RTC
         self.registerAudioFrameData()
@@ -736,6 +740,7 @@ extension AUIAICallViewController: AliRtcAudioFrameDelegate {
     
     public func onCapturedAudioFrame(_ frame: AliRtcAudioFrame) -> Bool {
         // 这里处理返回的音频采集裸数据
+        debugPrint("onCapturedAudioFrame")
         return true
     }
     
@@ -748,6 +753,7 @@ extension AUIAICallViewController: AliRtcAudioFrameDelegate {
     }
     
     public func onPlaybackAudioFrame(_ frame: AliRtcAudioFrame) -> Bool {
+        debugPrint("onPlaybackAudioFrame")
         return false
     }
     
@@ -756,6 +762,7 @@ extension AUIAICallViewController: AliRtcAudioFrameDelegate {
     }
     
     public func onRemoteUserAudioFrame(_ uid: String?, frame: AliRtcAudioFrame) -> Bool {
+        debugPrint("onRemoteUserAudioFrame")
         return false
     }
     

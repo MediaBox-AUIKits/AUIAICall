@@ -12,25 +12,25 @@ const tabItems = [
     key: WorkflowType.VoiceChat,
     value: AICallAgentType.VoiceAgent,
     title: i18n['agent.voice'],
-    imgUrl: 'https://img.alicdn.com/imgextra/i2/O1CN01tOWPAl1a4SWHi4fge_!!6000000003276-49-tps-426-852.webp',
+    imgUrl: 'https://gw.alicdn.com/imgextra/i2/O1CN01ZLoopi1t0JfazWfy8_!!6000000005839-2-tps-426-852.png',
   },
   {
     key: WorkflowType.AvatarChat3D,
     value: AICallAgentType.AvatarAgent,
     title: i18n['agent.avatar'],
-    imgUrl: 'https://img.alicdn.com/imgextra/i2/O1CN01ItB96W1wZWw83WnTF_!!6000000006322-49-tps-426-852.webp',
+    imgUrl: 'https://gw.alicdn.com/imgextra/i4/O1CN01SfZ6SI1eo2QpmMjMt_!!6000000003917-2-tps-426-852.png',
   },
   {
     key: WorkflowType.VisionChat,
     value: AICallAgentType.VisionAgent,
     title: i18n['agent.vision'],
-    imgUrl: 'https://img.alicdn.com/imgextra/i1/O1CN01KNB3ru1aU6hSxhptR_!!6000000003332-49-tps-426-852.webp',
+    imgUrl: 'https://gw.alicdn.com/imgextra/i1/O1CN01BZPzdO1pnXmFPq3WN_!!6000000005405-2-tps-426-852.png',
   },
   {
     key: 'Chatbot',
     value: AIChatAgentType.MessageChat,
     title: i18n['agent.chatbot'],
-    imgUrl: 'https://img.alicdn.com/imgextra/i4/O1CN01LMBWgi1zsiOciKzqu_!!6000000006770-2-tps-426-852.png',
+    imgUrl: 'https://gw.alicdn.com/imgextra/i3/O1CN01e6vxYV1pJm28uCaRD_!!6000000005340-2-tps-426-852.png',
   },
 ];
 

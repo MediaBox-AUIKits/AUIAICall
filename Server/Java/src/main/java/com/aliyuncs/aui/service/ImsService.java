@@ -12,9 +12,13 @@ public interface ImsService {
 
     AiAgentStartResponse startAIAgentInstance(AIAgentStartRequestDto aiAgentStartRequestDto);
 
+    AiAgentStartResponse startAIAgentInstanceWithChannel(AiAgentStartWithChannelRequestDto aiAgentStartWithChannelRequestDto);
+
     CommonResponse stopAIAgentInstance(AiAgentStopRequestDto aiAgentStopRequestDto);
 
     CommonResponse updateAIAgentInstance(AiAgentUpdateRequestDto robotUpdateRequestDto);
+
+    RtcAuthTokenResponse getRtcAuthToken(RtcAuthTokenRequestDto rtcAuthTokenRequestDto);
 
     GenerateAIAgentCallResponse generateAIAgentCall(GenerateAIAgentCallRequestDto generateAIAgentCallRequestDto);
 

@@ -10,7 +10,7 @@ import com.aliyuncs.aui.dto.res.*;
  */
 public interface AiAgentService {
 
-    AiAgentStartResponse startAiAgent(String ChannelId, String userId, String rtcAuthToken, String templateConfig, String workflowType, String userData, String sessionId, String chatSyncConfig);
+    AiAgentStartResponse startAiAgent(String ChannelId, String userId, String rtcAuthToken, String templateConfig, String workflowType, String userData, String sessionId, String chatSyncConfig, String aiAgentId, String region);
 
     CommonResponse stopAiAgent(String aiAgentInstanceId);
 

@@ -59,9 +59,9 @@ dependencies {
     implementation 'com.google.android.material:material:x.x.x'             // Modify x.x.x to the version compatible with your project
     androidTestImplementation 'androidx.test.espresso:espresso-core:x.x.x'  // Modify x.x.x to the version compatible with your project
     implementation 'com.aliyun.aio:AliVCSDK_ARTC:x.x.x'                  // Modify x.x.x to the version compatible with your project
-    implementation 'com.aliyun.auikits.android:ARTCAICallKit:2.1.0'
-    // If your business also needs to support message conversations, you also need to integrate AliVCInteractionMessage, with a minimum version of 1.5.0
-    implementation 'com.aliyun.sdk.android:AliVCInteractionMessage:1.5.0'
+    implementation 'com.aliyun.auikits.android:ARTCAICallKit:2.2.0'
+    // If your business also needs to support message conversations, you also need to integrate AliVCInteractionMessage, with a minimum version of 1.6.0
+    implementation 'com.aliyun.sdk.android:AliVCInteractionMessage:1.6.0'
 }
 ```
 3. Wait for gradle synchronization to complete, and finish the source code integration.

@@ -37,7 +37,8 @@ public class SpeechAnimationView extends SurfaceView implements SurfaceHolder.Ca
         LISTENING,
         ROBOT_THINKING,
         ROBOT_SPEAKING,
-        CHATBOT_THINKING
+        CHATBOT_THINKING,
+        CHATBOT_SPEAKING
     }
 
     public SpeechAnimationView(Context context, AttributeSet attrs) {
@@ -50,6 +51,22 @@ public class SpeechAnimationView extends SurfaceView implements SurfaceHolder.Ca
             mDrawThread.setAnimationType(animationType);
         }
         mAnimationType = animationType;
+    }
+
+    public void setBgColor(int color) {
+        mDrawThread.mBackgroundColor = color;
+    }
+
+    public void startAnimation() {
+        if (null != mDrawThread) {
+            mDrawThread.setRunning(true);
+        }
+    }
+
+    public void stopAnimation() {
+        if (null != mDrawThread) {
+            mDrawThread.setRunning(false);
+        }
     }
 
     @Override
@@ -118,6 +135,10 @@ public class SpeechAnimationView extends SurfaceView implements SurfaceHolder.Ca
             SpeakingAnimationDrawer speakingAnimationDrawer = new SpeakingAnimationDrawer(1.0f, true);
             speakingAnimationDrawer.setTranslateFromCenter(0f, DisplayUtil.dip2px(16)/2f);
             mAnimationDrawers.put(AnimationType.ROBOT_SPEAKING, speakingAnimationDrawer);
+
+            ChatBotSpeakingAnimationDrawer chatBotSpeakingAnimationDrawer = new ChatBotSpeakingAnimationDrawer(1.0f, true);
+            chatBotSpeakingAnimationDrawer.setTranslateFromCenter(0f, DisplayUtil.dip2px(16)/2f);
+            mAnimationDrawers.put(AnimationType.CHATBOT_SPEAKING, chatBotSpeakingAnimationDrawer);
         }
 
         public void setRunning(boolean running) {
@@ -128,6 +149,8 @@ public class SpeechAnimationView extends SurfaceView implements SurfaceHolder.Ca
             this.mAnimationType.set(mAnimationType);
             if(mAnimationType == AnimationType.CHATBOT_THINKING) {
                 mBackgroundColor = mContext.getResources().getColor(R.color.layout_base_dialog_background);
+            } else if(mAnimationType == AnimationType.CHATBOT_SPEAKING) {
+                mBackgroundColor = mContext.getResources().getColor(R.color.layout_base_blue);
             }
         }
 
@@ -719,6 +742,146 @@ public class SpeechAnimationView extends SurfaceView implements SurfaceHolder.Ca
                 mRoundRectMaxBoost/419f,
                 mRoundRectMaxBoost/487f,
                 mRoundRectMaxBoost/442f
+            };
+
+            if (mUseTransition) {
+                mThinkingToSpeakingDrawer.setSpeakingSmallCircleRadius(mRoundRectWidth/2);
+                mThinkingToSpeakingDrawer.setSpeakingSmallCircleMargin(mRoundRectMargin);
+                mThinkingToSpeakingDrawer.setSpeakingSmallCircleNum(mRoundRectNum);
+            }
+        }
+
+        private int calculateDrawerWidth() {
+            return mRoundRectNum * mRoundRectWidth + (mRoundRectNum-1) * mRoundRectMargin;
+        }
+
+        private void updateRoundRect(long progress, Canvas canvas) {
+            int drawerWidth = calculateDrawerWidth();
+
+            float drawerLeft = (canvas.getWidth() - drawerWidth) / 2f + mTranslateFromCenter.x;
+            float drawerBottom = canvas.getHeight() / 2f + mTranslateFromCenter.y;
+
+            for (int i = 0; i < mRoundRectNum; i++) {
+                float speed = mRoundRectSpeed[i];
+                float distance = 0.0f;
+                int state = 0;
+                RoundRectStatus roundRectStatus = mRoundRectStatus[i];
+                if (roundRectStatus.beginTimes == 0) {
+                    roundRectStatus.targetHeight = (float) (mRoundRectMinHeight + Math.random() * mRoundRectMaxBoost);
+                    roundRectStatus.currentHeight = mRoundRectMinHeight;
+                    roundRectStatus.beginTimes = progress;
+                    state = 1;
+                } else {
+                    distance = speed*(progress-roundRectStatus.beginTimes);
+                    if (mRoundRectMinHeight + distance <= roundRectStatus.targetHeight) {
+                        roundRectStatus.currentHeight = mRoundRectMinHeight + distance;
+                    } else {
+                        roundRectStatus.currentHeight = roundRectStatus.targetHeight - (mRoundRectMinHeight + distance - roundRectStatus.targetHeight);
+                    }
+                    if (roundRectStatus.currentHeight <= mRoundRectMinHeight) {
+                        roundRectStatus.beginTimes = 0;
+                        roundRectStatus.currentHeight = mRoundRectMinHeight;
+                    }
+                    state = 2;
+                }
+
+                mRoundRectF[i].left = drawerLeft + mRoundRectWidth*i + i*mRoundRectMargin;
+                mRoundRectF[i].top = drawerBottom - roundRectStatus.currentHeight;
+                mRoundRectF[i].right = mRoundRectF[i].left + mRoundRectWidth;
+                mRoundRectF[i].bottom = drawerBottom;
+//                if (i == 0) {
+//                    Log.i("SpeakingAnimationDrawer@" + hashCode(), "updateRoundRect: " + mRoundRectF[i]  + ", current@" + roundRectStatus.hashCode() + ": " + roundRectStatus.currentHeight + ", target: " + roundRectStatus.targetHeight +
+//                            ", speed: " + speed + ", distance: " + distance + ", state: " + state
+//                    );
+//                }
+            }
+        }
+    }
+
+    private class ChatBotSpeakingAnimationDrawer extends AnimationDrawer {
+        protected int mRoundRectWidth;// = DisplayUtil.dip2px(16);
+        protected int mRoundRectMaxHeight;// = DisplayUtil.dip2px(80);
+        protected int mRoundRectMinHeight;// = DisplayUtil.dip2px(16);
+        protected int mRoundRectMaxBoost;// = mRoundRectMaxHeight-mRoundRectMinHeight;
+        protected int mRoundRectMargin;// = DisplayUtil.dip2px(10);
+        protected int mRoundRectRadius;// = DisplayUtil.dip2px(8);
+
+        protected int mRoundRectNum = 10;
+
+        protected float mScale = 1.0f;
+        protected RectF mRoundRectF[] = new RectF[mRoundRectNum];
+
+        protected float mRoundRectSpeed[];
+
+        private class RoundRectStatus {
+            long beginTimes = 0;
+            float targetHeight = 0;
+            float currentHeight = 0;
+        }
+        protected RoundRectStatus mRoundRectStatus[] = new RoundRectStatus[mRoundRectNum];
+
+        private ThinkingToSpeakingDrawer mThinkingToSpeakingDrawer = null;
+        private boolean mUseTransition = false;
+
+        public ChatBotSpeakingAnimationDrawer(float scale, boolean useTransition) {
+            super();
+//            Log.i("SpeakingAnimationDrawer@" + hashCode(), "construct");
+
+            mUseTransition = useTransition;
+            mThinkingToSpeakingDrawer = new ThinkingToSpeakingDrawer();
+            addChainDrawer(mThinkingToSpeakingDrawer);
+
+            mScale = scale;
+            updateSizeParam();
+            for (int i = 0; i < mRoundRectNum; i++) {
+                mRoundRectF[i] = new RectF();
+                mRoundRectStatus[i] = new RoundRectStatus();
+            }
+        }
+
+        @Override
+        public void draw(Canvas canvas) {
+            // 过渡动画
+            if (mUseTransition && mProgress <= mThinkingToSpeakingDrawer.getAnimationDuration()) {
+                mThinkingToSpeakingDrawer.setDrawerCenterPos(
+                        canvas.getWidth()/2f + mTranslateFromCenter.x,
+                        canvas.getHeight()/2f + mTranslateFromCenter.y - mRoundRectMinHeight/2f
+                );
+                mThinkingToSpeakingDrawer.draw(canvas);
+                return;
+            }
+
+            long progress = mUseTransition ? mProgress-mThinkingToSpeakingDrawer.getAnimationDuration() : mProgress;
+            updateRoundRect(progress, canvas);
+
+            for (int i = 0; i < mRoundRectNum; i++) {
+                canvas.drawRoundRect(mRoundRectF[i], mRoundRectRadius, mRoundRectRadius, mPaint);
+            }
+        }
+
+        public int getRoundRectMaxHeight() {
+            return mRoundRectMaxHeight;
+        }
+
+        private void updateSizeParam() {
+            mRoundRectWidth = (int) (DisplayUtil.dip2px(6) * mScale);
+            mRoundRectMaxHeight = (int) (DisplayUtil.dip2px(20) * mScale);
+            mRoundRectMinHeight = (int) (DisplayUtil.dip2px(4) * mScale);
+            mRoundRectMaxBoost = mRoundRectMaxHeight-mRoundRectMinHeight;
+            mRoundRectMargin = (int) (DisplayUtil.dip2px(8) * mScale);
+            mRoundRectRadius = (int) (DisplayUtil.dip2px(6) * mScale);
+
+            mRoundRectSpeed = new float[] {
+                    mRoundRectMaxBoost/474f,
+                    mRoundRectMaxBoost/433f,
+                    mRoundRectMaxBoost/407f,
+                    mRoundRectMaxBoost/458f,
+                    mRoundRectMaxBoost/400f,
+                    mRoundRectMaxBoost/427f,
+                    mRoundRectMaxBoost/441f,
+                    mRoundRectMaxBoost/419f,
+                    mRoundRectMaxBoost/487f,
+                    mRoundRectMaxBoost/442f
             };
 
             if (mUseTransition) {

@@ -1,0 +1,139 @@
+.aicall-markdown-render {
+  font-size: 14px;
+  line-height: 22px;
+  color: #26244c;
+  margin: -8px 0;
+  user-select: auto;
+  word-break: break-all;
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5 {
+    font-weight: 600;
+    margin: 0.5em 0;
+    line-height: 1.5;
+  }
+
+  h1 {
+    font-size: 24px;
+  }
+
+  h2 {
+    font-size: 22px;
+  }
+
+  h3 {
+    font-size: 20px;
+  }
+
+  h4 {
+    font-size: 18px;
+  }
+
+  h5 {
+    font-size: 16px;
+  }
+
+  h6 {
+    font-weight: 600;
+  }
+
+  pre {
+    max-width: 100%;
+    overflow-x: auto;
+    border-radius: 10px;
+    opacity: 1;
+    box-sizing: border-box;
+    border: 1px solid #d8d9e6;
+  }
+
+  hr {
+    height: 0;
+    border-width: 0 0 1px 0;
+    border-bottom: 1px dashed #878aab;
+  }
+
+  p {
+    margin: 8px 0;
+  }
+
+  img {
+    margin: 6px 0;
+    max-height: 113px;
+    max-width: 100%;
+    vertical-align: bottom;
+    border-radius: 4px;
+  }
+
+  a {
+    color: #624aff;
+    text-decoration: none;
+  }
+
+  ._table-container {
+    border: 1px solid #d8d9e6;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  table {
+    border-collapse: collapse;
+  }
+
+  th,
+  td {
+    padding: 8px 12px;
+    border: 1px solid #d8d9e6;
+  }
+
+  th {
+    font-weight: 500;
+  }
+
+  /* 去除表格最外层单元格的外部边框 */
+
+  tr:first-child th {
+    border-top: none;
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  tr td:first-child,
+  tr th:first-child {
+    border-left: none;
+  }
+
+  tr td:last-child,
+  tr th:last-child {
+    border-right: none;
+  }
+}
+
+.chat-messages .aicall-markdown-render {
+  ul,
+  ol {
+    padding-left: 44px;
+  }
+
+  ul {
+    list-style: disc;
+
+    li::marker {
+      color: #624aff;
+    }
+
+    ul {
+      padding-left: 14px;
+      list-style-type: circle;
+    }
+  }
+
+  ol ul {
+    padding-left: 14px;
+    list-style-type: circle;
+  }
+}

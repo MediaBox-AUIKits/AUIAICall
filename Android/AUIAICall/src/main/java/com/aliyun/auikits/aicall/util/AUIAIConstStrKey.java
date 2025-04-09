@@ -9,4 +9,6 @@ public class AUIAIConstStrKey {
     public static final String BUNDLE_KEY_IS_SHARED_AGENT = "BUNDLE_KEY_IS_SHARED_AGENT";
     public static final String BUNDLE_KEY_TOKEN_EXPIRE_TIMESTAMP = "BUNDLE_KEY_TOKEN_EXPIRE_TIMESTAMP";
     public static final String BUNDLE_KEY_CHAT_SYNC_CONFIG = "BUNDLE_KEY_CHAT_SYNC_CONFIG";
+    public static final String BUNDLE_KEY_RTC_AUTH_TOKEN = "BUNDLE_KEY_RTC_AUTH_TOKEN";
+    public static final String BUNDLE_KEY_WEBVIEW_URL = "BUNDLE_KEY_WEBVIEW_URL";
 }

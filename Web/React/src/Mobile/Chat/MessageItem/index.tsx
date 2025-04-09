@@ -11,6 +11,8 @@ import MessageItemTextLineRender from './TextLineRender';
 import MessageItemReasoning from './Reasoning';
 
 import './index.less';
+import MessageItemMarkdownRender from './MarkdownRender';
+import SendAttachment from '@/Mobile/Chat/MessageItem/SendAttachment.tsx';
 
 function StaticMessageItem({ messageItem }: { messageItem: ChatMessageItem }) {
   const engine = useContext(ChatEngineContext);
@@ -44,7 +46,12 @@ function StaticMessageItem({ messageItem }: { messageItem: ChatMessageItem }) {
   }, []);
 
   if (!message) return null;
-  if (message.messageState !== AIChatMessageState.Transfering && !message.text && !message.reasoningText) {
+  if (
+    message.messageState !== AIChatMessageState.Transfering &&
+    !message.text &&
+    !message.reasoningText &&
+    !message.attachmentList
+  ) {
     return null;
   }
 
@@ -136,31 +143,43 @@ function StaticMessageItem({ messageItem }: { messageItem: ChatMessageItem }) {
         visible={showDelete}
       >
         <div
-          className='_box'
+          className='_bd'
           {...longPressEvents({
             onStartCallback: onLongPress,
             ms: 500,
           })}
         >
-          <MessageItemReasoning message={message} />
-          <MessageItemTextLineRender text={message.text} />
-          {!messageItem.isSend && message.messageState === AIChatMessageState.Transfering && (
-            <DotLoading color='currentColor' />
-          )}
-          {!messageItem.isSend && message.messageState === AIChatMessageState.Interrupted && (
-            <div className='_interrupted'>用户停止本次回答</div>
-          )}
-          {(message.messageState === AIChatMessageState.Finished ||
-            message.messageState === AIChatMessageState.Interrupted) && (
-            <div className='_actions'>
-              <Button className={copying ? 'is-copying' : ''} onClick={onCopy}>
-                {copySVG}
-              </Button>
-              <Button className={playingMessageId === message.dialogueId ? 'is-playing' : ''} onClick={togglePlay}>
-                {volumeSVG}
-              </Button>
+          {messageItem.isSend && <SendAttachment message={message} />}
+          {(message.text ||
+            message.reasoningText ||
+            (!messageItem.isSend && message.messageState === AIChatMessageState.Transfering)) && (
+            <div className='_box'>
+              {messageItem.isSend ? (
+                <MessageItemTextLineRender text={message.text} />
+              ) : (
+                <>
+                  <MessageItemReasoning message={message} />
+                  <MessageItemMarkdownRender text={message.text} />
+                  {message.messageState === AIChatMessageState.Transfering && <DotLoading color='currentColor' />}
+                  {message.messageState === AIChatMessageState.Interrupted && (
+                    <div className='_interrupted'>用户停止本次回答</div>
+                  )}
+                </>
+              )}
+
+              {(message.messageState === AIChatMessageState.Finished ||
+                message.messageState === AIChatMessageState.Interrupted) && (
+                <div className='_actions'>
+                  <Button className={copying ? 'is-copying' : ''} onClick={onCopy}>
+                    {copySVG}
+                  </Button>
+                  <Button className={playingMessageId === message.dialogueId ? 'is-playing' : ''} onClick={togglePlay}>
+                    {volumeSVG}
+                  </Button>
+                </div>
+              )}
             </div>
-          )}{' '}
+          )}
           {messageItem.isSend && <MessageItemSendStatus message={message} />}
         </div>
       </Popover>

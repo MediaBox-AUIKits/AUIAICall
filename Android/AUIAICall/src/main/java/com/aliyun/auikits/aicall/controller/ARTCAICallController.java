@@ -158,6 +158,23 @@ public abstract class ARTCAICallController {
         }
 
         @Override
+        public void onAgentStarted() {
+            if (null != mBizCallEngineCallback) {
+                mBizCallEngineCallback.onAgentStarted();
+            }
+
+            ARTCAICallEngine.ARTCAICallAgentInfo agentInfo= mARTCAICallEngine.getAgentInfo();
+            mAIAgentInstanceId = agentInfo.instanceId;
+            mAIAgentUserId = agentInfo.agentUserId;
+            mChannelId = agentInfo.channelId;
+            mAIAgentRequestId = agentInfo.requestId;
+
+            if(mEnableVoiceIdList) {
+                mARTCAICallEngine.getIARTCAICallService().describeAIAgentInstance(mUserId, agentInfo.instanceId, getVoiceIdListCallback());
+            }
+        }
+
+        @Override
         public void onAgentVideoAvailable(boolean available) {
             if (null != mBizCallEngineCallback) {
                 mBizCallEngineCallback.onAgentVideoAvailable(available);
@@ -253,6 +270,13 @@ public abstract class ARTCAICallController {
                 mBizCallEngineCallback.onSpeakingInterrupted(reason);
             }
         }
+
+        @Override
+        public void onLLMReplyCompleted(String text, int userAsrSentenceId) {
+            if(null != mBizCallEngineCallback) {
+                mBizCallEngineCallback.onLLMReplyCompleted(text, userAsrSentenceId);
+            }
+        }
     };
 
     protected ARTCAICallController(Context context, String userId) {
@@ -287,6 +311,8 @@ public abstract class ARTCAICallController {
     }
 
     public abstract void start();
+
+    public abstract void startCall(String token);
 
     public ARTCAICallEngine getARTCAICallEngine() {
         return mARTCAICallEngine;

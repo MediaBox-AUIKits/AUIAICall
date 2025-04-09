@@ -6,7 +6,7 @@
 //
 
 #import "AVCircularProgressView.h"
-#import "UIView+AVHelper.h""
+#import "UIView+AVHelper.h"
 #import "AUIFoundationMacro.h"
 
 @interface AVCircularProgressView()<CAAnimationDelegate>

@@ -10,6 +10,7 @@ import android.view.View;
 import androidx.annotation.NonNull;
 
 import com.aliyun.auikits.aiagent.util.Logger;
+import com.aliyun.auikits.aicall.widget.card.ChatBotSendTextMessageCard;
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.module.LoadMoreModule;
 import com.chad.library.adapter.base.viewholder.BaseViewHolder;
@@ -24,11 +25,23 @@ public class CardListAdapter extends BaseQuickAdapter<CardEntity, BaseViewHolder
     private SparseArray<String> cardTypeIntArray;
     private int lastScrollPosition = 0;
     private boolean autoScrollToBottom = true;
+    private OnItemLongClickListener onItemLongClickListener;
+
+    public interface OnItemLongClickListener {
+        void onItemLongClick(View view, int position);
+    }
 
     public CardListAdapter(ICardViewFactory cardViewFactory) {
         super(0);
         this.cardViewFactory = cardViewFactory;
         this.cardTypeIntArray = new SparseArray<>();
+    }
+
+    public CardListAdapter(ICardViewFactory cardViewFactory, OnItemLongClickListener onItemLongClickListener) {
+        super(0);
+        this.cardViewFactory = cardViewFactory;
+        this.cardTypeIntArray = new SparseArray<>();
+        this.onItemLongClickListener = onItemLongClickListener;
     }
 
     public void setAutoScrollToBottom(boolean autoScrollToBottom) {
@@ -84,6 +97,17 @@ public class CardListAdapter extends BaseQuickAdapter<CardEntity, BaseViewHolder
     @Override
     public void onBindViewHolder(BaseViewHolder holder, int position) {
         super.onBindViewHolder(holder, position);
+
+        if(holder.itemView instanceof ChatBotSendTextMessageCard) {
+            ((ChatBotSendTextMessageCard)holder.itemView).setOnMessageItemLongClickListener(new ChatBotSendTextMessageCard.OnMessageItemLongClickListener() {
+                @Override
+                public void onMessageItemLongClick(String requestId) {
+                    if(onItemLongClickListener != null) {
+                        onItemLongClickListener.onItemLongClick(holder.itemView, position);
+                    }
+                }
+            });
+        }
 
         if(autoScrollToBottom) {
             if (position == getItemCount() - 1) {

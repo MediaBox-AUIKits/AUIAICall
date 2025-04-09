@@ -6,6 +6,7 @@ import useChatStore from './store';
 import ChatEngineContext from './ChatEngineContext';
 import MessageItem from './MessageItem';
 import './messages.less';
+import resizeHandler from '@/Mobile/Chat/resizeHandler.ts';
 
 const AutoScrollGap = 80;
 
@@ -41,6 +42,13 @@ function ChatMessages() {
     }
     scrollToBottom();
   };
+
+  useEffect(() => {
+    resizeHandler.on('resize', onLayoutUpdate);
+    return () => {
+      resizeHandler.off('resize', onLayoutUpdate);
+    };
+  }, []);
 
   const onLoadHistoryMessage = async () => {
     let endTime = Date.now();

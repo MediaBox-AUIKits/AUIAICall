@@ -1,0 +1,25 @@
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 背景圆环 -->
+    <item android:id="@android:id/background">
+        <shape
+            android:shape="ring"
+            android:thickness="2dp"
+            android:thicknessRatio="8"
+            android:useLevel="false">
+            <solid android:color="#B2FFFFFF" />  <!-- 设置背景圆环的颜色 -->
+        </shape>
+    </item>
+
+    <!-- 进度圆环 -->
+    <item android:id="@android:id/progress">
+        <clip>
+            <shape
+                android:shape="ring"
+                android:thickness="2dp"
+                android:thicknessRatio="8"
+                android:useLevel="true">
+                <solid android:color="#FFFFFF" />  <!-- 设置进度圆环的颜色 -->
+            </shape>
+        </clip>
+    </item>
+</layer-list>

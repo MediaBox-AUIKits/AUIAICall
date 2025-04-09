@@ -59,7 +59,7 @@ public class AiAgentServiceImpl implements AiAgentService {
     }
 
     @Override
-    public AiAgentStartResponse startAiAgent(String ChannelId, String userId, String rtcAuthToken, String templateConfig, String workflowType, String userData, String sessionId, String chatSyncConfig) {
+    public AiAgentStartResponse startAiAgent(String ChannelId, String userId, String rtcAuthToken, String templateConfig, String workflowType, String userData, String sessionId, String chatSyncConfig, String aiAgentId, String region) {
         Params params = new Params()
                 // 接口名称
                 .setAction("StartAIAgentInstance")
@@ -81,15 +81,19 @@ public class AiAgentServiceImpl implements AiAgentService {
         boolean isAvatarChat3D = isAvatarChat3D(workflowType);
 
         java.util.Map<String, Object> queries = new java.util.HashMap<>();
-        if (isAvatarChat3D(workflowType)) {
-            queries.put("AIAgentId", avatarChat3DAiAgentId);
-        } else if (isVoiceChat(workflowType)) {
-            queries.put("AIAgentId", voiceChatAiAgentId);
-        } else if (isVisionChat(workflowType)) {
-            queries.put("AIAgentId", visionChatAiAgentId);
+        if (StringUtils.isEmpty(aiAgentId)) {
+            if (isAvatarChat3D(workflowType)) {
+                queries.put("AIAgentId", avatarChat3DAiAgentId);
+            } else if (isVoiceChat(workflowType)) {
+                queries.put("AIAgentId", voiceChatAiAgentId);
+            } else if (isVisionChat(workflowType)) {
+                queries.put("AIAgentId", visionChatAiAgentId);
+            } else {
+                String errMessage = String.format("workflowType %s is not support", workflowType);
+                return AiAgentStartResponse.builder().result(false).requestId("").message(errMessage).build();
+            }
         } else {
-            String errMessage = String.format("workflowType %s is not support", workflowType);
-            return AiAgentStartResponse.builder().result(false).requestId("").message(errMessage).build();
+            queries.put("AIAgentId", aiAgentId);
         }
 
         JSONObject runtimeConfig = new JSONObject();
@@ -128,11 +132,12 @@ public class AiAgentServiceImpl implements AiAgentService {
         String errCode = StringUtils.EMPTY;
         try {
             OpenApiRequest request = new OpenApiRequest().setQuery(com.aliyun.openapiutil.Client.query(queries));
+            Client localClient = getClient(region);
             long start = System.currentTimeMillis();
             log.info("startAiAgent, queries：{}", JSONObject.toJSONString(queries));
             // 复制代码运行请自行打印 API 的返回值
             // 返回值为 Map 类型，可从 Map 中获得三类数据：响应体 body、响应头 headers、HTTP 返回的状态码 statusCode。
-            Map<String, ?> response = client.callApi(params, request, runtime);
+            Map<String, ?> response = localClient.callApi(params, request, runtime);
             log.info("startAiAgent, response:{}, cost:{}ms", JSONObject.toJSONString(response), (System.currentTimeMillis() - start));
             if (response != null) {
                 if (response.containsKey("statusCode")) {
@@ -397,6 +402,9 @@ public class AiAgentServiceImpl implements AiAgentService {
         // 如果区域为空或空白，设置默认区域为 imsRegion
         if (StringUtils.isBlank(region)) {
             region = imsRegion;
+        }
+        if (clientByRegion.containsKey(region)) {
+            return clientByRegion.get(region);
         }
         // 使用 computeIfAbsent 方法在并发环境下安全地获取或创建 Client
         return clientByRegion.computeIfAbsent(region, this::createClient);

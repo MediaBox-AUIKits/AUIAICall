@@ -54,6 +54,9 @@ public let AUIAIMainBundle = AUIAICallTheme("AUIAIMain")
         }
         
         self.selectAgent(isCus: false, isAni: false)
+        
+        // 提前获取Token
+        AUIAICallAuthTokenHelper.shared.fetchAuthToken(userId: AUIAICallManager.defaultManager.userId!, completed: nil)
     }
     
     public static var isEnableChat: Bool {

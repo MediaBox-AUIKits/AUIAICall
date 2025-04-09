@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'AUIAICall'
-  s.version          = '2.1.0'
+  s.version          = '2.2.0'
   s.summary          = 'A short description of AUIAICall.'
 
 # This description is used to generate tags and improve search results.
@@ -28,7 +28,7 @@ TODO: Add long description of the pod here.
   s.source           = { :git => 'https://github.com/MediaBox-AUIKits/AUIAICall', :tag =>"v#{s.version}" }
   # s.social_media_url = 'https://twitter.com/<TWITTER_USERNAME>'
 
-  s.ios.deployment_target = '10.0'
+  s.ios.deployment_target = '11.0'
   s.static_framework = true
   s.swift_version = '5.0'
 #  s.pod_target_xcconfig = {'GCC_PREPROCESSOR_DEFINITIONS' => '$(inherited) COCOAPODS=1'}
@@ -42,7 +42,6 @@ TODO: Add long description of the pod here.
     ss.exclude_files = 'Source/AUIAICallMainViewController.swift', 'Source/ChatBot/**/*.{swift,h,m,mm}'
     ss.dependency 'AUIFoundation'
     ss.dependency 'ARTCAICallKit'
-    ss.dependency 'MJRefresh'
     ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => '$(inherited)'}
   end
   
@@ -53,6 +52,8 @@ TODO: Add long description of the pod here.
     ss.dependency 'AUIFoundation'
     ss.dependency 'ARTCAICallKit/Chatbot'
     ss.dependency 'MJRefresh'
+    ss.dependency 'SwiftyMarkdown'
+    ss.dependency 'SDWebImage'
     ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => '$(inherited) AICALL_ENABLE_CHATBOT'}
   end
   
@@ -62,6 +63,8 @@ TODO: Add long description of the pod here.
     ss.dependency 'AUIFoundation'
     ss.dependency 'ARTCAICallKit/Chatbot'
     ss.dependency 'MJRefresh'
+    ss.dependency 'SwiftyMarkdown'
+    ss.dependency 'SDWebImage'
     ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => '$(inherited) AICALL_ENABLE_CHATBOT '}
   end
   
@@ -71,7 +74,9 @@ TODO: Add long description of the pod here.
     ss.dependency 'AUIFoundation'
     ss.dependency 'ARTCAICallKit/Chatbot'
     ss.dependency 'MJRefresh'
-    ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => '$(inherited) DEMO_FOR_DEBUG '}
+    ss.dependency 'SwiftyMarkdown'
+    ss.dependency 'SDWebImage'
+    ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => '$(inherited) DEMO_FOR_DEBUG AICALL_ENABLE_CHATBOT '}
   end
   
   s.subspec 'Demo_For_RTC' do |ss|

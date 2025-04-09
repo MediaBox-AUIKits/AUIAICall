@@ -2,6 +2,7 @@ package com.aliyun.auikits.aicall.util;
 
 import android.text.TextUtils;
 
+import com.aliyun.auikits.aiagent.ARTCAIChatAttachmentUploader;
 import com.aliyun.auikits.aiagent.ARTCAIChatEngine;
 import com.aliyun.auikits.aiagent.util.Logger;
 
@@ -67,6 +68,16 @@ public class AUIAIChatMessageCacheHelper {
                         sourceType = jsonObject.getString("sourceType");
                     }
                     ARTCAIChatEngine.ARTCAIChatMessage message = new ARTCAIChatEngine.ARTCAIChatMessage(dialogueId, requestId, messageState, messageType, sendTime, text, senderId, isEnd, reasoningText, isReasoningEnd, source, sourceType);
+                    if(jsonObject.has("attachmentList")) {
+                        message.attachmentList = new ArrayList<>();
+                        JSONArray attachmentList = jsonObject.getJSONArray("attachmentList");
+                        for(int j = 0; j < attachmentList.length(); j++) {
+                            JSONObject attachment = new JSONObject((String) attachmentList.optString(j));
+                            if(attachment != null) {
+                                message.attachmentList.add(new ARTCAIChatAttachmentUploader.ARTCAIChatAttachment(attachment));
+                            }
+                        }
+                    }
                     list.add(message);
                 }
             }

@@ -25,7 +25,7 @@ public class AICallDebugDialog {
         DialogPlus dialog = DialogPlus.newDialog(context)
                 .setContentHolder(viewHolder)
                 .setGravity(Gravity.BOTTOM)
-                .setExpanded(true, DisplayUtil.dip2px(400))
+                .setExpanded(true, DisplayUtil.dip2px(430))
                 .setOverlayBackgroundResource(android.R.color.transparent)
                 .setContentBackgroundResource(R.color.layout_base_dialog_background)
                 .setOnClickListener((dialog1, v) -> {
@@ -34,11 +34,13 @@ public class AICallDebugDialog {
                     } else if(v.getId() == R.id.debug_update_llm_prompt) {
                         engine.updateLlmSystemPrompt(editTextllmPrompt.getText().toString());
                     } else if(v.getId() == R.id.debug_send_single_custom_capture) {
-                        engine.startVisionCustomCapture(new ARTCAICallEngine.ARTCAICallVisionCustomCaptureRequest(editTextCustomCapture.getText().toString(), true, 5, 2, 2, ""));
+                        engine.startVisionCustomCapture(new ARTCAICallEngine.ARTCAICallVisionCustomCaptureRequest(editTextCustomCapture.getText().toString(), false, true, 5, 2, 2, ""));
                     } else if(v.getId() == R.id.debug_send_continus_custom_capture) {
-                        engine.startVisionCustomCapture(new ARTCAICallEngine.ARTCAICallVisionCustomCaptureRequest(editTextCustomCapture.getText().toString(), false, 5, 2, 100, ""));
+                        engine.startVisionCustomCapture(new ARTCAICallEngine.ARTCAICallVisionCustomCaptureRequest(editTextCustomCapture.getText().toString(), false, false, 5, 2, 100, ""));
                     } else if(v.getId() == R.id.debug_stop_custom_capture) {
                         engine.stopVisionCustomCapture();
+                    } else if(v.getId() == R.id.debug_send_continus_custom_capture_enable_asr) {
+                        engine.startVisionCustomCapture(new ARTCAICallEngine.ARTCAICallVisionCustomCaptureRequest(editTextCustomCapture.getText().toString(), true, false, 5, 2, 100, ""));
                     }
                     dialog1.dismiss();
                 })

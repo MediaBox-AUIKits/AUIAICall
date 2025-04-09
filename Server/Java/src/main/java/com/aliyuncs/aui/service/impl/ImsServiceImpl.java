@@ -6,7 +6,9 @@ import com.aliyuncs.aui.dto.req.*;
 import com.aliyuncs.aui.dto.res.*;
 import com.aliyuncs.aui.service.AiAgentService;
 import com.aliyuncs.aui.service.ImsService;
+import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.apache.shiro.codec.Base64;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,8 +52,22 @@ public class ImsServiceImpl implements ImsService {
 
         AiAgentStartResponse aiAgentStartResponse = aiAgentService.startAiAgent(channelId, robotUserId, robotRtcAuthToken,
                 aiAgentStartRequestDto.getTemplateConfig(), aiAgentStartRequestDto.getWorkflowType(), aiAgentStartRequestDto.getUserData(),
-                aiAgentStartRequestDto.getSessionId(), aiAgentStartRequestDto.getChatSyncConfig());
+                aiAgentStartRequestDto.getSessionId(), aiAgentStartRequestDto.getChatSyncConfig(), "", "");
         return AiAgentStartResponse.builder().aiAgentInstanceId(aiAgentStartResponse.getAiAgentInstanceId()).rtcAuthToken(rtcAuthToken)
+                .aiAgentUserId(robotUserId).channelId(channelId).requestId(aiAgentStartResponse.getRequestId())
+                .result(aiAgentStartResponse.isResult()).message(aiAgentStartResponse.getMessage())
+                .code(aiAgentStartResponse.getCode()).errorCode(aiAgentStartResponse.getErrorCode()).build();
+    }
+
+    @Override
+    public AiAgentStartResponse startAIAgentInstanceWithChannel(AiAgentStartWithChannelRequestDto requestDto){
+        String channelId = requestDto.getChannelId();
+        String robotUserId = UUID.randomUUID().toString().replaceAll("-", "");
+        String robotRtcAuthToken = createBase64Token(channelId, robotUserId, getAigcTimestamp());
+        AiAgentStartResponse aiAgentStartResponse = aiAgentService.startAiAgent(channelId, robotUserId, robotRtcAuthToken,
+                requestDto.getTemplateConfig(), requestDto.getWorkflowType(), requestDto.getUserData(),
+                requestDto.getSessionId(), requestDto.getChatSyncConfig(), requestDto.getAiAgentId(), requestDto.getRegion());
+        return AiAgentStartResponse.builder().aiAgentInstanceId(aiAgentStartResponse.getAiAgentInstanceId())
                 .aiAgentUserId(robotUserId).channelId(channelId).requestId(aiAgentStartResponse.getRequestId())
                 .result(aiAgentStartResponse.isResult()).message(aiAgentStartResponse.getMessage())
                 .code(aiAgentStartResponse.getCode()).errorCode(aiAgentStartResponse.getErrorCode()).build();
@@ -65,6 +81,20 @@ public class ImsServiceImpl implements ImsService {
     @Override
     public CommonResponse updateAIAgentInstance(AiAgentUpdateRequestDto aiAgentUpdateRequestDto) {
         return aiAgentService.updateAiAgent(aiAgentUpdateRequestDto.getAiAgentInstanceId(), aiAgentUpdateRequestDto.getTemplateConfig());
+    }
+
+    @Override
+    public RtcAuthTokenResponse getRtcAuthToken(RtcAuthTokenRequestDto rtcAuthTokenRequestDto) {
+        String channelId = rtcAuthTokenRequestDto.getChannelId();
+        if (StringUtils.isBlank(channelId)) {
+            channelId = UUID.randomUUID().toString().replaceAll("-", "");
+        }
+        long timestamp = getClientTimestamp();
+        // 生成客户端的rtcAuthToken，基于客户端传的userid
+        String rtcAuthToken = createBase64Token(channelId, rtcAuthTokenRequestDto.getUserId(), timestamp);
+        log.info("getRtcAuthToken, params: {}, rtcAuthToken:{}", rtcAuthTokenRequestDto, rtcAuthToken);
+
+        return RtcAuthTokenResponse.builder().authToken(rtcAuthToken).timestamp(timestamp).build();
     }
 
     @Override

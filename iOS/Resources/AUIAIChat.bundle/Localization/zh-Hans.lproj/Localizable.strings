@@ -40,4 +40,13 @@
 "Reasoning stopped" = "思考停止";
 "Reasoning..." = "思考中...";
 
+"Failed to upload image" = "上传图片失败";
+"Failed to load image" = "读取图片失败";
+"Some images failed to upload" = "部分图片上传失败";
+
 "Unable to start call because there is not connected" = "无法启动通话，因为当前未连接";
+
+"Voice Call" = "音频通话";
+"Avatar Call" = "数字人通话";
+"Vision Call" = "视觉理解通话";
+"Album" = "相册";

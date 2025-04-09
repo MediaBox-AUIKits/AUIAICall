@@ -1,0 +1,442 @@
+.chat-footer {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 2;
+  padding: 20px;
+  background-color: #f7f6fe;
+
+  ._bd {
+    position: relative;
+    display: flex;
+  }
+
+  ._send-area {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+  }
+
+  ._extra-btn,
+  ._to-voice-btn {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: none;
+    background-color: transparent;
+
+    span {
+      display: inline-block;
+      width: 28px;
+      height: 28px;
+      vertical-align: -6px;
+    }
+  }
+
+  ._extra-btn {
+    margin: 0 6px 0 -6px;
+  }
+
+  ._to-voice-btn {
+    margin: 0 -6px 0 6px;
+  }
+
+  .adm-text-area {
+    width: auto;
+    background: radial-gradient(58% 126% at 50% 90%, rgba(255, 255, 255, 0.6) 0%, #ffffff 100%);
+    border: 1px solid #ffffff;
+    box-shadow: 0px 2px 8px 0px rgba(0, 0, 0, 0.05);
+    border-radius: 20px;
+    overflow: hidden;
+    color: #26244c;
+  }
+
+  .adm-text-area-element {
+    line-height: 20px;
+    min-height: 20px;
+    padding: 9px 12px;
+    width: calc(100% - 40px);
+    margin-right: 40px;
+  }
+
+  ._send-textarea {
+    flex: 1;
+    position: relative;
+
+    &.is-focusing {
+      .adm-text-area {
+        border-color: #624aff;
+      }
+    }
+  }
+
+  ._action-btn {
+    right: 8px;
+    bottom: 6px;
+    position: absolute;
+    z-index: 9;
+    width: 28px;
+    height: 28px;
+    line-height: 28px;
+    border: none;
+    padding: 0;
+    border-radius: 14px;
+
+
+    &::before {
+      border: none;
+      transform: none;
+      border-radius: 14px;
+    }
+
+    span {
+      display: inline-block;
+      height: 28px;
+      vertical-align: bottom;
+    }
+
+    svg {
+      vertical-align: bottom;
+    }
+
+    &.is-send {
+      padding: 5px;
+      line-height: 18px;
+
+      span {
+        height: 18px;
+      }
+
+      &.is-disabled {
+        background-color: #aaa;
+      }
+
+      background-color: #624aff;
+      border-radius: 14px;
+    }
+
+    &.is-text {
+      padding: 2px;
+      line-height: 24px;
+
+      span {
+        height: 24px;
+      }
+    }
+  }
+
+  ._send-voice {
+    flex: 1;
+
+    &.is-pushing {
+      ._pushing {
+        display: block;
+      }
+
+      ._push-btn {
+        opacity: 0;
+      }
+
+      ._action-btn {
+        display: none;
+      }
+    }
+  }
+
+  ._push-btn {
+    position: relative;
+    z-index: 9;
+    height: 40px;
+    background: radial-gradient(58% 126% at 50% 90%, rgba(255, 255, 255, 0.6) 0%, #ffffff 100%);
+    border: 1px solid #ffffff;
+    box-shadow: 0px 2px 8px 0px rgba(0, 0, 0, 0.05);
+    border-radius: 20px;
+
+    &::before {
+      border-radius: 20px;
+    }
+  }
+
+  ._pushing {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: none;
+    z-index: 1;
+    overflow: hidden;
+    background-color: #f7f6fe;
+  }
+
+  ._pushing-content {
+    position: relative;
+    z-index: 5;
+    text-align: center;
+
+    ._tip {
+      margin: 16px 0;
+      font-size: 14px;
+      line-height: 18px;
+      color: #26244c;
+      opacity: 0.6;
+
+      &.is-will-cancel {
+        color: #f95353;
+        opacity: 1;
+      }
+    }
+
+    ._time {
+      position: absolute;
+      left: 12px;
+      top: 10px;
+      font-size: 14px;
+      line-height: 20px;
+    }
+
+    ul {
+      display: flex;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      align-items: flex-end;
+    }
+
+    li {
+      margin: 0 2px;
+      background-color: #fff;
+      width: 4px;
+      height: 6px;
+      border-radius: 4px;
+    }
+  }
+
+  ._recording-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    height: 40px;
+    border-radius: 20px;
+    line-height: 52px;
+    background: #624aff;
+    color: #fff;
+
+    &.is-will-cancel {
+      background-color: #f95353;
+    }
+
+    ._wave {
+      height: 12px;
+    }
+  }
+
+  ._extra-actions {
+    display: flex;
+    justify-content: space-between;
+    list-style: none;
+    margin: 0;
+    padding: 18px 0 0 0;
+    text-align: center;
+
+    li {
+      flex: 1 1 70px;
+    }
+
+    ._extra-action-label {
+      margin-top: 8px;
+      padding: 0 2px;
+      word-wrap: break-word;
+      color: #56597e;
+    }
+
+    .adm-button,
+    ._upload-button {
+      width: 70px;
+      height: 70px;
+      border-radius: 10px;
+      background-color: #fff;
+
+      span {
+        display: inline-block;
+        width: 32px;
+        height: 32px;
+        line-height: 32px;
+        vertical-align: bottom;
+      }
+    }
+
+    ._upload-button {
+      position: relative;
+      display: inline-block;
+      box-sizing: border-box;
+      padding: 18px;
+      margin: 0;
+      --border-radius: var(--adm-button-border-radius, 4px);
+      --border-width: var(--adm-button-border-width, 1px);
+      --border-style: var(--adm-button-border-style, solid);
+      --border-color: var(--adm-button-border-color, var(--adm-color-border));
+
+      border: var(--border-width) var(--border-style) var(--border-color);
+
+      input {
+        cursor: pointer;
+        position: absolute;
+        opacity: 0;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 4px;
+      }
+
+      &::before {
+        position: absolute;
+        top: 0;
+        left: 0;
+        transform: translate(calc(var(--border-width) * -1), calc(var(--border-width) * -1));
+        width: 100%;
+        height: 100%;
+        background-color: var(--adm-color-text-dark-solid);
+        border: var(--border-width) var(--border-style) var(--adm-color-text-dark-solid);
+        border-radius: var(--border-radius);
+        opacity: 0;
+        content: ' ';
+        box-sizing: content-box;
+      }
+    }
+  }
+
+  ._attachments {
+    margin: 16px -6px 0 -6px;
+    padding-top: 6px;
+    overflow-x: auto;
+
+    ul {
+      display: flex;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    li {
+      position: relative;
+      margin: 6px 8px 0 6px;
+
+      &:last-child {
+        margin-right: 0;
+      }
+    }
+
+    ._preview {
+      position: relative;
+      width: 52px;
+      height: 52px;
+      border-radius: 10px;
+      overflow: hidden;
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 10px;
+      }
+    }
+
+    ._remove {
+      position: absolute;
+      right: -8px;
+      top: -8px;
+      padding: 2px;
+      height: 20px;
+      border: none;
+      background: transparent;
+
+      span {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        line-height: 16px;
+        vertical-align: top;
+      }
+    }
+
+    ._add {
+      border-radius: 10px;
+      width: 52px;
+      height: 52px;
+      padding: 15px;
+      border: none;
+      position: relative;
+      display: inline-block;
+      box-sizing: border-box;
+      background: #fff;
+
+      margin: 0;
+
+      input {
+        cursor: pointer;
+        position: absolute;
+        opacity: 0;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 4px;
+      }
+
+      &::before {
+        position: absolute;
+        top: 0;
+        left: 0;
+        transform: translate(calc(var(--border-width) * -1), calc(var(--border-width) * -1));
+        width: 100%;
+        height: 100%;
+        background-color: var(--adm-color-text-dark-solid);
+        border: var(--border-width) var(--border-style) var(--adm-color-text-dark-solid);
+        border-radius: var(--border-radius);
+        opacity: 0;
+        content: ' ';
+        box-sizing: content-box;
+      }
+
+      span {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+      }
+    }
+
+    ._progress, ._failed {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    ._progress-circle {
+      transition: 0.35s stroke-dashoffset;
+      transform: rotate(-90deg);
+      transform-origin: 50% 50%;
+      stroke-dasharray: 56.5487, 56.5487;
+    }
+  }
+}
+
+@keyframes chat-push-to-talk {
+  0% {
+    height: 8px;
+  }
+  50% {
+    height: 12px;
+  }
+  100% {
+    height: 8px;
+  }
+}

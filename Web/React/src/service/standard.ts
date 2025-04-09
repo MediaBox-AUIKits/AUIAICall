@@ -1,10 +1,10 @@
 import { AICallAgentError, AICallAgentInfo, AICallErrorCode, AIChatAuthToken } from 'aliyun-auikit-aicall';
 import AUIAICallConfig from '../controller/call/AUIAICallConfig';
 
-import { APP_SERVER, getWorkflowType, TemplateConfig, WorkflowType } from './interface';
+import { getWorkflowType, TemplateConfig, WorkflowType } from './interface';
 
 class StandardAppService {
-  private appServer = APP_SERVER;
+  private appServer = '';
 
   setAppServer(appServer: string) {
     this.appServer = appServer;

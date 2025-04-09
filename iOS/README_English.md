@@ -28,27 +28,69 @@ Download [address](https://github.com/MediaBox-AUIKits/AUIAICall/tree/main/iOS)
 - Prepare a real device with iOS 10.0 or above
 
 ### Prerequisites
-You need to create an agent and develop relevant interfaces on your server or directly deploy the provided server source code. For details, please refer to the official website documentation.
+You need to create an agent. For details, please refer to the official website documentation.
 
 ## Running the Demo
 - After downloading the source code, navigate to the Example directory.
 - Execute the command "pod install --repo-update" in the Example directory to automatically install the dependent SDKs.
 - Open the project file "AUIAICallExample.xcworkspace" and modify the bundle ID.
-- After completing the prerequisites, go to the file AUIAICallAppServer.swift and modify the server domain name.
-```swift
-// AUIAICallAppServer.swift
-public let AICallServerDomain = "Your application server domain"
-```
-- Configure the message conversation agent ID and its region by entering the file AUIAICallAgentConfig.swift.
+- Configure the agent ID and its region by entering the file AUIAICallAgentConfig.swift.
 ```swift
 // AUIAICallAgentConfig.swift
 
 // Configure the agent ID 
-let ChatAgentId = "Your message conversation agent ID"
+let VoiceAgentId = "xxx"
+let AvatarAgentId = "xxx"
+let VisionAgentId = "xxx"
+let ChatAgentId = "xxx"
 
 // Configure the region
 let Region = "cn-shanghai"
 ```
+
+- After configuring the agent, there are two methods to start the agent:
+    * **Method 1:** If you have already deployed the provided AppServer source code on your server, go to the file `AUIAICallAppServer.swift` and modify the server domain name.
+    ```swift
+    // AUIAICallAppServer.swift
+    public let AICallServerDomain = "Your application server domain"
+    ```
+
+    * **Method 2:** If you cannot deploy the AppServer source code and need to quickly run the demo and experience the agent, you can refer to the following method for generating a startup authentication token on the App side.
+    > Note: This method requires entering sensitive information such as AppKey locally. It is only suitable for the trial and development phase, **not for online release**, to avoid security risks from stolen AppKeys. For online releases, use the Server-side token generation method (refer to Method 1).
+    
+    For the call agent, locate `AUIAICallAuthTokenHelper.swift`, enable `EnableDevelopToken`, and copy the RTC `AppId` and `Key` used by the agent from the console.
+    ```swift
+    // AUIAICallAuthTokenHelper.swift
+    @objcMembers public class AUIAICallAuthTokenHelper: NSObject {
+    
+        // Set to true to enable Develop mode
+        private static let EnableDevelopToken: Bool = true     
+        // Copy the RTC AppId from the console
+        private static let RTCDevelopAppId: String = "RTC AppId used by the agent"
+        // Copy the RTC AppKey from the console
+        private static let RTCDevelopAppKey: String = "RTC AppKey used by the agent"
+    
+        ...
+    }
+    ```
+    
+    For the messaging conversation agent, locate `AUIAIChatAuthTokenHelper.swift`, enable `EnableDevelopToken`, and copy the IM `AppId`, `Key`, and `Sign` used by the agent from the console.
+    ```swift
+    // AUIAIChatAuthTokenHelper.swift
+    @objcMembers public class AUIAIChatAuthTokenHelper: NSObject {
+    
+        // Set to true to enable Develop mode
+        private static let EnableDevelopToken: Bool = true     
+        // Copy the interactive message AppId from the console
+        private static let IMDevelopAppId: String = "Interactive message AppId used by the agent"
+        // Copy the interactive message AppKey from the console
+        private static let IMDevelopAppKey: String = "Interactive message AppKey used by the agent"
+        // Copy the interactive message AppSign from the console
+        private static let IMDevelopAppSign: String = "Interactive message AppSign used by the agent"
+        ...
+    }
+    ```
+
 
 - Select the "Example" Target for compilation and execution.
 
@@ -59,7 +101,7 @@ You can quickly integrate AUIAICall into your APP through the following steps, e
 - Import AUIAICall: After downloading the repository code, copy the iOS folder to your APP code directory and rename it to AUIAICall, at the same level as your Podfile file. You can delete the Example and AICallKit directories.
 - Modify your Podfile to include:
     * AliVCSDK_ARTC: Audio and video terminal SDK suitable for AI real-time interactive calls. You can also use AliVCSDK_Standard or AliVCSDK_InteractiveLive. Refer to Quick Integration.
-    * AliVCInteractionMessage: Interactive messaging SDK suitable for message conversations. If you have already integrated, please use version 1.5.0 or above. Refer to Quick Integration.
+    * AliVCInteractionMessage: Interactive messaging SDK suitable for message conversations. If you have already integrated, please use version 1.6.0 or above. Refer to Quick Integration.
     * ARTCAICallKit: SDK for AI real-time interactive call scenarios and message conversation scenarios.
     * AUIFoundation: Basic UI component.
     * AUIAICall: UI component source code for AI call scenarios and message conversation scenarios.
@@ -70,11 +112,11 @@ platform :ios, '10.0'
 
 target 'Your App target' do
     # Integrate the appropriate audio and video terminal SDK based on your business scenario. Supports: AliVCSDK_ARTC, AliVCSDK_Standard, AliVCSDK_InteractiveLive
-    pod 'AliVCSDK_ARTC', '~> 6.21.0'
+    pod 'AliVCSDK_ARTC', '~> 7.1.0'
 
     # AI real-time interactive call scenario SDK
-    # If your business also needs to support message conversations, use "ARTCAICallKit/Chatbot" for integration, change the line below to: pod 'ARTCAICallKit/Chatbot', '~> 2.1.0'
-    pod 'ARTCAICallKit', '~> 2.1.0'
+    # If your business also needs to support message conversations, use "ARTCAICallKit/Chatbot" for integration, change the line below to: pod 'ARTCAICallKit/Chatbot', '~> 2.2.0'
+    pod 'ARTCAICallKit', '~> 2.2.0'
 
     # Basic UI component source code
     pod 'AUIFoundation', :path => "./AUIAICall/AUIBaseKits/AUIFoundation/", :modular_headers => true
@@ -83,8 +125,8 @@ target 'Your App target' do
     # If your business also needs to support message conversations, use "AUIAICall/Chatbot" for integration, change the line below to: pod 'AUIAICall/Chatbot',  :path => "./AUIAICall/"
     pod 'AUIAICall',  :path => "./AUIAICall/"
 
-    # If your business also needs to support message conversations, you also need to integrate AliVCInteractionMessage, minimum version is 1.5.0
-    pod 'AliVCInteractionMessage', '~> 1.5.0'
+    # If your business also needs to support message conversations, you also need to integrate AliVCInteractionMessage, minimum version is 1.6.0
+    pod 'AliVCInteractionMessage', '~> 1.6.0'
 
 end
 ```
@@ -93,7 +135,7 @@ end
 
 
 ### Project Configuration
-- Open the project info.Plist and add NSMicrophoneUsageDescription permissions.
+- Open the project's info.plist, add microphone permissions, and include other permissions as needed, such as camera permissions (used by the vision agent) and photo library permissions (used by the multi-modal messaging conversation agent).
 - Open the project settings, enable "Background Modes" in "Signing & Capabilities". If background mode is not enabled, you need to handle ending the call when entering the background yourself.
 
 ### Source Code Configuration
@@ -102,6 +144,10 @@ end
 // AUIAICallAppServer.swift
 public let AICallServerDomain = "Your application server domain"
 ```
+> During the development phase, you can use the method of generating authentication tokens on the App side. Refer to Method 2 above for guidance.
+
+
+
 
 ### Calling APIs
 After completing the previous steps, you can start AI calls through component interfaces on other modules or the homepage of your APP according to your business scenario and interactions. You can also modify the source code according to your own needs.
@@ -121,16 +167,15 @@ AVDeviceAuth.checkMicAuth { auth in
     }
     
     // userId is recommended to use your App's logged-in user id
-    let userId = "123"
-    // Build controller with userId, it is recommended that userId be the currently logged-in user
-    let controller = AUIAICallStandardController(userId: userId)
-    // Set agent ID, if nil, the agent ID configured on AppServer will be used
-    controller.config.agentId = nil
-    // Set the type of call (voice, digital human, or visual understanding). If setting AgentId, it needs to correspond to the type of AgentId, otherwise appserver selects the corresponding agentId to start the call based on agentType
+    let userId = "xxx"
+    let controller = AUIAICallController(userId: userId)
+
+    controller.config.agentId = "xxx"
     controller.config.agentType = agentType
-    // Create call ViewController
+    controller.config.region = "xx-xxx"
+
     let vc = AUIAICallViewController(controller)
-    // Open the call interface in full screen mode
+
     vc.modalPresentationStyle = .fullScreen
     vc.modalTransitionStyle = .coverVertical
     vc.modalPresentationCapturesStatusBarAppearance = true
@@ -147,20 +192,17 @@ import ARTCAICallKit
 import AUIFoundation
 
 // userId is recommended to use your App's logged-in user id
-let userId = "123"
+let userId = "xxx"
 // Set deviceId
 let deviceId = UIDevice.current.identifierForVendor?.uuidString
 let userInfo = ARTCAIChatUserInfo(userId, deviceId)
 
-// Set agent, agentId cannot be nil, region is the area where the agent is located
 let agentId = "xxxxx"
 let region = "xx-xxx"
 let agentInfo = ARTCAIChatAgentInfo(agentId: agentId)
 agentInfo.region = region
 
-// Create message conversation ViewController
 let vc = AUIAIChatViewController(userInfo: userInfo, agentInfo: agentInfo)
-// Open the call interface
 self.navigationController?.pushViewController(vc, animated: true)
 ```
 
@@ -181,7 +223,7 @@ import AUIFoundation
 
 AUIAICallManager.defaultManager.checkDeviceAuth(agentType: .VisionAgent) {
     let topVC = viewController ?? UIViewController.av_top()
-    let controller = AUIAICallStandardController(userId: "123")   // Parameter is the UserId of the currently logged-in user
+    let controller = AUIAICallStandardController(userId: "xxx")   // Parameter is the UserId of the currently logged-in user
     controller.agentShareInfo = "xxxxx"   // Obtain the token to start the call from the console
     let vc = AUIAICallViewController(controller)
     vc.enableVoiceIdSwitch = false

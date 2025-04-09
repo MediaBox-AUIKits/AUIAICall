@@ -61,9 +61,9 @@ dependencies {
     implementation 'com.google.android.material:material:x.x.x'             //修改x.x.x为你工程适配的版本
     androidTestImplementation 'androidx.test.espresso:espresso-core:x.x.x'  //修改x.x.x为你工程适配的版本
     implementation 'com.aliyun.aio:AliVCSDK_ARTC:x.x.x'                  //修改x.x.x为你工程适配的版本
-    implementation 'com.aliyun.auikits.android:ARTCAICallKit:2.1.0'
-    //如果你的业务还需要支持消息对话，还需要集成AliVCInteractionMessage，版本最低是1.5.0
-    implementation 'com.aliyun.sdk.android:AliVCInteractionMessage:1.5.0'
+    implementation 'com.aliyun.auikits.android:ARTCAICallKit:2.2.0'
+    //如果你的业务还需要支持消息对话，还需要集成AliVCInteractionMessage，版本最低是1.6.0
+    implementation 'com.aliyun.sdk.android:AliVCInteractionMessage:1.6.0'
 }
 ```
 3. 等待gradle同步完成，完成源码集成。

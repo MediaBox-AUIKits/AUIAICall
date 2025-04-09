@@ -28,4 +28,9 @@ public class ARTCAICustomController extends ARTCAICallController {
             }
         });
     }
+
+    @Override
+    public void startCall(String token) {
+
+    }
 }

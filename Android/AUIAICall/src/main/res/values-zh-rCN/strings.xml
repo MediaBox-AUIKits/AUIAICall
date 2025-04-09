@@ -145,6 +145,7 @@
     <string name="chat_bot_delete_message_title">确认删除信息？</string>
     <string name="chat_bot_delete_message_content">信息删除后，不可恢复</string>
     <string name="chat_bot_delete_message">删除</string>
+    <string name="chat_bot_delete_all_message">删除全部</string>
 
     <string name="chat_bot_connect_init_status">未连接</string>
     <string name="chat_bot_connecting_status">连接中</string>
@@ -163,4 +164,9 @@
     <string name="chat_bot_error_kick_by_system">当前用户可能被系统断开链接，无法继续聊天</string>
     <string name="chat_bot_error_kick_by_user_replace">当前用户可能登录了其他设备，无法继续聊天</string>
     <string name="chat_bot_default_voice">默认</string>
+    <string name="chat_bot_photo">相册</string>
+    <string name="chat_bot_image_upload_failed">部分图片上传失败</string>
+    <string name="chat_bot_image_uploading">部分图片上传中，暂不能发送</string>
+    <string name="chatbot_selected_image_limit">一次对话最多上传9张图片</string>
+    <string name="chatbot_selected_image_size_limit">文件大小超过10MB，暂不支持发送</string>
 </resources>

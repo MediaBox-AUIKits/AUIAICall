@@ -1,11 +1,7 @@
 import { AICallAgentType } from 'aliyun-auikit-aicall';
 
-// 格式示例 https://xxxx.domain.com
-// 1. 除本地 localhost 调试外，需要为 https 域名
-// 2. 结尾不应包含 /
-export const APP_SERVER = "你的AppServer域名";
-
 type JSONPrimitive = string | number | boolean | null;
+
 export interface JSONObject {
   [key: string]: JSONPrimitive | JSONPrimitive[] | JSONObject | JSONObject[];
 }

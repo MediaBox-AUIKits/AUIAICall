@@ -65,55 +65,6 @@ import ARTCAICallKit
             self.userId = NSString.av_random()
         }
         
-        self.startCallWithStandard(agentShareInfo: agentShareInfo, viewController: viewController)
-    }
-
-    // 通过指定agentType（agentId为空时，由appserver配置的）发起通话，
-    open func startCall(agentType: ARTCAICallAgentType, agentId: String? = nil, chatSyncConfig: ARTCAICallChatSyncConfig? = nil, region: String? = nil, limitSecond: UInt32 = 0, viewController: UIViewController? = nil) {
-        
-        if self.userId == nil {
-            self.userId = NSString.av_random()
-        }
-        
-        self.startCallWithStandard(agentType: agentType, agentId: agentId, chatSyncConfig: chatSyncConfig, region: region, limitSecond: limitSecond, viewController: viewController)
-    }
-    
-    // 全托管方式发起通话，通过指定agentType（agentId为空时，由appserver配置的）发起通话，
-    private func startCallWithStandard(agentType: ARTCAICallAgentType, agentId: String? = nil, chatSyncConfig: ARTCAICallChatSyncConfig? = nil, region: String? = nil, limitSecond: UInt32 = 0, viewController: UIViewController? = nil) {
-        
-        self.checkDeviceAuth(agentType: agentType) { [weak self] in
-            guard let self = self else {return}
-            
-            let topVC = viewController ?? UIViewController.av_top()
-            // userId推荐使用你的App登录后的用户id
-            let userId = self.userId!
-            let controller = AUIAICallStandardController(userId: userId)
-            
-            // 设置智能体Id，如果为nil，则使用在AppServer上配置的智能体id
-            controller.config.agentId = agentId ?? AUIAICallAgentConfig.shared.getAgentID(agentType: agentType)
-            // 设置通话的类型（语音、数字人或视觉理解），如果设置AgentId则需要与AgentId的类型对应，否则appserver根据agentType选择对应的agentId启动通话
-            controller.config.agentType = agentType
-            // 关联的chat智能体配置(必须同一账号同一区域上)，如果设置了，那么在通话过程中会把通话记录同步到chat智能体上
-            controller.config.chatSyncConfig = chatSyncConfig
-            // 通话配置
-            controller.config.templateConfig = self.getDefaultTemplateConfig()
-            // agent所在的区域
-            controller.config.region = region
-            // 通话时长限制，如无限制则无需设置
-            controller.config.limitSecond = limitSecond
-            
-            // 创建通话ViewController
-            let vc = AUIAICallViewController(controller)
-            // AppServer的Token失效回调
-            vc.onUserTokenExpiredBlcok = self.onUserTokenExpiredBlcok
-            
-            // 全屏方式打开通话界面
-            topVC.av_presentFullScreenViewController(vc, animated: true)
-        }
-    }
-    
-    private func startCallWithStandard(agentShareInfo: String, viewController: UIViewController? = nil) {
-        
         self.checkDeviceAuth(agentType: .VisionAgent) { [weak self] in
             guard let self = self else {return}
             
@@ -123,6 +74,44 @@ import ARTCAICallKit
             let vc = AUIAICallViewController(controller)
             vc.enableVoiceprintSwitch = false
             vc.onUserTokenExpiredBlcok = self.onUserTokenExpiredBlcok
+            topVC.av_presentFullScreenViewController(vc, animated: true)
+        }
+    }
+
+    // 通过指定agentType发起通话
+    open func startCall(agentType: ARTCAICallAgentType, agentId: String? = nil, chatSyncConfig: ARTCAICallChatSyncConfig? = nil, region: String? = nil, limitSecond: UInt32 = 0, viewController: UIViewController? = nil) {
+        
+        if self.userId == nil {
+            self.userId = NSString.av_random()
+        }
+        
+        self.checkDeviceAuth(agentType: agentType) { [weak self] in
+            guard let self = self else {return}
+            
+            let topVC = viewController ?? UIViewController.av_top()
+            // userId推荐使用你的App登录后的用户id
+            let userId = self.userId!
+            let controller = AUIAICallController(userId: userId)
+            
+            // 设置智能体Id
+            controller.config.agentId = agentId ?? AUIAICallAgentConfig.shared.getAgentID(agentType: agentType)
+            // 设置通话的类型（语音、数字人或视觉理解），如果设置AgentId则需要与AgentId的类型对应，否则appserver根据agentType选择对应的agentId启动通话
+            controller.config.agentType = agentType
+            // 关联的chat智能体配置(必须同一账号同一区域上)，如果设置了，那么在通话过程中会把通话记录同步到chat智能体上
+            controller.config.chatSyncConfig = chatSyncConfig
+            // 通话配置
+            controller.config.templateConfig = self.getDefaultTemplateConfig()
+            // agent所在的区域
+            controller.config.region = region ?? AUIAICallAgentConfig.shared.getRegion()
+            // 通话时长限制，如无限制则无需设置
+            controller.config.limitSecond = limitSecond
+            
+            // 创建通话ViewController
+            let vc = AUIAICallViewController(controller)
+            // AppServer的Token失效回调
+            vc.onUserTokenExpiredBlcok = self.onUserTokenExpiredBlcok
+            
+            // 全屏方式打开通话界面
             topVC.av_presentFullScreenViewController(vc, animated: true)
         }
     }

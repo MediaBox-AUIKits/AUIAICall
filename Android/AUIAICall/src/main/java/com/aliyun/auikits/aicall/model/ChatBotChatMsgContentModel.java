@@ -2,6 +2,8 @@ package com.aliyun.auikits.aicall.model;
 
 import android.content.Context;
 
+import com.aliyun.auikits.aiagent.ARTCAIChatAttachmentUploader;
+import com.aliyun.auikits.aiagent.ARTCAIChatEngine;
 import com.aliyun.auikits.aiagent.service.IARTCAICallService;
 import com.aliyun.auikits.aicall.bean.AudioToneData;
 import com.aliyun.auikits.aicall.bean.ChatBotChatMessage;
@@ -17,6 +19,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import android.net.Uri;
 
 public class ChatBotChatMsgContentModel extends AbsContentModel<CardEntity> {
     private WeakReference<Context> mContextRef;
@@ -78,6 +81,7 @@ public class ChatBotChatMsgContentModel extends AbsContentModel<CardEntity> {
         cardEntityList.add(cardEntity);
         insertContentHeader(cardEntityList);
     }
+
 
     public int getPositionByRequestId(String requestId, boolean isAIResponse) {
 

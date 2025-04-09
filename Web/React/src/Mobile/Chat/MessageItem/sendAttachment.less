@@ -1,0 +1,33 @@
+.chat-item {
+  ._send-attachment {
+    max-width: 100%;
+    max-width: calc(100% + 40px);
+    overflow: hidden;
+    margin: 0 -20px;
+
+    ul {
+      display: flex;
+      list-style: none;
+      margin: 0;
+      padding: 0 20px;
+      overflow-x: auto;
+    }
+
+    li {
+      margin: 0 8px 0 0;
+
+      &:last-child {
+        margin-right: 0;
+      }
+    }
+
+    img {
+      width: 72px;
+      height: 72px;
+      object-fit: cover;
+      vertical-align: bottom;
+      border-radius: 2px;
+    }
+
+  }
+}

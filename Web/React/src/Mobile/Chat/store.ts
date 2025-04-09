@@ -1,7 +1,9 @@
 import { create } from 'zustand';
 
 import { lastOfArray } from '@/common/utils';
-import { AIChatEngineState, AIChatMessage, AIChatMessageState } from 'aliyun-auikit-aicall';
+import { AIChatAttachment, AIChatEngineState, AIChatMessage } from 'aliyun-auikit-aicall';
+
+const MAX_CACHE_LENGTH = 20;
 
 export interface ChatMessageItem {
   message: AIChatMessage;
@@ -21,8 +23,14 @@ interface ChatStore {
   updateSendMessage: (message: AIChatMessage) => void;
   receiveMessage: (message: AIChatMessage) => void;
   deleteMessage: (message: AIChatMessage) => void;
-  historyMessages: (messages: AIChatMessage[], userId: string) => void;
+  historyMessages: (messages: AIChatMessage[], userId: string, isUpdateRecent?: boolean) => void;
   interruptAgent: () => void;
+
+  attachmentList: AIChatAttachment[];
+  addAttachment: (attachment: AIChatAttachment) => void;
+  removeAttachment: (attachmentId: string) => void;
+  attachmentCanSend: boolean;
+
   // 更新消息列表，不修改内容，当前主要作用是触发消息列表滚动到最后
   updateMessageList: () => void;
   reset: () => void;
@@ -39,6 +47,8 @@ const getInitialChatState = (): Omit<
   | 'historyMessages'
   | 'interruptAgent'
   | 'updateMessageList'
+  | 'addAttachment'
+  | 'removeAttachment'
   | 'reset'
 > => ({
   chatState: AIChatEngineState.Init,
@@ -48,6 +58,8 @@ const getInitialChatState = (): Omit<
   voiceIdList: [],
   voiceId: '',
   playingMessageId: undefined,
+  attachmentList: [],
+  attachmentCanSend: true,
 });
 
 /**
@@ -138,17 +150,29 @@ const useChatStore = create<ChatStore>((set) => ({
       newState.messageList = state.messageList.filter((item) => item.message.dialogueId !== message.dialogueId);
       return newState;
     }),
-  historyMessages: (messages: AIChatMessage[], userId: string) =>
+
+  historyMessages: (messages: AIChatMessage[], userId: string, isUpdateRecent = false) =>
     set((state: ChatStore) => {
+      // 可能已经下拉获取更多，直接跳过
+      if (state.messageList.length > MAX_CACHE_LENGTH) {
+        return state;
+      }
+
       const newState: Partial<ChatStore> = {};
       const chatMessageList = messages.map((message) => ({
         message,
         isSend: message.senderId === userId,
         isProcessing: false,
       }));
-      newState.messageList = [...chatMessageList, ...state.messageList];
+
+      if (isUpdateRecent) {
+        newState.messageList = chatMessageList;
+      } else {
+        newState.messageList = [...chatMessageList, ...state.messageList];
+      }
       return newState;
     }),
+
   interruptAgent: () =>
     set((state: ChatStore) => {
       const newState: Partial<ChatStore> = {};
@@ -165,20 +189,29 @@ const useChatStore = create<ChatStore>((set) => ({
       return newState;
     }),
 
+  addAttachment: (attachment: AIChatAttachment) =>
+    set((state: ChatStore) => {
+      const newState: Partial<ChatStore> = {};
+      newState.attachmentList = [...state.attachmentList, attachment];
+      return newState;
+    }),
+
+  removeAttachment: (attachmentId: string) =>
+    set((state: ChatStore) => {
+      const newState: Partial<ChatStore> = {};
+      newState.attachmentList = state.attachmentList.filter((item) => item.id !== attachmentId);
+      return newState;
+    }),
+
   reset: () => set(getInitialChatState()),
 }));
 
 useChatStore.subscribe((state, prevState) => {
   if (!state.sessionId) return;
   if (state.messageList !== prevState.messageList) {
-    const last20items = state.messageList.slice(-20);
-    last20items.forEach((item) => {
-      if (item.message.messageState === AIChatMessageState.Transfering) {
-        item.message.messageState = AIChatMessageState.Interrupted;
-      }
-    });
+    const lastCacheItems = state.messageList.slice(0 - MAX_CACHE_LENGTH);
 
-    localStorage.setItem(`${messageCachePrefix}${state.sessionId}`, JSON.stringify(last20items));
+    localStorage.setItem(`${messageCachePrefix}${state.sessionId}`, JSON.stringify(lastCacheItems));
     return;
   }
 });

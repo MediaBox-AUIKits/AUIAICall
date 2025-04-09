@@ -28,11 +28,16 @@ import android.widget.Toast;
 import com.acker.simplezxing.activity.CaptureActivity;
 import com.alibaba.android.arouter.facade.annotation.Route;
 import com.aliyun.auikits.aiagent.ARTCAICallEngine;
+import com.aliyun.auikits.aiagent.service.ARTCAICallServiceImpl;
+import com.aliyun.auikits.aiagent.service.IARTCAICallService;
 import com.aliyun.auikits.aiagent.util.ARTCAIAgentUtil;
+import com.aliyun.auikits.aiagent.util.Logger;
 import com.aliyun.auikits.aicall.controller.ARTCAICallController;
 import com.aliyun.auikits.aicall.util.AUIAICallAgentDebug;
 import com.aliyun.auikits.aicall.util.AUIAICallAgentIdConfig;
+import com.aliyun.auikits.aicall.util.AUIAICallAuthTokenHelper;
 import com.aliyun.auikits.aicall.util.AUIAIConstStrKey;
+import com.aliyun.auikits.aicall.util.AppServiceConst;
 import com.aliyun.auikits.aicall.util.PermissionUtils;
 import com.aliyun.auikits.aicall.util.SettingStorage;
 import com.aliyun.auikits.aicall.util.ToastHelper;
@@ -43,6 +48,8 @@ import com.orhanobut.dialogplus.DialogPlus;
 import com.orhanobut.dialogplus.OnDismissListener;
 import com.orhanobut.dialogplus.ViewHolder;
 import com.permissionx.guolindev.PermissionX;
+
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -57,6 +64,7 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
     private long mLastSettingTapMillis = 0;
     private long mLastSettingTapCount = 0;
 
+    private String mRtcAuthToken = null;
     private LayoutHolder mLayoutHolder = new LayoutHolder();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -115,6 +123,37 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
                 });
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        featchRtcAuthToken();
+    }
+
+
+    private void featchRtcAuthToken() {
+
+        AUIAICallAuthTokenHelper.getAICallAuthToken(mLoginUserId, mLoginAuthorization, new AUIAICallAuthTokenHelper.IAUIAICallAuthTokenCallback() {
+            @Override
+            public void onSuccess(JSONObject jsonObject) {
+
+                try {
+                    if (jsonObject.has("rtc_auth_token")) {
+                        String rtcAuthToken = jsonObject.getString("rtc_auth_token");
+                        if (!TextUtils.isEmpty(rtcAuthToken)) {
+                            mRtcAuthToken = rtcAuthToken;
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            @Override
+            public void onFail(int errorCode, String errorMsg) {
+            }
+        });
+    }
+
+
     private boolean validateToken() {
 
         if (getIntent() != null && null != getIntent().getExtras()) {
@@ -144,6 +183,7 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
             intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_USER_ID, mLoginUserId);
             intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_AUTHORIZATION, mLoginAuthorization);
             intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_TYPE, mLayoutHolder.getOfficialLayerHolder().getAICallAgentType());
+            intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_RTC_AUTH_TOKEN, mRtcAuthToken);
             boolean useEmotional = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_EMOTION, SettingStorage.DEFAULT_BOOT_ENABLE_EMOTION);
             boolean usePreHost = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_APP_SERVER_TYPE, SettingStorage.DEFAULT_APP_SERVER_TYPE);
             String agentId = "";
@@ -178,6 +218,7 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
 
         ((EditText)view.findViewById(R.id.et_robot_id)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_ROBOT_ID));
         ((Switch)view.findViewById(R.id.sv_deposit)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_DEPOSIT_SWITCH, SettingStorage.DEFAULT_DEPOSIT_SWITCH));
+        ((Switch)view.findViewById(R.id.sv_use_appserver_start_agent)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_USE_APP_SERVER_START_AGENT, SettingStorage.DEFAULT_USE_APPSERVER_START_AGENT));
         ((Switch)view.findViewById(R.id.sv_audio_dump)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_AUDIO_DUMP_SWITCH));
         ((Switch)view.findViewById(R.id.sv_audio_tip)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_AUDIO_TIPS_SWITCH));
         ((Switch)view.findViewById(R.id.sv_server_type)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_APP_SERVER_TYPE, SettingStorage.DEFAULT_APP_SERVER_TYPE));
@@ -203,7 +244,7 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
         ((EditText) view.findViewById(R.id.asrLanguage_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_USER_ASR_LANGUAGE, ""));
         ((EditText) view.findViewById(R.id.llmSystemPrompt_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_LLM_SYSTEM_PROMPT));
         ((EditText) view.findViewById(R.id.interrupt_words_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_INTERRUPT_WORDS, ""));
-        ((EditText) view.findViewById(R.id.vad_level_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_VAD_LEVEL, "1"));
+        ((EditText) view.findViewById(R.id.vad_level_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_VAD_LEVEL, "3"));
 
 
         if (!showExtraDebugConfig) {
@@ -233,6 +274,9 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
 
                         boolean useDeposit = ((Switch)view.findViewById(R.id.sv_deposit)).isChecked();
                         SettingStorage.getInstance().setBoolean(SettingStorage.KEY_DEPOSIT_SWITCH, useDeposit);
+
+                        boolean useAppServerStartAgent = ((Switch)view.findViewById(R.id.sv_use_appserver_start_agent)).isChecked();
+                        SettingStorage.getInstance().setBoolean(SettingStorage.KEY_USE_APP_SERVER_START_AGENT, useAppServerStartAgent);
 
                         boolean useRtcPreEnv = ((Switch)view.findViewById(R.id.sv_use_rtc_pre_env)).isChecked();
                         SettingStorage.getInstance().setBoolean(SettingStorage.KEY_USE_RTC_PRE_ENV_SWITCH, useRtcPreEnv);
@@ -298,6 +342,7 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
                     }
                     if (v.getId() == R.id.btn_confirm || v.getId() == R.id.btn_cancel) {
                         dialog1.dismiss();
+                        featchRtcAuthToken();
                     }
                     if (v.getId() == R.id.tv_dialog_title) {
                         onSettingDialogTitleClicked();
@@ -625,7 +670,7 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
             );
 
             for (ARTCAICallEngine.ARTCAICallAgentType aiCallAgentType : mCallTypeList) {
-                adapter.addFragment(new OfficialCallPreviewFragment(aiCallAgentType), aiCallAgentTypeTitle(context, aiCallAgentType));
+                adapter.addFragment(aiCallAgentType, aiCallAgentTypeTitle(context, aiCallAgentType));
             }
 
             mViewPagerCallType.setAdapter(adapter);
@@ -687,15 +732,28 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
             fragmentList.add(fragment);
             fragmentTitleList.add(title);
         }
+
+        public void addFragment(ARTCAICallEngine.ARTCAICallAgentType callAgentType, String title) {
+            Fragment fragment = OfficialCallPreviewFragment.newInstance(callAgentType);
+            fragmentList.add(fragment);
+            fragmentTitleList.add(title);
+        }
     }
 
     public static class OfficialCallPreviewFragment extends Fragment {
         private ARTCAICallEngine.ARTCAICallAgentType mCallAgentType;
         private ImageView mIvPreview;
 
-        public OfficialCallPreviewFragment(ARTCAICallEngine.ARTCAICallAgentType callAgentType) {
-            mCallAgentType = callAgentType;
+        private OfficialCallPreviewFragment() {}
+
+        public static OfficialCallPreviewFragment newInstance(ARTCAICallEngine.ARTCAICallAgentType callAgentType) {
+            OfficialCallPreviewFragment fragment = new OfficialCallPreviewFragment();
+            Bundle args = new Bundle();
+            args.putString("callAgentType", callAgentType.name());
+            fragment.setArguments(args);
+            return fragment;
         }
+
 
         private void printLifeCycle(String lifeCycle) {
             Log.i("OfficialCallPreview", lifeCycle);
@@ -729,6 +787,10 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
         public void onCreate(Bundle savedInstanceState) {
             printLifeCycle("onCreate");
             super.onCreate(savedInstanceState);
+            if (getArguments() != null) {
+                String callAgentTypeName = getArguments().getString("callAgentType");
+                mCallAgentType = ARTCAICallEngine.ARTCAICallAgentType.valueOf(callAgentTypeName);
+            }
         }
 
         @Override

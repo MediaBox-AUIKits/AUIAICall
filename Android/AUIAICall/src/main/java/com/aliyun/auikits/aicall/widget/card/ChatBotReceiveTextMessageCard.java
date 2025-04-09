@@ -6,7 +6,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -18,6 +17,7 @@ import com.aliyun.auikits.aicall.bean.ChatBotChatMessage;
 import com.aliyun.auikits.aicall.widget.PlayMessageAnimationView;
 import com.aliyun.auikits.aicall.widget.SpeechAnimationView;
 import com.aliyun.auikits.aicall.base.card.CardEntity;
+import com.aliyun.auikits.aicall.util.markwon.AUIAIMarkwonManager;
 
 public class ChatBotReceiveTextMessageCard extends BaseCard {
 
@@ -36,13 +36,14 @@ public class ChatBotReceiveTextMessageCard extends BaseCard {
     private ImageView mReceiveThinkTitleButton;
     private ConstraintLayout mReceiveThinkTextDescMessageLayout;
     private boolean isThinkingShow = true;
-
+    private Context mContext = null;
     public ChatBotReceiveTextMessageCard(Context context) {
         super(context);
     }
 
     @Override
     public void onCreate(Context context) {
+        mContext = context;
         View root = LayoutInflater.from(context).inflate(R.layout.layout_auiaichat_receive_text_message_card, this, true);
         mThinkingView = (SpeechAnimationView)root.findViewById(R.id.chat_animation_view);
         mReceiveTextContentView = root.findViewById(R.id.chat_message_text);
@@ -98,7 +99,8 @@ public class ChatBotReceiveTextMessageCard extends BaseCard {
                             //think end show response text
                             mReceiveThinkFinishImage.setVisibility(View.VISIBLE);
                             mReceiveThinkTitle.setText(R.string.robot_thinking_finish_tips);
-                            mReceiveTextContentView.setText(chatMessage.getMessage().text);
+                            AUIAIMarkwonManager.getInstance(mContext).getMarkwon().setMarkdown(mReceiveTextContentView, chatMessage.getMessage().text);
+                           // mReceiveTextContentView.setText(chatMessage.getMessage().text);
                             mReceiveTextMessageLayout.setVisibility(View.VISIBLE);
                             mReceiveTextMessageActionButtonLayout.setVisibility(View.VISIBLE);
                             mReceiveTextContentView.setVisibility(View.VISIBLE);
@@ -112,7 +114,8 @@ public class ChatBotReceiveTextMessageCard extends BaseCard {
                     } else {
                         //no thinking text
                         mReceiveThinkTextMessageLayout.setVisibility(View.GONE);
-                        mReceiveTextContentView.setText(chatMessage.getMessage().text);
+                        AUIAIMarkwonManager.getInstance(mContext).getMarkwon().setMarkdown(mReceiveTextContentView, chatMessage.getMessage().text);
+                        //mReceiveTextContentView.setText(chatMessage.getMessage().text);
                         mReceiveTextMessageActionButtonLayout.setVisibility(View.VISIBLE);
                         mReceiveTextContentView.setVisibility(View.VISIBLE);
                     }

@@ -76,3 +76,10 @@
 * Android&iOS&Web：视觉理解通话支持选取特定时间和特定截帧数量
 * Android&iOS&Web：通话智能体支持发送消息给客户注册的回调服务
 
+## v2.2.0
+发布时间：2025-04-03
+* Android&iOS&Web：消息对话智能体支持Markdown渲染（包括：标题、段落、编号、粗体、斜体、图片）
+* Android&iOS&Web：消息对话智能体支持发送图片
+* Android&iOS&Web：在消息对话中支持发起智能体通话并同步通话记录
+* Android&iOS：通话智能体支持通过AICallKit SDK发起通话
+

@@ -3,7 +3,7 @@ import AUIAICallController from './AUIAICallController';
 
 import standardService from '../../service/standard';
 import AUIAICallConfig from './AUIAICallConfig';
-import { APP_SERVER, TemplateConfig } from '../../service/interface';
+import { TemplateConfig } from '../../service/interface';
 import logger from '@/common/logger';
 
 class AUIAICallStandardController extends AUIAICallController {
@@ -115,7 +115,7 @@ class AUIAICallStandardController extends AUIAICallController {
   destroy() {
     logger.info('StandardController', 'destroy');
     super.destroy();
-    this.appServer = APP_SERVER;
+    this.appServer = '';
   }
 }
 

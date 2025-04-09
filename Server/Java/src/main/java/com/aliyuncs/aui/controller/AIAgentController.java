@@ -224,5 +224,39 @@ public class AIAgentController {
             return getErrorResult(response.getErrorCode(), response.getRequestId(), response.getCode(), response.getMessage());
         }
     }
+
+    @RequestMapping("/getRtcAuthToken")
+    public Result getRtcAuthToken(@RequestBody RtcAuthTokenRequestDto rtcAuthTokenRequestDto) {
+        ValidatorUtils.validateEntity(rtcAuthTokenRequestDto);
+        RtcAuthTokenResponse rtcAuthTokenResponse =  imsService.getRtcAuthToken(rtcAuthTokenRequestDto);
+
+        Map<String, Object> map = new HashMap<>(1);
+        map.put("rtc_auth_token", rtcAuthTokenResponse.getAuthToken());
+        map.put("timestamp", rtcAuthTokenResponse.getTimestamp());
+        map.put("channel_id", rtcAuthTokenRequestDto.getChannelId());
+        Result result = Result.ok();
+        result.putAll(map);
+        return result;
+    }
+
+    @RequestMapping("/startAIAgentInstanceWithChannel")
+    public Result startAiAgentInstanceWithChannel(@RequestBody AiAgentStartWithChannelRequestDto aiAgentStartWithChannelRequestDto) {
+        ValidatorUtils.validateEntity(aiAgentStartWithChannelRequestDto);
+        AiAgentStartResponse aiAgentStartResponse = imsService.startAIAgentInstanceWithChannel(aiAgentStartWithChannelRequestDto);
+        if (aiAgentStartResponse == null) {
+            return Result.error();
+        }
+        if (aiAgentStartResponse.isResult()) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("ai_agent_instance_id", aiAgentStartResponse.getAiAgentInstanceId());
+            map.put("ai_agent_user_id", aiAgentStartResponse.getAiAgentUserId());
+            map.put("request_id", aiAgentStartResponse.getRequestId());
+            Result result = Result.ok();
+            result.putAll(map);
+            return result;
+        } else {
+            return getErrorResult(aiAgentStartResponse.getErrorCode(), aiAgentStartResponse.getRequestId(), aiAgentStartResponse.getCode(), aiAgentStartResponse.getMessage());
+        }
+    }
 }
 

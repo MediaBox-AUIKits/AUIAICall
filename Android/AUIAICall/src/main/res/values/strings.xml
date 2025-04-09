@@ -144,6 +144,7 @@
     <string name="chat_bot_delete_message_title">Confirm to delete message?</string>
     <string name="chat_bot_delete_message_content">Once message is deleted, it cannot be restored</string>
     <string name="chat_bot_delete_message">Delete</string>
+    <string name="chat_bot_delete_all_message">Delete all</string>
 
     <string name="chat_bot_connect_init_status">Not connected</string>
     <string name="chat_bot_connecting_status">Connecting</string>
@@ -162,4 +163,9 @@
     <string name="chat_bot_error_kick_by_system">The current user may be disconnected by the system and cannot continue chatting</string>
     <string name="chat_bot_error_kick_by_user_replace">The current user may be logged in to another device and cannot continue chatting</string>
     <string name="chat_bot_default_voice">Default</string>
+    <string name="chat_bot_photo">Photo</string>
+    <string name="chat_bot_image_upload_failed">Some images failed to upload</string>
+    <string name="chat_bot_image_uploading">Some pictures are being uploaded and cannot be sent yet.</string>
+    <string name="chatbot_selected_image_limit">A maximum of 9 pictures can be uploaded in a conversation</string>
+    <string name="chatbot_selected_image_size_limit">Files larger than 10MB are not supported for sending</string>
 </resources>

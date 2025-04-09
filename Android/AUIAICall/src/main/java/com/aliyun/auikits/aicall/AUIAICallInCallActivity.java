@@ -34,6 +34,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.aliyun.auikits.aiagent.util.Logger;
 import com.aliyun.auikits.aicall.controller.ARTCAICallController;
 import com.aliyun.auikits.aicall.controller.ARTCAICustomController;
 import com.aliyun.auikits.aicall.controller.ARTCAICallDepositController;
@@ -80,6 +81,7 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
     private ARTCAICallEngine.ARTCAICallRobotState mRobotState = ARTCAICallEngine.ARTCAICallRobotState.Listening;
     private boolean isUserSpeaking = false;
     private long mLastBackButtonExitMillis = 0;
+    private long mLastCallMillis = 0;
     private ARTCAICallEngine.ARTCAICallAgentType mAiAgentType = ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent;
     private boolean mIsSharedAgent = false;
     private boolean mFirstAvatarFrameDrawn = false;
@@ -209,6 +211,12 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         @Override
         public void onCallBegin() {
             Log.i("AUIAICALL", "onCallBegin");
+            long current = SystemClock.elapsedRealtime();
+
+            if(BuildConfig.TEST_ENV_MODE) {
+                Logger.i( "Call started duration " + (current - mLastCallMillis));
+                ToastHelper.showToast(AUIAICallInCallActivity.this, "Call started duration " + (current - mLastCallMillis), Toast.LENGTH_SHORT);
+            }
         }
 
         @Override
@@ -405,15 +413,22 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         String loginUserId = null;
         String loginAuthorization = null;
         boolean chatSyncConfig = false;
+        String rtcAuthToken = null;
         if (null != getIntent() && null != getIntent().getExtras()) {
             aiAgentRegion = getIntent().getExtras().getString(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_REGION, null);
             aiAgentId = getIntent().getExtras().getString(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_ID, null);
             mAiAgentType = (ARTCAICallEngine.ARTCAICallAgentType) getIntent().getExtras().getSerializable(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_TYPE);
             mIsSharedAgent =  getIntent().getExtras().getBoolean(AUIAIConstStrKey.BUNDLE_KEY_IS_SHARED_AGENT, false);
-
+            rtcAuthToken = getIntent().getExtras().getString(AUIAIConstStrKey.BUNDLE_KEY_RTC_AUTH_TOKEN, null);
             loginUserId = getIntent().getExtras().getString(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_USER_ID, null);
             loginAuthorization = getIntent().getExtras().getString(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_AUTHORIZATION, null);
             chatSyncConfig = getIntent().getExtras().getBoolean(AUIAIConstStrKey.BUNDLE_KEY_CHAT_SYNC_CONFIG, false);
+        }
+
+        if(TextUtils.isEmpty(aiAgentRegion)) {
+            if(!mIsSharedAgent) {
+                aiAgentRegion = AUIAICallAgentIdConfig.getRegion();
+            }
         }
 
         TextView tvAICallTitle = findViewById(R.id.tv_ai_call_title);
@@ -505,8 +520,12 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                     new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
             );
         }
-        mARTCAICallController.start();
-
+        if(TextUtils.isEmpty(rtcAuthToken) || SettingStorage.getInstance().getBoolean(SettingStorage.KEY_USE_APP_SERVER_START_AGENT)) {
+            mARTCAICallController.start();
+        } else {
+            mARTCAICallController.startCall(rtcAuthToken);
+        }
+        mLastCallMillis = SystemClock.elapsedRealtime();
         mSmallVideoViewHolder.init(this);
         updateActionLayerHolder();
     }
@@ -834,7 +853,12 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
 
     private void updateTemplateConfig(ARTCAICallEngine.ARTCAICallAgentTemplateConfig templateConfig) {
         try {
-            templateConfig.enableVoiceInterrupt =  SettingStorage.getInstance().get(SettingStorage.KEY_ENABLE_VOICE_INTERRUPT).equals("1") ? true:false;
+            String enableVoiceInterruptKey = SettingStorage.getInstance().get(SettingStorage.KEY_ENABLE_VOICE_INTERRUPT);
+            if(TextUtils.isEmpty(enableVoiceInterruptKey) || !enableVoiceInterruptKey.equals("0")) {
+                templateConfig.enableVoiceInterrupt = true;
+            } else {
+                templateConfig.enableVoiceInterrupt = false;
+            }
             templateConfig.aiAgentVoiceId = SettingStorage.getInstance().get(SettingStorage.KEY_VOICE_ID);
             templateConfig.aiAgentUserOfflineTimeout = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_USER_OFFLINE_TIMEOUT));
             templateConfig.aiAgentMaxIdleTime = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_MAX_IDLE_TIME));

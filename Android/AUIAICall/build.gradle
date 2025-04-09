@@ -48,6 +48,11 @@ dependencies {
     androidTestImplementation externalTestJunit
     androidTestImplementation externalEspresso
     implementation externalAndroidAnnotation
+    implementation externalMarkwon
+    implementation externalMarkwonImage
+    implementation externalMarkwonImageGlide
+    implementation externalGlide
+    implementation externalGlideProcessor
 
     implementation externalDialogPlus
     implementation (externalRecyclerViewAdapterHelper) {
@@ -67,7 +72,7 @@ dependencies {
 
 
     if(getBoolProperty('USE_AICALLKIT_AAR')) {
-        implementation 'com.aliyun.auikits.android:ARTCAICallKit:2.1.0'
+        implementation 'com.aliyun.auikits.android:ARTCAICallKit:2.2.0'
     } else {
         implementation project(':AUIAICallEngine')
         implementation project(':ARTCAICallKit')

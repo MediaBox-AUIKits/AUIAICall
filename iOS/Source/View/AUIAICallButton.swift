@@ -33,10 +33,20 @@ import AUIFoundation
     open override func layoutSubviews() {
         super.layoutSubviews()
         
-        let iconHeight = self.av_height - 18 - 8
-        let iconWidth = self.av_width
-        self.imageBgView.frame = CGRect(x: 0, y: 0, width: iconWidth, height: iconHeight)
-        self.imageBgView.layer.cornerRadius = iconHeight / 2.0
+        var iconWidth = self.av_width
+        var iconHeight = self.av_height - 18 - 8
+        if self.iconLength != CGFloat.leastNormalMagnitude {
+            iconWidth = self.iconLength
+            iconHeight = iconWidth
+        }
+        
+        var iconCorner = iconHeight / 2.0
+        if self.iconCorner != CGFloat.leastNormalMagnitude {
+            iconCorner = self.iconCorner
+        }
+        
+        self.imageBgView.frame = CGRect(x: (self.av_width - iconWidth) / 2.0, y: 0, width: iconWidth, height: iconHeight)
+        self.imageBgView.layer.cornerRadius = iconCorner
         self.imageBgView.layer.masksToBounds = true
         self.imageView.av_size = CGSize(width: iconHeight - self.iconMargin * 2, height: iconHeight - self.iconMargin * 2)
         self.imageView.center = CGPoint(x: iconWidth / 2.0, y: iconHeight / 2.0)
@@ -46,6 +56,8 @@ import AUIFoundation
         self.titleLabel.frame = CGRect(x: (self.av_width - width) / 2.0, y: self.av_height - 18, width: width, height: 18.0)
     }
     
+    open var iconLength: CGFloat = CGFloat.leastNormalMagnitude
+    open var iconCorner: CGFloat = CGFloat.leastNormalMagnitude
     open var iconMargin: CGFloat = 12.0
     open var normalBgColor: UIColor? = nil
     open var selectedBgColor: UIColor? = nil

@@ -10,7 +10,7 @@ function MessageItemTextLineRender({ text }: { text: string }) {
     </React.Fragment>
   ));
 
-  return <>{formattedText}</>;
+  return <div className='aicall-text-render'>{formattedText}</div>;
 }
 
 export default MessageItemTextLineRender;

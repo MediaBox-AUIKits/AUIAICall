@@ -126,6 +126,18 @@ extension AUIAIChatMessageAgentTextCell {
         return _interruptedMinWidth
     }
     
+    public static func computAgentContentSize(attributeText: NSAttributedString, maxWidth: CGFloat) -> CGSize {
+        if attributeText.string.isEmpty {
+            return CGSize.zero
+        }
+        let maxSize = CGSize(width: maxWidth - 12 - 12, height: CGFloat.greatestFiniteMagnitude) // 限制宽度，允许无限制高度
+        let boundingBox = attributeText.boundingRect(with: maxSize, options: [.usesLineFragmentOrigin, .usesFontLeading], context: nil)
+
+        let width = max(boundingBox.width + 24, self.minSize.width)
+        let height = ceil(boundingBox.height)
+        return CGSize(width: width, height: height)
+    }
+    
     // 计算item的占位大小
     public static func computeAgentSize(item: AUIAIChatMessageItem, maxWidth: CGFloat) {
         
@@ -148,19 +160,7 @@ extension AUIAIChatMessageAgentTextCell {
         }
         
         if item.contentSize == nil {
-            let text = item.message.text
-            if text.isEmpty == false {
-                let font = AVTheme.regularFont(14)
-                let maxSize = CGSize(width: maxWidth - 12 - 12, height: CGFloat.greatestFiniteMagnitude) // 限制宽度，允许无限制高度
-                let attributes: [NSAttributedString.Key: Any] = [.font: font]
-                let boundingBox = (text as NSString).boundingRect(with: maxSize, options: [.usesLineFragmentOrigin, .usesFontLeading], attributes: attributes, context: nil)
-                let width = max(boundingBox.width + 24, self.minSize.width)
-                let height = boundingBox.height + 0.1  // 处理精度问题
-                item.contentSize = CGSize(width: width, height: height)
-            }
-            else {
-                item.contentSize = CGSize.zero
-            }
+            item.contentSize = self.computAgentContentSize(attributeText: item.contentAttributeText, maxWidth: maxWidth)
         }
         
         let reasonSize = item.reasonSize!

@@ -15,14 +15,17 @@
     "antd": "^5.20.1",
     "antd-mobile": "^5.38.1",
     "eventemitter3": "^5.0.1",
+    "highlight.js": "^11.11.1",
+    "markdown-it": "^14.1.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "zustand": "^4.5.5",
-    "aliyun-auikit-aicall": "2.1.1"
+    "aliyun-auikit-aicall": "2.2.0"
   },
   "devDependencies": {
     "@arms/rum-browser": "^0.0.33",
     "@eslint/js": "^9.8.0",
+    "@types/markdown-it": "^14.1.2",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@types/throttle-debounce": "^5.0.2",
@@ -33,6 +36,7 @@
     "eslint-plugin-react-refresh": "^0.4.9",
     "globals": "^15.9.0",
     "less": "^4.2.0",
+    "prettier": "3.5.3",
     "terser": "^5.31.6",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.0",

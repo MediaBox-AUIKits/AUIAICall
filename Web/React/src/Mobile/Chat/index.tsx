@@ -16,15 +16,17 @@ import ChatMessages from './Messages';
 import ChatFooter from './Footer';
 import { useEffect, useState } from 'react';
 import ChatEngineContext from './ChatEngineContext';
-import useChatStore, { messageCachePrefix } from './store';
+import useChatStore, { ChatMessageItem, messageCachePrefix } from './store';
 import standardService from '../../service/standard';
 
 import './index.less';
 import ChatState from './State';
 import { getRootElement } from '@/common/utils';
 import { getErrorMessage } from '@/common/i18n';
+import { AIChatEngineState, AIChatMessageState } from 'aliyun-auikit-aicall';
+import { JSONObject } from '@/service/interface.ts';
 
-interface ChatProps {
+export interface ChatProps {
   userId: string;
   userToken: string;
   appServer?: string;
@@ -32,6 +34,7 @@ interface ChatProps {
   shareToken?: string;
   region?: string;
   templateConfig?: AIChatTemplateConfig;
+  userData?: JSONObject;
   onExit: () => void;
   onAuthFail?: () => void;
 }
@@ -44,6 +47,7 @@ function Chat({
   shareToken,
   region,
   templateConfig,
+  userData,
   onExit,
   onAuthFail,
 }: ChatProps) {
@@ -91,6 +95,9 @@ function Chat({
 
     if (templateConfig) {
       chatEngine.templateConfig = templateConfig;
+    }
+    if (userData) {
+      chatEngine.userData = userData;
     }
 
     chatEngine.on('engineStateChange', (state) => {
@@ -170,6 +177,11 @@ function Chat({
         let messageList;
         try {
           messageList = JSON.parse(localStorage.getItem(`${messageCachePrefix}${chatEngine.sessionId}`) || '[]');
+          messageList.forEach((messageItem: ChatMessageItem) => {
+            if (messageItem.message.messageState === AIChatMessageState.Transfering) {
+              messageItem.message.messageState = AIChatMessageState.Interrupted;
+            }
+          });
         } catch (error) {
           console.warn(`get local history message list error: ${error}`);
           messageList = [];
@@ -177,6 +189,26 @@ function Chat({
         useChatStore.setState({
           sessionId: chatEngine.sessionId,
           messageList,
+        });
+
+        // 首次连接成功后，加载历史消息
+        chatEngine.once('engineStateChange', async (state) => {
+          if (state === AIChatEngineState.Connected) {
+            const serverLastMessageList = await chatEngine?.queryMessageList({
+              startTime: 0,
+              endTime: Date.now(),
+              pageNumber: 1,
+              pageSize: 20,
+              isDesc: true,
+            });
+
+            if (serverLastMessageList?.length && chatEngine?.userInfo?.userId) {
+              // 加载的历史消息列表是新的在前的，在这里进行了反向
+              useChatStore
+                .getState()
+                .historyMessages(serverLastMessageList.reverse(), chatEngine.userInfo.userId, true);
+            }
+          }
         });
       }
     })();

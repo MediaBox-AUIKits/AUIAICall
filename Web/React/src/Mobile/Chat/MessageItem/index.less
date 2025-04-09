@@ -1,15 +1,32 @@
 .chat-item {
+  position: relative;
   margin: 12px 0;
   display: flex;
-  color: #26244c;
+  flex-direction: column;
+  align-items: flex-start;
+  color: #716f8a;
+
+
+  ._bd {
+    position: relative;
+    box-sizing: border-box;
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+
 
   ._box {
-    position: relative;
     padding: 12px;
     border-radius: 14px 14px 12px 0px;
     font-size: 14px;
     line-height: 22px;
     background-color: #fff;
+  }
+
+  ._send-attachment + ._box {
+    margin-top: 12px;
   }
 
   ._interrupted {
@@ -35,6 +52,7 @@
     color: #878aab;
     padding-left: 12px;
     border-left: 1px solid #878aab;
+    word-wrap: break-word;
   }
 
   ._reasoning-end-icon {
@@ -49,10 +67,12 @@
     height: 20px;
     padding: 0;
     margin: 0 0 0 3px;
+
     & > span {
       height: 6px;
       line-height: 6px;
     }
+
     svg {
       transition: 100ms linear;
     }
@@ -64,6 +84,11 @@
     }
   }
 
+  .aicall-text-render {
+    user-select: auto;
+    word-break: break-all;
+  }
+
   ._actions {
     margin-bottom: -8px;
 
@@ -71,11 +96,13 @@
       ._volume-1 {
         animation: chat-playing-volume-animation-1 1s ease-in-out infinite;
       }
+
       ._volume-2 {
         animation: chat-playing-volume-animation-2 1s ease-in-out infinite;
       }
     }
   }
+
   ._status {
     position: absolute;
     top: 50%;
@@ -101,12 +128,15 @@
       display: inline-block;
       height: 16px;
     }
+
     svg {
       vertical-align: bottom;
     }
+
     &:active::before {
       opacity: 0.05;
     }
+
     &::before {
       border: none;
     }
@@ -136,11 +166,13 @@
         color: #56597e;
       }
     }
+
     &::after {
       content: ' ';
       flex: 1;
       min-width: 12px;
     }
+
     ._action-tip {
       padding-left: 4px;
     }
@@ -148,6 +180,8 @@
 
   &.is-self {
     color: #fff;
+    align-items: flex-end;
+
     ._box {
       background-color: #624aff;
       border-radius: 14px 14px 0px 12px;
@@ -199,6 +233,7 @@
   .adm-mask {
     z-index: 1050 !important;
   }
+
   .adm-center-popup-wrap {
     z-index: 1055 !important;
   }
@@ -207,6 +242,7 @@
     .adm-button:first-child {
       color: #26244c;
     }
+
     .adm-button:last-child {
       color: #f23139;
       font-weight: normal;

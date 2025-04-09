@@ -19,11 +19,11 @@ import ARTCAICallKit
     }
     
     // =================== 启动通话智能体信息 ====================================
-    open var agentId: String? = nil                // 智能体Id，如果为nil，则使用在AppServer上配置好的智能体Id
+    open var agentId: String? = nil                // 智能体Id
     open var agentType: ARTCAICallAgentType = .VoiceAgent // 智能体类型
     open var expireSecond: UInt32 = 3600           // 用户入会后失效的时间，超过这个时间会触发onAICallUserTokenExpired事件
     open var limitSecond: UInt32 = 0               // 通话限制时间，为0表示不限制，否则通话时间到达秒数后，会自动结束通话
-    open var region: String? = nil                 // 智能体服务所在的区域，如果为空，Appserver会使用默认的region来启动智能体服务
+    open var region: String? = nil                 // 智能体服务所在的区域
     open var templateConfig: ARTCAICallTemplateConfig!        // 用户自定义信息，该信息最终传给智能体
     open var userData: [String: Any]? = nil                   // 用户自定义信息，该信息最终传给智能体
 
@@ -61,7 +61,7 @@ import ARTCAICallKit
     /**
      * AI智能体开始通话
      */
-    @objc optional func onAICallBegin()
+    @objc optional func onAICallBegin(elapsedTime: TimeInterval)
     
     /**
      * AI智能体开始通话

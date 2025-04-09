@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { AICallAgentType, AICallChatSyncConfig, AICallTemplateConfig } from 'aliyun-auikit-aicall';
 import AUIAICallStandardController from '@/controller/call/AUIAICallStandardController';
 
@@ -34,6 +34,7 @@ export interface CallProps {
   };
   children?: React.ReactNode;
 }
+
 function Call({
   userId,
   userToken,
@@ -112,6 +113,17 @@ function Call({
     chatSyncConfig,
   ]);
 
+  // 关闭页面时尝试挂断，减少出现 Agent 需要超时才能退出的 Case
+  useEffect(() => {
+    const beforeOnload = () => {
+      controller?.handup();
+    };
+    window.addEventListener('beforeunload', beforeOnload);
+    return () => {
+      window.removeEventListener('beforeunload', beforeOnload);
+    };
+  }, []);
+
   return (
     <ControllerContext.Provider value={controller}>
       <Stage
@@ -130,7 +142,7 @@ function Call({
         onExit={() => {
           onExit?.();
         }}
-        limitSecond={60 * 5}
+        
       />
       {children}
     </ControllerContext.Provider>

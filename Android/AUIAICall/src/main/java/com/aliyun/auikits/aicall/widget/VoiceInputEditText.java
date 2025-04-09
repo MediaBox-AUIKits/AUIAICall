@@ -6,7 +6,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.EditText;
 
-public class VoiceInputEditText extends EditText {
+public class VoiceInputEditText extends androidx.appcompat.widget.AppCompatEditText {
     private VoiceInputListener mVoiceInputListener;
 
     public interface VoiceInputListener {

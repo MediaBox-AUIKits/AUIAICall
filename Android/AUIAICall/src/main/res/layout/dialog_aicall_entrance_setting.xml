@@ -103,7 +103,7 @@
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/ll_audio_dump"
+        android:id="@+id/ll_use_appserver_start_agent"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -113,6 +113,34 @@
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
         app:layout_constraintTop_toBottomOf="@id/ll_deposit"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent">
+        <TextView
+            android:id="@+id/tv_use_appserver_start_agent"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            style="@style/layout_base_text_style_12"
+            android:text="通过AppServer呼叫智能体"
+            />
+        <Switch
+            android:id="@+id/sv_use_appserver_start_agent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/ll_audio_dump"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="12dp"
+        android:layout_marginLeft="12dp"
+        android:layout_marginRight="12dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        app:layout_constraintTop_toBottomOf="@id/ll_use_appserver_start_agent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent">
         <TextView
@@ -877,7 +905,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     style="@style/layout_base_text_style_12"
-                    android:text="1"
+                    android:text="3"
                     android:textColorHint="@color/layout_base_gray"
                     android:backgroundTint="@color/layout_base_iv_border"
                     />

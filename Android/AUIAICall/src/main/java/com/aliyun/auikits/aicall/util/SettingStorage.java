@@ -44,6 +44,7 @@ public class SettingStorage {
     public static final String KEY_USER_ASR_LANGUAGE = "KEY_USER_ASR_LANGUAGE";
     public static final String KEY_INTERRUPT_WORDS = "KEY_INTERRUPT_WORDS";
     public static final String KEY_VAD_LEVEL = "KEY_VAD_LEVEL";
+    public static final String KEY_USE_APP_SERVER_START_AGENT = "KEY_USE_APP_SERVER_START_AGENT";
 
 
 
@@ -70,6 +71,9 @@ public class SettingStorage {
             false :
             false; // 发布包默认改为false
     public static final boolean DEFAULT_BOOT_ENABLE_EMOTION = BuildConfig.TEST_ENV_MODE ?
+            false :
+            false;
+    public static final boolean DEFAULT_USE_APPSERVER_START_AGENT = BuildConfig.TEST_ENV_MODE ?
             false :
             false;
 
