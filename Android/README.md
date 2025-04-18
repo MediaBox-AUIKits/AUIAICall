@@ -41,6 +41,22 @@ AUI Kits AI智能体集成工具适用于网络客服、AI助理、撮合助手�
 // AppServiceConst.java
 String HOST = "你的应用服务器域名";
 ```
+
+- 配置音视频通话智能体及所在区域,进入AUIAICallAgentIdConfig.java文件，修改各类型智能体为控制台生成的智能体ID，修改Region配置区域
+```java
+// AUIAICallAgentIdConfig.java
+// 你的语音通话智能体ID
+private static String VOICE_AGENT_ID = "<控制台语音通话智能体ID>";
+// 你的数字人通话智能体ID
+private static String Avatar_AGENT_ID = "<控制台数字人通话智能体ID>";
+// 你的视觉理解通话智能体ID
+private static String VISION_AGENT_ID = "<控制台视觉理解通话智能体ID>";
+
+//配置区域
+private static String Region = "cn-shanghai";
+```
+
+
 - 配置消息对话智能体Id及所在区域,进入AUIAICallAgentIdConfig.java文件，修改ChatBot_AGENT_ID为控制台生成的智能体ID，修改Region配置区域
 ```java
 // AUIAICallAgentIdConfig.java
@@ -74,6 +90,21 @@ dependencies {
 // AppServiceConst.java
 String HOST = "你的应用服务器域名";
 ```
+
+- 配置音视频通话智能体及所在区域,进入AUIAICallAgentIdConfig.java文件，修改各类型智能体为控制台生成的智能体ID，修改Region配置区域
+```java
+// AUIAICallAgentIdConfig.java
+// 你的语音通话智能体ID
+private static String VOICE_AGENT_ID = "<控制台语音通话智能体ID>";
+// 你的数字人通话智能体ID
+private static String Avatar_AGENT_ID = "<控制台数字人通话智能体ID>";
+// 你的视觉理解通话智能体ID
+private static String VISION_AGENT_ID = "<控制台视觉理解通话智能体ID>";
+
+//配置区域
+private static String Region = "cn-shanghai";
+```
+
 - 配置消息对话智能体Id及所在区域,进入AUIAICallAgentIdConfig.java文件，修改ChatBot_AGENT_ID为控制台生成的智能体ID，修改Region配置区域
 ```java
 // AUIAICallAgentIdConfig.java
