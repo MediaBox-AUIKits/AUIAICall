@@ -1,5 +1,5 @@
 
-platform :ios, '10.0'
+platform :ios, '11.0'
 
 workspace 'AUIAICallExample'
 
@@ -7,11 +7,12 @@ AlivcSDK='AliVCSDK_ARTC'
 
 target 'Example' do
 
-  pod "#{AlivcSDK}", '~> 6.21.0'
-  pod 'AliVCInteractionMessage', '~> 1.5.0'
-  pod "ARTCAICallKit/Chatbot", '~> 2.1.0'
+  pod "#{AlivcSDK}", '~> 7.1.0'
+  pod 'AliVCInteractionMessage', '~> 1.6.0'
+  pod "ARTCAICallKit/Chatbot", '~> 2.2.0'
 
   pod 'MJRefresh', :modular_headers => true
+  pod 'SDWebImage', :modular_headers => true
   pod 'AUIFoundation', :path => '../AUIBaseKits/AUIFoundation/', :modular_headers => true
   pod "AUIAICall/Demo", :path => '../'
 

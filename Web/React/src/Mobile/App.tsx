@@ -7,7 +7,7 @@ import { Toast } from 'antd-mobile';
 import Call from './Call';
 import Chat from './Chat';
 import runUserConfig from '@/runConfig.ts';
-import { AIChatTemplateConfig } from 'aliyun-auikit-aicall/src';
+import { AIChatTemplateConfig } from 'aliyun-auikit-aicall';
 import { JSONObject } from '@/service/interface.ts';
 import { getCallAgentId, getRuntimeConfig } from '@/interface.ts';
 

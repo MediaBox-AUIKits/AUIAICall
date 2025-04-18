@@ -17,8 +17,7 @@ class MainViewController: UIViewController {
         // Do any additional setup after loading the view.
         
 #if DEBUG
-        
-        
+        AUIAICallManager.defaultManager.userId = String.aicall_random()
 #endif
         self.showCallAgentEntrance()
         self.showChatAgentEntrance()
