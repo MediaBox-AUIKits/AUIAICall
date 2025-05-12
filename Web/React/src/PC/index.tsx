@@ -9,15 +9,17 @@ import useCallStore from '@/Mobile/Call/store';
 import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { debounce } from '@/common/utils';
 import ControllerContext from '@/Mobile/Call/ControlerContext';
-import i18n, { getErrorMessage } from '@/common/i18n';
 
 import './call.less';
+import { useTranslation } from '@/common/i18nContext';
 interface AICallProps {
   limitSecond?: number;
   onAuthFail?: () => void;
 }
 
 function AICall(props: AICallProps) {
+  const { t, e } = useTranslation();
+
   const { limitSecond, onAuthFail } = props;
   const controller = useContext(ControllerContext);
   const callState = useCallStore((state) => state.callState);
@@ -38,7 +40,7 @@ function AICall(props: AICallProps) {
       }
       const duration = Date.now() - pushingStartTimeRef.current;
       if (duration < 500) {
-        messageApi.error('说话时间太短');
+        messageApi.error(t('pushToTalk.tooShort'));
         controller?.cancelPushToTalk();
       } else {
         controller?.finishPushToTalk();
@@ -66,9 +68,9 @@ function AICall(props: AICallProps) {
     [controller, stopPushToTalk]
   );
 
-  // Tab 键打断
   const onKeyDown = useMemo(() => {
     // 不把 debounce 放到 onKeyDown 是因为需要阻止 Tab 键的默认行为
+    // no debounce in onKeyDown is because we need to prevent Tab key's default behavior
     const interruptSpeaking = debounce(() => {
       controller?.interruptSpeaking();
     }, 100);
@@ -105,7 +107,6 @@ function AICall(props: AICallProps) {
     };
   }, [controller, onKeyDown, onKeyUp]);
 
-  // 开始通话
   const startCall = async (agentType: AICallAgentType) => {
     if (!controller) return;
     controller.config.agentType = agentType;
@@ -117,6 +118,7 @@ function AICall(props: AICallProps) {
     });
 
     // 保证事件只监听一次
+    // ensure events only listen once
     controller.removeAllListeners();
     controller.on('AICallStateChanged', (newState) => {
       useCallStore.setState({
@@ -125,7 +127,7 @@ function AICall(props: AICallProps) {
       if (newState === AICallState.Error) {
         controller?.handup();
         useCallStore.setState({
-          callErrorMessage: getErrorMessage(controller.errorCode),
+          callErrorMessage: e(controller.errorCode),
         });
       }
     });
@@ -138,14 +140,12 @@ function AICall(props: AICallProps) {
 
     controller.on('AICallActiveSpeakerVolumeChanged', (userId, volume) => {
       if (userId === '') {
-        // 本地说话状态
         useCallStore.setState({
           isSpeaking: volume > 30,
         });
       }
     });
 
-    // 实时字幕相关呢
     controller.on('AICallAgentSubtitleNotify', (data) => {
       useCallStore.getState().setCurrentSubtitle({
         data,
@@ -160,7 +160,7 @@ function AICall(props: AICallProps) {
     });
 
     controller.on('AICallUserTokenExpired', () => {
-      messageApi.error(i18n['login.tokenExpired']);
+      messageApi.error(t('login.tokenExpired'));
       onAuthFail?.();
     });
 
@@ -193,7 +193,7 @@ function AICall(props: AICallProps) {
       await controller.start();
     } catch (error) {
       console.log(error, controller.errorCode);
-      useCallStore.setState({ callState: AICallState.Error, callErrorMessage: getErrorMessage(controller.errorCode) });
+      useCallStore.setState({ callState: AICallState.Error, callErrorMessage: e(controller.errorCode) });
     }
   };
 

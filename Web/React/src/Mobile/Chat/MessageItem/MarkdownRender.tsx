@@ -7,6 +7,8 @@ import wrapTable from './markdownPlugin/wrapTable';
 import addTargetToLinks from './markdownPlugin/addTargetToLinks';
 
 import './markdownRender.less';
+import { ImageViewer } from 'antd-mobile';
+import { getRootElement } from '@/common/utils';
 
 const md = markdownit({
   highlight: function (str, lang) {
@@ -32,6 +34,19 @@ function MessageItemMarkdownRender({ text }: { text: string }) {
     }
   }, [text]);
 
+  const onMarkdownClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    const target = e.target as HTMLImageElement;
+    if (target.tagName === 'IMG') {
+      const src = target.getAttribute('src');
+      if (!src) return;
+      ImageViewer.show({
+        image: src,
+        getContainer: getRootElement,
+      });
+    }
+  };
+
   if (!text) return null;
   return (
     <div
@@ -39,6 +54,7 @@ function MessageItemMarkdownRender({ text }: { text: string }) {
       dangerouslySetInnerHTML={{
         __html: md.render(text),
       }}
+      onClick={onMarkdownClick}
     />
   );
 }

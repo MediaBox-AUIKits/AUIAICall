@@ -59,7 +59,6 @@ import java.util.List;
 public class AUIAICallEntranceActivity extends AppCompatActivity {
     private String mLoginUserId = null;
     private String mLoginAuthorization = null;
-    private boolean mInternalBuild = false;
 
     private long mLastSettingTapMillis = 0;
     private long mLastSettingTapCount = 0;
@@ -159,7 +158,6 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
         if (getIntent() != null && null != getIntent().getExtras()) {
             mLoginUserId = getIntent().getStringExtra("login_user_id");
             mLoginAuthorization = getIntent().getStringExtra("authorization");
-            mInternalBuild = getIntent().getBooleanExtra("international_build", false);
         }
         if (TextUtils.isEmpty(mLoginUserId)) {
             // 建议绑定为业务的登录用户id
@@ -224,6 +222,7 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
         ((Switch)view.findViewById(R.id.sv_server_type)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_APP_SERVER_TYPE, SettingStorage.DEFAULT_APP_SERVER_TYPE));
         ((Switch)view.findViewById(R.id.sv_use_rtc_pre_env)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_USE_RTC_PRE_ENV_SWITCH, SettingStorage.DEFAULT_USE_RTC_PRE_ENV));
         ((Switch)view.findViewById(R.id.sv_boot_push_to_talk)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_PUSH_TO_TALK, SettingStorage.DEFAULT_ENABLE_PUSH_TO_TALK));
+        ((Switch)view.findViewById(R.id.sv_boot_use_audio_delay_info)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_AUDIO_DELAY_INFO, true));
         ((Switch)view.findViewById(R.id.sv_boot_use_voice_print)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_VOICE_PRINT, SettingStorage.DEFAULT_ENABLE_VOICE_PRINT));
         ((Switch)view.findViewById(R.id.sv_share_boot_use_demo_app_server)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_SHARE_BOOT_USE_DEMO_APP_SERVER, SettingStorage.DEFAULT_SHARE_BOOT_USE_DEMO_APP_SERVER));
         ((EditText)view.findViewById(R.id.et_boot_user_data)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_USER_EXTEND_DATA));
@@ -283,6 +282,9 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
 
                         boolean bootEnablePushToTalk = ((Switch)view.findViewById(R.id.sv_boot_push_to_talk)).isChecked();
                         SettingStorage.getInstance().setBoolean(SettingStorage.KEY_BOOT_ENABLE_PUSH_TO_TALK, bootEnablePushToTalk);
+
+                        boolean useAudioDelayInfo = ((Switch)view.findViewById(R.id.sv_boot_use_audio_delay_info)).isChecked();
+                        SettingStorage.getInstance().setBoolean(SettingStorage.KEY_BOOT_ENABLE_AUDIO_DELAY_INFO, useAudioDelayInfo);
 
                         boolean bootUseVoicePrint = ((Switch)view.findViewById(R.id.sv_boot_use_voice_print)).isChecked();
                         SettingStorage.getInstance().setBoolean(SettingStorage.KEY_BOOT_ENABLE_VOICE_PRINT, bootUseVoicePrint);
@@ -654,9 +656,7 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
             mCallTypeList.add(ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent);
             mCallTypeList.add(ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent);
             mCallTypeList.add(ARTCAICallEngine.ARTCAICallAgentType.VisionAgent);
-            if(!mInternalBuild) {
-                mCallTypeList.add(ChatBot);
-            }
+            mCallTypeList.add(ChatBot);
 
             mMotionalLayout = findViewById(R.id.config_layout);
             mTabCallType = findViewById(R.id.tab_function_detail_call_type);

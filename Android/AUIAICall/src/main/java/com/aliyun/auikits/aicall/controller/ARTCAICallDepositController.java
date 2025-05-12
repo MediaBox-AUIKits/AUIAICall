@@ -32,18 +32,19 @@ public class ARTCAICallDepositController extends ARTCAICallController {
 
     @Override
     public void startCall(String token) {
-        mCallbackHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                setCallState(AICallState.Connecting, ARTCAICallEngine.AICallErrorCode.None);
-                mRtcAuthToken = token;
-                if (!mARTCAiCallConfig.mAiCallAgentTemplateConfig.isSharedAgent) {
-                    mARTCAICallEngine.call(token);
-                } else {
+        if(!mARTCAiCallConfig.mAiCallAgentTemplateConfig.isSharedAgent) {
+            setCallState(AICallState.Connecting, ARTCAICallEngine.AICallErrorCode.None);
+            mRtcAuthToken = token;
+            mARTCAICallEngine.call(token);
+        } else {
+            mCallbackHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    setCallState(AICallState.Connecting, ARTCAICallEngine.AICallErrorCode.None);
+                    mRtcAuthToken = token;
                     mARTCAICallEngine.getIARTCAICallService().generateAIAgentShareCall(mUserId, mARTCAiCallConfig.mAiCallAgentTemplateConfig.aiAgentId, mAiAgentType, mARTCAiCallConfig, getStartActionCallback());
                 }
-            }
-        });
-
+            });
+        }
     }
 }

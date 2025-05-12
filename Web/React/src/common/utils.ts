@@ -34,10 +34,12 @@ export const copyText = async (text: string) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error) {
     // 如果不支持 Clipboard API 或不在安全上下文中，使用回退方法
+    // if Clipboard API is not supported or not in a secure context, fallback to a backup method
     const textArea = document.createElement('textarea');
     textArea.value = text;
 
     // 防止iOS设备上使用缩放
+    // to prevent iOS devices from zooming
     textArea.style.position = 'fixed';
     textArea.style.top = '0';
     textArea.style.left = '0';
@@ -75,6 +77,7 @@ export const isAndroidWeChatBrowser = () => {
   const ua = navigator.userAgent;
 
   // 检查是否包含 Android 和 MicroMessenger
+  // check if the user agent contains both Android and MicroMessenger
   return /Android/i.test(ua) && /MicroMessenger/i.test(ua);
 };
 
@@ -121,9 +124,8 @@ export const longPressEvents = function ({
   };
   const stop: ILongPressEndMethod = (event) => {
     if (timeout) {
-      window.clearTimeout(timeout); // 合成事件，要先 clear，否则报 warning
+      window.clearTimeout(timeout);
     }
-    // 下边的其实可以不用，如果不需要结束回调的话
     if (event.nativeEvent instanceof TouchEvent) target = event.nativeEvent.target;
     onEndCallback?.(target);
   };

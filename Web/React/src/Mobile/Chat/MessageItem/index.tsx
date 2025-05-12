@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, useState } from 'react';
+import { memo, useContext, useEffect, useRef, useState } from 'react';
 import { AICallErrorCode, AIChatError, AIChatMessageState } from 'aliyun-auikit-aicall';
 
 import useChatStore, { ChatMessageItem } from '../store';
@@ -13,8 +13,17 @@ import MessageItemReasoning from './Reasoning';
 import './index.less';
 import MessageItemMarkdownRender from './MarkdownRender';
 import SendAttachment from '@/Mobile/Chat/MessageItem/SendAttachment.tsx';
+import { useTranslation } from '@/common/i18nContext';
 
-function StaticMessageItem({ messageItem }: { messageItem: ChatMessageItem }) {
+function StaticMessageItem({
+  messageItem,
+  onLayoutUpdate,
+}: {
+  messageItem: ChatMessageItem;
+  onLayoutUpdate: (forceScroll?: boolean) => void;
+}) {
+  const { t } = useTranslation();
+
   const engine = useContext(ChatEngineContext);
   const message = messageItem.message;
   const voiceId = useChatStore((state) => state.voiceId);
@@ -45,6 +54,10 @@ function StaticMessageItem({ messageItem }: { messageItem: ChatMessageItem }) {
     };
   }, []);
 
+  useEffect(() => {
+    onLayoutUpdate();
+  }, [message.text, message.reasoningText, message.messageState]);
+
   if (!message) return null;
   if (
     message.messageState !== AIChatMessageState.Transfering &&
@@ -60,14 +73,14 @@ function StaticMessageItem({ messageItem }: { messageItem: ChatMessageItem }) {
       if (!message.text) return;
       setCopying(true);
       await copyText(message.text);
-      Toast.show({ content: '信息已复制', getContainer: getRootElement });
+      Toast.show({ content: t('chat.message.copied'), getContainer: getRootElement });
       setTimeout(() => {
         setCopying(false);
       }, 2000);
     } catch (error) {
       setCopying(false);
       console.warn(error);
-      Toast.show({ content: '信息复制失败', getContainer: getRootElement });
+      Toast.show({ content: t('chat.message.copyFailed'), getContainer: getRootElement });
     }
   };
 
@@ -86,8 +99,9 @@ function StaticMessageItem({ messageItem }: { messageItem: ChatMessageItem }) {
 
     try {
       await engine?.startPlayMessage(message, voiceId ? voiceId : undefined);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
-      Toast.show({ content: `播放失败: ${(err as AIChatError).code}`, getContainer: getRootElement });
+      Toast.show({ content: t('chat.playback.failed'), getContainer: getRootElement });
     }
   };
 
@@ -103,17 +117,17 @@ function StaticMessageItem({ messageItem }: { messageItem: ChatMessageItem }) {
   const onDelete = async () => {
     Dialog.confirm({
       className: 'chat-item-delete-confirm',
-      title: '确认删除此条信息？',
-      content: '信息删除后，不可恢复',
-      confirmText: '删除',
-      cancelText: '取消',
+      title: t('chat.message.deleteConfirm'),
+      content: t('chat.message.deleteHelp'),
+      confirmText: t('common.delete'),
+      cancelText: t('common.cancel'),
       getContainer: getRootElement,
       onConfirm: async () => {
         try {
           await engine?.deleteMessage(message.dialogueId);
         } catch (error) {
           if ((error as AIChatError).code !== AICallErrorCode.ChatLogNotFound) {
-            Toast.show({ content: `删除失败: ${(error as AIChatError).code}`, getContainer: getRootElement });
+            Toast.show({ content: t('chat.message.deleteFailed'), getContainer: getRootElement });
             throw error;
           }
         }
@@ -131,7 +145,7 @@ function StaticMessageItem({ messageItem }: { messageItem: ChatMessageItem }) {
           <div className='chat-item-delete' ref={deleteRef}>
             <Button onClick={onDelete}>
               {deleteSVG}
-              <div className='_text'>删除</div>
+              <div className='_text'>{t('common.delete')}</div>
             </Button>
           </div>
         }
@@ -162,7 +176,7 @@ function StaticMessageItem({ messageItem }: { messageItem: ChatMessageItem }) {
                   <MessageItemMarkdownRender text={message.text} />
                   {message.messageState === AIChatMessageState.Transfering && <DotLoading color='currentColor' />}
                   {message.messageState === AIChatMessageState.Interrupted && (
-                    <div className='_interrupted'>用户停止本次回答</div>
+                    <div className='_interrupted'>{t('chat.response.interrupted')}</div>
                   )}
                 </>
               )}
@@ -187,52 +201,14 @@ function StaticMessageItem({ messageItem }: { messageItem: ChatMessageItem }) {
   );
 }
 
-// 性能优化考虑，仅当前正在处理的 Message 需要持续渲染
-function ProcessingMessageItem({
+function MessageItem({
   messageItem,
   onLayoutUpdate,
 }: {
   messageItem: ChatMessageItem;
   onLayoutUpdate: (forceScroll?: boolean) => void;
 }) {
-  const currentMessage = useChatStore((state) => state.currentMessage);
-
-  // 发送消息，强制滚动到最底部
-  useEffect(() => {
-    if (currentMessage?.isSend) {
-      onLayoutUpdate(true);
-    }
-  }, [currentMessage?.isSend, onLayoutUpdate]);
-
-  useEffect(() => {
-    onLayoutUpdate();
-  }, [
-    currentMessage?.message.text,
-    currentMessage?.message.reasoningText,
-    currentMessage?.message.messageState,
-    onLayoutUpdate,
-  ]);
-
-  if (
-    !!messageItem.isSend === !!currentMessage?.isSend &&
-    messageItem.message.requestId === currentMessage?.message.requestId
-  ) {
-    return <StaticMessageItem messageItem={currentMessage} />;
-  }
-  return <StaticMessageItem messageItem={messageItem} />;
+  return <StaticMessageItem messageItem={messageItem} onLayoutUpdate={onLayoutUpdate} />;
 }
 
-function MessageItem({
-  message,
-  onLayoutUpdate,
-}: {
-  message: ChatMessageItem;
-  onLayoutUpdate: (forceScroll?: boolean) => void;
-}) {
-  if (message.isProcessing) {
-    return <ProcessingMessageItem messageItem={message} onLayoutUpdate={onLayoutUpdate} />;
-  }
-  return <StaticMessageItem messageItem={message} />;
-}
-
-export default MessageItem;
+export default memo(MessageItem);

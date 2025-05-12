@@ -83,3 +83,11 @@
 * Android&iOS&Web：在消息对话中支持发起智能体通话并同步通话记录
 * Android&iOS：通话智能体支持通过AICallKit SDK发起通话
 
+## v2.3.0
+发布时间：2025-05-06
+* Android&iOS&Web：智能体支持形象动画，动画形式包括入场、聆听、讲话中、打断等
+* Android&iOS&Web：消息对话智能体支持国际站
+* Android&iOS&Web：消息对话智能体放大查看上传/接收的图片
+* Android&iOS&Web：通话智能体支持对智能体静音
+* Android&iOS&Web：消息对话智能体支持在一个提问智能体多次回复
+* Web：支持通过端侧SDK来启动通话

@@ -1,6 +1,7 @@
+import { TemplateConfig } from '@/service/interface.ts';
+import standardService from '@/service/standard.ts';
 import EventEmitter from 'eventemitter3';
 import {
-  AICallAgentError,
   AICallAgentInfo,
   AICallAgentShareConfig,
   AICallAgentState,
@@ -9,6 +10,7 @@ import {
   AICallSendTextToAgentRequest,
   AICallState,
   AICallSubtitleData,
+  AICallTemplateConfig,
   AICallVisionCustomCaptureRequest,
   AICallVoiceprintResult,
 } from 'aliyun-auikit-aicall';
@@ -29,12 +31,15 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
   }
 
   protected _currentEngine?: ARTCAICallEngine;
+
   public get engine() {
     return this._currentEngine;
   }
+
   public get userId() {
     return this._userId;
   }
+
   public get token() {
     return this._token;
   }
@@ -47,6 +52,7 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
   public get state() {
     return this._state;
   }
+
   protected set state(state: AICallState) {
     this.emit('AICallStateChanged', state);
     this._state = state;
@@ -76,6 +82,7 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
   public get shareConfig(): AICallAgentShareConfig | undefined {
     return this._shareConfig;
   }
+
   public set shareConfig(shareToken: string) {
     logger.info('Controller', 'SetShareConfig', { shareToken });
     try {
@@ -93,9 +100,7 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
     return this._agentAudioElement;
   }
 
-  abstract startAIAgent(): Promise<AICallAgentInfo>;
-
-  private async initEngine() {
+  protected async initEngine() {
     const startTs = Date.now();
     if (!this._currentEngine) {
       this._currentEngine = new ARTCAICallEngine();
@@ -117,44 +122,15 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
     return;
   }
 
-  async start(): Promise<void> {
-    logger.info('Controller', 'Start');
-    const startTs = Date.now();
-    if (this.state === AICallState.Connected || this.state === AICallState.Connecting) return;
-    this.state = AICallState.Connecting;
-
-    let instanceInfo: AICallAgentInfo | undefined;
-    try {
-      if (!this._currentEngine) {
-        this._currentEngine = new ARTCAICallEngine();
-      }
-      [instanceInfo] = await Promise.all([this.startAIAgent(), this.initEngine()]);
-      logger.setParams({
-        instanceId: instanceInfo.instanceId,
-        channelId: instanceInfo.channelId,
-        userId: instanceInfo.userId,
-        reqId: instanceInfo.reqId || '-',
-      });
-      logger.info('Controller', 'GenerateAIAgentSuccess', { value: Date.now() - startTs });
-    } catch (error: unknown) {
-      this._errorCode = (error as AICallAgentError).code || AICallErrorCode.BeginCallFailed;
-      if ((error as AICallAgentError).name === 'ServiceAuthError') {
-        this.emit('AICallUserTokenExpired');
-      }
-      this.state = AICallState.Error;
-      logger.error('StartAIAgentFailed', error as Error);
-      throw error;
-    }
-
-    // 可能已经结束通话，不再继续
-    if (this.state !== AICallState.Connecting) return;
-
-    this._agentInfo = instanceInfo;
-    this.emit('AICallAIAgentStarted', instanceInfo);
-
+  protected addEngineListener() {
     if (!this._currentEngine) {
-      logger.error('StartCallFailed', new AICallAgentError('engine not init'));
-      throw new AICallAgentError('engine not init');
+      this._currentEngine = new ARTCAICallEngine({
+        muteMicrophone: this._config.muteMicrophone,
+        muteCamera: this._config.muteCamera,
+        previewElement: this._config.previewView,
+        templateConfig: this._config.templateConfig,
+        rtcEngineConfig: this._config.rtcEngineConfig,
+      });
     }
 
     this._currentEngine.on('errorOccurred', (errorCode: number) => {
@@ -165,11 +141,13 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
     });
 
     // Agent 状态相关
+    // state of agent
     this._currentEngine.on('agentStateChange', (newState) => {
       this.emit('AICallAgentStateChanged', newState);
     });
 
-    // 实时字幕相关呢
+    // 实时字幕相关
+    // realtime subtitle
     this._currentEngine.on('agentSubtitleNotify', (data: AICallSubtitleData) => {
       if (this.state !== AICallState.Connected) return;
       this.emit('AICallAgentSubtitleNotify', data);
@@ -186,6 +164,7 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
     });
 
     // 鉴权相关
+    // auth token info
     this._currentEngine.on('authInfoWillExpire', async () => {
       const token = await this.requestRTCToken();
       this.engine?.updateToken(token);
@@ -218,6 +197,7 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
     });
 
     // 真人接管相关
+    // human takeover
     this._currentEngine.on('humanTakeoverWillStart', (uid: string, mode: number) => {
       this.emit('AICallHumanTakeoverWillStart', uid, mode);
     });
@@ -231,42 +211,56 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
     this._currentEngine.on('speakingInterrupted', (reason) => {
       this.emit('AICallSpeakingInterrupted', reason);
     });
+    this._currentEngine.on('callEnd', () => {
+      this.emit('AICallEnd');
+    });
 
-    try {
-      await this.engine?.call(this.userId, instanceInfo);
-
-      if (this.config.agentView) {
-        this.engine?.setAgentView(this.config.agentView);
-      }
-
-      // 默认静音麦克风
-      if (this.config.muteMicrophone) {
-        this.engine?.mute(true);
-      }
-      if (this.config.muteCamera) {
-        this.engine?.muteLocalCamera(true);
-      }
-
-      // @ts-expect-error state may change
-      if (this.state === AICallState.Over) {
-        this.handup();
-        throw new AICallAgentError('call has been over');
-      }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      this._errorCode = error.errorCode || AICallErrorCode.BeginCallFailed;
-      this.state = AICallState.Error;
-      this.handup();
-      logger.error('StartCallFailed', error);
-      throw error;
-    }
-
-    logger.info('Controller', 'StartSuccess', { value: Date.now() - startTs });
-    this.emit('AICallBegin');
-    this.state = AICallState.Connected;
+    this._currentEngine.on('llmReplyCompleted', (text, sentenceId) => {
+      console.log('llmReplyCompleted', text, sentenceId);
+    });
+    this._currentEngine.on('agentDataChannelAvailable', () => {
+      console.log('agentDataChannelAvailable');
+    });
   }
 
-  abstract stopAIAgent(instanceId: string): Promise<void>;
+  abstract start(): Promise<void>;
+
+  protected async describeAIAgent(instanceId: string) {
+    const startTs = Date.now();
+    try {
+      // 每次先清空当前的配置
+      // clear config first
+      this.config.templateConfig.avatarUrl = '';
+      this.config.templateConfig.agentVoiceId = '';
+      this.config.agentVoiceIdList = [];
+      const templateConfig = await standardService.describeAIAgent(this.userId, this.token, instanceId);
+      const configKey = AICallTemplateConfig.getTemplateConfigKey(this.config.agentType) as keyof TemplateConfig;
+      const configValue = templateConfig[configKey];
+      if (configValue?.AvatarUrl) {
+        this.config.templateConfig.avatarUrl = configValue?.AvatarUrl as string;
+      }
+      if (configValue?.VoiceId) {
+        this.config.templateConfig.agentVoiceId = configValue?.VoiceId as string;
+      }
+      if (configValue?.VoiceIdList) {
+        this.config.agentVoiceIdList = configValue.VoiceIdList as string[];
+      }
+      logger.info('Controller', 'DescribeAIAgent', { value: Date.now() - startTs });
+    } catch (error) {
+      logger.error('DescribeAIAgentFailed', error as Error);
+      console.log(error);
+    }
+  }
+
+  async stopAIAgent(): Promise<void> {
+    logger.info('Controller', 'StopAIAgent');
+    this.engine?.stopAgent();
+    await new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(true);
+      }, 200);
+    });
+  }
 
   async handup(): Promise<void> {
     logger.info('Controller', 'Handup');
@@ -275,15 +269,18 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
     this.state = AICallState.Over;
     const agent = this.engine?.agentInfo;
     if (agent && currentState === AICallState.Connected) {
-      await this.stopAIAgent(agent.instanceId);
+      await this.stopAIAgent();
     }
     await this.engine?.handup();
     this.engine?.removeAllListeners();
     this.removeAllListeners();
   }
+
   /**
    * 设置智能体视频渲染视图
+   * Set agent video render view
    * @param view Video标签或 id
+   * @param view HtmlVideoElement or id
    */
   setAgentView(view: HTMLVideoElement | string): void {
     logger.info('Controller', 'SetAgentView', { view: typeof view === 'string' ? `#${view}` : view.nodeType });
@@ -293,6 +290,7 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
 
   /**
    * 主动打断讲话
+   * interrupt speaking
    */
   async interruptSpeaking(): Promise<void> {
     logger.info('Controller', 'InterruptSpeaking');
@@ -303,24 +301,57 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
 
   /**
    * 开启/关闭智能打断
+   * Open/close voice interrupt
    * @param enable 是否开启
+   * @param enable open or close
    */
-  abstract enableVoiceInterrupt(enable: boolean): Promise<boolean>;
+  async enableVoiceInterrupt(enable: boolean): Promise<boolean> {
+    logger.info('Controller', 'EnableVoiceInterrupt', { enable });
+    if (this.state === AICallState.Connected) {
+      this.engine?.enableVoiceInterrupt(enable);
+    }
+    return true;
+  }
 
   /**
    * 切换智能体讲话音色
+   * Switch voice id
    * @param voiceId 音色Id
+   * @param voiceId voice id
    */
-  abstract switchVoiceId(voiceId: string): Promise<boolean>;
+  async switchVoiceId(voiceId: string): Promise<boolean> {
+    logger.info('Controller', 'SwitchVoiceId', { voiceId });
+    if (this.state === AICallState.Connected) {
+      this.engine?.switchVoiceId(voiceId);
+    }
+    return true;
+  }
 
   /**
    * 请求 RTC Token
+   * request rtc token
    */
-  abstract requestRTCToken(): Promise<string>;
+  async requestRTCToken(): Promise<string> {
+    logger.info('Controller', 'RequestRTCToken');
+    if (this.state === AICallState.Connected) {
+      this.engine?.requestRTCToken();
+
+      // 等待返回新的 RTC token
+      // wait for new RTC token
+      return new Promise((resolve) => {
+        this.engine?.once('newRTCToken', (token: string) => {
+          resolve(token);
+        });
+      });
+    }
+    return '';
+  }
 
   /**
    * 开启/关闭麦克风
+   * open or close microphone
    * @param off 是否关闭
+   * @param off mute or unmute
    */
   muteMicrophone(mute: boolean): boolean {
     logger.info('Controller', 'MuteMicrophone', { mute: mute ? 'off' : 'on' });
@@ -372,6 +403,7 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
 
   /**
    * 开启/关闭对讲机模式，对讲机模式下，只有在finishPushToTalk被调用后，智能体才会播报结果
+   * Open or close push to talk mode, in push to talk mode, only after finishPushToTalk is called, the agent will play the result
    */
   async enablePushToTalk(enable: boolean): Promise<boolean> {
     logger.info('Controller', 'EnablePushToTalk', { enable: enable ? 'on' : 'off' });
@@ -383,6 +415,7 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
 
   /**
    * 开始讲话
+   * start push to talk
    */
   startPushToTalk(): boolean {
     logger.info('Controller', 'StartPushToTalk');
@@ -394,6 +427,7 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
 
   /**
    * 结束讲话
+   * finish push to talk
    */
   finishPushToTalk(): boolean {
     logger.info('Controller', 'FinishPushToTalk');
@@ -405,6 +439,7 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
 
   /**
    * 取消这次讲话
+   * cancel push to talk
    */
   cancelPushToTalk(): boolean {
     logger.info('Controller', 'CancelPushToTalk');
@@ -415,6 +450,7 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
   }
 
   // 给智能体发送文本消息
+  // send text to agent
   sendTextToAgent(req: AICallSendTextToAgentRequest): boolean {
     logger.info('Controller', 'SendTextToAgent');
     if (this.state === AICallState.Connected) {
@@ -424,6 +460,7 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
   }
 
   // 给智能体发送文本消息
+  // send text to agent
   sendCustomMessageToServer(msg: string): boolean {
     logger.info('Controller', 'SendTextToAgent');
     if (this.state === AICallState.Connected) {
@@ -433,6 +470,7 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
   }
 
   // 更新llm的系统提示词
+  // update llm system prompt
   updateLlmSystemPrompt(prompt: string): boolean {
     logger.info('Controller', 'UpdateLlmSystemPrompt');
     if (this.state === AICallState.Connected) {
@@ -442,6 +480,7 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
   }
 
   // Vision智能体，开始启动自定义截帧，启动后，无法通过语音与智能体通话
+  // start vision custom capture, after start, you can not call agent by voice
   startVisionCustomCapture(req: AICallVisionCustomCaptureRequest) {
     logger.info('Controller', 'StartVisionCustomCapture');
     if (this.state === AICallState.Connected) {
@@ -451,6 +490,7 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
   }
 
   // Vision智能体，结束自定义截帧
+  // stop vision custom capture
   stopVisionCustomCapture() {
     logger.info('Controller', 'StopVisionCustomCapture');
     if (this.state === AICallState.Connected) {
@@ -460,7 +500,26 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
   }
 
   /**
+   * 停止/恢复智能体音频流的播放
+   * @param mute 是否静音
+   * @return 是否成功
+   */
+  /****
+   * Mute/unmute agent audio playing
+   * @param mute Whether to mute
+   * @return Whether it is successful
+   */
+  muteAgentAudioPlaying(mute: boolean) {
+    logger.info('Controller', 'Mute');
+    if (this.state === AICallState.Connected) {
+      return !!this.engine?.muteAgentAudioPlaying(mute);
+    }
+    return false;
+  }
+
+  /**
    * 销毁引擎
+   * Destroy engine
    */
   destroy() {
     logger.info('Controller', 'destroy');

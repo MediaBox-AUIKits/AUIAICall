@@ -13,12 +13,15 @@ import androidx.annotation.Nullable;
 
 
 import org.commonmark.node.Heading;
+import org.commonmark.node.Image;
 import org.commonmark.node.Link;
 
 import io.noties.markwon.Markwon;
 import io.noties.markwon.MarkwonConfiguration;
 import io.noties.markwon.SpanFactory;
 import io.noties.markwon.core.CoreProps;
+import io.noties.markwon.image.AsyncDrawableSpan;
+import io.noties.markwon.image.ImageProps;
 import io.noties.markwon.image.glide.GlideImagesPlugin;
 import io.noties.markwon.MarkwonSpansFactory;
 import io.noties.markwon.AbstractMarkwonPlugin;
@@ -36,7 +39,7 @@ public class AUIAIMarkwonManager {
 
 
     public interface AUIAIMarkwonManagerCallback {
-         void onLinkClicked(String url) ;
+         void onLinkClicked(String url, boolean isLinkUrl) ;
     }
 
     /**
@@ -49,6 +52,10 @@ public class AUIAIMarkwonManager {
                 .usePlugin(new AbstractMarkwonPlugin() {
                     @Override
                     public void configureSpansFactory(@NonNull MarkwonSpansFactory.Builder builder) {
+
+                        // 获取默认的Image Span工厂
+                        final SpanFactory original = builder.getFactory(Image.class);
+                        if (original == null) return;
 
                         builder.setFactory(Heading.class, new SpanFactory() {
                             @Nullable
@@ -87,6 +94,30 @@ public class AUIAIMarkwonManager {
                             public Object getSpans(@NonNull MarkwonConfiguration configuration, @NonNull RenderProps props) {
                                 return new CustomLinkSpan(CoreProps.LINK_DESTINATION.require(props));
                             }
+                        });
+
+                        builder.setFactory(Image.class, (configuration, props) -> {
+                            // 生成原始ImageSpan（由GlideImagesPlugin处理）
+                            Object originalSpans = original.getSpans(configuration, props);
+                            if (originalSpans instanceof AsyncDrawableSpan) {
+                                AsyncDrawableSpan imageSpan = (AsyncDrawableSpan) originalSpans;
+                                String source = props.get(ImageProps.DESTINATION);
+
+                                // 创建可点击的Span（结合ImageSpan和ClickableSpan）
+                                ClickableSpan clickableSpan = AUIAIMarkwonClickableImageSpan.createClickableSpan(
+                                        source,
+                                        imageUrl -> {
+                                            // 处理点击事件
+                                            if(callback != null) {
+                                                callback.onLinkClicked(imageUrl, false);
+                                            }
+                                        }
+                                );
+
+                                // 返回多个Span：原始图片Span和点击Span
+                                return new Object[] { imageSpan, clickableSpan };
+                            }
+                            return originalSpans;
                         });
                     }
                 })
@@ -132,7 +163,7 @@ public class AUIAIMarkwonManager {
         @Override
         public void onClick(View widget) {
             if(callback != null) {
-                callback.onLinkClicked(url);
+                callback.onLinkClicked(url, true);
             }
         }
     }

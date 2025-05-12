@@ -38,6 +38,7 @@ function App() {
   const [controller, setController] = useState(getController());
   const onAuthFail = () => {
     // 获取新的 token 并更新 controller
+    // get new token and update controller
   };
 
   if (agentType === undefined || agentType === null) {

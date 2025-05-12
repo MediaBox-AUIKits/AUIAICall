@@ -1,3 +1,4 @@
+import { AICallRunConfig } from '@/interface.ts';
 import { useContext, useEffect, useRef, useState } from 'react';
 import { Button, Popup, Toast } from 'antd-mobile';
 
@@ -21,11 +22,14 @@ import useChatStore from '@/Mobile/Chat/store.ts';
 import Attachment from '@/Mobile/Chat/Footer/Attachment.tsx';
 import resizeHandler from '@/Mobile/Chat/resizeHandler.ts';
 import Call from '@/Mobile/Call';
+import { useTranslation } from '@/common/i18nContext';
 
 const MAX_FILE_SIZE = 1024 * 1024 * 10;
 const MAX_FILE_COUNT = 9;
 
-function ChatFooter({ userId, userToken }: { userId: string; userToken: string }) {
+function ChatFooter({ userId, userToken, rc }: { userId: string; userToken: string; rc: AICallRunConfig }) {
+  const { t } = useTranslation();
+
   const [mode, setMode] = useState<'text' | 'voice'>('text');
   const engine = useContext(ChatEngineContext);
 
@@ -51,17 +55,32 @@ function ChatFooter({ userId, userToken }: { userId: string; userToken: string }
     if (attachmentList.length + (files?.length || 0) > MAX_FILE_COUNT) {
       Toast.show({
         getContainer: () => getRootElement(),
-        content: `最多上传${MAX_FILE_COUNT}个文件`,
+        content: t('chat.uploader.countLimit', { count: `${MAX_FILE_COUNT}` }),
       });
       return;
     }
 
     if (files && files.length > 0) {
-      const filteredFiles = Array.from(files).filter((file) => file.size <= MAX_FILE_SIZE);
-      if (files.length !== filteredFiles.length) {
+      const svgFilteredFiles = Array.from(files).filter((file) => {
+        if (file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg')) {
+          return false;
+        }
+        return true;
+      });
+      if (svgFilteredFiles.length !== files.length) {
         Toast.show({
           getContainer: () => getRootElement(),
-          content: `文件大小不能超过${MAX_FILE_SIZE / 1024 / 1024}M`,
+          content: t('chat.uploader.noSVG'),
+        });
+      }
+
+      const filteredFiles = svgFilteredFiles.filter((file) => file.size <= MAX_FILE_SIZE);
+      if (svgFilteredFiles.length !== filteredFiles.length) {
+        Toast.show({
+          getContainer: () => getRootElement(),
+          content: t('chat.uploader.sizeLimit', {
+            size: `${MAX_FILE_SIZE / 1024 / 1024}M`,
+          }),
         });
       }
 
@@ -75,7 +94,6 @@ function ChatFooter({ userId, userToken }: { userId: string; userToken: string }
           });
         }
 
-        // 开始上传则必然不可 Send
         useChatStore.setState({
           attachmentCanSend: false,
         });
@@ -87,6 +105,7 @@ function ChatFooter({ userId, userToken }: { userId: string; userToken: string }
         });
 
         // 添加完成后如有必要，将继续添加按钮移动到画面中
+        // if needed scroll add button to view
         setTimeout(() => {
           attachmentEndRef.current?.scrollIntoView();
         }, 100);
@@ -104,16 +123,18 @@ function ChatFooter({ userId, userToken }: { userId: string; userToken: string }
   };
   const afterSend = (success: boolean) => {
     // 发送成功，清空 uploader
+    // send success, clear uploader
     if (success) {
       uploaderRef.current?.destroy();
       uploaderRef.current = undefined;
     }
 
-    // 清空附件列表
     useChatStore.setState({
       attachmentList: [],
     });
   };
+
+  const fromShare = new URLSearchParams(window.location.search).get('token');
 
   return (
     <>
@@ -141,51 +162,55 @@ function ChatFooter({ userId, userToken }: { userId: string; userToken: string }
                 <input type='file' accept='image/*' multiple onChange={onStartUpload} />
               </div>
               <div className='_extra-action-label'>
-                <span>相册</span>
+                <span>{t('chat.actions.album')}</span>
               </div>
             </li>
-            <li>
-              <Button
-                onClick={() => {
-                  setExtraViewVisible(false);
-                  setCallAgentType(AICallAgentType.VoiceAgent);
-                  setCallVisible(true);
-                }}
-              >
-                {toVoiceSVG}
-              </Button>
-              <div className='_extra-action-label'>
-                <span>语音通话</span>
-              </div>
-            </li>
-            <li>
-              <Button
-                onClick={() => {
-                  setExtraViewVisible(false);
-                  setCallAgentType(AICallAgentType.AvatarAgent);
-                  setCallVisible(true);
-                }}
-              >
-                {toAvatarSVG}
-              </Button>
-              <div className='_extra-action-label'>
-                <span>虚拟人通话</span>
-              </div>
-            </li>
-            <li>
-              <Button
-                onClick={() => {
-                  setExtraViewVisible(false);
-                  setCallAgentType(AICallAgentType.VisionAgent);
-                  setCallVisible(true);
-                }}
-              >
-                {toVisionSVG}
-              </Button>
-              <div className='_extra-action-label'>
-                <span>视觉理解通话</span>
-              </div>
-            </li>
+            {!fromShare && (
+              <>
+                <li>
+                  <Button
+                    onClick={() => {
+                      setExtraViewVisible(false);
+                      setCallAgentType(AICallAgentType.VoiceAgent);
+                      setCallVisible(true);
+                    }}
+                  >
+                    {toVoiceSVG}
+                  </Button>
+                  <div className='_extra-action-label'>
+                    <span>{t('chat.actions.toVoice')}</span>
+                  </div>
+                </li>
+                <li>
+                  <Button
+                    onClick={() => {
+                      setExtraViewVisible(false);
+                      setCallAgentType(AICallAgentType.AvatarAgent);
+                      setCallVisible(true);
+                    }}
+                  >
+                    {toAvatarSVG}
+                  </Button>
+                  <div className='_extra-action-label'>
+                    <span>{t('chat.actions.toAvatar')}</span>
+                  </div>
+                </li>
+                <li>
+                  <Button
+                    onClick={() => {
+                      setExtraViewVisible(false);
+                      setCallAgentType(AICallAgentType.VisionAgent);
+                      setCallVisible(true);
+                    }}
+                  >
+                    {toVisionSVG}
+                  </Button>
+                  <div className='_extra-action-label'>
+                    <span>{t('chat.actions.toVision')}</span>
+                  </div>
+                </li>
+              </>
+            )}
           </ul>
         )}
 
@@ -214,6 +239,7 @@ function ChatFooter({ userId, userToken }: { userId: string; userToken: string }
         bodyStyle={{ height: '100%' }}
       >
         <Call
+          rc={rc}
           userId={userId}
           userToken={userToken}
           agentType={callAgentType}

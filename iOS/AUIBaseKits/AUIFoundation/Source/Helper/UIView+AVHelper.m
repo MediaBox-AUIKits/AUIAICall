@@ -99,6 +99,9 @@
             mainWindow = UIApplication.sharedApplication.delegate.window;
         }
     }
+    if (mainWindow == nil) {
+        mainWindow = UIApplication.sharedApplication.keyWindow;
+    }
     
     return mainWindow;
 }

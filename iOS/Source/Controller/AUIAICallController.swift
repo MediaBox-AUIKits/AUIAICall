@@ -308,6 +308,11 @@ extension AUIAICallController: ARTCAICallEngineDelegate {
         debugPrint("AUIAICallController onCallEnd")
     }
     
+    public func onRTCEngineCreated() {
+        debugPrint("AUIAICallController onRTCEngineCreated")
+        self.delegate?.onAICallRTCEngineCreated?()
+    }
+    
     public func onAgentStarted() {
         debugPrint("AUIAICallController onAgentStarted")
 
@@ -318,7 +323,7 @@ extension AUIAICallController: ARTCAICallEngineDelegate {
         ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "AgentUserId", value: agent.uid)
         ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "InstanceId", value: agent.instanceId)
         
-        self.delegate?.onAICallAIAgentStarted?(agentInfo: agent)
+        self.delegate?.onAICallAIAgentStarted?(agentInfo: agent, elapsedTime: Date().timeIntervalSince1970 - self.startTime)
         self.fetchVoiceIdList(instanceId: agent.instanceId)
     }
     

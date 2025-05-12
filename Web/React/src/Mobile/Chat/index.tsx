@@ -1,3 +1,4 @@
+import { AICallRunConfig } from '@/interface.ts';
 import { SafeArea, Toast } from 'antd-mobile';
 import {
   AICallAgentError,
@@ -22,11 +23,12 @@ import standardService from '../../service/standard';
 import './index.less';
 import ChatState from './State';
 import { getRootElement } from '@/common/utils';
-import { getErrorMessage } from '@/common/i18n';
 import { AIChatEngineState, AIChatMessageState } from 'aliyun-auikit-aicall';
 import { JSONObject } from '@/service/interface.ts';
+import { useTranslation } from '@/common/i18nContext';
 
 export interface ChatProps {
+  rc: AICallRunConfig;
   userId: string;
   userToken: string;
   appServer?: string;
@@ -40,6 +42,7 @@ export interface ChatProps {
 }
 
 function Chat({
+  rc,
   userId,
   userToken,
   appServer,
@@ -51,7 +54,10 @@ function Chat({
   onExit,
   onAuthFail,
 }: ChatProps) {
+  const { t } = useTranslation();
+
   const [chatEngine, setChatEngine] = useState<AIChatEngine | null>(null);
+  const { e } = useTranslation();
 
   useEffect(() => {
     const pageUnload = () => {
@@ -60,7 +66,7 @@ function Chat({
     window.addEventListener('beforeunload', pageUnload);
 
     return () => {
-      // 触发将当前未结束的消息缓存
+      // to cache the message list
       useChatStore.getState().updateMessageList();
       window.removeEventListener('beforeunload', pageUnload);
     };
@@ -78,13 +84,13 @@ function Chat({
           _region = shareConfig.region;
         }
       } else {
-        Toast.show({ content: '分享信息解析失败', getContainer: () => getRootElement() });
+        Toast.show({ content: t('share.tokenInvalid'), getContainer: () => getRootElement() });
         return;
       }
     }
 
     if (!_agentId) {
-      Toast.show({ content: '智能体Id不能为空', getContainer: () => getRootElement() });
+      Toast.show({ content: 'no agentId founded', getContainer: () => getRootElement() });
       return;
     }
     if (appServer) {
@@ -103,6 +109,11 @@ function Chat({
     chatEngine.on('engineStateChange', (state) => {
       useChatStore.setState({
         chatState: state,
+      });
+    });
+    chatEngine.on('agentResponeStateChange', (state) => {
+      useChatStore.setState({
+        chatResponseState: state,
       });
     });
     chatEngine.on('messagePlayStateChange', (message, state) => {
@@ -124,8 +135,8 @@ function Chat({
           callback(authToken as AIChatAuthToken);
         } catch (err) {
           callback(undefined, err as AIChatError);
-          const message = getErrorMessage((err as AICallAgentError).code) || (err as AICallAgentError).message;
-          Toast.show({ content: `${message || '出错了'}` });
+          const message = e((err as AICallAgentError).code) || (err as AICallAgentError).message;
+          Toast.show({ content: `${message || t('error.unknown')}` });
         }
         return;
       }
@@ -154,12 +165,11 @@ function Chat({
       });
     });
     chatEngine.on('errorOccurs', (error) => {
-      // TokenExpired 场景交给 requestAuthToken 处理
       if ((error as AIChatError).code === AICallErrorCode.TokenExpired) {
         return;
       }
       Toast.show({
-        content: `出错了(${(error as AIChatError).code}): ${(error as AIChatError).message}`,
+        content: `Error Occurs: (${(error as AIChatError).code}): ${(error as AIChatError).message}`,
         getContainer: getRootElement,
       });
     });
@@ -192,6 +202,7 @@ function Chat({
         });
 
         // 首次连接成功后，加载历史消息
+        // load history message after engine connected
         chatEngine.once('engineStateChange', async (state) => {
           if (state === AIChatEngineState.Connected) {
             const serverLastMessageList = await chatEngine?.queryMessageList({
@@ -203,7 +214,6 @@ function Chat({
             });
 
             if (serverLastMessageList?.length && chatEngine?.userInfo?.userId) {
-              // 加载的历史消息列表是新的在前的，在这里进行了反向
               useChatStore
                 .getState()
                 .historyMessages(serverLastMessageList.reverse(), chatEngine.userInfo.userId, true);
@@ -228,7 +238,7 @@ function Chat({
         <SafeArea position='top' />
         <ChatHeader onBack={onExit} />
         <ChatMessages />
-        <ChatFooter userId={userId} userToken={userToken} />
+        <ChatFooter userId={userId} userToken={userToken} rc={rc} />
         <SafeArea position='bottom' />
         <ChatState onExit={onExit} />
       </div>

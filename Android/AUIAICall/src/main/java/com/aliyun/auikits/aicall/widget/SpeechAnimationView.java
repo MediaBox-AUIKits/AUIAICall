@@ -41,6 +41,11 @@ public class SpeechAnimationView extends SurfaceView implements SurfaceHolder.Ca
         CHATBOT_SPEAKING
     }
 
+    public SpeechAnimationView(Context context) {
+        super(context);
+        getHolder().addCallback(this);
+    }
+
     public SpeechAnimationView(Context context, AttributeSet attrs) {
         super(context, attrs);
         getHolder().addCallback(this);

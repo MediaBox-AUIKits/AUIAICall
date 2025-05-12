@@ -109,6 +109,17 @@ extension AUIAIChatMessageUserAttachmentCell: UICollectionViewDelegate, UICollec
         return cell
     }
     
+    public func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        guard let cell = self.attachmentsView.cellForItem(at: indexPath) as? AUIAIChatMessageAttachmentCell else {
+            return
+        }
+        
+        guard let image = cell.imageView.image else {
+            return
+        }
+        
+        UIViewController.av_top().av_presentFullScreenViewController(AUIAIChatImageViewer(image: image), animated: true)
+    }
 }
 
 extension AUIAIChatMessageUserAttachmentCell {

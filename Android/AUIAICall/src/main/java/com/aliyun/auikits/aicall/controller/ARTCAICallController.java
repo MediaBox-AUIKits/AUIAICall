@@ -10,6 +10,7 @@ import android.util.Base64;
 import android.util.Log;
 import android.view.ViewGroup;
 
+import com.alivc.rtc.AliRtcEngine;
 import com.aliyun.auikits.aiagent.ARTCAICallEngine;
 import com.aliyun.auikits.aiagent.service.IARTCAICallService;
 import com.aliyun.auikits.aiagent.util.ARTCAIAgentUtil;
@@ -105,6 +106,13 @@ public abstract class ARTCAICallController {
         public void onUserSpeaking(boolean isSpeaking) {
             if (null != mBizCallEngineCallback) {
                 mBizCallEngineCallback.onUserSpeaking(isSpeaking);
+            }
+        }
+
+        @Override
+        public void onUserAsrSubtitleNotify(String text, boolean isSentenceEnd, int sentenceId) {
+            if (null != mBizCallEngineCallback) {
+                mBizCallEngineCallback.onUserAsrSubtitleNotify(text, isSentenceEnd, sentenceId);
             }
         }
 
@@ -275,6 +283,13 @@ public abstract class ARTCAICallController {
         public void onLLMReplyCompleted(String text, int userAsrSentenceId) {
             if(null != mBizCallEngineCallback) {
                 mBizCallEngineCallback.onLLMReplyCompleted(text, userAsrSentenceId);
+            }
+        }
+
+        @Override
+        public void onAliRtcEngineCreated(AliRtcEngine engine) {
+            if(null != mBizCallEngineCallback) {
+                mBizCallEngineCallback.onAliRtcEngineCreated(engine);
             }
         }
     };

@@ -72,7 +72,7 @@ dependencies {
 
 
     if(getBoolProperty('USE_AICALLKIT_AAR')) {
-        implementation 'com.aliyun.auikits.android:ARTCAICallKit:2.2.0'
+        implementation 'com.aliyun.auikits.android:ARTCAICallKit:2.3.0'
     } else {
         implementation project(':AUIAICallEngine')
         implementation project(':ARTCAICallKit')
@@ -82,6 +82,7 @@ dependencies {
     implementation externalAllInOne
     implementation externalAliVCInteractionMessage
     implementation project(':AUIBaseKits::AUICommon')
+    implementation externalLottie
 }
 
 def getBoolProperty(String gradlePropertyKey) {

@@ -1,52 +1,141 @@
 package com.aliyun.auikits.aicall.util;
 
-import com.aliyun.auikits.aiagent.ARTCAIChatEngine;
 
+import android.text.TextUtils;
+
+import com.alivc.auicommon.common.base.log.Logger;
+import com.aliyun.auikits.aiagent.ARTCAIChatEngine;
+import com.aliyun.auikits.aiagent.service.ARTCAICallServiceImpl;
+import com.aliyun.auikits.aiagent.service.IARTCAICallService;
+
+import org.json.JSONObject;
+
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public class AUIAIChatAuthTokenHelper {
 
-    private static String appID = "";
-    private static String appKey = "";
-    private static String appSign = "";
-    private static long tokenDuration = 24 * 60 * 60;
+    // 设置为true，启动Develop模式
+    private static final boolean EnableDevelopToken = false;
 
-    public static ARTCAIChatEngine.ARTCAIChatAuthToken generateAuthToken(String userId) {
+    //从控制台拷贝的互动消息的AppId
+    private static final String AIChatIMDevelopAppId = "";
+    //从控制台拷贝互动消息的AppKey
+    private static final String AIChatIMDevelopAppKey = "";
+    //从控制台拷贝互动消息的AppKey
+    private static final String AIChatIMDevelopAppSign = "";
+
+    public interface IAUIAIChatAuthTokenCallback {
+        void onSuccess(ARTCAIChatEngine.ARTCAIChatAuthToken auth);
+        void onFail(int errorCode, String errorMsg);
+    }
+
+    private static final String TAG = "AUIAIChatAuthTokenHelper";
+    private static ARTCAICallServiceImpl.AppServerService mAppServerService = null;
+
+    public static void getAIChatAuthToken(String userId, String authorization,  String mAgentId, String mAgentRegion, AUIAIChatAuthTokenHelper.IAUIAIChatAuthTokenCallback callback) {
+        if(EnableDevelopToken) {
+            ARTCAIChatEngine.ARTCAIChatAuthToken auth = generateAIChatAuthToken(AIChatIMDevelopAppId, AIChatIMDevelopAppKey, AIChatIMDevelopAppSign, userId, getTimesTamp());
+            if(callback != null ) {
+                if(auth != null) {
+                    callback.onSuccess(auth);
+                }
+            }
+        } else {
+            boolean usePreHost = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_APP_SERVER_TYPE, SettingStorage.DEFAULT_APP_SERVER_TYPE);
+            String mAppServer = null;
+            if(usePreHost) {
+                mAppServer = AUIAICallAgentDebug.PRE_HOST;
+            } else {
+                mAppServer = AppServiceConst.HOST;
+            }
+
+            if(mAppServerService == null) {
+                mAppServerService = new ARTCAICallServiceImpl.AppServerService(mAppServer);
+            }
+            if(mAppServerService != null) {
+                try {
+                    JSONObject jsonObject = new JSONObject();
+                    jsonObject.put("user_id", userId);
+                    jsonObject.put("expire", 1 * 60 * 60);
+                    if(!TextUtils.isEmpty(mAgentId)) {
+                        jsonObject.put("ai_agent_id", mAgentId);
+                    }
+                    if(!TextUtils.isEmpty(mAgentRegion)) {
+                        jsonObject.put("region", mAgentRegion);
+                    }
+
+                    mAppServerService.postAsync(mAppServer, "/api/v2/aiagent/generateMessageChatToken", authorization, jsonObject, new IARTCAICallService.IARTCAICallServiceCallback() {
+                        @Override
+                        public void onSuccess(JSONObject jsonObject) {
+
+                            ARTCAIChatEngine.ARTCAIChatAuthToken auth = new ARTCAIChatEngine.ARTCAIChatAuthToken(jsonObject);
+                            if(auth != null) {
+                                if(callback != null) {
+                                    callback.onSuccess(auth);
+                                }
+                            }
+                        }
+                        @Override
+                        public void onFail(int errorCode, String errorMsg) {
+                            Logger.e("generateMessageChatToken failed: " + errorMsg);
+                            if(callback != null) {
+                                callback.onFail(errorCode, errorMsg);
+                            }
+                        }
+                    });
+
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }
+    }
+
+    public static ARTCAIChatEngine.ARTCAIChatAuthToken generateAIChatAuthToken(String appid, String appkey, String appSign, String userId, long timestamp) {
         String role = "";
         String nonce = "AK_4";
-        long timestamp = System.currentTimeMillis() / 1000 + tokenDuration;
-        String pendingShaStr = appID + appKey + userId + nonce + timestamp + role;
-        String appToken = AUIAIChatAuthTokenHelper.shaEncrypt(pendingShaStr);
-        return new ARTCAIChatEngine.ARTCAIChatAuthToken(appID, appSign, appToken, timestamp, role, nonce);
+        StringBuilder stringBuilder = new StringBuilder()
+                .append(appid)
+                .append(appkey)
+                .append(userId)
+                .append(nonce)
+                .append(role)
+                .append(timestamp);
+        String appToken = getSHA256(stringBuilder.toString());
+
+        ARTCAIChatEngine.ARTCAIChatAuthToken auth = new ARTCAIChatEngine.ARTCAIChatAuthToken(appid, appSign, appToken, timestamp, role, nonce);
+        return auth;
     }
 
-    private static String shaEncrypt(String strSrc) {
-        MessageDigest md = null;
-        String strDes = null;
-        byte[] bt = strSrc.getBytes();
+    public static String getSHA256(String str) {
         try {
-            md = MessageDigest.getInstance("SHA-256");// 将此换成SHA-1、SHA-512、SHA-384等参数
-            md.update(bt);
-            strDes = bytes2Hex(md.digest()); // to HexString
+            MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = messageDigest.digest(str.getBytes(StandardCharsets.UTF_8));
+            return byte2Hex(hash);
         } catch (NoSuchAlgorithmException e) {
-            return null;
+            // Consider logging the exception and/or re-throwing as a RuntimeException
+            e.printStackTrace();
         }
-        return strDes;
+        return "";
     }
 
-    private static String bytes2Hex(byte[] bts) {
-        String des = "";
-        String tmp = null;
-        for (int i = 0; i < bts.length; i++) {
-            tmp = (Integer.toHexString(bts[i] & 0xFF));
-            if (tmp.length() == 1) {
-                des += "0";
+    private static String byte2Hex(byte[] bytes) {
+        StringBuilder stringBuilder = new StringBuilder();
+        for (byte b : bytes) {
+            String hex = Integer.toHexString(0xff & b);
+            if (hex.length() == 1) {
+                // Use single quote for char
+                stringBuilder.append('0');
             }
-            des += tmp;
+            stringBuilder.append(hex);
         }
-        return des;
+        return stringBuilder.toString();
     }
 
+    public static long getTimesTamp() {
+        return System.currentTimeMillis() / 1000 + 60 * 60 * 24;
+    }
 
 }

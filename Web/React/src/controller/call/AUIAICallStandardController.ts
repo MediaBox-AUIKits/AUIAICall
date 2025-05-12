@@ -1,9 +1,7 @@
-import { AICallAgentError, AICallAgentInfo, AICallState, AICallTemplateConfig } from 'aliyun-auikit-aicall';
+import { AICallAgentError, AICallAgentInfo, AICallErrorCode, AICallState } from 'aliyun-auikit-aicall';
 import AUIAICallController from './AUIAICallController';
-
 import standardService from '../../service/standard';
 import AUIAICallConfig from './AUIAICallConfig';
-import { TemplateConfig } from '../../service/interface';
 import logger from '@/common/logger';
 
 class AUIAICallStandardController extends AUIAICallController {
@@ -15,29 +13,71 @@ class AUIAICallStandardController extends AUIAICallController {
     standardService.setAppServer(appServerUrl);
   }
 
-  private async describeAIAgent(instanceId: string) {
+  async start(): Promise<void> {
+    logger.info('StandardController', 'Start');
     const startTs = Date.now();
+    if (this.state === AICallState.Connected || this.state === AICallState.Connecting) return;
+    this.state = AICallState.Connecting;
+
+    this.addEngineListener();
+    let instanceInfo: AICallAgentInfo | undefined;
     try {
-      // 每次先清空当前的配置
-      this.config.templateConfig.avatarUrl = '';
-      this.config.templateConfig.agentVoiceId = '';
-      this.config.agentVoiceIdList = [];
-      const templateConfig = await standardService.describeAIAgent(this.userId, this.token, instanceId);
-      const configKey = AICallTemplateConfig.getTemplateConfigKey(this.config.agentType) as keyof TemplateConfig;
-      const configValue = templateConfig[configKey];
-      if (configValue?.AvatarUrl) {
-        this.config.templateConfig.avatarUrl = configValue?.AvatarUrl as string;
+      [instanceInfo] = await Promise.all([this.startAIAgent(), this.initEngine()]);
+      logger.setParams({
+        instanceId: instanceInfo.instanceId,
+        channelId: instanceInfo.channelId,
+        userId: instanceInfo.userId,
+        reqId: instanceInfo.reqId || '-',
+      });
+      logger.info('StandardController', 'GenerateAIAgentSuccess', { value: Date.now() - startTs });
+    } catch (error: unknown) {
+      this._errorCode = (error as AICallAgentError).code || AICallErrorCode.BeginCallFailed;
+      if ((error as AICallAgentError).name === 'ServiceAuthError') {
+        this.emit('AICallUserTokenExpired');
       }
-      if (configValue?.VoiceId) {
-        this.config.templateConfig.agentVoiceId = configValue?.VoiceId as string;
+      this.state = AICallState.Error;
+      logger.error('StartAIAgentFailed', error as Error);
+      throw error;
+    }
+
+    // 可能通话已经结束，不再继续
+    // call may be ended, abort
+    if (this.state !== AICallState.Connecting) return;
+
+    this._agentInfo = instanceInfo;
+    this.emit('AICallAIAgentStarted', instanceInfo, Date.now() - startTs);
+
+    if (!this._currentEngine) {
+      logger.error('StartCallFailed', new AICallAgentError('engine not init'));
+      throw new AICallAgentError('engine not init');
+    }
+
+    try {
+      this.engine!.once('callBegin', () => {
+        const elapsedTime = Date.now() - startTs;
+        logger.info('StandardController', 'StartSuccess', { value: elapsedTime });
+        this.emit('AICallBegin', elapsedTime);
+        this.state = AICallState.Connected;
+      });
+
+      await this.engine?.call(this.userId, instanceInfo);
+
+      if (this.config.agentView) {
+        this.engine?.setAgentView(this.config.agentView);
       }
-      if (configValue?.VoiceIdList) {
-        this.config.agentVoiceIdList = configValue.VoiceIdList as string[];
+
+      // @ts-expect-error state may change
+      if (this.state === AICallState.Over) {
+        this.handup();
+        throw new AICallAgentError('call has been over');
       }
-      logger.info('StandardController', 'DescribeAIAgent', { value: Date.now() - startTs });
-    } catch (error) {
-      logger.error('DescribeAIAgentFailed', error as Error);
-      console.log(error);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      this._errorCode = error.errorCode || AICallErrorCode.BeginCallFailed;
+      this.state = AICallState.Error;
+      this.handup();
+      logger.error('StartCallFailed', error);
+      throw error;
     }
   }
 
@@ -66,50 +106,10 @@ class AUIAICallStandardController extends AUIAICallController {
     }
 
     // 不需要等待 describeAIAgent 接口返回
+    // no need to wait for describeAIAgent
     this.describeAIAgent(agentInfo.instanceId);
 
     return agentInfo;
-  }
-
-  async stopAIAgent(): Promise<void> {
-    logger.info('StandardController', 'StopAIAgent');
-    this.engine?.stopAgent();
-    await new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(true);
-      }, 200);
-    });
-  }
-
-  async enableVoiceInterrupt(enable: boolean): Promise<boolean> {
-    logger.info('StandardController', 'EnableVoiceInterrupt', { enable });
-    if (this.state === AICallState.Connected) {
-      this.engine?.enableVoiceInterrupt(enable);
-    }
-    return true;
-  }
-
-  async switchVoiceId(voiceId: string): Promise<boolean> {
-    logger.info('StandardController', 'SwitchVoiceId', { voiceId });
-    if (this.state === AICallState.Connected) {
-      this.engine?.switchVoiceId(voiceId);
-    }
-    return true;
-  }
-
-  async requestRTCToken(): Promise<string> {
-    logger.info('StandardController', 'RequestRTCToken');
-    if (this.state === AICallState.Connected) {
-      this.engine?.requestRTCToken();
-
-      // 等待返回新的 RTC token
-      return new Promise((resolve) => {
-        this.engine?.once('newRTCToken', (token: string) => {
-          resolve(token);
-        });
-      });
-    }
-    return '';
   }
 
   destroy() {

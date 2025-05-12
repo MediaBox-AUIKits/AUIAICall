@@ -7,8 +7,10 @@ import { useContext, useState } from 'react';
 import { VoiceOneSVG, VoiceThreeSVG, VoiceTwoSVG } from '../Call/Icons';
 
 import ChatEngineContext from './ChatEngineContext';
+import { useTranslation } from '@/common/i18nContext';
 
 function ChatHeader({ onBack }: { onBack: () => void }) {
+  const { t } = useTranslation();
   const engine = useContext(ChatEngineContext);
   const voiceIdList = useChatStore((state) => state.voiceIdList);
   const voiceId = useChatStore((state) => state.voiceId);
@@ -25,7 +27,7 @@ function ChatHeader({ onBack }: { onBack: () => void }) {
         height={28}
         alt=''
       />
-      <div className='_title'>小云</div>
+      <div className='_title'>{t('hero.name')}</div>
       <div className='_gap' />
       <Button className='_setting-btn' disabled={voiceIdList.length === 0} onClick={() => setSettingVisible(true)}>
         {settingSVG}
@@ -41,14 +43,14 @@ function ChatHeader({ onBack }: { onBack: () => void }) {
           setSettingVisible(false);
         }}
       >
-        <div className='_title'>设置</div>
+        <div className='_title'>{t('settings.title')}</div>
         <ul>
           {voiceIdList.length > 0 && (
             <li className='_voiceId'>
               <div className='_itemBox'>
                 <div className='_itemInfo'>
-                  <div className='_itemTitle'>选择音色</div>
-                  <div className='_itemDesc'>切换音色后，AI将在下一次回答中使用新的音色</div>
+                  <div className='_itemTitle'>{t('settings.voiceId.title')}</div>
+                  <div className='_itemDesc'>{t('settings.voiceId.help')}</div>
                 </div>
               </div>
               <Radio.Group

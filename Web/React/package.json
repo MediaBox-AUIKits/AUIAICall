@@ -16,11 +16,13 @@
     "antd-mobile": "^5.38.1",
     "eventemitter3": "^5.0.1",
     "highlight.js": "^11.11.1",
+    "lottie-web": "^5.12.2",
     "markdown-it": "^14.1.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "uuid": "^11.1.0",
     "zustand": "^4.5.5",
-    "aliyun-auikit-aicall": "2.2.3"
+    "aliyun-auikit-aicall": "2.3.1"
   },
   "devDependencies": {
     "@arms/rum-browser": "^0.0.33",

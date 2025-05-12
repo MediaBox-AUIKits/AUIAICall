@@ -5,9 +5,9 @@ import useCallStore from '@/Mobile/Call/store';
 import { useContext } from 'react';
 import ControllerContext from '@/Mobile/Call/ControlerContext';
 import { AICallAgentType } from 'aliyun-auikit-aicall';
-import i18n from '@/common/i18n';
 import Icon from '@ant-design/icons';
 import SettingSvg from './svg/setting.svg?react';
+import { useTranslation } from '@/common/i18nContext';
 
 const layout = {
   labelCol: { span: 8 },
@@ -15,6 +15,8 @@ const layout = {
 };
 
 function CallSettingsPopover() {
+  const { t } = useTranslation();
+
   const [messageApi, contextHolder] = message.useMessage();
   const controller = useContext(ControllerContext);
 
@@ -32,9 +34,10 @@ function CallSettingsPopover() {
     useCallStore.setState({ enablePushToTalk: checked, updatingPushToTalk: true });
     const updated = await controller?.enablePushToTalk(checked);
     if (updated) {
-      messageApi.success(`对讲机模式已${checked ? '开启' : '关闭'}`);
+      messageApi.success(checked ? t('settings.pushToTalk.enabled') : t('settings.pushToTalk.disabled'));
     }
     // 退出对讲机模式，恢复音频静音状态
+    // exit push to talk mode, restore mute status
     if (!checked) {
       if (useCallStore.getState().microphoneMuted) {
         controller?.muteMicrophone(true);
@@ -51,7 +54,7 @@ function CallSettingsPopover() {
     const updated = await controller?.enableVoiceInterrupt(checked);
 
     if (updated) {
-      messageApi.success(`智能打断成功已${checked ? '开启' : '关闭'}`);
+      messageApi.success(checked ? t('settings.interrupt.enabled') : t('settings.interrupt.disabled'));
     }
     useCallStore.setState({ enableVoiceInterrupt: updated ? checked : original, updatingVoiceInterrupt: false });
   };
@@ -62,7 +65,7 @@ function CallSettingsPopover() {
 
     const updated = await controller?.switchVoiceId(e.target.value);
     if (updated) {
-      messageApi.success('音色切换成功');
+      messageApi.success(t('settings.voiceId.success'));
     }
     useCallStore.setState({ voiceId: updated ? e.target.value : original, updatingVoiceId: false });
   };
@@ -70,7 +73,7 @@ function CallSettingsPopover() {
   return (
     <Form {...layout} colon={false} labelAlign='left' className='voice-call-settings-form'>
       {contextHolder}
-      <Form.Item label={i18n['setting.modeTitle']} className='_mode'>
+      <Form.Item label={t('settings.mode.title')} className='_mode'>
         <Radio.Group
           name='mode'
           value={enablePushToTalk ? 'pushToTalk' : 'normal'}
@@ -78,21 +81,20 @@ function CallSettingsPopover() {
           onChange={onPushToTalkChange}
         >
           <Space direction='vertical'>
-            <Radio value='normal'>自然对话模式</Radio>
-            <Radio value='pushToTalk'>对讲机模式</Radio>
+            <Radio value='normal'>{t('settings.mode.natural')}</Radio>
+            <Radio value='pushToTalk'>{t('settings.mode.pushToTalk')}</Radio>
           </Space>
         </Radio.Group>
       </Form.Item>
 
       {!enablePushToTalk && !updatingPushToTalk && (
-        <Form.Item label={i18n['setting.voiceInterruptTitle']} help={i18n['setting.voiceInterruptHelp']}>
+        <Form.Item label={t('settings.interrupt.title')} help={t('settings.interrupt.help')}>
           <Switch checked={enableVoiceInterrupt} disabled={updatingVoiceInterrupt} onChange={onVoiceInterruptChange} />
         </Form.Item>
       )}
 
-      {/* 3D数字人不支持切换音色，防止出现声音与形象不符的情况 */}
       {agentType !== AICallAgentType.AvatarAgent && (controller?.config.agentVoiceIdList.length || 0) > 0 && (
-        <Form.Item label={i18n['setting.voiceIdTitle']} help={i18n['setting.voiceIdHelp']}>
+        <Form.Item label={t('settings.voiceId.title')} help={t('settings.voiceId.help')}>
           <Radio.Group name='voiceId' value={voiceId} disabled={updatingVoiceId} onChange={onVoiceChange}>
             <Space direction='vertical'>
               {controller?.config.agentVoiceIdList.map((voiceId, index) => {
@@ -111,18 +113,20 @@ function CallSettingsPopover() {
 }
 
 function CallSettings() {
+  const { t } = useTranslation();
+
   return (
     <Popover
       overlayClassName='stage-settings-content'
       placement='bottomRight'
       arrow={false}
-      title='设置'
+      title={t('settings.title')}
       content={<CallSettingsPopover />}
       trigger='click'
     >
       <Button>
         <Icon component={SettingSvg} />
-        设置
+        {t('settings.title')}
       </Button>
     </Popover>
   );

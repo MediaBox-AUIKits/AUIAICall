@@ -101,7 +101,7 @@ public class CardListAdapter extends BaseQuickAdapter<CardEntity, BaseViewHolder
         if(holder.itemView instanceof ChatBotSendTextMessageCard) {
             ((ChatBotSendTextMessageCard)holder.itemView).setOnMessageItemLongClickListener(new ChatBotSendTextMessageCard.OnMessageItemLongClickListener() {
                 @Override
-                public void onMessageItemLongClick(String requestId) {
+                public void onMessageItemLongClick() {
                     if(onItemLongClickListener != null) {
                         onItemLongClickListener.onItemLongClick(holder.itemView, position);
                     }

@@ -1,27 +1,28 @@
 import { create } from 'zustand';
 
-import { AICallAgentState, AICallAgentType, AICallState, AICallSubtitleData } from 'aliyun-auikit-aicall';
+import {
+  AICallAgentState,
+  AICallAgentType,
+  AICallState,
+  AICallSubtitleData,
+  AICallVoiceprintResult,
+} from 'aliyun-auikit-aicall';
 
 type SubtitleItem = {
   data: AICallSubtitleData;
   source: 'agent' | 'user';
+  voiceprintResult?: AICallVoiceprintResult;
 };
 
 interface CallStore {
   agentType: AICallAgentType | undefined;
 
-  // 通话状态
   callState: AICallState;
-  // 通话错误
   callErrorMessage?: string;
-
-  // Agent 状态
   agentState: AICallAgentState;
 
-  // 是否正在说话
   isSpeaking: boolean;
 
-  // 字幕
   currentSubtitle?: SubtitleItem;
   currentAgentSubtitle?: SubtitleItem;
   subtitleList: SubtitleItem[];
@@ -71,6 +72,7 @@ const useCallStore = create<CallStore>((set) => ({
       const currentAgentSubtitle = state.currentAgentSubtitle;
       const newState: Partial<CallStore> = {};
       // agent 的字幕连续出现，sentenceId 相同进行拼接
+      // agent subtitle appear in the same sentenceId, merge them
       if (subtitle.source === 'agent' && subtitle.data.sentenceId === currentAgentSubtitle?.data?.sentenceId) {
         currentAgentSubtitle.data.text = currentAgentSubtitle.data.text + subtitle.data.text;
         currentAgentSubtitle.data.end = subtitle.data.end;
@@ -78,8 +80,10 @@ const useCallStore = create<CallStore>((set) => ({
         newSubtitle = currentAgentSubtitle;
       } else {
         // agent 字幕
+        // agent subtitle
         if (subtitle.source === 'agent') {
           // 如果 currentAgentSubtitle 存在，并且非 end 则添加到 subtitleList，视为已经 end
+          // if currentAgentSubtitle is exist and not end, add it to subtitleList, means it is end
           if (currentAgentSubtitle?.data.text && !currentAgentSubtitle.data.end) {
             newState.subtitleList = [...state.subtitleList, currentAgentSubtitle];
           }
@@ -91,10 +95,12 @@ const useCallStore = create<CallStore>((set) => ({
       newState.currentSubtitle = { ...newSubtitle };
 
       // 如果 end 则添加到 subtitleList
+      // if subtitle was end, add it to subtitleList
       if (newSubtitle.data.text) {
         const existSubtitle = state.subtitleList.find(
           (sub) => sub.source === newSubtitle.source && sub.data.sentenceId === newSubtitle.data.sentenceId
         );
+        // if exist, update it
         // 如果已经存在更新，否则 Append
         if (existSubtitle) {
           existSubtitle.data.text = newSubtitle.data.text;

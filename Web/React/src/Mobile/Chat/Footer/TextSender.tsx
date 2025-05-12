@@ -1,6 +1,6 @@
 import { useContext, useRef, useState, useEffect, RefObject } from 'react';
 import { TextAreaRef, Button, TextArea, Toast } from 'antd-mobile';
-import { AIChatMessage, AIChatMessageState } from 'aliyun-auikit-aicall';
+import { AIChatAgentResponseState, AIChatMessage, AIChatMessageState } from 'aliyun-auikit-aicall';
 
 import ChatEngineContext from '../ChatEngineContext';
 import { interruptSVG, sendSVG, micSVG } from '../Icons';
@@ -8,6 +8,7 @@ import useChatStore from '../store';
 import { OnTypeChange } from './type';
 import { AIChatAttachmentUploader } from 'aliyun-auikit-aicall';
 import { getRootElement } from '@/common/utils.ts';
+import { useTranslation } from '@/common/i18nContext';
 
 const TEXT_CACHE_KEY = 'aicall-chat-input-cache';
 
@@ -20,14 +21,16 @@ function TextSender({
   uploaderRef: RefObject<AIChatAttachmentUploader | undefined>;
   afterSend?: (success: boolean) => void;
 }) {
+  const { t } = useTranslation();
   const engine = useContext(ChatEngineContext);
   const ref = useRef<TextAreaRef>(null);
   const textHeightRef = useRef(0);
-  const currentMessage = useChatStore((state) => state.currentMessage);
+  const reponseState = useChatStore((state) => state.chatResponseState);
   const [focusing, setFocusing] = useState(false);
   const attachmentList = useChatStore((state) => state.attachmentList);
   const attachmentCanSend = useChatStore((state) => state.attachmentCanSend);
   const [hasText, setHasText] = useState(false);
+  const sendingRef = useRef(false);
 
   useEffect(() => {
     const text = localStorage?.getItem(TEXT_CACHE_KEY);
@@ -45,18 +48,19 @@ function TextSender({
   useEffect(() => {
     setTimeout(() => {
       if (focusing) {
-        // iOS 16 一下如果传入 false 会导致无法滚动
+        // iOS 16 以下如果传入 false 会导致无法滚动
+        // if iOS version < 16 and params with false scrollIntoView will not work
         ref.current?.nativeElement?.scrollIntoView();
       }
     }, 100);
   }, [focusing]);
 
-  const sendMessage = async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-    const target = e.target as HTMLButtonElement;
-    if (target.getAttribute('data-disabled' as any) === 'true') {
+  const sendMessage = async (e?: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    const target = e?.target as HTMLButtonElement;
+    if (target && target.getAttribute('data-disabled') === 'true') {
       if (!attachmentCanSend) {
         Toast.show({
-          content: '部分图片上传中或上传失败',
+          content: t('chat.uploader.notReady'),
           getContainer: getRootElement,
         });
       }
@@ -66,9 +70,11 @@ function TextSender({
 
     // 需要有附件或文本时才发送
     // If there are no attachments and the text is empty, do not send
-    if (!uploaderRef.current?.attachmentList?.length && !text.trim()) {
+    if (sendingRef.current && !uploaderRef.current?.attachmentList?.length && !text.trim()) {
       return;
     }
+
+    sendingRef.current = true;
 
     localStorage?.removeItem(TEXT_CACHE_KEY);
     const message = AIChatMessage.fromSendText(text.trim(), uploaderRef.current?.attachmentList);
@@ -77,6 +83,7 @@ function TextSender({
 
     try {
       const sendedMessage = await engine?.sendMessage(message, uploaderRef.current || undefined);
+      useChatStore.getState().updateMessageList();
       afterSend?.(true);
       ref.current?.clear();
       setFocusing(false);
@@ -89,6 +96,8 @@ function TextSender({
       useChatStore.getState().updateSendMessage(message);
       useChatStore.setState({ attachmentList: [] });
       console.error(error);
+    } finally {
+      sendingRef.current = false;
     }
   };
 
@@ -112,6 +121,7 @@ function TextSender({
   const onChange = (v: string) => {
     if (ref.current?.nativeElement) {
       // 仅高度增大时需要更新列表，触发滚动到最下面
+      // only increase height, need to update list to scroll to bottom
       if (ref.current.nativeElement.clientHeight > textHeightRef.current) {
         useChatStore.getState().updateMessageList();
         textHeightRef.current = ref.current.nativeElement.clientHeight;
@@ -129,7 +139,7 @@ function TextSender({
       {sendSVG}
     </Button>
   );
-  if (currentMessage?.message.messageState === AIChatMessageState.Printing) {
+  if (reponseState === AIChatAgentResponseState.Replying || reponseState === AIChatAgentResponseState.Thinking) {
     actionBtn = (
       <Button className='_action-btn' onClick={interruptMessage}>
         {interruptSVG}
@@ -144,6 +154,7 @@ function TextSender({
     };
     const onBlur = () => {
       //  延迟，防止状态更新导致点击事件不触发
+      // delay 200ms to wait for state update
       setTimeout(() => {
         setFocusing(false);
       }, 200);
@@ -157,17 +168,25 @@ function TextSender({
     };
   }, [ref]);
 
+  const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
+
   return (
     <>
       <div className={`_send-textarea ${focusing ? 'is-focusing' : ''}`}>
         <TextArea
-          placeholder='请输入内容'
+          placeholder={t('chat.send.textHolder')}
           style={{ '--font-size': '14px' }}
           rows={1}
           autoSize={{ minRows: 1, maxRows: 5 }}
           defaultValue={localStorage?.getItem(TEXT_CACHE_KEY) || ''}
           ref={ref}
           onChange={onChange}
+          onKeyDown={onKeyDown}
         />
         {actionBtn}
       </div>

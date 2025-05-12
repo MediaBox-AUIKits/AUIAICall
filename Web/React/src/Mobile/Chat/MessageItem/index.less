@@ -6,7 +6,6 @@
   align-items: flex-start;
   color: #716f8a;
 
-
   ._bd {
     position: relative;
     box-sizing: border-box;
@@ -16,8 +15,9 @@
     align-items: flex-end;
   }
 
-
   ._box {
+    max-width: 100%;
+    box-sizing: border-box;
     padding: 12px;
     border-radius: 14px 14px 12px 0px;
     font-size: 14px;
@@ -252,36 +252,30 @@
 
 @keyframes chat-playing-volume-animation-1 {
   0% {
-    /* 起始状态 */
     opacity: 0;
   }
   20% {
     opacity: 0;
-    /* 中间状态 */
   }
   40% {
     opacity: 1;
   }
   100% {
-    /* 结束状态 */
     opacity: 1;
   }
 }
 
 @keyframes chat-playing-volume-animation-2 {
   0% {
-    /* 起始状态 */
     opacity: 0;
   }
   60% {
     opacity: 0;
-    /* 中间状态 */
   }
   80% {
     opacity: 1;
   }
   100% {
-    /* 结束状态 */
     opacity: 1;
   }
 }

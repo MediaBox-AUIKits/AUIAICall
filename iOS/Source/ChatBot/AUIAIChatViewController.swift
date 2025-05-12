@@ -319,7 +319,7 @@ import PhotosUI
     private func deleteMessage(item: AUIAIChatMessageItem) {
         AVAlertController.show(withTitle: AUIAIChatBundle.getString("Confirm delete message?"), message: AUIAIChatBundle.getString("Messages deleted cannot be recovered"), btn1: AUIAIChatBundle.getString("Delete"), btn1Destructive: true, btn2: AUIAIChatBundle.getString("Cancel"), btn2Destructive: false) { isCancel in
             if isCancel == false {
-                self.engine.deleteMessage(dialogueId: item.message.dialogueId) { error in
+                self.engine.deleteMessage(message: item.message) { error in
                     if let error, error.aicall_code != .ChatLogNotFound {
                         self.showToast(AUIAIChatBundle.getString("Delete failed") + ": \(error.code)")
                     }
@@ -985,7 +985,7 @@ extension AUIAIChatViewController: ARTCAIChatEngineDelegate {
     
     public func onUserMessageUpdated(message: ARTCAIChatMessage) {
         let item = self.listMessage.last { item in
-            return item.isLeft == false && item.message.requestId == message.requestId
+            return item.isSame(message: message, isLeft: false)
         }
         if let item = item {
             item.message = message
@@ -996,8 +996,9 @@ extension AUIAIChatViewController: ARTCAIChatEngineDelegate {
     
     public func onReceivedMessage(message: ARTCAIChatMessage) {
         let isLeft = message.senderId == self.engine.agentInfo?.agentId
+        
         let item = self.listMessage.last { item in
-            return item.isLeft == isLeft && item.message.requestId == message.requestId
+            return item.isSame(message: message, isLeft: isLeft)
         }
         
         let reloadBlock = { [weak self] in

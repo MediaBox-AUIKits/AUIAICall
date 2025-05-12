@@ -89,6 +89,20 @@ extension AUIAIChatMessageItem {
 
 extension AUIAIChatMessageItem {
     
+    open func isSame(message: ARTCAIChatMessage, isLeft: Bool) -> Bool {
+        let ret = self.isLeft == isLeft && self.message.requestId == message.requestId
+        if ret == false {
+            return false
+        }
+        if self.message.nodeId == nil && message.nodeId != nil {
+            return true
+        }
+        if self.message.nodeId == message.nodeId {
+            return true
+        }
+        return false
+    }
+    
     open func updateContentInfoSync(maxWidth: CGFloat) {
         guard self.needsUpdateContentInfo else {
             return

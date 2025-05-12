@@ -42,7 +42,7 @@ import ARTCAICallKit
                 ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "AgentUserId", value: agent.uid)
                 ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "InstanceId", value: agent.instanceId)
                 
-                self.delegate?.onAICallAIAgentStarted?(agentInfo: agent)
+                self.delegate?.onAICallAIAgentStarted?(agentInfo: agent, elapsedTime: Date().timeIntervalSince1970 - self.startTime)
                 self.fetchVoiceIdList(instanceId: agent.instanceId)
 
                 _ = self.engine.muteLocalCamera(mute: self.config.muteLocalCamera)
@@ -136,6 +136,7 @@ extension AUIAICallStandardController {
                 let rtc_auth_token = data?["rtc_auth_token"] as? String
                 let info = ARTCAICallAgentInfo(data: data)
                 info.requestId = reqId
+                info.region = self?.config.region
                 completed?(info, rtc_auth_token, nil, reqId)
             }
             else {

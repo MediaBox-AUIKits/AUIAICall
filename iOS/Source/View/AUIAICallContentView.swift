@@ -11,12 +11,13 @@ import ARTCAICallKit
 
 @objcMembers open class AUIAICallContentView: UIView {
 
-    public override init(frame: CGRect) {
+    public init(frame: CGRect, agentType: ARTCAICallAgentType) {
+        self.agentType = agentType
         super.init(frame: frame)
                 
         self.addSubview(self.tipsLabel)
         self.addSubview(self.voiceprintTipsLabel)
-        self.addSubview(self.callStateAni)
+        self.addSubview(self.agentAni)
         
         self.addSubview(self.subtitleIcon)
         self.addSubview(self.subtitleLabel)
@@ -24,6 +25,8 @@ import ARTCAICallKit
         self.subtitleLabel.tappedAction = { [weak self] label in
             self?.openSubtileFullscreen()
         }
+        
+        self.setup()
     }
     
     public required init?(coder: NSCoder) {
@@ -34,7 +37,7 @@ import ARTCAICallKit
         super.layoutSubviews()
         
         let hei = self.av_bottom - 228 - 18
-        self.callStateAni.frame = CGRect(x: 0, y: UIView.av_safeTop + 44, width: self.av_width, height: hei - UIView.av_safeTop - 44)
+        self.agentAni.frame = CGRect(x: 0, y: UIView.av_safeTop + 44, width: self.av_width, height: hei - UIView.av_safeTop - 44)
         
         self.updateAgentLayout()
         
@@ -80,34 +83,18 @@ import ARTCAICallKit
         return label
     }()
 
-    open lazy var callStateAni: AUIAICallStateAnimation = {
-        let view = AUIAICallStateAnimation()
-        view.isHidden = false
+    public let agentType: ARTCAICallAgentType!
+    open lazy var agentAni: AUIAICallAgentAnimator = {
+        let view = self.agentType == .VoiceAgent ? AUIAICallAgentAvatarAnimator() :  AUIAICallAgentSimpleAnimator()
         return view
     }()
     
-    open var agentType: ARTCAICallAgentType = .VoiceAgent
-    open var voiceAgentAniView: AUIAICallAgentStateAnimation? = nil
     open var avatarAgentView: UIView? = nil
     open var visionCameraView: UIView? = nil
     open var visionAgentView: UIView? = nil
     
-    open func updateAgentType(agentType: ARTCAICallAgentType) {
-        self.voiceAgentAniView?.removeFromSuperview()
-        self.voiceAgentAniView = nil
-        
-        self.avatarAgentView?.removeFromSuperview()
-        self.avatarAgentView = nil
-        
-        self.visionCameraView?.removeFromSuperview()
-        self.visionCameraView = nil
-        
-        self.agentType = agentType
+    private func setup() {
         if agentType == .VoiceAgent {
-            let view = AUIAICallAgentStateAnimation()
-            view.isHidden = true
-            self.insertSubview(view, at: 0)
-            self.voiceAgentAniView = view
             self.voiceprintTipsLabel.isSelected = false
         }
         else if agentType == .AvatarAgent {
@@ -133,15 +120,12 @@ import ARTCAICallKit
             self.visionAgentView = agentView
             self.voiceprintTipsLabel.isSelected = true
         }
-        self.updateAgentLayout()
-        
     }
     
     private func updateAgentLayout() {
         if agentType == .VoiceAgent {
             let hei = self.av_bottom - 228 - 18
             self.tipsLabel.frame = CGRect(x: 0, y: hei, width: self.av_width, height: 18)
-            self.voiceAgentAniView?.frame = CGRect(x: 0, y: UIView.av_safeTop + 44, width: self.av_width, height: hei - UIView.av_safeTop - 44)
         }
         else if agentType == .AvatarAgent {
             let hei = self.av_bottom - 228 - 18

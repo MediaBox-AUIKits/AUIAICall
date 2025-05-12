@@ -5,8 +5,10 @@ import { getRootElement } from '@/common/utils';
 
 import './state.less';
 import { Action } from 'antd-mobile/es/components/dialog';
+import { useTranslation } from '@/common/i18nContext';
 
 function ChatState({ onExit }: { onExit: () => void }) {
+  const { t } = useTranslation();
   const state = useChatStore((state) => state.chatState);
 
   if (state === AIChatEngineState.Connected) return null;
@@ -14,17 +16,17 @@ function ChatState({ onExit }: { onExit: () => void }) {
   let content: React.ReactNode = (
     <div>
       <SpinLoading style={{ '--size': '48px' }} />
-      <div>接通中</div>
+      <div>{t('chat.connecting')}</div>
     </div>
   );
   let actions: Action[] = [];
 
   if (state === AIChatEngineState.Disconnect) {
-    content = '连接已断开';
+    content = t('chat.disconnected');
     actions = [
       {
         key: 'exit',
-        text: '退出',
+        text: t('common.exit'),
         onClick: () => {
           onExit?.();
         },

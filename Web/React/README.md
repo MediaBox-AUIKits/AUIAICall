@@ -15,12 +15,25 @@ AUI Kits AI 智能体集成工具适用于网络客服、AI 助理、撮合助�
 ### 源码结构
 
 ```
-├── Web                                             // Web平台的根目录
-│   ├── React
-│   │   ├── src                                       // Demo代码
-│   │   ├── vite.config.ts                            // Vite 相关配置
-│   │   ├── README.md                                 // Readme
-
+.
+└── React
+    ├── README.md
+    ├── eslint.config.js
+    ├── index.html     // PC版入口
+    ├── mobile.html    // 手机版入口
+    ├── package.json
+    ├── src
+    │   ├── Mobile     // 手机版UI实现
+    │   ├── PC         // PC版UI实现
+    │   ├── common     // 公共业务方法
+    │   ├── controller
+    │   ├── interface.ts
+    │   ├── runConfig.ts  // 运行时配置
+    │   ├── service
+    │   └── vite-env.d.ts
+    ├── tsconfig.app.json
+    ├── tsconfig.json
+    └── vite.config.ts
 ```
 
 ### 前提条件
@@ -30,12 +43,18 @@ AUI Kits AI 智能体集成工具适用于网络客服、AI 助理、撮合助�
 ## 跑通 demo
 
 - 源码下载后，进入 React 目录
-- 在 React 目录里执行命令 `npm intall` ，自动安装依赖
-- 打开文件 src/controller/service/interface.ts，修改服务端域名
+- 在 React 目录里执行命令 `npm install` ，自动安装依赖
+- 打开文件 `src/runConfig.ts`，修改服务端域名和 AgentId (可以只修改会用到的智能体类型的 id)
 
 ```typescript
-// src/controller/service/interface.ts
-export const APP_SERVER = '你的应用服务器域名';
+// src/runConfig.ts
+const runConfig: AICallRunConfig = {
+  appServer: '您的应用服务器地址',
+  voiceAgentId: '您的语音通话智能体id',
+  avatarAgentId: '您的数字人智能体id',
+  visionAgentId: '您的视觉智能体id',
+  chatAgentId: '您的消息通话智能体id',
+};
 ```
 
 - 根据业务情况，完善获取 UserId / Token（用于 AppServer 接口鉴权） 的逻辑

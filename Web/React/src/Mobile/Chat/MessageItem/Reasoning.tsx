@@ -3,17 +3,19 @@ import { Button } from 'antd-mobile';
 import { AIChatMessage, AIChatMessageState } from 'aliyun-auikit-aicall';
 import { reasoningEndSVG, reasoningExpandSVG } from '../Icons';
 import MessageItemTextLineRender from './TextLineRender';
+import { useTranslation } from '@/common/i18nContext';
 
 function MessageItemReasoning({ message }: { message: AIChatMessage }) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(true);
 
   if (!message?.reasoningText) return null;
 
-  let titleText = '思考中';
+  let titleText = t('chat.response.reasoninging');
   if (message.isReasoningEnd) {
-    titleText = '思考完成';
+    titleText = t('chat.response.reasoningCompleted');
   } else if (message.messageState === AIChatMessageState.Interrupted) {
-    titleText = '思考停止';
+    titleText = t('chat.response.reasoningInterrupted');
   }
 
   const toggleExpanded = () => {

@@ -26,6 +26,7 @@ public class SettingStorage {
     public static final String KEY_SHARE_BOOT_USE_DEMO_APP_SERVER = "KEY_SHARE_BOOT_USE_DEMO_APP_SERVER";
     public static final String KEY_BOOT_USER_EXTEND_DATA = "KEY_BOOT_USER_EXTEND_DATA";
     public static final String KEY_BOOT_ENABLE_EMOTION = "KEY_BOOT_ENABLE_EMOTION";
+    public static final String KEY_BOOT_ENABLE_AUDIO_DELAY_INFO = "KEY_BOOT_ENABLE_AUDIO_DELAY_INFO";
 
     public static final String KEY_ENABLE_VOICE_INTERRUPT = "KEY_ENABLE_VOICE_INTERRUPT";
     public static final String KEY_VOICE_ID = "KEY_VOICE_ID";

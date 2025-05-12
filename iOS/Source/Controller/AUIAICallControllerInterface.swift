@@ -54,9 +54,14 @@ import ARTCAICallKit
 @objc public protocol AUIAICallControllerDelegate {
     
     /**
+     * RTC引擎被成功创建，可以在这个回调里调用getRTCInstance获取到rtc引擎实例
+     */
+    @objc optional func onAICallRTCEngineCreated()
+    
+    /**
      * AI智能体已被启动
      */
-    @objc optional func onAICallAIAgentStarted(agentInfo: ARTCAICallAgentInfo)
+    @objc optional func onAICallAIAgentStarted(agentInfo: ARTCAICallAgentInfo, elapsedTime: TimeInterval)
     
     /**
      * AI智能体开始通话

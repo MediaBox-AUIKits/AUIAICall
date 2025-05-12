@@ -53,7 +53,6 @@ import ARTCAICallKit
     private func getDefaultTemplateConfig() -> ARTCAICallTemplateConfig {
         let templateConfig = ARTCAICallTemplateConfig()
         templateConfig.voiceprintId = self.voiceprintId
-        templateConfig.useVoiceprint = true
         return templateConfig
     }
     

@@ -13,14 +13,16 @@ import Camera from './svg/camera.svg?react';
 import CameraClosed from './svg/camera_closed.svg?react';
 
 import './footer.less';
-import i18n from '@/common/i18n';
 import ControllerContext from '@/Mobile/Call/ControlerContext';
+import { useTranslation } from '@/common/i18nContext';
 
 interface CallActionsProps {
   onStop: () => void;
 }
 
 function CallTip() {
+  const { t } = useTranslation();
+
   const [seconds, setSeconds] = useState(0);
   const durationTimerRef = useRef(0);
   const startTimeRef = useRef(0);
@@ -52,25 +54,25 @@ function CallTip() {
   const tipText = useMemo(() => {
     if (agentState === AICallAgentState.Listening) {
       if (!hasSpeaked) {
-        return i18n['status.listeningToStart'];
+        return t('status.listeningToStart');
       }
-      return i18n['status.listening'];
+      return t('status.listening');
     }
 
     if (agentState === AICallAgentState.Thinking) {
-      return i18n['status.thinking'];
+      return t('status.thinking');
     }
 
     if (agentState === AICallAgentState.Speaking) {
       if (enableVoiceInterrupt) {
-        return i18n['status.speaking'];
+        return t('status.speaking');
       } else {
-        return i18n['status.speakingNoInterrupt'];
+        return t('status.speakingNoInterrupt');
       }
     }
 
     return '';
-  }, [hasSpeaked, agentState, enableVoiceInterrupt]);
+  }, [t, hasSpeaked, agentState, enableVoiceInterrupt]);
 
   const durationText = useMemo(() => {
     const hours = Math.floor(seconds / 3600);
@@ -143,6 +145,7 @@ function DeviceList({ type }: MicrophoneListProps) {
   };
 
   // 当前麦克风不在列表中，重置为第一个
+  // current microphone not in list, reset to first one
   if (current && menuItems.length > 0 && !menuItems.find((item) => item.key === current)) {
     onChange(menuItems[0].key);
   }
@@ -161,6 +164,8 @@ function DeviceList({ type }: MicrophoneListProps) {
 }
 
 function CallFooter({ onStop }: CallActionsProps) {
+  const { t } = useTranslation();
+
   const agentType = useCallStore((state) => state.agentType);
   const microphoneMuted = useCallStore((state) => state.microphoneMuted);
   const cameraMuted = useCallStore((state) => state.cameraMuted);
@@ -174,7 +179,7 @@ function CallFooter({ onStop }: CallActionsProps) {
     if (enablePushToTalk) return;
     const to = !useCallStore.getState().microphoneMuted;
     controller?.muteMicrophone(to);
-    messageApi.success(to ? '麦克风已关闭' : '麦克风已开启');
+    messageApi.success(to ? t('microphone.closed') : t('microphone.opened'));
     useCallStore.setState({
       microphoneMuted: to,
     });
@@ -183,7 +188,7 @@ function CallFooter({ onStop }: CallActionsProps) {
   const toggleCameraMuted = () => {
     const to = !useCallStore.getState().cameraMuted;
     controller?.muteCamera(to);
-    messageApi.success(to ? '摄像头已关闭' : '摄像头已开启');
+    messageApi.success(to ? t('camera.closed') : t('camera.opened'));
     useCallStore.setState({
       cameraMuted: to,
     });
@@ -201,9 +206,9 @@ function CallFooter({ onStop }: CallActionsProps) {
       </Button>
       <div className='_label'>
         {enablePushToTalk ? (
-          <span className='_text'>{pushingToTalk ? '松开空格发送' : '长按空格，开始讲话'}</span>
+          <span className='_text'>{pushingToTalk ? t('pushToTalk.releaseToSend') : t('pushToTalk.spaceTip')}</span>
         ) : (
-          <span className='_text'>{microphoneMuted ? '开' : '关'}麦克风</span>
+          <span className='_text'>{microphoneMuted ? t('microphone.open') : t('microphone.close')}</span>
         )}
       </div>
     </li>
@@ -221,7 +226,7 @@ function CallFooter({ onStop }: CallActionsProps) {
               <Icon component={Phone} />
             </Button>
             <div className='_label'>
-              <span className='_text'>挂断</span>
+              <span className='_text'>{t('actions.handup')}</span>
             </div>
           </li>
           {agentType === AICallAgentType.VisionAgent ? (
@@ -231,7 +236,7 @@ function CallFooter({ onStop }: CallActionsProps) {
                 <Icon component={cameraMuted ? CameraClosed : Camera} />
               </Button>
               <div className='_label'>
-                <span className='_text'>开摄像头</span>
+                <span className='_text'>{t('camera.open')}</span>
               </div>
             </li>
           ) : (

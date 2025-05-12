@@ -48,8 +48,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -74,6 +72,7 @@ import com.aliyun.auikits.aicall.model.ChatBotSelectImagesContentModel;
 import com.aliyun.auikits.aicall.util.AUIAICallAgentDebug;
 import com.aliyun.auikits.aicall.util.AUIAICallAgentIdConfig;
 import com.aliyun.auikits.aicall.util.AUIAICallAuthTokenHelper;
+import com.aliyun.auikits.aicall.util.AUIAIChatAuthTokenHelper;
 import com.aliyun.auikits.aicall.util.AUIAIChatFileUtil;
 import com.aliyun.auikits.aicall.util.AUIAIChatMessageCacheHelper;
 import com.aliyun.auikits.aicall.util.AUIAIConstStrKey;
@@ -178,14 +177,14 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
             boolean shareBootUseDemoAppServer = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_SHARE_BOOT_USE_DEMO_APP_SERVER, SettingStorage.DEFAULT_SHARE_BOOT_USE_DEMO_APP_SERVER);
             if(!mIsSharedAgent || shareBootUseDemoAppServer) {
 
-                AUIAICallAuthTokenHelper.getAIChatAuthToken(mUserId, mUserLoginAuthorization, mAgentId, mAgentRegion, new AUIAICallAuthTokenHelper.IAUIAICallAuthTokenCallback() {
+                AUIAIChatAuthTokenHelper.getAIChatAuthToken(mUserId, mUserLoginAuthorization, mAgentId, mAgentRegion, new AUIAIChatAuthTokenHelper.IAUIAIChatAuthTokenCallback() {
                     @Override
-                    public void onSuccess(JSONObject token) {
-                        ARTCAIChatEngine.ARTCAIChatAuthToken auth = new ARTCAIChatEngine.ARTCAIChatAuthToken(token);
+                    public void onSuccess(ARTCAIChatEngine.ARTCAIChatAuthToken auth) {
                         if(auth != null) {
                             callback.onSuccess(auth);
                         }
                     }
+
                     @Override
                     public void onFail(int errorCode, String errorMsg) {
                         Logger.e("onRequestAuthToken failed: " + errorMsg);
@@ -359,8 +358,8 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
 
         AUIAIMarkwonManager.getInstance(this).registerLinkClickCallback(new AUIAIMarkwonManager.AUIAIMarkwonManagerCallback() {
             @Override
-            public void onLinkClicked(String url) {
-                jumpToWebView(url);
+            public void onLinkClicked(String url, boolean isLinkUrl) {
+                jumpToExternalView(url, isLinkUrl);
             }
         });
     }
@@ -401,9 +400,13 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
-    private void jumpToWebView(String url) {
-        Intent intent = new Intent(AUIAIChatInChatActivity.this, AUIAIChatWebViewActivity.class);
-        intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_WEBVIEW_URL, url);
+    private void jumpToExternalView(String url, boolean isWebView) {
+        Intent intent = new Intent(AUIAIChatInChatActivity.this, AUIAIChatExternalViewActivity.class);
+        if(isWebView) {
+            intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_EXTERNAL_WEBVIEW_URL, url);
+        } else {
+            intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_EXTERNAL_IMAGE_URL, url);
+        }
         startActivity(intent);
     }
 
@@ -413,7 +416,7 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
         if(mChatEngine != null) {
             if(needLogout) {
                 mChatEngine.endChat(needLogout);
-                mChatEngine.destory();
+                mChatEngine.destroy();
             } else {
                 mChatEngine.endChat(needLogout);
             }
@@ -662,9 +665,9 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
                             mCurrentChatType = AUIAIChatType.Text;
                         }
                     } else {
-                        ARTCAIChatEngine.ARTCAIChatMessage thinkMessage = getCurrentThinkingMessage(mCurrentRequestId);
+                        ARTCAIChatEngine.ARTCAIChatMessage thinkMessage = mChatBotChatMsgContentModel.getCurrentThinkingMessage();
                         if(mCurrentAgentState == Thinking  || (thinkMessage != null && TextUtils.isEmpty(thinkMessage.text) && thinkMessage.isEnd)) {
-                            deleteThinkingResponseMessage(mCurrentRequestId);
+                            deleteThinkingResponseMessage(thinkMessage);
                         }
                         mChatEngine.interruptAgentResponse();
                     }
@@ -904,7 +907,7 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
                 mChangeToVoicePushAction.setImageResource(R.drawable.ic_chatbot_push_voice);
                 mChangeToVoicePushAction.setEnabled(true);
                 if(mCurrentChatType == AUIAIChatType.Voice) {
-                    if(hasMultiMedia) {
+                    if(hasMultiMedia && !mMultiMediaHolder.allImagesHasUploaded()) {
                         mPresseToPushAction.setTextColor(Color.parseColor("#9E9E9E"));
                         mPresseToPushAction.setEnabled(false);
 
@@ -1083,9 +1086,7 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
         private void sendTextMessage(String content) {
             String requestId = generateUUId();
             mCurrentRequestId = requestId;
-            ARTCAIChatEngine.ARTCAIChatMessage sendMessage = new ARTCAIChatEngine.ARTCAIChatMessage(requestId, content);
-            sendMessage.messageState = ARTCAIChatEngine.ARTCAIChatMessageState.Init;
-            sendMessage.messageType = ARTCAIChatEngine.ARTCAIChatMessageType.Text;
+            ARTCAIChatEngine.ARTCAIChatMessage sendMessage = new ARTCAIChatEngine.ARTCAIChatMessage(requestId,  mUserId,  ARTCAIChatEngine.ARTCAIChatMessageState.Init, content);
             insertMessageToMessageList(sendMessage, false, true);
             sendMessageInternal(sendMessage);
         }
@@ -1103,7 +1104,7 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
             mChatEngine.sendMessage(request, new ARTCAIChatEngine.IARTCAIChatMessageCallback() {
                 @Override
                 public void onSuccess(ARTCAIChatEngine.ARTCAIChatMessage data) {
-                    int pos = mChatBotChatMsgContentModel.getPositionByRequestId(data.requestId, false);
+                    int pos = mChatBotChatMsgContentModel.getPositionByChatMessage(data);
                     if(pos >= 0 && pos < mChatMessageListAdapter.getItemCount()) {
                         CardEntity cardEntity = (CardEntity) mChatMessageListAdapter.getItem(pos);
                         if(cardEntity != null && cardEntity.bizData != null) {
@@ -1116,7 +1117,7 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
                 }
                 @Override
                 public void onFailure(ARTCAIChatEngine.ARTCAIChatMessage data, ARTCAIChatEngine.ARTCAIChatError error) {
-                    int pos = mChatBotChatMsgContentModel.getPositionByRequestId(data.requestId, false);
+                    int pos = mChatBotChatMsgContentModel.getPositionByChatMessage(data);
                     if(pos >= 0 && pos < mChatMessageListAdapter.getItemCount()) {
                         CardEntity cardEntity = (CardEntity) mChatMessageListAdapter.getItem(pos);
                         if (cardEntity != null && cardEntity.bizData != null) {
@@ -1131,7 +1132,7 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
         }
         private void handleAIChatMessage(ARTCAIChatEngine.ARTCAIChatMessage chatMessage, boolean isAgentResponse) {
             mChatMessageListAdapter.setAutoScrollToBottom(!mScrollListByUser);
-            int pos = mChatBotChatMsgContentModel.getPositionByRequestId(chatMessage.requestId, isAgentResponse);
+            int pos = mChatBotChatMsgContentModel.getPositionByChatMessage(chatMessage);
             boolean notifyChangedInstead = false;
             if(pos >= 0 && pos < mChatMessageListAdapter.getItemCount()) {
                 if(chatMessage.messageState != ARTCAIChatEngine.ARTCAIChatMessageState.Failed) {
@@ -1147,12 +1148,11 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
                     }
                     else {
                         if(chatMessage.messageState == ARTCAIChatEngine.ARTCAIChatMessageState.Finished || chatMessage.messageState == ARTCAIChatEngine.ARTCAIChatMessageState.Interrupted) {
-                            deleteThinkingResponseMessage(chatMessage.requestId);
+                            deleteThinkingResponseMessage(chatMessage);
                         }
                     }
-
                 }else {
-                    deleteThinkingResponseMessage(chatMessage.requestId);
+                    deleteThinkingResponseMessage(chatMessage);
                 }
             }
             else {
@@ -1166,23 +1166,11 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
             }
         }
 
-        private void deleteThinkingResponseMessage(String requestId) {
-            int pos = mChatBotChatMsgContentModel.getPositionByRequestId(requestId, true);
+        private void deleteThinkingResponseMessage(ARTCAIChatEngine.ARTCAIChatMessage message) {
+            int pos = mChatBotChatMsgContentModel.getPositionByChatMessage(message);
             deleteMessage(pos);
         }
 
-        private ARTCAIChatEngine.ARTCAIChatMessage getCurrentThinkingMessage(String requestId) {
-            int pos = mChatBotChatMsgContentModel.getPositionByRequestId(requestId, true);
-            if(pos >= 0 && pos < mChatMessageListAdapter.getItemCount()) {
-                CardEntity cardEntity = (CardEntity) mChatMessageListAdapter.getItem(pos);
-                if(cardEntity != null && cardEntity.bizData != null) {
-                    ChatBotChatMessage uiMessage = (ChatBotChatMessage) cardEntity.bizData;
-                    ARTCAIChatEngine.ARTCAIChatMessage message = uiMessage.getMessage();
-                    return message;
-                }
-            }
-            return null;
-        }
 
         private void messagePlayStateChaneged() {
             if(mCurrentMessagePlayingAnimationView != null) {
@@ -1244,7 +1232,15 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
             String requestId = generateUUId();
             mCurrentRequestId = requestId;
             mPushingToTalking = true;
-            mChatEngine.startPushVoiceMessage(new ARTCAIChatEngine.ARTCAIChatSendMessageRequest(mCurrentRequestId, ARTCAIChatEngine.ARTCAIChatMessageType.Voice, ""));
+
+            ARTCAIChatEngine.ARTCAIChatSendMessageRequest request;
+            if(mMultiMediaHolder.mAttachmentUploader != null && !mMultiMediaHolder.mSelectedImages.isEmpty()) {
+                request = new ARTCAIChatEngine.ARTCAIChatSendMessageRequest(mCurrentRequestId, ARTCAIChatEngine.ARTCAIChatMessageType.Voice, "", mMultiMediaHolder.mAttachmentUploader);
+            } else {
+                request = new ARTCAIChatEngine.ARTCAIChatSendMessageRequest(mCurrentRequestId, ARTCAIChatEngine.ARTCAIChatMessageType.Voice, "");
+            }
+
+            mChatEngine.startPushVoiceMessage(request);
             startUIUpdateProgress();
         }
         private void stopPushingVoiceMessage() {
@@ -1252,8 +1248,9 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
             mChatEngine.finishPushVoiceMessage(new ARTCAIChatEngine.IARTCAIChatMessageCallback() {
                 @Override
                 public void onSuccess(ARTCAIChatEngine.ARTCAIChatMessage data) {
-                    if(!TextUtils.isEmpty(data.text)) {
+                    if(!TextUtils.isEmpty(data.text) || (data.attachmentList.size() > 0)) {
                         insertMessageToMessageList(data, false, true);
+                        mMultiMediaHolder.clearSelectedImages();
                     } else {
                         ToastHelper.showToast(AUIAIChatInChatActivity.this, R.string.chat_bot_press_to_talk_asr_null, Toast.LENGTH_SHORT);
                     }
@@ -1477,6 +1474,7 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
                             @Override
                             public void onSuccess(ARTCAIChatEngine.ARTCAIChatMessage data) {
                                 mChatMessageListAdapter.removeAt(position);
+                                mChatBotChatMsgContentModel.deleteMessageByPosition(position);
                             }
 
                             @Override
@@ -1484,12 +1482,14 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
                                 Logger.e("deleteMessage failed, errorCode: " + error.errorCode + ", errorMsg: " + error.errorMsg);
                                 if(TextUtils.isEmpty(data.text) || TextUtils.isEmpty(data.dialogueId)) {
                                     mChatMessageListAdapter.removeAt(position);
+                                    mChatBotChatMsgContentModel.deleteMessageByPosition(position);
                                 }
                             }
                         });
                     }
                 } else {
                     mChatMessageListAdapter.removeAt(position);
+                    mChatBotChatMsgContentModel.deleteMessageByPosition(position);
                 }
             }
         }

@@ -118,8 +118,8 @@ target '你的App target' do
     pod 'AliVCSDK_ARTC', '~> 7.1.0'
 
     # AI实时互动通话场景SDK
-    # 如果你的业务还需要支持消息对话，则使用“ARTCAICallKit/Chatbot”进行集成，把下面一行改为：pod 'ARTCAICallKit/Chatbot', '~> 2.2.0'
-    pod 'ARTCAICallKit', '~> 2.2.0'
+    # 如果你的业务还需要支持消息对话，则使用“ARTCAICallKit/Chatbot”进行集成，把下面一行改为：pod 'ARTCAICallKit/Chatbot', '~> 2.3.0'
+    pod 'ARTCAICallKit', '~> 2.3.0'
 
     # 基础UI组件源码
     pod 'AUIFoundation', :path => "./AUIAICall/AUIBaseKits/AUIFoundation/", :modular_headers => true
@@ -128,8 +128,8 @@ target '你的App target' do
     # 如果你的业务还需要支持消息对话，则使用“AUIAICall/Chatbot”进行集成，把下面这一行改为：pod 'AUIAICall/Chatbot',  :path => "./AUIAICall/"
     pod 'AUIAICall',  :path => "./AUIAICall/"
 
-    # 如果你的业务还需要支持消息对话，还需要集成AliVCInteractionMessage，版本最低是1.6.0
-    pod 'AliVCInteractionMessage', '~> 1.6.0'
+    # 如果你的业务还需要支持消息对话，还需要集成AliVCInteractionMessage，版本最低是1.7.0
+    pod 'AliVCInteractionMessage', '~> 1.7.0'
 
 end
 ```

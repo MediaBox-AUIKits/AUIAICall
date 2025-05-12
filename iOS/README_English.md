@@ -100,8 +100,8 @@ You can quickly integrate AUIAICall into your APP through the following steps, e
 ### Integrating Source Code
 - Import AUIAICall: After downloading the repository code, copy the iOS folder to your APP code directory and rename it to AUIAICall, at the same level as your Podfile file. You can delete the Example and AICallKit directories.
 - Modify your Podfile to include:
-    * AliVCSDK_ARTC: Audio and video terminal SDK suitable for AI real-time interactive calls. You can also use AliVCSDK_Standard or AliVCSDK_InteractiveLive. Refer to Quick Integration.
-    * AliVCInteractionMessage: Interactive messaging SDK suitable for message conversations. If you have already integrated, please use version 1.6.0 or above. Refer to Quick Integration.
+    * AliVCSDK_ARTC: Audio and video terminal SDK suitable for AI real-time interactive calls. You can also use AliVCSDK_Standard or AliVCSDK_InteractiveLive. 
+    * AliVCInteractionMessage: Interactive messaging SDK suitable for message conversations.
     * ARTCAICallKit: SDK for AI real-time interactive call scenarios and message conversation scenarios.
     * AUIFoundation: Basic UI component.
     * AUIAICall: UI component source code for AI call scenarios and message conversation scenarios.
@@ -115,8 +115,8 @@ target 'Your App target' do
     pod 'AliVCSDK_ARTC', '~> 7.1.0'
 
     # AI real-time interactive call scenario SDK
-    # If your business also needs to support message conversations, use "ARTCAICallKit/Chatbot" for integration, change the line below to: pod 'ARTCAICallKit/Chatbot', '~> 2.2.0'
-    pod 'ARTCAICallKit', '~> 2.2.0'
+    # If your business also needs to support message conversations, use "ARTCAICallKit/Chatbot" for integration, change the line below to: pod 'ARTCAICallKit/Chatbot', '~> 2.3.0'
+    pod 'ARTCAICallKit', '~> 2.3.0'
 
     # Basic UI component source code
     pod 'AUIFoundation', :path => "./AUIAICall/AUIBaseKits/AUIFoundation/", :modular_headers => true
@@ -125,8 +125,8 @@ target 'Your App target' do
     # If your business also needs to support message conversations, use "AUIAICall/Chatbot" for integration, change the line below to: pod 'AUIAICall/Chatbot',  :path => "./AUIAICall/"
     pod 'AUIAICall',  :path => "./AUIAICall/"
 
-    # If your business also needs to support message conversations, you also need to integrate AliVCInteractionMessage, minimum version is 1.6.0
-    pod 'AliVCInteractionMessage', '~> 1.6.0'
+    # If your business also needs to support message conversations, you also need to integrate AliVCInteractionMessage, minimum version is 1.7.0
+    pod 'AliVCInteractionMessage', '~> 1.7.0'
 
 end
 ```

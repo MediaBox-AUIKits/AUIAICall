@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'AUIAICall'
-  s.version          = '2.2.0'
+  s.version          = '2.3.0'
   s.summary          = 'A short description of AUIAICall.'
 
 # This description is used to generate tags and improve search results.
@@ -42,6 +42,7 @@ TODO: Add long description of the pod here.
     ss.exclude_files = 'Source/AUIAICallMainViewController.swift', 'Source/ChatBot/**/*.{swift,h,m,mm}'
     ss.dependency 'AUIFoundation'
     ss.dependency 'ARTCAICallKit'
+    ss.dependency 'lottie-ios'
     ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => '$(inherited)'}
   end
   
@@ -65,6 +66,7 @@ TODO: Add long description of the pod here.
     ss.dependency 'MJRefresh'
     ss.dependency 'SwiftyMarkdown'
     ss.dependency 'SDWebImage'
+    ss.dependency 'lottie-ios'
     ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => '$(inherited) AICALL_ENABLE_CHATBOT '}
   end
   
@@ -76,6 +78,7 @@ TODO: Add long description of the pod here.
     ss.dependency 'MJRefresh'
     ss.dependency 'SwiftyMarkdown'
     ss.dependency 'SDWebImage'
+    ss.dependency 'lottie-ios'
     ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => '$(inherited) DEMO_FOR_DEBUG AICALL_ENABLE_CHATBOT '}
   end
   

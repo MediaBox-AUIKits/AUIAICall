@@ -16,6 +16,7 @@ function Video() {
     const videoElement = videoRef.current;
     if (avatarLoading) {
       // canplay / timeupdate 都认为是加载完成
+      // canplay / timeupdate both are considered as video loaded
       videoElement?.addEventListener('canplay', loaded);
       videoElement?.addEventListener('timeupdate', loaded);
     }

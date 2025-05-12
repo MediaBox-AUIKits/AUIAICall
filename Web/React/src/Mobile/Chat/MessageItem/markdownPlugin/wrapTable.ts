@@ -11,6 +11,7 @@ function wrapTable(md: markdownit) {
   };
 
   // 保存原始的 renderer 函数
+  // save the original renderer
   const defaultCloseRender =
     md.renderer.rules.table_close ||
     function (tokens, idx, options, _, self) {

@@ -187,6 +187,15 @@ extension AUIAIChatSendAttachmentView: UICollectionViewDelegate, UICollectionVie
         return cell
     }
     
+    public func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        let item = self.getItem(row: indexPath.row)
+        guard item != AUIAIChatSendAttachmentItem.addItem else {
+            return
+        }
+        
+        UIViewController.av_top().av_presentFullScreenViewController(AUIAIChatImageViewer(image: item.image), animated: true)
+    }
+    
     private func getItem(row: Int) -> AUIAIChatSendAttachmentItem {
         var item = AUIAIChatSendAttachmentItem.addItem
         if row < self.itemList.count {
@@ -208,6 +217,7 @@ extension AUIAIChatSendAttachmentView: UICollectionViewDelegate, UICollectionVie
         self.imageView.addSubview(self.imageMaskView)
         self.imageMaskView.addSubview(self.progressView)
         self.imageMaskView.addSubview(self.imageFailedView)
+
         
 
     }

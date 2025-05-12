@@ -14,6 +14,9 @@ import AUIFoundation
         super.init(frame: frame)
         self.addSubview(self.loadingAniView)
         self.addSubview(self.errorView)
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(applicationWillResignActive), name: UIApplication.willResignActiveNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(applicationDidBecomeActive), name: UIApplication.didBecomeActiveNotification, object: nil)
     }
     
     public required init?(coder: NSCoder) {
@@ -43,39 +46,34 @@ import AUIFoundation
     
     
     open func updateState(newState: AUIAICallState) {
-        if self.state == newState {
-            return
-        }
+        let isAppActive = UIApplication.shared.applicationState == .active
+        let isLoading = newState == .Connecting || newState == .None
+        let isError = newState == .Error
+        self.loadingAniView.isHidden = !isLoading
+        self.errorView.isHidden = !isError
         
-        debugPrint("AUIAICallStateAnimation: updateState:\(newState)")
-        self.state = newState
-        self.loadingAniView.isHidden = !(self.state == .Connecting || self.state == .None)
-        self.errorView.isHidden = self.state != .Error
-
-        if self.isAni {
-            self.start()
+        if isLoading {
+            if isAppActive && self.isStartAni == false {
+                self.isStartAni = true
+                self.loadingAniView.start()
+            }
+        }
+        else {
+            self.loadingAniView.stop()
+            self.isStartAni = false
         }
     }
     
-    open private(set) var state: AUIAICallState = .None
+    @objc private func applicationWillResignActive() {
+        self.loadingAniView.stop()
+    }
     
-    open private(set) var isAni: Bool = false
-    
-    open func start() {
-        self.stop()
-        
-        debugPrint("AUIAICallStateAnimation: start ani")
-        self.isAni = true
-        if self.loadingAniView.isHidden == false {
+    @objc private func applicationDidBecomeActive() {
+        if self.isStartAni {
             self.loadingAniView.start()
         }
     }
     
-    open func stop() {
-        debugPrint("AUIAICallStateAnimation: stop ani")
-        self.isAni = false
-        
-        self.loadingAniView.stop()
-    }
+    private var isStartAni: Bool = false
     
 }

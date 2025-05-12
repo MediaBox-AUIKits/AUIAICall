@@ -20,11 +20,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import android.net.Uri;
+import android.text.TextUtils;
 
 public class ChatBotChatMsgContentModel extends AbsContentModel<CardEntity> {
     private WeakReference<Context> mContextRef;
 
-    private Map<String, Integer> mRequestIdToPositionMap = new HashMap<>();
+    private List<ARTCAIChatEngine.ARTCAIChatMessage> messageList = new ArrayList<ARTCAIChatEngine.ARTCAIChatMessage>();
 
     public ChatBotChatMsgContentModel(Context context) {
         super();
@@ -55,7 +56,9 @@ public class ChatBotChatMsgContentModel extends AbsContentModel<CardEntity> {
         else {
             cardEntity.cardType = CardTypeDef.CHATBOT_SEND_TEXT_MESSAGE_CARD;
         }
-        mRequestIdToPositionMap.put(getRequestIdMapId(message.getRequestId(), message.isAIResponse()), currentPosition);
+
+        messageList.add(message.getMessage());
+
         cardEntity.bizData = message;
 
         List<CardEntity> cardEntityList = new ArrayList<>();
@@ -72,9 +75,7 @@ public class ChatBotChatMsgContentModel extends AbsContentModel<CardEntity> {
             cardEntity.cardType = CardTypeDef.CHATBOT_SEND_TEXT_MESSAGE_CARD;
         }
 
-        countPositionForHeader();
-
-        mRequestIdToPositionMap.put(getRequestIdMapId(message.getRequestId(), message.isAIResponse()), 0);
+        messageList.add(0, message.getMessage());
         cardEntity.bizData = message;
 
         List<CardEntity> cardEntityList = new ArrayList<>();
@@ -82,31 +83,53 @@ public class ChatBotChatMsgContentModel extends AbsContentModel<CardEntity> {
         insertContentHeader(cardEntityList);
     }
 
-
-    public int getPositionByRequestId(String requestId, boolean isAIResponse) {
-
-        if(!mRequestIdToPositionMap.containsKey(getRequestIdMapId(requestId, isAIResponse))) {
-            return -1;
-        }
-
-        return mRequestIdToPositionMap.get(getRequestIdMapId(requestId, isAIResponse)).intValue();
-    }
-
-    public void countPositionForHeader() {
-        for (Map.Entry<String, Integer> entry : mRequestIdToPositionMap.entrySet()) {
-            String key = entry.getKey();
-            Integer value = entry.getValue();
-            mRequestIdToPositionMap.put(key, value + 1);
+    public void deleteMessageByPosition(int pos) {
+        if(pos >= 0 && pos < messageList.size()) {
+            messageList.remove(pos);
         }
     }
 
-    public int getLenghtOfRequestMap() {
-        return mRequestIdToPositionMap.size();
+    public int getPositionByChatMessage(ARTCAIChatEngine.ARTCAIChatMessage mes) {
+       int pos = -1;
+       if(mes != null) {
+           for(int i = 0; i < messageList.size(); i++) {
+               ARTCAIChatEngine.ARTCAIChatMessage message = messageList.get(i);
+               if(message.requestId.equals(mes.requestId) && message.senderId.equals(mes.senderId)) {
+
+                   if(!TextUtils.isEmpty(mes.nodeID)) {
+                       if(TextUtils.isEmpty(message.nodeID)  || message.nodeID.equals(mes.nodeID)) {
+                           pos = i;
+                           break;
+                       }
+                   } else {
+                       pos = i;
+                       break;
+                   }
+               }
+           }
+       }
+       return pos;
     }
+
+    public ARTCAIChatEngine.ARTCAIChatMessage getCurrentThinkingMessage() {
+        for(int i = 0; i < messageList.size(); i++) {
+            ARTCAIChatEngine.ARTCAIChatMessage message = messageList.get(i);
+            if(message.messageState == ARTCAIChatEngine.ARTCAIChatMessageState.Transfering && TextUtils.isEmpty(message.text)) {
+                return message;
+            }
+        }
+        return null;
+    }
+
 
     @Override
     public void updateContent(CardEntity data, int pos) {
         super.updateContent(data, pos);
+
+        if(pos >= 0 && pos < messageList.size()) {
+            ARTCAIChatEngine.ARTCAIChatMessage message = messageList.get(pos);
+            message= ((ChatBotChatMessage)data.bizData).getMessage() ;
+        }
     }
 
     @Override
@@ -114,7 +137,4 @@ public class ChatBotChatMsgContentModel extends AbsContentModel<CardEntity> {
 
     }
 
-    private String getRequestIdMapId(String requestId, boolean isAIResponse) {
-        return requestId + (isAIResponse ? "aiResponse" : "UserSend");
-    }
 }

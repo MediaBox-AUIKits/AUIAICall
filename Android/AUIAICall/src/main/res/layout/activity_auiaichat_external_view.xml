@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:layout_width="match_parent"
+android:layout_height="match_parent">
+
+<LinearLayout
+    android:id="@+id/custom_toolbar"
+    android:layout_width="match_parent"
+    android:layout_height="36dp"
+    android:orientation="horizontal"
+    android:background="@color/layout_blank_color"
+    android:padding="8dp">
+
+    <ImageView
+        android:id="@+id/btn_back_image"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/ic_back"
+         />
+
+    <TextView
+        android:id="@+id/web_title"
+        style="@style/layout_base_text_style_14"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text=""
+        android:textColor="@android:color/white"
+        android:textSize="14sp"
+        android:gravity="center"/>
+</LinearLayout>
+
+<WebView
+    android:id="@+id/web_view"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_below="@id/custom_toolbar" />
+
+<ImageView
+    android:id="@+id/image_view"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:visibility="gone"
+    android:layout_below="@id/custom_toolbar" />
+
+</RelativeLayout>

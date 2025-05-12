@@ -11,10 +11,15 @@ import Vision from './Vision';
 
 import useCallStore from '@/Mobile/Call/store';
 import { debounce, getRootElement } from '@/common/utils';
-import ARTCAICallEngine, { AICallAgentType, AICallState } from 'aliyun-auikit-aicall';
-import i18n, { getErrorMessage } from '@/common/i18n';
+import ARTCAICallEngine, {
+  AICallAgentError,
+  AICallAgentType,
+  AICallState,
+  AICallVoiceprintResult,
+} from 'aliyun-auikit-aicall';
 import { Dialog, Toast } from 'antd-mobile';
 import Connecting from './Connecting';
+import { useTranslation } from '@/common/i18nContext';
 
 interface StageProps {
   autoCall?: boolean;
@@ -27,6 +32,7 @@ interface StageProps {
 
 function Stage({ agentType, onStateChange, onExit, onAuthFail, limitSecond, autoCall = false }: StageProps) {
   const controller = useContext(ControllerContext);
+  const { t, e } = useTranslation();
   const callState = useCallStore((state) => state.callState);
   const cameraMuted = useCallStore((state) => state.cameraMuted);
 
@@ -34,6 +40,7 @@ function Stage({ agentType, onStateChange, onExit, onAuthFail, limitSecond, auto
   const startTimeRef = useRef(0);
 
   // 切换 controller 后重置状态
+  // if controller changed, reset state
   useEffect(() => {
     if (!controller) return;
     controller.config.agentType = agentType;
@@ -64,14 +71,13 @@ function Stage({ agentType, onStateChange, onExit, onAuthFail, limitSecond, auto
     controller?.interruptSpeaking();
   }, 100);
 
-  // 开始通话
   const startCall = async () => {
     if (!controller) return;
 
     const supportedResult = await ARTCAICallEngine.isSupported();
     if (!supportedResult.support) {
       Dialog.show({
-        content: '当前浏览器不支持WebRTC，建议您使用钉钉或微信打开',
+        content: t('system.notSupported'),
         actions: [],
       });
       return;
@@ -84,7 +90,7 @@ function Stage({ agentType, onStateChange, onExit, onAuthFail, limitSecond, auto
       if (newState === AICallState.Error) {
         controller?.handup();
         useCallStore.setState({
-          callErrorMessage: getErrorMessage(controller.errorCode),
+          callErrorMessage: e(controller.errorCode),
         });
       }
     });
@@ -98,6 +104,7 @@ function Stage({ agentType, onStateChange, onExit, onAuthFail, limitSecond, auto
     controller.on('AICallActiveSpeakerVolumeChanged', (userId, volume) => {
       if (userId === '') {
         // 本地说话状态
+        // local user speaking
         useCallStore.setState({
           isSpeaking: volume > 30,
         });
@@ -105,10 +112,9 @@ function Stage({ agentType, onStateChange, onExit, onAuthFail, limitSecond, auto
     });
 
     controller.on('AICallAgentEmotionNotify', (emotion, sentenceId) => {
-      console.log(`智能体情绪：${emotion}, 语句：${sentenceId}`);
+      console.log(`Agent emotion notify: ${emotion}, sentenceId: ${sentenceId}`);
     });
 
-    // 实时字幕相关呢
     controller.on('AICallAgentSubtitleNotify', (data) => {
       useCallStore.getState().setCurrentSubtitle({
         data,
@@ -119,16 +125,29 @@ function Stage({ agentType, onStateChange, onExit, onAuthFail, limitSecond, auto
       useCallStore.getState().setCurrentSubtitle({
         data,
         source: 'user',
+        voiceprintResult,
       });
+      if (voiceprintResult === AICallVoiceprintResult.UndetectedSpeaker) {
+        Toast.show({
+          content: t('agent.voiceprintIgnored'),
+          getContainer: () => getRootElement(),
+        });
+      } else if (voiceprintResult === AICallVoiceprintResult.UndetectedSpeakerWithAIVad) {
+        Toast.show({
+          content: t('agent.aivadIgnored'),
+          getContainer: () => getRootElement(),
+        });
+      }
+
       console.log(`voiceprintResult to ${voiceprintResult}`);
     });
 
     controller.on('AICallUserTokenExpired', () => {
-      Toast.show({ content: i18n['login.tokenExpired'], getContainer: () => getRootElement() });
+      Toast.show({ content: t('login.tokenExpired'), getContainer: () => getRootElement() });
       onAuthFail?.();
     });
 
-    controller.on('AICallBegin', () => {
+    controller.on('AICallBegin', (elapsedTime) => {
       if (countdownRef.current) {
         window.clearInterval(countdownRef.current);
       }
@@ -138,7 +157,7 @@ function Stage({ agentType, onStateChange, onExit, onAuthFail, limitSecond, auto
           const delta = Date.now() - startTimeRef.current;
           if (delta > limitSecond * 1000) {
             Toast.show({
-              content: i18n['avatar.timeLimit'],
+              content: t('avatar.timeLimit'),
               getContainer: () => getRootElement(),
             });
             stopCall();
@@ -151,11 +170,11 @@ function Stage({ agentType, onStateChange, onExit, onAuthFail, limitSecond, auto
     });
 
     controller.on('AICallAgentWillLeave', (reason) => {
-      let toast = '通话已经结束';
+      let toast = t('agent.ended');
       if (reason == 2001) {
-        toast = '由于你长时间未进行通话，该通话已经结束';
+        toast = t('agent.endedByInactivity');
       } else if (reason == 2002) {
-        toast = '该通话已经结束';
+        toast = t('agent.endedByAgent');
       }
       Toast.show({
         content: toast,
@@ -165,43 +184,39 @@ function Stage({ agentType, onStateChange, onExit, onAuthFail, limitSecond, auto
 
     controller.on('AICallReceivedAgentCustomMessage', (data) => {
       Toast.show({
-        content: '收到智能体自定义消息：' + JSON.stringify(data),
+        content: t('agent.receivedCustomMessage', { msg: JSON.stringify(data) }),
         getContainer: () => getRootElement(),
       });
     });
 
     controller.on('AICallHumanTakeoverWillStart', () => {
       Toast.show({
-        content: i18n['humanTakeover.willStart'],
+        content: t('humanTakeover.willStart'),
         getContainer: () => getRootElement(),
       });
     });
     controller.on('AICallHumanTakeoverConnected', () => {
       Toast.show({
-        content: i18n['humanTakeover.connected'],
+        content: t('humanTakeover.connected'),
         getContainer: () => getRootElement(),
       });
     });
     controller.on('AICallVisionCustomCaptureChanged', (enabled) => {
-      console.log(`视觉自定义截图：${enabled}`);
+      console.log(t('agent.visionCustomCaptureState', { enabled: `${enabled}` }));
       if (enabled) {
         Toast.show({
-          content: i18n['vision.customCapture.enabled'],
+          content: t('vision.customCapture.enabled'),
           getContainer: () => getRootElement(),
         });
       } else {
         Toast.show({
-          content: i18n['vision.customCapture.disabled'],
+          content: t('vision.customCapture.disabled'),
           getContainer: () => getRootElement(),
         });
       }
     });
     controller.on('AICallSpeakingInterrupted', (reason) => {
-      console.log(`当前讲话已被打断: ${reason}`);
-      Toast.show({
-        content: i18n['speaking.interrupt'],
-        getContainer: () => getRootElement(),
-      });
+      console.log(t('agent.interrupted', { reason: `${reason}` }));
     });
 
     const currentTemplateConfig = controller.config.templateConfig;
@@ -220,9 +235,13 @@ function Stage({ agentType, onStateChange, onExit, onAuthFail, limitSecond, auto
       }
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
+      if ((error as AICallAgentError).name === 'ServiceAuthError') {
+        onAuthFail?.();
+      }
+
       useCallStore.setState({
         callState: AICallState.Error,
-        callErrorMessage: getErrorMessage(controller.errorCode),
+        callErrorMessage: e(controller.errorCode),
       });
     }
   };
@@ -234,6 +253,7 @@ function Stage({ agentType, onStateChange, onExit, onAuthFail, limitSecond, auto
   };
 
   // 已连接且是数字人或者有摄像头
+  // is avatar or vision agent or camera not muted
   const hasVideo =
     callState === AICallState.Connected &&
     (agentType === AICallAgentType.AvatarAgent || (agentType === AICallAgentType.VisionAgent && !cameraMuted));
@@ -268,7 +288,7 @@ function Stage({ agentType, onStateChange, onExit, onAuthFail, limitSecond, auto
             [
               {
                 key: 'close',
-                text: '关闭',
+                text: t('common.close'),
                 onClick: () => {
                   useCallStore.setState({
                     callState: AICallState.None,
@@ -277,7 +297,7 @@ function Stage({ agentType, onStateChange, onExit, onAuthFail, limitSecond, auto
               },
               {
                 key: 'exit',
-                text: '退出',
+                text: t('common.exit'),
                 onClick: stopCall,
               },
             ],

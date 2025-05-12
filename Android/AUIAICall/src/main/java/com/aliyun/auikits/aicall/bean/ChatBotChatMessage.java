@@ -3,8 +3,6 @@ package com.aliyun.auikits.aicall.bean;
 
 import com.aliyun.auikits.aiagent.ARTCAIChatEngine;
 
-import java.security.PublicKey;
-
 public class ChatBotChatMessage {
 
     private boolean isAIResponse;;
@@ -31,9 +29,5 @@ public class ChatBotChatMessage {
         this.isAIResponse = isAIResponse;
     }
 
-
-    public String getRequestId() {
-         return this.message.requestId;
-    }
 
 }

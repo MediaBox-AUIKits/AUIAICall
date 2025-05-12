@@ -8,6 +8,7 @@ import { CallPhoneSVG, CameraClosedSVG, CameraSVG, CameraSwitchSVG, MicrophoneCl
 
 import './footer.less';
 import { getRootElement, isMobile } from '@/common/utils';
+import { useTranslation } from '@/common/i18nContext';
 
 interface CallFooterProps {
   onCall: () => void;
@@ -15,6 +16,8 @@ interface CallFooterProps {
 }
 
 function Footer({ onStop, onCall }: CallFooterProps) {
+  const { t } = useTranslation();
+
   const controller = useContext(ControllerContext);
   const agentType = useCallStore((state) => state.agentType);
   const callState = useCallStore((state) => state.callState);
@@ -31,7 +34,6 @@ function Footer({ onStop, onCall }: CallFooterProps) {
     if (enablePushToTalk) return;
     const to = !useCallStore.getState().microphoneMuted;
     controller?.muteMicrophone(to);
-    // messageApi.success(to ? '麦克风已关闭' : '麦克风已开启');
     useCallStore.setState({
       microphoneMuted: to,
     });
@@ -41,7 +43,6 @@ function Footer({ onStop, onCall }: CallFooterProps) {
     e.stopPropagation();
     const to = !useCallStore.getState().cameraMuted;
     controller?.muteCamera(to);
-    // messageApi.success(to ? '摄像头已关闭' : '摄像头已开启');
     useCallStore.setState({
       cameraMuted: to,
     });
@@ -110,7 +111,9 @@ function Footer({ onStop, onCall }: CallFooterProps) {
     >
       <Button onClick={onCallClick}>{CallPhoneSVG}</Button>
       <div className='_label'>
-        {callState === AICallState.Connected || callState === AICallState.Connecting ? '挂断' : '拨打'}
+        {callState === AICallState.Connected || callState === AICallState.Connecting
+          ? t('actions.handup')
+          : t('actions.call')}
       </div>
     </li>
   );
@@ -136,9 +139,9 @@ function Footer({ onStop, onCall }: CallFooterProps) {
         </Button>
 
         {enablePushToTalk ? (
-          <div className='_label'>{pushingToTalk ? '松开发送' : '按住讲话'}</div>
+          <div className='_label'>{pushingToTalk ? t('pushToTalk.releaseToSend') : t('pushToTalk.push')}</div>
         ) : (
-          <div className='_label'>{microphoneMuted ? '麦克风已关' : '关麦克风'}</div>
+          <div className='_label'>{microphoneMuted ? t('microphone.closed') : t('microphone.close')}</div>
         )}
       </li>
     );
@@ -149,16 +152,16 @@ function Footer({ onStop, onCall }: CallFooterProps) {
           {!cameraMuted && isMobile() && (
             <div className='_camera-switch'>
               <Button onClick={switchCamera}>{CameraSwitchSVG}</Button>
-              <div className='_label'>镜头翻转</div>
+              <div className='_label'>{t('camera.switch')}</div>
             </div>
           )}
           <Button onClick={toggleCameraMuted}>{cameraMuted ? CameraClosedSVG : CameraSVG}</Button>
-          <div className='_label'>{cameraMuted ? '摄像头已关' : '关摄像头'}</div>
+          <div className='_label'>{cameraMuted ? t('camera.closed') : t('camera.close')}</div>
         </li>
       );
       btns.push(cameraBtn);
 
-      // 对讲机模式，按钮在中间
+      // push to talk mode, button order is different
       if (enablePushToTalk) {
         btns.push(microphoneBtn);
         btns.push(callBtn);
@@ -170,6 +173,7 @@ function Footer({ onStop, onCall }: CallFooterProps) {
       btns.push(callBtn);
       btns.push(microphoneBtn);
       // 对讲机模式，新增占位按钮，让声音按钮在中间
+      // push to talk mode, add empty button to make voice button center
       if (enablePushToTalk) {
         btns.push(emptyBtn);
       }

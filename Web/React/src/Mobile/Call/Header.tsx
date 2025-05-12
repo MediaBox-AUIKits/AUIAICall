@@ -2,7 +2,6 @@ import { useContext, useMemo, useState } from 'react';
 import { Button, Popup, Radio, SafeArea, Selector, Space, Switch, Toast } from 'antd-mobile';
 import { SettingSVG, VoiceOneSVG, VoiceThreeSVG, VoiceTwoSVG } from './Icons';
 import useCallStore from '@/Mobile/Call/store';
-import i18n from '@/common/i18n';
 import { AICallAgentType, AICallState } from 'aliyun-auikit-aicall';
 
 import './header.less';
@@ -12,9 +11,11 @@ import logger from '@/common/logger';
 import { getRootElement } from '@/common/utils';
 
 import { getWorkflowType } from '@/service/interface';
+import { useTranslation } from '@/common/i18nContext';
 
 function Header() {
   const controller = useContext(ControllerContext);
+  const { t } = useTranslation();
   const agentType = useCallStore((state) => state.agentType);
   const callState = useCallStore((state) => state.callState);
   const enableVoiceInterrupt = useCallStore((state) => state.enableVoiceInterrupt);
@@ -34,7 +35,7 @@ function Header() {
 
     if (updated) {
       Toast.show({
-        content: `智能打断成功已${checked ? '开启' : '关闭'}`,
+        content: checked ? t('settings.interrupt.enabled') : t('settings.interrupt.disabled'),
         getContainer: () => getRootElement(),
       });
     }
@@ -49,7 +50,7 @@ function Header() {
     const updated = await controller?.switchVoiceId(voiceId);
     if (updated) {
       Toast.show({
-        content: '音色切换成功',
+        content: t('settings.voiceId.success'),
         getContainer: () => getRootElement(),
       });
     }
@@ -63,16 +64,17 @@ function Header() {
     const updated = await controller?.enablePushToTalk(checked);
     if (updated) {
       Toast.show({
-        content: `对讲机模式已${checked ? '开启' : '关闭'}`,
+        content: checked ? t('settings.pushToTalk.enabled') : t('settings.pushToTalk.disabled'),
         getContainer: () => getRootElement(),
       });
     } else {
       Toast.show({
-        content: '对讲机模式切换失败',
+        content: t('settings.pushToTalk.failed'),
         getContainer: () => getRootElement(),
       });
     }
     // 退出对讲机模式，恢复音频静音状态
+    // exit push to talk mode, restore mute status
     if (!checked) {
       if (useCallStore.getState().microphoneMuted) {
         controller?.muteMicrophone(true);
@@ -85,12 +87,12 @@ function Header() {
 
   const agentName = useMemo(() => {
     if (agentType === AICallAgentType.AvatarAgent) {
-      return i18n['agent.avatar'];
+      return t('agent.avatar');
     } else if (agentType === AICallAgentType.VisionAgent) {
-      return i18n['agent.vision'];
+      return t('agent.vision');
     }
-    return i18n['agent.voice'];
-  }, [agentType]);
+    return t('agent.voice');
+  }, [agentType, t]);
 
   return (
     <>
@@ -117,17 +119,17 @@ function Header() {
             setSettingVisible(false);
           }}
         >
-          <div className='_title'>设置</div>
+          <div className='_title'>{t('settings.title')}</div>
           <ul>
             <li className='_mode'>
               <Selector
                 options={[
                   {
-                    label: '自然对话模式',
+                    label: t('settings.mode.natural'),
                     value: 'normal',
                   },
                   {
-                    label: '对讲机模式',
+                    label: t('settings.mode.pushToTalk'),
                     value: 'pushToTalk',
                   },
                 ]}
@@ -143,8 +145,8 @@ function Header() {
               <li>
                 <div className='_itemBox'>
                   <div className='_itemInfo'>
-                    <div className='_itemTitle'>智能打断</div>
-                    <div className='_itemDesc'>根据声音和环境智能打断AI机器人</div>
+                    <div className='_itemTitle'>{t('settings.interrupt.title')}</div>
+                    <div className='_itemDesc'>{t('settings.interrupt.help')}</div>
                   </div>
                   <div className='_itemSwitch'>
                     <Switch
@@ -159,11 +161,18 @@ function Header() {
             {agentType !== AICallAgentType.AvatarAgent &&
               !controller?.config.fromShare &&
               (controller?.config.agentVoiceIdList.length || 0) > 0 && (
-                <li className='_voiceId'>
+                <li
+                  className='_voiceId'
+                  style={{
+                    // @ts-expect-error custom style
+                    '--btn-text': JSON.stringify(t('common.use')),
+                  }}
+                  dataText={t('common.use')}
+                >
                   <div className='_itemBox'>
                     <div className='_itemInfo'>
-                      <div className='_itemTitle'>选择音色</div>
-                      <div className='_itemDesc'>切换音色后，AI将在下一次回答中使用新的角色</div>
+                      <div className='_itemTitle'>{t('settings.voiceId.title')}</div>
+                      <div className='_itemDesc'>{t('settings.voiceId.help')}</div>
                     </div>
                   </div>
                   <Radio.Group value={voiceId} disabled={updatingVoiceId} onChange={onVoiceChange}>

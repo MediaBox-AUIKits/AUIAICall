@@ -67,7 +67,19 @@ public class AUIAIChatMessageCacheHelper {
                     if(jsonObject.has("sourceType")){
                         sourceType = jsonObject.getString("sourceType");
                     }
-                    ARTCAIChatEngine.ARTCAIChatMessage message = new ARTCAIChatEngine.ARTCAIChatMessage(dialogueId, requestId, messageState, messageType, sendTime, text, senderId, isEnd, reasoningText, isReasoningEnd, source, sourceType);
+                    boolean isDialogueEnd = true;
+                    if(jsonObject.has("isDialogueEnd")){
+                        isDialogueEnd = jsonObject.getBoolean("isDialogueEnd");
+                    }
+                    String nodeID = "";
+                    if(jsonObject.has("nodeId")){
+                        nodeID = jsonObject.getString("nodeId");
+                    }
+                    String extend = "";
+                    if(jsonObject.has("extend")){
+                        extend = jsonObject.getString("extend");
+                    }
+                    ARTCAIChatEngine.ARTCAIChatMessage message = new ARTCAIChatEngine.ARTCAIChatMessage(dialogueId, requestId, messageState, messageType, sendTime, text, senderId, isDialogueEnd, isEnd, reasoningText, isReasoningEnd, source, sourceType, nodeID, extend);
                     if(jsonObject.has("attachmentList")) {
                         message.attachmentList = new ArrayList<>();
                         JSONArray attachmentList = jsonObject.getJSONArray("attachmentList");

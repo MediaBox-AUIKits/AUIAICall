@@ -5,18 +5,24 @@ import { getWorkflowType, TemplateConfig, WorkflowType } from './interface';
 
 class StandardAppService {
   private appServer = '';
+  private serverAuth = '';
 
   setAppServer(appServer: string) {
     this.appServer = appServer;
   }
 
+  setServerAuth(serverAuth: string) {
+    this.serverAuth = serverAuth;
+  }
+
   /**
-   * 启动智能体实例
-   * @param userId 用户 id
+   * 启动智能体实例 Start a AI agent instance
+   * @param userId
    * @param token token
-   * @param config 智能体实例配置
-   * @returns {Promise<AICallAgentInfo>} 智能体实例信息
+   * @param config 智能体实例配置 agent instance config
+   * @returns {Promise<AICallAgentInfo>} 智能体实例信息 agent instance info
    * @note 调用之前需要先设置用户 id 和 token
+   * @note id and token are required before calling this method
    */
   generateAIAgent = async (userId: string, token: string, config: AUIAICallConfig): Promise<AICallAgentInfo> => {
     if (!userId) {
@@ -101,6 +107,38 @@ class StandardAppService {
           };
         }
         throw new AICallAgentError(data.message || 'request error');
+      });
+  };
+
+  getRtcAuthToken = async (userId: string, channelId: string) => {
+    const body = {
+      user_id: userId,
+      channel_id: channelId,
+    };
+    return fetch(`${this.appServer}/api/v2/aiagent/getRtcAuthToken`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: this.serverAuth || '',
+      },
+      body: JSON.stringify(body),
+    })
+      .then((res) => {
+        if (res.status === 403) {
+          const error = new AICallAgentError('token is invalid');
+          error.name = 'ServiceAuthError';
+          throw error;
+        } else if (res.status !== 200) {
+          throw new AICallAgentError(`response status is ${res.status}`);
+        }
+
+        return res.json();
+      })
+      .then((data) => {
+        if (data.code === 200) {
+          return data.rtc_auth_token;
+        }
+        throw new AICallAgentError(`request error, message: ${data.message || 'request error'}`);
       });
   };
 

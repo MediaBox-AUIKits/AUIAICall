@@ -40,7 +40,6 @@ import ARTCAICallKit
         
         self.callContentView.frame = self.view.bounds
         self.callContentView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(onContentViewClicked(recognizer:))))
-        self.callContentView.updateAgentType(agentType: self.controller.config.agentType)
         
         self.titleLabel.frame = CGRect(x: 0, y: UIView.av_safeTop, width: self.view.av_width, height: 44)
         self.updateTitle()
@@ -70,24 +69,10 @@ import ARTCAICallKit
         self.controller.delegate = self
         self.controller.start()
         
-        NotificationCenter.default.addObserver(self, selector: #selector(applicationWillResignActive), name: UIApplication.willResignActiveNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(applicationDidBecomeActive), name: UIApplication.didBecomeActiveNotification, object: nil)
-
-        self.callContentView.callStateAni.start()
+        self.callContentView.agentAni.updateState(newState: self.controller.state)
     }
     
     public var onUserTokenExpiredBlcok: (()->Void)? = nil
-    
-    @objc private func applicationWillResignActive() {
-        self.callContentView.callStateAni.stop()
-        self.callContentView.voiceAgentAniView?.stop()
-    }
-    
-    @objc private func applicationDidBecomeActive() {
-        self.callContentView.callStateAni.start()
-        self.callContentView.voiceAgentAniView?.start()
-    }
-    
     
     open override var shouldAutorotate: Bool {
         return false
@@ -121,7 +106,7 @@ import ARTCAICallKit
     }()
     
     open lazy var callContentView: AUIAICallContentView = {
-        let view = AUIAICallContentView()
+        let view = AUIAICallContentView(frame: CGRect.zero, agentType: self.controller.config.agentType)
         view.voiceprintTipsLabel.clearBtn.clickBlock = { [weak self] btn in
             guard let self = self else { return }
             if self.controller.clearVoiceprint() == true {
@@ -194,13 +179,11 @@ import ARTCAICallKit
                 _ = self?.controller.cancelPushToTalk()
                 AVToastView.show(AUIAICallBundle.getString("You have canceled to send you talk."), view: self!.view, position: .mid)
                 btn.isSelected = false
-                self?.callContentView.voiceAgentAniView?.listeningAniView.isSpeaking = false
                 debugPrint("ptt: cancel elapsed: \(elapsed)")
             }
             else {
                 _ = self?.controller.startPushToTalk()
                 btn.isSelected = true
-                self?.callContentView.voiceAgentAniView?.listeningAniView.isSpeaking = false
                 debugPrint("ptt: start elapsed: \(elapsed)")
             }
         }
@@ -288,8 +271,6 @@ import ARTCAICallKit
         if Double(limitSecond) <= self.callingSeconds {
             self.controller.currentEngine.handup(true)
             self.countdownTimer.invalidate()
-            self.callContentView.callStateAni.stop()
-            self.callContentView.voiceAgentAniView?.stop()
             AVAlertController.show(withTitle: nil, message: AUIAICallBundle.getString("The call has ended. The avatar agent call can only be experienced for 5 minutes."), needCancel: false) { isCancel in
                 self.controller.handup()
             }
@@ -380,7 +361,7 @@ extension AUIAICallViewController {
     
     @objc func onTitleLabelTap() {
 #if DEMO_FOR_DEBUG
-        self.showDebugInfo()
+        self.showAgentDebugInfo()
 #endif
     }
     
@@ -388,31 +369,29 @@ extension AUIAICallViewController {
 
 extension AUIAICallViewController: AUIAICallControllerDelegate {
     
-    public func onAICallAIAgentStarted(agentInfo: ARTCAICallAgentInfo) {
-
+    public func onAICallRTCEngineCreated() {
+#if DEMO_FOR_RTC
+        self.registerAudioFrameData()
+#endif
+    }
+    
+    public func onAICallAIAgentStarted(agentInfo: ARTCAICallAgentInfo, elapsedTime: TimeInterval) {
+        ARTCAICallEngineLog.WriteLog(.Info, "Agent Start Elapse Time: \(elapsedTime)")
     }
     
     public func onAICallBegin(elapsedTime: TimeInterval) {
-        
+        ARTCAICallEngineLog.WriteLog(.Info, "Call Begin Elapse Time: \(elapsedTime)")
 #if DEMO_FOR_DEBUG
-        AVToastView.show(AUIAICallBundle.getString("Connected Time: \(elapsedTime)s"), view: self.view, position: .mid)
-#endif
-        
-#if DEMO_FOR_RTC
-        self.registerAudioFrameData()
+        self.printDebugInfo(AUIAICallBundle.getString("Connected Time: \(elapsedTime)s"))
 #endif
         
     }
     
     public func onAICallStateChanged() {
         ARTCAICallEngineLog.WriteLog(.Debug, "Call State Changed: \(self.controller.state)")
-        self.callContentView.callStateAni.updateState(newState: self.controller.state)
+        self.callContentView.agentAni.updateState(newState: self.controller.state)
         
         if self.controller.state == .Connected {
-            self.callContentView.callStateAni.isHidden = true
-            self.callContentView.callStateAni.stop()
-            self.callContentView.voiceAgentAniView?.isHidden = false
-            self.callContentView.voiceAgentAniView?.start()
             self.callContentView.avatarAgentView?.isHidden = false
             self.callContentView.visionCameraView?.isHidden = false
             self.callContentView.visionAgentView?.isHidden = !self.controller.config.muteLocalCamera
@@ -427,8 +406,6 @@ extension AUIAICallViewController: AUIAICallControllerDelegate {
         }
         else if self.controller.state == .Over {
             self.countdownTimer.invalidate()
-            self.callContentView.callStateAni.stop()
-            self.callContentView.voiceAgentAniView?.stop()
         }
         
         // 更新提示语
@@ -504,8 +481,6 @@ extension AUIAICallViewController: AUIAICallControllerDelegate {
             }
             self.callContentView.tipsLabel.text = msg
             self.countdownTimer.invalidate()
-            self.callContentView.callStateAni.stop()
-            self.callContentView.voiceAgentAniView?.stop()
             
             if self.controller.errorCode == .AvatarRoutesExhausted {
                 AVAlertController.show(withTitle: nil, message: AUIAICallBundle.getString("AI avatar calling is in high demand, please try again later or enjoy the new experience of AI voice calling first."), needCancel: false) { isCancel in
@@ -541,16 +516,11 @@ extension AUIAICallViewController: AUIAICallControllerDelegate {
             }
         }
         
-        self.callContentView.voiceAgentAniView?.updateAgentState(newState: self.controller.agentState)
+        self.callContentView.agentAni.updateAgentAnimator(state: self.controller.agentState)
     }
     
     public func onAICallActiveSpeakerVolumeChanged(userId: String, volume: Int32) {
-        if userId == self.controller.userId {
-            self.callContentView.voiceAgentAniView?.listeningAniView.isSpeaking = volume > 10
-        }
-        else {
-            self.callContentView.voiceAgentAniView?.listeningAniView.isSpeaking = false
-        }
+        
     }
     
     public func onAICallAgentSubtitleNotify(text: String, isSentenceEnd: Bool, userAsrSentenceId: Int) {
@@ -588,7 +558,7 @@ extension AUIAICallViewController: AUIAICallControllerDelegate {
             }
             else if (voiceprintResult == .UndetectedSpeakerWithAIVad) {
 #if DEMO_FOR_DEBUG
-                AVToastView.show(AUIAICallBundle.getString("VAD detected other speaking, stop responded this question."), view: self.view, position: .mid)
+                self.printDebugInfo(AUIAICallBundle.getString("VAD detected other speaking, stop responded this question."))
 #endif
             }
         }
@@ -636,8 +606,10 @@ extension AUIAICallViewController: AUIAICallControllerDelegate {
     }
     
     public func onAICallAgentEmotionNotify(emotion: String, userAsrSentenceId: Int) {
+        self.callContentView.agentAni.updateAgentAnimator(emotion: emotion)
+
 #if DEMO_FOR_DEBUG
-        AVToastView.show(String(format: AUIAICallBundle.getString("The agent seems to be %@"), emotion), view: self.view, position: .mid)
+        self.printDebugInfo(String(format: AUIAICallBundle.getString("The agent seems to be %@"), emotion))
 #endif
     }
     
@@ -651,9 +623,9 @@ extension AUIAICallViewController: AUIAICallControllerDelegate {
     
     public func onAICallSpeakingInterrupted(reason: ARTCAICallSpeakingInterruptedReason) {
 #if DEMO_FOR_DEBUG
-        let text = AUIAICallBundle.getString("Speaking interrupted") + ": \(reason.rawValue)"
-        AVToastView.show(text, view: self.view, position: .mid)
+        self.printDebugInfo(AUIAICallBundle.getString("Speaking interrupted") + ": \(reason.rawValue)")
 #endif
+        self.callContentView.agentAni.onAgentInterrupted()
     }
 }
 
@@ -700,17 +672,26 @@ extension AUIAICallViewController {
 #if DEMO_FOR_DEBUG
 extension AUIAICallViewController {
     
-    func showDebugInfo() {
-        AUIAICallDebugManager.shared.showDebugInfo(vc: self, controller: self.controller)
+    func showAgentDebugInfo() {
+        AUIAICallDebugManager.shared.showAgentDebugInfo(vc: self, controller: self.controller)
     }
     
     func getUserSubtitle(text: String, voiceprintResult: ARTCAICallVoiceprintResult) -> String {
+        if AUIAICallDebugManager.shared.enableDebugInfo == false {
+            return text
+        }
+        
         if (self.controller.config.templateConfig.voiceprintId != nil && self.controller.config.templateConfig.useVoiceprint) || self.controller.config.templateConfig.vadLevel > 0 {
             return "[\(voiceprintResult.rawValue)]\(text)"
         }
         return text
     }
     
+    func printDebugInfo(_ text: String) {
+        if AUIAICallDebugManager.shared.enableDebugInfo {
+            AVToastView.show(text, view: self.view, position: .mid)
+        }
+    }
 }
 #endif
 

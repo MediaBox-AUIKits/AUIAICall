@@ -14,6 +14,7 @@ import ArrowBtn from '../components/ArrowBtn';
 import { useEffect, useState } from 'react';
 import Vision from './Vision';
 
+import { useTranslation } from '@/common/i18nContext';
 
 interface StageProps {
   showMessage: boolean;
@@ -22,6 +23,8 @@ interface StageProps {
 }
 
 function Stage({ onStop, showMessage: propsShowMessage, onShowMessage }: StageProps) {
+  const { t } = useTranslation();
+
   const agentType = useCallStore((state) => state.agentType);
   const enablePushToTalk = useCallStore((state) => state.enablePushToTalk);
   const cameraMuted = useCallStore((state) => state.cameraMuted);
@@ -68,20 +71,14 @@ function Stage({ onStop, showMessage: propsShowMessage, onShowMessage }: StagePr
       )}
       <div className='call-block-container'>
         <div className='call-block-title'>
-          <div className='_text'>小云</div>
+          <div className='_text'>{t('hero.name')}</div>
           <div className='_extra'>
             
             <CallSettings />
           </div>
         </div>
         <div className='call-block-bd stage-bd'>
-          {enablePushToTalk && (
-            <Alert
-              className='stage-push-to-talk-tip'
-              message='已开启对讲机模式，长按空格开始讲话，对讲机状态下，麦克风默认开启。'
-              closable
-            />
-          )}
+          {enablePushToTalk && <Alert className='stage-push-to-talk-tip' message={t('pushToTalk.spaceTip')} closable />}
           <CharacterComponent />
           <CallSubtitle />
           <CallFooter onStop={onStop} />

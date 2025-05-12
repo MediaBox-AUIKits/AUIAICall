@@ -25,7 +25,7 @@ public class AICallDebugDialog {
         DialogPlus dialog = DialogPlus.newDialog(context)
                 .setContentHolder(viewHolder)
                 .setGravity(Gravity.BOTTOM)
-                .setExpanded(true, DisplayUtil.dip2px(430))
+                .setExpanded(true, DisplayUtil.dip2px(580))
                 .setOverlayBackgroundResource(android.R.color.transparent)
                 .setContentBackgroundResource(R.color.layout_base_dialog_background)
                 .setOnClickListener((dialog1, v) -> {
@@ -41,6 +41,12 @@ public class AICallDebugDialog {
                         engine.stopVisionCustomCapture();
                     } else if(v.getId() == R.id.debug_send_continus_custom_capture_enable_asr) {
                         engine.startVisionCustomCapture(new ARTCAICallEngine.ARTCAICallVisionCustomCaptureRequest(editTextCustomCapture.getText().toString(), true, false, 5, 2, 100, ""));
+                    } else if(v.getId() == R.id.debug_mute_agent_audio) {
+                        engine.muteAgentAudioPlaying(true);
+                    } else if(v.getId() == R.id.debug_unmute_agent_audio) {
+                        engine.muteAgentAudioPlaying(false);
+                    } else if(v.getId() == R.id.debug_send_text_to_agent) {
+                        engine.sendTextToAgent(new ARTCAICallEngine.ARTCAICallSendTextToAgentRequest("今天天气怎么样"));
                     }
                     dialog1.dismiss();
                 })

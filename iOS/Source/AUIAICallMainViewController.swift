@@ -23,6 +23,9 @@ public let AUIAIMainBundle = AUIAICallTheme("AUIAIMain")
         // Do any additional setup after loading the view.
         self.view.backgroundColor = AVTheme.bg_medium
         self.titleView.text = AUIAIMainBundle.getString("AIAgent")
+        // 打开音频回环延迟统计，如果不需要统计可以关闭
+        ARTCAICallBase.isEnableAudioDelayInfo = true
+        
 #if DEMO_FOR_DEBUG
         self.hiddenMenuButton = false
         self.menuButton.addTarget(self, action: #selector(onMenuBtnClick), for: .touchUpInside)

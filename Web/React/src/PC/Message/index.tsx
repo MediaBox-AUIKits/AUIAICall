@@ -8,6 +8,7 @@ import { AICallAgentType } from 'aliyun-auikit-aicall';
 import './index.less';
 import useCallStore from '@/Mobile/Call/store';
 import ArrowBtn from '../components/ArrowBtn';
+import { useTranslation } from '@/common/i18nContext';
 
 const AutoScrollGap = 20;
 
@@ -17,11 +18,15 @@ interface MessageProps {
 }
 
 function Message({ showMessage, onHideMessage }: MessageProps) {
+  const { t } = useTranslation();
+
   const agentType = useCallStore((state) => state.agentType);
   const subtitleList = useCallStore((state) => state.subtitleList);
   // 最底部的节点，依靠 scrollIntoView 来实现滚动到最底部
+  // bottom element for scrollIntoView to scroll to bottom
   const scrollBottomRef = useRef<HTMLDivElement>(null);
   // 是否自动滚动到最底部
+  // is auto scroll to bottom needed
   const autoScrollSwitchRef = useRef<boolean>(true);
 
   useEffect(() => {
@@ -47,7 +52,7 @@ function Message({ showMessage, onHideMessage }: MessageProps) {
       />
       <div className='call-block-container'>
         <div className='call-block-title'>
-          <div className='_text'>小云</div>
+          <div className='_text'>{t('hero.name')}</div>
         </div>
         <div className='call-block-bd call-message-bd'>
           <div className='call-message-list' onScroll={onScroll}>
@@ -71,7 +76,7 @@ function Message({ showMessage, onHideMessage }: MessageProps) {
               </Button>
             }
           /> */}
-            <div className='_tip'>内容由 AI 生成，仅供参考</div>
+            <div className='_tip'>{t('system.generateByAI')}</div>
           </div>
         </div>
       </div>

@@ -1,6 +1,6 @@
 import { useContext, useState, useRef, useEffect, RefObject } from 'react';
 import { ButtonRef, Toast, Button } from 'antd-mobile';
-import { AIChatMessageState } from 'aliyun-auikit-aicall';
+import { AIChatAgentResponseState } from 'aliyun-auikit-aicall';
 
 import { getRootElement } from '@/common/utils';
 import ChatEngineContext from '../ChatEngineContext';
@@ -8,6 +8,7 @@ import { interruptSVG, keyboardSVG } from '../Icons';
 import useChatStore from '../store';
 import { OnTypeChange } from './type';
 import { AIChatAttachmentUploader } from 'aliyun-auikit-aicall';
+import { useTranslation } from '@/common/i18nContext';
 
 function smoothData(data: Uint8Array) {
   const smoothingFactor = 0.8;
@@ -30,8 +31,9 @@ function VoiceSender({
   uploaderRef: RefObject<AIChatAttachmentUploader | undefined>;
   afterSend?: (success: boolean) => void;
 }) {
+  const { t } = useTranslation();
   const engine = useContext(ChatEngineContext);
-  const currentMessage = useChatStore((state) => state.currentMessage);
+  const reponseState = useChatStore((state) => state.chatResponseState);
   const attachmentCanSend = useChatStore((state) => state.attachmentCanSend);
   const [pushing, setPushing] = useState(false);
   const [willCancel, setWillCancel] = useState(false);
@@ -74,9 +76,8 @@ function VoiceSender({
 
         const audioContext = engine?.audioContext || new (window.AudioContext || window.webkitAudioContext)();
         const source = audioContext.createMediaStreamSource(stream);
-        // 代码片段中改变 fftSize 的值
         const analyser = audioContext.createAnalyser();
-        analyser.fftSize = 256; // 增加 FFT 尺寸
+        analyser.fftSize = 256;
         const bufferLength = analyser.frequencyBinCount;
         const dataArray = new Uint8Array(bufferLength);
 
@@ -101,7 +102,7 @@ function VoiceSender({
       const target = e.currentTarget as HTMLButtonElement;
       if (target.disabled) {
         if (!attachmentCanSend) {
-          Toast.show({ content: '部分图片上传中或上传失败', getContainer: getRootElement });
+          Toast.show({ content: t('chat.uploader.notReady'), getContainer: getRootElement });
         }
         return;
       }
@@ -112,7 +113,7 @@ function VoiceSender({
       const target = e.currentTarget as HTMLButtonElement;
       if (target.disabled) {
         if (!attachmentCanSend) {
-          Toast.show({ content: '部分图片上传中或上传失败', getContainer: getRootElement });
+          Toast.show({ content: t('chat.uploader.notReady'), getContainer: getRootElement });
         }
         return;
       }
@@ -136,10 +137,12 @@ function VoiceSender({
           const message = await engine?.finishPushVoiceMessage();
           afterSend?.(true);
           if (!message?.text) {
-            Toast.show({ content: '未识别到文字', getContainer: getRootElement });
+            Toast.show({ content: t('chat.send.voice.noText'), getContainer: getRootElement });
             return;
           }
           useChatStore.getState().sendMessage(message);
+          useChatStore.getState().updateMessageList();
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
           afterSend?.(false);
         }
@@ -213,11 +216,11 @@ function VoiceSender({
         className='_push-btn'
         block
         ref={buttonRef}
-        disabled={currentMessage?.message.messageState === AIChatMessageState.Printing || !attachmentCanSend}
+        disabled={reponseState !== AIChatAgentResponseState.Listening || !attachmentCanSend}
       >
-        按住说话
+        {t('chat.send.voice.tip')}
       </Button>
-      {currentMessage?.message.messageState === AIChatMessageState.Printing ? (
+      {reponseState !== AIChatAgentResponseState.Listening ? (
         <Button className='_action-btn' onClick={interruptMessage}>
           {interruptSVG}
         </Button>
@@ -229,7 +232,7 @@ function VoiceSender({
       <div className='_pushing'>
         <div className='_pushing-content'>
           <div className={`_tip ${willCancel ? 'is-will-cancel' : ''}`}>
-            {willCancel ? '松开发送，上滑取消' : '松开结束'}
+            {willCancel ? t('chat.send.voice.releaseToSend') : t('chat.send.voice.releaseToCancel')}
           </div>
           <div className={`_recording-status ${willCancel ? 'is-will-cancel' : ''}`}>
             <div className='_time'>{timeString}</div>

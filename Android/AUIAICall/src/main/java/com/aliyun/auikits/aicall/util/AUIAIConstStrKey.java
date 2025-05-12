@@ -10,5 +10,6 @@ public class AUIAIConstStrKey {
     public static final String BUNDLE_KEY_TOKEN_EXPIRE_TIMESTAMP = "BUNDLE_KEY_TOKEN_EXPIRE_TIMESTAMP";
     public static final String BUNDLE_KEY_CHAT_SYNC_CONFIG = "BUNDLE_KEY_CHAT_SYNC_CONFIG";
     public static final String BUNDLE_KEY_RTC_AUTH_TOKEN = "BUNDLE_KEY_RTC_AUTH_TOKEN";
-    public static final String BUNDLE_KEY_WEBVIEW_URL = "BUNDLE_KEY_WEBVIEW_URL";
+    public static final String BUNDLE_KEY_EXTERNAL_WEBVIEW_URL = "BUNDLE_KEY_EXTERNAL_WEBVIEW_URL";
+    public static final String BUNDLE_KEY_EXTERNAL_IMAGE_URL = "BUNDLE_KEY_EXTERNAL_IMAGE_URL";
 }

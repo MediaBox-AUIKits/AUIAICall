@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react';
 import Welcome from './Welcome';
-import { AICallAgentType, AICallTemplateConfig, AIChatAgentType } from 'aliyun-auikit-aicall';
+import { AICallAgentType, AICallTemplateConfig, AIChatAgentType, AIChatTemplateConfig } from 'aliyun-auikit-aicall';
 
 import './App.css';
 import { Toast } from 'antd-mobile';
 import Call from './Call';
 import Chat from './Chat';
 import runUserConfig from '@/runConfig.ts';
-import { AIChatTemplateConfig } from 'aliyun-auikit-aicall';
 import { JSONObject } from '@/service/interface.ts';
 import { getCallAgentId, getRuntimeConfig } from '@/interface.ts';
+import service from '@/service/standard';
 
 Toast.config({
   position: 'bottom',
@@ -49,10 +49,15 @@ function App(props: AppProps) {
   const [stateAgentType, setStateAgentType] = useState<AICallAgentType | AIChatAgentType | undefined>(agentType);
 
   useEffect(() => {
+    if (runConfig.appServer) {
+      service.setAppServer(runConfig.appServer);
+    }
+
     const preventContextMenu = function (e: Event) {
       e.preventDefault();
     };
     // 禁用右键菜单
+    // disable context menu
     document.addEventListener('contextmenu', preventContextMenu);
     return () => {
       document.removeEventListener('contextmenu', preventContextMenu);
@@ -72,6 +77,7 @@ function App(props: AppProps) {
     <>
       {stateAgentType === AIChatAgentType.MessageChat ? (
         <Chat
+          rc={runConfig}
           userId={userId}
           userToken={userToken}
           agentId={agentId || runConfig.chatAgentId}
@@ -86,6 +92,7 @@ function App(props: AppProps) {
         />
       ) : (
         <Call
+          rc={runConfig}
           userId={userId}
           userToken={userToken}
           agentType={stateAgentType}

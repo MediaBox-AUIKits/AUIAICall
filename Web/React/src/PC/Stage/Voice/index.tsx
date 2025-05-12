@@ -26,6 +26,7 @@ function Voice() {
   const avatarUrl = controller?.config.templateConfig?.avatarUrl;
 
   // 先停止动画，再执行切换状态进行 transition
+  // stop animation first, then switch state to trigger transition
   useEffect(() => {
     setAnimating(false);
     if (animationTimerRef.current) {
@@ -34,6 +35,7 @@ function Voice() {
     setTimeout(() => {
       setAgentState(storeAgentState);
       // 兜底 350ms 开始动画
+      // animation will start after 350ms
       animationTimerRef.current = window.setTimeout(() => {
         setAnimating(true);
       }, 350);
@@ -42,9 +44,9 @@ function Voice() {
 
   useEffect(() => {
     if (isSpeaking === showSpeaking) return;
-    // 未显示切换为显示
     if (isSpeaking) {
       // 如果准备停止显示，则取消
+      // if prepare to stop show, cancel it
       if (speakingTimerRef.current) {
         clearTimeout(speakingTimerRef.current);
       }
@@ -64,6 +66,7 @@ function Voice() {
       setAnimating(true);
     };
     // 默认 transition 结束开始动画
+    // animation will start after transition end
     watcherElementRef.current?.addEventListener('transitionend', transitionEnd);
     return () => {
       watcherElementRef.current?.removeEventListener('transitionend', transitionEnd);

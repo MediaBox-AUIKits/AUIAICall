@@ -52,10 +52,12 @@ import com.aliyun.auikits.aicall.widget.AICallNoticeDialog;
 import com.aliyun.auikits.aicall.widget.AICallRatingDialog;
 import com.aliyun.auikits.aicall.widget.AICallReportingDialog;
 import com.aliyun.auikits.aicall.widget.AICallSettingDialog;
-import com.aliyun.auikits.aicall.widget.SpeechAnimationView;
+import com.aliyun.auikits.aicall.widget.AUIAICallAgentAnimator;
+import com.aliyun.auikits.aicall.widget.AUIAICallAgentAvatarAnimator;
 import com.aliyun.auikits.aiagent.ARTCAICallEngine;
 import com.aliyun.auikits.aiagent.debug.ARTCAICallEngineDebuger;
 import com.aliyun.auikits.aicall.util.AppServiceConst;
+import com.aliyun.auikits.aicall.widget.AUIAICallAgentSimpleAnimator;
 import com.orhanobut.dialogplus.DialogPlus;
 import com.orhanobut.dialogplus.OnDismissListener;
 
@@ -91,6 +93,8 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
     private SubtitleHolder mSubtitleHolder = new SubtitleHolder();
     private ActionLayerHolder mActionLayerHolder = null;
     private SmallVideoViewHolder mSmallVideoViewHolder = new SmallVideoViewHolder();
+
+    private AUIAICallAgentAnimator mAICallAgentAnimator = null;
 
     private ARTCAICallController.IARTCAICallStateCallback mCallStateCallback = new ARTCAICallController.IARTCAICallStateCallback() {
         @Override
@@ -185,6 +189,9 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         public void onAgentEmotionNotify(String emotion,int userAsrSentenceId) {
             if(BuildConfig.TEST_ENV_MODE) {
                 ToastHelper.showToast(AUIAICallInCallActivity.this, "The agent seems to be " + emotion, Toast.LENGTH_SHORT);
+            }
+            if (mAICallAgentAnimator != null) {
+                mAICallAgentAnimator.updateAgentAnimator(emotion);
             }
         }
 
@@ -325,6 +332,7 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         @Override
         public void onSpeakingInterrupted(ARTCAICallEngine.ARTCAICallSpeakingInterruptedReason reason) {
             Log.i("AUIAICall", "onSpeakingInterrupted: " + reason);
+            mAICallAgentAnimator.onAgentInterrupted();
             if(BuildConfig.TEST_ENV_MODE) {
                 ToastHelper.showToast(AUIAICallInCallActivity.this, "onSpeakingInterrupted reason " + reason, Toast.LENGTH_SHORT);
             }
@@ -388,12 +396,6 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                         mIsVoicePrintRecognized, mIsSharedAgent, mARTCAICallController.getAgentVoiceList());
             }
         });
-        findViewById(R.id.speech_animation_view).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mARTCAICallEngine.interruptSpeaking();
-            }
-        });
         findViewById(R.id.avatar_layer).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -429,6 +431,24 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             if(!mIsSharedAgent) {
                 aiAgentRegion = AUIAICallAgentIdConfig.getRegion();
             }
+        }
+
+        if (mAICallAgentAnimator == null) {
+            FrameLayout callAgentContainer = findViewById(R.id.ai_call_agent_avatar_container);
+            if (mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent) {
+                mAICallAgentAnimator = new AUIAICallAgentAvatarAnimator(this);
+            } else {
+                mAICallAgentAnimator = new AUIAICallAgentSimpleAnimator(this);
+            }
+            callAgentContainer.removeAllViews();
+            callAgentContainer.addView(mAICallAgentAnimator);
+
+            mAICallAgentAnimator.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    mARTCAICallEngine.interruptSpeaking();
+                }
+            });
         }
 
         TextView tvAICallTitle = findViewById(R.id.tv_ai_call_title);
@@ -488,6 +508,7 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         if(BuildConfig.TEST_ENV_MODE) {
             updateTemplateConfig(artcaiCallConfig.mAiCallAgentTemplateConfig);
         }
+        artcaiCallConfig.enableAudioDelayInfo = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_AUDIO_DELAY_INFO, true);;
         if(chatSyncConfig) {
             if(BuildConfig.TEST_ENV_MODE) {
                 artcaiCallConfig.mAiCallChatSyncConfig.chatBotAgentId = usePreHost ? AUIAICallAgentDebug.getAIAgentId(ChatBot, false) : AUIAICallAgentIdConfig.getAIAgentId(ChatBot, false);
@@ -588,16 +609,16 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                 if (mARTCAICallEngine.isLocalCameraMute()) {
                     findViewById(R.id.ll_ai_agent_logo).setVisibility(View.VISIBLE);
                     findViewById(R.id.avatar_layer).setVisibility(View.GONE);
-                    findViewById(R.id.speech_animation_view).setVisibility(View.GONE);
+                    findViewById(R.id.ai_call_agent_avatar_container).setVisibility(View.GONE);
                 } else {
                     findViewById(R.id.ll_ai_agent_logo).setVisibility(View.GONE);
                     findViewById(R.id.avatar_layer).setVisibility(View.VISIBLE);
-                    findViewById(R.id.speech_animation_view).setVisibility(View.GONE);
+                    findViewById(R.id.ai_call_agent_avatar_container).setVisibility(View.GONE);
                 }
             } else {
                 findViewById(R.id.ll_ai_agent_logo).setVisibility(View.GONE);
                 findViewById(R.id.avatar_layer).setVisibility(View.GONE);
-                findViewById(R.id.speech_animation_view).setVisibility(View.VISIBLE);
+                findViewById(R.id.ai_call_agent_avatar_container).setVisibility(View.VISIBLE);
             }
         }
     }
@@ -833,21 +854,9 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
 
     private void updateSpeechAnimationType() {
         Log.i("AUIAICALL", "updateSpeechAnimationType: [robotState: " + mRobotState + ", isUserSpeaking: " + isUserSpeaking + "]");
-        SpeechAnimationView speechAnimationView = ((SpeechAnimationView)findViewById(R.id.speech_animation_view));
-        if (mCallState == ARTCAICallController.AICallState.Connecting) {
-            speechAnimationView.setAnimationType(SpeechAnimationView.AnimationType.Connecting);
-        } else {
-            if (mRobotState == ARTCAICallEngine.ARTCAICallRobotState.Thinking) {
-                speechAnimationView.setAnimationType(SpeechAnimationView.AnimationType.ROBOT_THINKING);
-            } else if (mRobotState == ARTCAICallEngine.ARTCAICallRobotState.Speaking) {
-                speechAnimationView.setAnimationType(SpeechAnimationView.AnimationType.ROBOT_SPEAKING);
-            } else if (mRobotState == ARTCAICallEngine.ARTCAICallRobotState.Listening) {
-                speechAnimationView.setAnimationType(
-                        isUserSpeaking ?
-                                SpeechAnimationView.AnimationType.LISTENING :
-                                SpeechAnimationView.AnimationType.WAITING
-                );
-            }
+        if (mAICallAgentAnimator != null) {
+            mAICallAgentAnimator.updateState(AUIAICallAgentAnimator.AUIAICallState.valueOf(mCallState.name()));
+            mAICallAgentAnimator.updateAgentAnimator(AUIAICallAgentAnimator.ARTCAICallAgentState.valueOf(mRobotState.name()));
         }
     }
 

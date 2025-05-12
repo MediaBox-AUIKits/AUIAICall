@@ -1,10 +1,12 @@
-import i18n from '@/common/i18n';
 import useCallStore from '@/Mobile/Call/store';
 import { AICallState, AICallAgentState } from 'aliyun-auikit-aicall';
 import { useState, useRef, useEffect, useMemo } from 'react';
 import './tip.less';
+import { useTranslation } from '@/common/i18nContext';
 
 function CallTip() {
+  const { t } = useTranslation();
+
   const [seconds, setSeconds] = useState(0);
   const durationTimerRef = useRef(0);
   const startTimeRef = useRef(0);
@@ -36,25 +38,25 @@ function CallTip() {
   const tipText = useMemo(() => {
     if (agentState === AICallAgentState.Listening) {
       if (!hasSpeaked) {
-        return i18n['status.listeningToStart'];
+        return t('status.listeningToStart');
       }
-      return i18n['status.listening'];
+      return t('status.listening');
     }
 
     if (agentState === AICallAgentState.Thinking) {
-      return i18n['status.thinking'];
+      return t('status.thinking');
     }
 
     if (agentState === AICallAgentState.Speaking) {
       if (enableVoiceInterrupt) {
-        return i18n['status.mobile.speaking'];
+        return t('status.mobile.speaking');
       } else {
-        return i18n['status.mobile.speakingNoInterrupt'];
+        return t('status.mobile.speakingNoInterrupt');
       }
     }
 
     return '';
-  }, [hasSpeaked, agentState, enableVoiceInterrupt]);
+  }, [hasSpeaked, agentState, enableVoiceInterrupt, t]);
 
   const durationText = useMemo(() => {
     const hours = Math.floor(seconds / 3600);

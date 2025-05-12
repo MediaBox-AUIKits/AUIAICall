@@ -1,9 +1,10 @@
 import { AIChatAttachment } from 'aliyun-auikit-aicall';
-import { Button } from 'antd-mobile';
+import { Button, ImageViewer } from 'antd-mobile';
 import { attachmentRemoveSVG, attachmentUploadFailSVG } from '@/Mobile/Chat/Icons.tsx';
 import { RefObject, useEffect, useMemo, useState } from 'react';
 import { AIChatAttachmentState, AIChatAttachmentUploader } from 'aliyun-auikit-aicall';
 import useChatStore from '@/Mobile/Chat/store.ts';
+import { getRootElement } from '@/common/utils';
 
 function Progress({ attachment }: { attachment: AIChatAttachment }) {
   const [progress, setProgress] = useState(attachment.progress);
@@ -62,7 +63,7 @@ function ChatFooterAttachment({
   const url = useMemo(() => {
     if (attachment.path) return attachment.path;
     return '';
-  }, [attachment.path, attachment.file]);
+  }, [attachment.path]);
 
   useEffect(() => {
     const updateState = (v: AIChatAttachmentState) => {
@@ -82,10 +83,17 @@ function ChatFooterAttachment({
     });
   };
 
+  const onImageClick = (imageUrl: string) => {
+    ImageViewer.show({
+      image: imageUrl,
+      getContainer: getRootElement,
+    });
+  };
+
   return (
     <li>
       <div className='_preview'>
-        <img src={url} alt={attachment.name || ''} />
+        <img src={url} alt={attachment.name || ''} onClick={() => onImageClick(url)} />
       </div>
 
       {state === AIChatAttachmentState.Uploading && <Progress attachment={attachment} />}

@@ -17,6 +17,8 @@ function Subtitle() {
 
   if (!currentSubtitle || !currentSubtitle?.data.text) return null;
 
+  let text = currentSubtitle.data.text;
+
   const onExpand = (e: React.MouseEvent) => {
     e.stopPropagation();
     setDetailVisible(true);
@@ -31,7 +33,7 @@ function Subtitle() {
       </div>
       <div className='_text' onClick={onExpand}>
         <Ellipsis
-          content={currentSubtitle.data.text}
+          content={text}
           rows={rows}
           expandText={
             <span className='_more' onClick={(e) => e.stopPropagation()}>
@@ -51,7 +53,7 @@ function Subtitle() {
           <div className='_detail-close'>
             <Button onClick={() => setDetailVisible(false)}>{MaskCloseSVG}</Button>
           </div>
-          {currentSubtitle.data.text}
+          {text}
         </div>
       </Mask>
     </div>

@@ -123,4 +123,43 @@
         android:paddingHorizontal="16dp"
         android:paddingVertical="6dp"
         android:background="@drawable/bg_reporting_type_selector"/>
+
+    <TextView
+        android:id="@+id/debug_mute_agent_audio"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="@style/layout_base_text_style_14"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/debug_stop_custom_capture"
+        android:text="关闭智能体语音"
+        android:layout_marginTop="20dp"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="6dp"
+        android:background="@drawable/bg_reporting_type_selector"/>
+
+    <TextView
+        android:id="@+id/debug_unmute_agent_audio"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="@style/layout_base_text_style_14"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/debug_mute_agent_audio"
+        android:text="打开智能体语音"
+        android:layout_marginTop="20dp"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="6dp"
+        android:background="@drawable/bg_reporting_type_selector"/>
+
+    <TextView
+        android:id="@+id/debug_send_text_to_agent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="@style/layout_base_text_style_14"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/debug_unmute_agent_audio"
+        android:text="SendAIAgentText"
+        android:layout_marginTop="20dp"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="6dp"
+        android:background="@drawable/bg_reporting_type_selector"/>
 </LinearLayout>

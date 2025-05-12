@@ -213,6 +213,15 @@ import SDWebImage
         return false
     }
     
+    public func textView(_ textView: UITextView, shouldInteractWith textAttachment: NSTextAttachment, in characterRange: NSRange, interaction: UITextItemInteraction) -> Bool {
+        if let image = textAttachment.image {
+            UIViewController.av_top().av_presentFullScreenViewController(AUIAIChatImageViewer(image: image), animated: true)
+        }
+
+        // 返回 false 表示不执行默认行为
+        return false
+    }
+    
     open override func canPerformAction(_ action: Selector, withSender sender: Any?) -> Bool {
         // 移除默认的复制、粘贴等操作
         if action == #selector(copy(_:)) || action == #selector(selectAll(_:)) {

@@ -1,6 +1,9 @@
 package com.aliyun.auikits.aicall.widget.card;
 
+import static androidx.core.content.ContextCompat.startActivity;
+
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Rect;
 import android.text.TextUtils;
 import android.util.TypedValue;
@@ -20,6 +23,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.aliyun.auikits.aiagent.ARTCAIChatAttachmentUploader;
 import com.aliyun.auikits.aiagent.ARTCAIChatEngine;
 import com.aliyun.auikits.aiagent.util.Logger;
+import com.aliyun.auikits.aicall.AUIAIChatExternalViewActivity;
+import com.aliyun.auikits.aicall.AUIAIChatInChatActivity;
 import com.aliyun.auikits.aicall.R;
 import com.aliyun.auikits.aicall.base.card.BaseCard;
 import com.aliyun.auikits.aicall.base.card.CardEntity;
@@ -29,15 +34,17 @@ import com.aliyun.auikits.aicall.base.feed.ContentViewModel;
 import com.aliyun.auikits.aicall.bean.ChatBotChatMessage;
 import com.aliyun.auikits.aicall.bean.ChatBotSelectedFileAttachment;
 import com.aliyun.auikits.aicall.model.ChatBotSelectImagesContentModel;
+import com.aliyun.auikits.aicall.util.AUIAIConstStrKey;
 import com.aliyun.auikits.aicall.util.markwon.AUIAIMarkwonManager;
 import com.aliyun.auikits.aicall.widget.PlayMessageAnimationView;
 import com.chad.library.adapter.base.BaseQuickAdapter;
+import com.chad.library.adapter.base.listener.OnItemClickListener;
 import com.chad.library.adapter.base.listener.OnItemLongClickListener;
 
 public class ChatBotSendTextMessageCard extends BaseCard {
 
     public interface OnMessageItemLongClickListener {
-        void onMessageItemLongClick(String requestId);
+        void onMessageItemLongClick();
     }
 
     private Button mSendTextMessageStatusImage;
@@ -132,9 +139,19 @@ public class ChatBotSendTextMessageCard extends BaseCard {
                         @Override
                         public boolean onItemLongClick(@NonNull BaseQuickAdapter adapter, @NonNull View view, int position) {
                             if(listener != null) {
-                                listener.onMessageItemLongClick(chatMessage.getRequestId());
+                                listener.onMessageItemLongClick();
                             }
                             return false;
+                        }
+                    });
+
+                    mSendImagesListAdapter.setOnItemClickListener(new OnItemClickListener() {
+                        @Override
+                        public void onItemClick(@NonNull BaseQuickAdapter<?, ?> adapter, @NonNull View view, int position) {
+
+                            if(position >= 0 && position < chatMessage.getMessage().attachmentList.size()) {
+                                showDetailImage(chatMessage.getMessage().attachmentList.get(position));
+                            }
                         }
                     });
 
@@ -190,6 +207,14 @@ public class ChatBotSendTextMessageCard extends BaseCard {
             }
         }
 
+    }
+
+    private void showDetailImage(ARTCAIChatAttachmentUploader.ARTCAIChatAttachment attachment) {
+        if(attachment != null && !TextUtils.isEmpty(attachment.path)) {
+            Intent intent = new Intent(mContext, AUIAIChatExternalViewActivity.class);
+            intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_EXTERNAL_IMAGE_URL, attachment.path);
+            startActivity(mContext, intent, null);
+        }
     }
 
     private ChatBotSelectedFileAttachment.ChatBotAttachmentType getType(ARTCAIChatAttachmentUploader.ARTCAIChatAttachmentType type) {

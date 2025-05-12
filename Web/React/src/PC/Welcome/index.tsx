@@ -10,14 +10,16 @@ import Vision from './svg/vision.svg?react';
 import useCallStore from '@/Mobile/Call/store';
 
 import './index.less';
-import i18n from '@/common/i18n';
 
+import { useTranslation } from '@/common/i18nContext';
 
 interface CallWelcomeProps {
   onAgentTypeSelected: (agentType: AICallAgentType) => void;
 }
 
 function CallWelcome({ onAgentTypeSelected }: CallWelcomeProps) {
+  const { t } = useTranslation();
+
   const callState = useCallStore((state) => state.callState);
   const callErrorMessage = useCallStore((state) => state.callErrorMessage);
 
@@ -26,14 +28,14 @@ function CallWelcome({ onAgentTypeSelected }: CallWelcomeProps) {
     content = (
       <>
         <LoadingOutlined className='_loading' />
-        <div className='_tip'>接通中，请稍后</div>
+        <div className='_tip'>{t('system.connecting')}</div>
       </>
     );
   } else if (callState === AICallState.Error) {
     content = (
       <>
         <ExclamationOutlined className='_error' />
-        <div className='_tip'>{callErrorMessage || '通话异常'}</div>
+        <div className='_tip'>{callErrorMessage || t('error.unknown')}</div>
         <div className='_backBtn'>
           <Button
             type='primary'
@@ -43,7 +45,7 @@ function CallWelcome({ onAgentTypeSelected }: CallWelcomeProps) {
               });
             }}
           >
-            &nbsp;返回&nbsp;
+            &nbsp;{t('common.back')}&nbsp;
           </Button>
         </div>
       </>
@@ -61,7 +63,7 @@ function CallWelcome({ onAgentTypeSelected }: CallWelcomeProps) {
             >
               <Icon component={Voice} />
             </Button>
-            <div className='_tip'>{i18n['agent.voice']}</div>
+            <div className='_tip'>{t('agent.voice')}</div>
           </div>
           <div style={{ width: 28 }} />
           <div>
@@ -73,7 +75,7 @@ function CallWelcome({ onAgentTypeSelected }: CallWelcomeProps) {
             >
               <Icon component={Avatar} />
             </Button>
-            <div className='_tip'>{i18n['agent.avatar']}</div>
+            <div className='_tip'>{t('agent.avatar')}</div>
           </div>
           <div style={{ width: 28 }} />
           <div>
@@ -85,7 +87,7 @@ function CallWelcome({ onAgentTypeSelected }: CallWelcomeProps) {
             >
               <Icon component={Vision} />
             </Button>
-            <div className='_tip'>{i18n['agent.vision']}</div>
+            <div className='_tip'>{t('agent.vision')}</div>
           </div>
         </div>
         
