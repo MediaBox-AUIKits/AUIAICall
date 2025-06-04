@@ -1,31 +1,31 @@
-import { AICallRunConfig } from '@/interface.ts';
 import { useEffect, useMemo } from 'react';
-import { AICallAgentType, AICallChatSyncConfig, AICallTemplateConfig } from 'aliyun-auikit-aicall';
+import { Toast } from 'antd-mobile';
+import { AICallRunConfig } from '@/interface.ts';
+import { AICallAgentConfig, AICallAgentType, AICallChatSyncConfig, AICallTemplateConfig } from 'aliyun-auikit-aicall';
 import AUIAICallStandardController from '@/controller/call/AUIAICallStandardController';
 import AUIAICallProxyController from '@/controller/call/AUIAICallProxyController.ts';
-import './index.less';
 import useCallStore from './store';
-import { Toast } from 'antd-mobile';
 import ControllerContext from './ControlerContext';
-import Stage from './Stage';
-import { isAndroidWeChatBrowser } from '@/common/utils';
 import { useTranslation } from '@/common/i18nContext';
+
+import Stage from './Stage';
+import './index.less';
 
 export interface CallProps {
   mode?: string;
-  agentType: AICallAgentType;
+  rc: AICallRunConfig;
   userId?: string;
   userToken?: string;
-  autoCall?: boolean;
-  rc: AICallRunConfig;
   shareToken?: string;
-  fromShare?: boolean;
-
-  agentId?: string;
+  autoCall?: boolean;
   appServer?: string;
+
+  agentType: AICallAgentType;
+  agentId?: string;
   region?: string;
   userData?: string;
-  templateConfig?: AICallTemplateConfig;
+  agentConfig?: AICallAgentConfig;
+
   isShare?: boolean;
   onExit?: () => void;
   onAuthFail?: () => void;
@@ -42,14 +42,14 @@ function Call({
   mode,
   userId,
   userToken,
-  agentId,
   autoCall,
+
+  agentId,
   shareToken,
-  fromShare,
   region,
   agentType,
   userData,
-  templateConfig,
+  agentConfig,
   onExit,
   onAuthFail,
   chatSyncConfig,
@@ -63,19 +63,24 @@ function Call({
     useCallStore.setState({
       agentType,
     });
+
     const _controller =
       mode === 'standard' || shareToken
         ? new AUIAICallStandardController(userId, userToken)
         : new AUIAICallProxyController(userId, userToken);
 
-    if (rtcEngineConfig) _controller.config.rtcEngineConfig = rtcEngineConfig;
-    if (region) _controller.config.region = region;
-    if (userData) {
-      _controller.config.userData = userData;
-    }
-    if (templateConfig) {
-      _controller.config.templateConfig = templateConfig;
-    }
+    if (rtcEngineConfig) _controller.engineConfig.rtcEngineConfig = rtcEngineConfig;
+
+    _controller.config = {
+      agentType,
+      region: region || 'cn-shanghai',
+      userData,
+      agentConfig,
+      agentId: agentId || '',
+      userId,
+      userJoinToken: '',
+      chatSyncConfig,
+    };
 
     if (shareToken) {
       _controller.shareConfig = shareToken;
@@ -99,30 +104,20 @@ function Call({
       if (_controller.shareConfig.userData) {
         _controller.config.userData = _controller.shareConfig?.userData;
       }
-
-      _controller.config.fromShare = true;
-    } else {
-      _controller.config.fromShare = !!fromShare;
-      if (agentId) {
-        _controller.config.agentId = agentId;
-      }
-      if (chatSyncConfig) {
-        _controller.config.chatSyncConfig = chatSyncConfig;
-      }
     }
 
     return _controller;
   }, [
     t,
+    mode,
     userId,
     userToken,
     shareToken,
-    fromShare,
     region,
     agentId,
-    userData,
-    templateConfig,
     agentType,
+    userData,
+    agentConfig,
     chatSyncConfig,
     rtcEngineConfig,
   ]);
@@ -137,28 +132,18 @@ function Call({
     return () => {
       window.removeEventListener('beforeunload', beforeOnload);
     };
-  }, []);
+  }, [controller]);
 
   return (
     <ControllerContext.Provider value={controller}>
       <Stage
-        // 微信安卓端自动播放会失败，分享场景需要手动点击通话
-        // Wechat Android will autoplay failed, need click call manually when share
-        agentType={agentType}
-        autoCall={
-          autoCall ||
-          (new URLSearchParams(location.search).get('nocall') ||
-          (controller?.config.fromShare && isAndroidWeChatBrowser())
-            ? false
-            : true)
-        }
+        autoCall={autoCall}
         onAuthFail={() => {
           onAuthFail?.();
         }}
         onExit={() => {
           onExit?.();
         }}
-        
       />
       {children}
     </ControllerContext.Provider>

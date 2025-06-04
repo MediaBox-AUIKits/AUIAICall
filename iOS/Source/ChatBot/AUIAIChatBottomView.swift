@@ -131,13 +131,19 @@ import ARTCAICallKit
      
     open var enableCall: Bool = true
     
+    open lazy var scrollView: UIScrollView = {
+        let scrollView = UIScrollView()
+        self.addSubview(scrollView)
+        return scrollView
+    }()
+    
     open lazy var voiceCallBtn: AUIAICallButton = {
         let btn = AUIAICallButton.create(title: AUIAIChatBundle.getString("Voice Call"), iconBgColor: AVTheme.fg_strong, normalIcon: AUIAIChatBundle.getImage("ic_call_voice"))
         btn.iconCorner = 10.0
         btn.iconLength = 70.0
         btn.iconMargin = 18.0
         btn.isHidden = true
-        self.addSubview(btn)
+        self.scrollView.addSubview(btn)
         return btn
     }()
     
@@ -147,7 +153,7 @@ import ARTCAICallKit
         btn.iconLength = 70.0
         btn.iconMargin = 18.0
         btn.isHidden = true
-        self.addSubview(btn)
+        self.scrollView.addSubview(btn)
         return btn
     }()
     
@@ -157,7 +163,17 @@ import ARTCAICallKit
         btn.iconLength = 70.0
         btn.iconMargin = 18.0
         btn.isHidden = true
-        self.addSubview(btn)
+        self.scrollView.addSubview(btn)
+        return btn
+    }()
+    
+    open lazy var videoCallBtn: AUIAICallButton = {
+        let btn = AUIAICallButton.create(title: AUIAIChatBundle.getString("Video Call"), iconBgColor: AVTheme.fg_strong, normalIcon: AUIAIChatBundle.getImage("ic_call_video"))
+        btn.iconCorner = 10.0
+        btn.iconLength = 70.0
+        btn.iconMargin = 18.0
+        btn.isHidden = true
+        self.scrollView.addSubview(btn)
         return btn
     }()
     
@@ -167,7 +183,7 @@ import ARTCAICallKit
         btn.iconLength = 70.0
         btn.iconMargin = 18.0
         btn.isHidden = true
-        self.addSubview(btn)
+        self.scrollView.addSubview(btn)
         return btn
     }()
 
@@ -177,22 +193,26 @@ import ARTCAICallKit
             return
         }
         
-        let left = 20.0 - 9.0
+        let left = 20.0
         let top = 68.0 + 4.0
-        let width = 88.0
+        let width = 70.0
         let height = 98.0
-        let n = 4.0
-        let margin = (self.av_width - left * 2 - width * n) / 3.0
-        self.addPhotoBtn.frame = CGRect(x: left, y: top, width: width, height: height)
-        self.voiceCallBtn.frame = CGRect(x: self.addPhotoBtn.av_right + margin, y: top, width: width, height: height)
-        self.avatarCallBtn.frame = CGRect(x: self.voiceCallBtn.av_right + margin, y: top, width: width, height: height)
-        self.visionCallBtn.frame = CGRect(x: self.avatarCallBtn.av_right + margin, y: top, width: width, height: height)
+        let margin = 18.0
+        self.addPhotoBtn.frame = CGRect(x: left, y: 0, width: width, height: height)
+        self.voiceCallBtn.frame = CGRect(x: self.addPhotoBtn.av_right + margin, y: 0, width: width, height: height)
+        self.avatarCallBtn.frame = CGRect(x: self.voiceCallBtn.av_right + margin, y: 0, width: width, height: height)
+        self.visionCallBtn.frame = CGRect(x: self.avatarCallBtn.av_right + margin, y: 0, width: width, height: height)
+        self.videoCallBtn.frame = CGRect(x: self.visionCallBtn.av_right + margin, y: 0, width: width, height: height)
         
         self.addPhotoBtn.isHidden = false
         self.voiceCallBtn.isHidden = self.enableCall ? false : true
         self.avatarCallBtn.isHidden = self.enableCall ? false : true
         self.visionCallBtn.isHidden = self.enableCall ? false : true
+        self.videoCallBtn.isHidden = self.enableCall ? false : true
         
+        self.scrollView.frame = CGRect(x: 0, y: top, width: self.av_width, height: height)
+        self.scrollView.contentSize = CGSize(width: self.enableCall ? self.videoCallBtn.av_right + left : self.addPhotoBtn.av_right + left, height: height)
+
         UIView.animate(withDuration: 0.25) {
             let bot = self.av_bottom
             let height = 68 + 106 + UIView.av_safeBottom
@@ -212,7 +232,8 @@ import ARTCAICallKit
         self.voiceCallBtn.isHidden = true
         self.avatarCallBtn.isHidden = true
         self.visionCallBtn.isHidden = true
-        
+        self.videoCallBtn.isHidden = true
+
         UIView.animate(withDuration: 0.25) {
             let bot = self.av_bottom
             let height = 68 + UIView.av_safeBottom

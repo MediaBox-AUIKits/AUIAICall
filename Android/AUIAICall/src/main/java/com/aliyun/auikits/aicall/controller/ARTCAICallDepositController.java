@@ -22,9 +22,9 @@ public class ARTCAICallDepositController extends ARTCAICallController {
                 setCallState(AICallState.Connecting, ARTCAICallEngine.AICallErrorCode.None);
                 boolean shareBootUseDemoAppServer = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_SHARE_BOOT_USE_DEMO_APP_SERVER, SettingStorage.DEFAULT_SHARE_BOOT_USE_DEMO_APP_SERVER);
                 if (!mARTCAiCallConfig.mAiCallAgentTemplateConfig.isSharedAgent || shareBootUseDemoAppServer) {
-                    mARTCAICallEngine.getIARTCAICallService().generateAIAgentCall(mUserId, mARTCAiCallConfig.mAiCallAgentTemplateConfig.aiAgentId, mAiAgentType, mARTCAiCallConfig, getStartActionCallback());
+                    mARTCAICallEngine.getIARTCAICallService().generateAIAgentCall(mUserId, mARTCAiCallConfig.agentId, mAiAgentType, mARTCAiCallConfig, getStartActionCallback());
                 } else {
-                    mARTCAICallEngine.getIARTCAICallService().generateAIAgentShareCall(mUserId, mARTCAiCallConfig.mAiCallAgentTemplateConfig.aiAgentId, mAiAgentType, mARTCAiCallConfig, getStartActionCallback());
+                    mARTCAICallEngine.getIARTCAICallService().generateAIAgentShareCall(mUserId, mARTCAiCallConfig.agentId, mAiAgentType, mARTCAiCallConfig, getStartActionCallback());
                 }
             }
         });
@@ -42,7 +42,7 @@ public class ARTCAICallDepositController extends ARTCAICallController {
                 public void run() {
                     setCallState(AICallState.Connecting, ARTCAICallEngine.AICallErrorCode.None);
                     mRtcAuthToken = token;
-                    mARTCAICallEngine.getIARTCAICallService().generateAIAgentShareCall(mUserId, mARTCAiCallConfig.mAiCallAgentTemplateConfig.aiAgentId, mAiAgentType, mARTCAiCallConfig, getStartActionCallback());
+                    mARTCAICallEngine.getIARTCAICallService().generateAIAgentShareCall(mUserId, mARTCAiCallConfig.agentId, mAiAgentType, mARTCAiCallConfig, getStartActionCallback());
                 }
             });
         }

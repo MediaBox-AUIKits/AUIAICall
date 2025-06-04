@@ -40,21 +40,13 @@ class AUIAICallProxyController extends AUIAICallController {
       });
 
       const authToken = await AUIAICallAuthTokenHelper.shared.fetchAuthToken(this.userId);
-      await this.engine!.callWithConfig({
-        agentId: this.config.agentId!,
-        agentType: this.config.agentType,
-        region: this.config.region ?? 'cn-shanghai',
-        userId: this.userId,
-        userData: this.config.userData,
-        templateConfig: this.config.templateConfig,
-        chatSyncConfig: this.config.chatSyncConfig,
-        userJoinToken: authToken,
-      });
+      this.config.userJoinToken = authToken;
+      await this.engine!.callWithConfig(this.config);
 
       AUIAICallAuthTokenHelper.shared.requestNewAuthToken(); // Request for next call
 
-      if (this.config.agentView) {
-        this.engine?.setAgentView(this.config.agentView);
+      if (this.engineConfig.agentElement) {
+        this.engine?.setAgentView(this.engineConfig.agentElement);
       }
 
       // @ts-expect-error state may change

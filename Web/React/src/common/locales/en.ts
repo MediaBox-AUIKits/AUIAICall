@@ -71,6 +71,8 @@ export default {
     avatar: 'AI Avatar Call',
     vision: 'AI Vision Call',
     chatbot: 'AI Chatbot',
+    video: 'AI Video Call',
+
     ended: 'Call ended',
     endedByInactivity: 'Due to your prolonged inactivity, the call has ended.',
     endedByAgent: 'The call has ended.',
@@ -91,6 +93,16 @@ export default {
     clickToCall: 'Click to Call',
     call: 'Call',
     handup: 'Handup',
+  },
+
+  resume: {
+    title: 'Audio/Video playback failed',
+    content: 'Please click the "Confirm" button to resume playback',
+    btn: 'Confirm',
+  },
+
+  subtitleList: {
+    btn: 'Subtitle',
   },
 
   settings: {
@@ -255,6 +267,8 @@ export default {
       deleteFailed: 'Delete failed',
 
       customReceived: 'Received custom message: {msg}',
+
+      tableTitle: 'Table',
     },
 
     actions: {
@@ -262,6 +276,7 @@ export default {
       toVoice: 'Voice Call',
       toAvatar: 'Avatar Call',
       toVision: 'Vision Call',
+      toVideo: 'Video Call',
     },
 
     send: {
@@ -272,6 +287,8 @@ export default {
         releaseToCancel: 'Release to cancel',
         failed: 'Failed to send voice message',
         noText: 'No text recognized',
+        noPermission: 'Failed to start microphone, please check device and permission',
+        tooShort: 'Canceled due to short hold time.',
       },
     },
 

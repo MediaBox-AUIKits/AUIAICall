@@ -1,17 +1,15 @@
-import { useContext, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import './index.less';
 import useCallStore from '@/Mobile/Call/store';
-import ControllerContext from '@/Mobile/Call/ControlerContext';
 import VoiceHero from './Hero';
 
 function Voice() {
-  const controller = useContext(ControllerContext);
   const isSpeaking = useCallStore((state) => state.isSpeaking);
   const [showSpeaking, setShowSpeaking] = useState(false);
   const speakingTimerRef = useRef(0);
 
-  const avatarUrl = controller?.config.templateConfig?.avatarUrl;
+  const voiceAvatarUrl = useCallStore((state) => state.voiceAvatarUrl);
 
   useEffect(() => {
     if (isSpeaking === showSpeaking) return;
@@ -31,13 +29,13 @@ function Voice() {
 
   return (
     <div className='character voice'>
-      {avatarUrl ? (
+      {voiceAvatarUrl ? (
         <div className='_box'>
           <div className='_agent-status-with-avatar'>
             <div></div>
           </div>
           <div className='_avatar'>
-            <img src={avatarUrl} />
+            <img src={voiceAvatarUrl} />
           </div>
         </div>
       ) : (

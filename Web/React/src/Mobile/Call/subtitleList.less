@@ -1,0 +1,49 @@
+.subtitle-list-pop {
+  .adm-mask {
+    background: none !important;
+    z-index: 6;
+  }
+  .adm-popup-body {
+    position: relative;
+    height: 100%;
+    box-sizing: border-box;
+    padding-top: 44px;
+    padding-bottom: 180px;
+    background: linear-gradient(180deg, #ffffff 65%, rgba(255, 255, 255, 0) 130%);
+    backdrop-filter: blur(20px);
+    z-index: 6 !important;
+
+    &::before {
+      content: ' ';
+      position: absolute;
+      height: 20px;
+      width: 100%;
+      left: 0;
+      top: 44px;
+      background: linear-gradient(180deg, #ffffff 0%, rgba(255, 255, 255, 0) 100%);
+    }
+  }
+}
+
+.subtitle-list {
+  height: 100%;
+  box-sizing: border-box;
+  overflow-y: auto;
+  padding: 0 20px;
+  font-size: 16px;
+  line-height: 24px;
+  color: #56597e;
+
+  ol {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+}
+
+.subtitle-list-item {
+  margin: 14px 0;
+  &.is-agent {
+    color: #aaacc4;
+  }
+}

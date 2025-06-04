@@ -44,6 +44,8 @@ private static String VOICE_AGENT_ID = "XXX";
 private static String Avatar_AGENT_ID = "XXX";
 // Your vision chat agent ID
 private static String VISION_AGENT_ID = "XXX";
+// Your video chat agent ID
+private static String VIDEO_AGENT_ID = "XXX";
 
 //Configuring region
 private static String Region = "cn-shanghai";
@@ -111,7 +113,7 @@ dependencies {
     implementation 'com.google.android.material:material:x.x.x'             // Modify x.x.x to the version compatible with your project
     androidTestImplementation 'androidx.test.espresso:espresso-core:x.x.x'  // Modify x.x.x to the version compatible with your project
     implementation 'com.aliyun.aio:AliVCSDK_ARTC:7.2.0'                  // Modify x.x.x to the version compatible with your project
-    implementation 'com.aliyun.auikits.android:ARTCAICallKit:2.4.0'
+    implementation 'com.aliyun.auikits.android:ARTCAICallKit:2.5.0'
     // If your business also needs to support message conversations, you also need to integrate AliVCInteractionMessage, with a minimum version of 1.6.0
     implementation 'com.aliyun.sdk.android:AliVCInteractionMessage:1.7.0'
 }
@@ -135,6 +137,8 @@ private static String VOICE_AGENT_ID = "XXX";
 private static String Avatar_AGENT_ID = "XXX";
 // Your vision chat agent ID
 private static String VISION_AGENT_ID = "XXX";
+// Your video chat agent ID
+private static String VIDEO_AGENT_ID = "XXX";
 
 //Configuring region
 private static String Region = "cn-shanghai";

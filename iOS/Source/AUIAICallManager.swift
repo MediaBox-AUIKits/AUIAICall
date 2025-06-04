@@ -36,7 +36,7 @@ import ARTCAICallKit
         
         AVDeviceAuth.checkMicAuth { micAuth in
             if micAuth {
-                if agentType == .VisionAgent {
+                if agentType == .VisionAgent || agentType == .VideoAgent {
                     AVDeviceAuth.checkCameraAuth { cameraAuth in
                         if cameraAuth {
                             success()
@@ -50,10 +50,10 @@ import ARTCAICallKit
         }
     }
     
-    private func getDefaultTemplateConfig() -> ARTCAICallTemplateConfig {
-        let templateConfig = ARTCAICallTemplateConfig()
-        templateConfig.voiceprintId = self.voiceprintId
-        return templateConfig
+    private func getDefaultCallAgentConfig() -> ARTCAICallAgentConfig {
+        let agentConfig = ARTCAICallAgentConfig()
+        agentConfig.voiceprintConfig.voiceprintId = self.voiceprintId
+        return agentConfig
     }
     
 #if !DEMO_FOR_DEBUG
@@ -99,7 +99,7 @@ import ARTCAICallKit
             // 关联的chat智能体配置(必须同一账号同一区域上)，如果设置了，那么在通话过程中会把通话记录同步到chat智能体上
             controller.config.chatSyncConfig = chatSyncConfig
             // 通话配置
-            controller.config.templateConfig = self.getDefaultTemplateConfig()
+            controller.config.agentConfig = self.getDefaultCallAgentConfig()
             // agent所在的区域
             controller.config.region = region ?? AUIAICallAgentConfig.shared.getRegion()
             // 通话时长限制，如无限制则无需设置

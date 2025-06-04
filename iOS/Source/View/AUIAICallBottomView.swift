@@ -47,7 +47,7 @@ import ARTCAICallKit
     }
     
     private var enableCamera: Bool {
-        return self.agentType == .VisionAgent
+        return self.agentType == .VisionAgent || self.agentType == .VideoAgent
     }
     
     open override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
@@ -155,19 +155,9 @@ import ARTCAICallKit
     
     open lazy var gradientlayer: CAGradientLayer = {
         let layer = CAGradientLayer()
-        if self.agentType == .AvatarAgent {
-            layer.locations = [0.27, 0.99]
-            layer.startPoint = CGPoint(x: 0.5, y: 0.06)
-            layer.endPoint = CGPoint(x: 0.5, y: 0.4)
-            layer.colors = [UIColor.av_color(withHexString: "#001146", alpha: 0.0).cgColor, UIColor.av_color(withHexString: "#00040F", alpha: 1.0).cgColor]
-
-        }
-        else if self.agentType == .VisionAgent {
-            layer.startPoint = CGPoint(x: 0.5, y: 0.0)
-            layer.endPoint = CGPoint(x: 0.5, y: 1.0)
-            layer.colors = [UIColor.black.withAlphaComponent(0.0).cgColor, UIColor.black.withAlphaComponent(1).cgColor]
-        }
-
+        layer.startPoint = CGPoint(x: 0.5, y: 0.0)
+        layer.endPoint = CGPoint(x: 0.5, y: 1.0)
+        layer.colors = [UIColor.black.withAlphaComponent(0.0).cgColor, UIColor.black.withAlphaComponent(1).cgColor]
         return layer
     }()
     

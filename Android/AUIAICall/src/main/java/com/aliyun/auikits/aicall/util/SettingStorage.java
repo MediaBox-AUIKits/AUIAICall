@@ -46,6 +46,8 @@ public class SettingStorage {
     public static final String KEY_INTERRUPT_WORDS = "KEY_INTERRUPT_WORDS";
     public static final String KEY_VAD_LEVEL = "KEY_VAD_LEVEL";
     public static final String KEY_USE_APP_SERVER_START_AGENT = "KEY_USE_APP_SERVER_START_AGENT";
+    public static final String KEY_ASR_HOT_WORDS = "KEY_ASR_HOT_WORDS";
+    public static final String KEY_TURN_END_WORDS = "KEY_TURN_END_WORDS";
 
 
 

@@ -21,7 +21,7 @@ public class ARTCAICustomController extends ARTCAICallController {
                 setCallState(AICallState.Connecting, ARTCAICallEngine.AICallErrorCode.None);
                 // 调用启动服务
                 if (mARTCAiCallConfig.mAiCallAgentTemplateConfig.isSharedAgent) {
-                    mARTCAICallEngine.getIARTCAICallService().generateAIAgentCall(mUserId, mARTCAiCallConfig.mAiCallAgentTemplateConfig.aiAgentId, mAiAgentType, mARTCAiCallConfig, getStartActionCallback());
+                    mARTCAICallEngine.getIARTCAICallService().generateAIAgentCall(mUserId, mARTCAiCallConfig.agentId, mAiAgentType, mARTCAiCallConfig, getStartActionCallback());
                 } else {
                     mARTCAICallEngine.getIARTCAICallService().startAIAgentService(mUserId, mAiAgentType, mARTCAiCallConfig, getStartActionCallback());
                 }

@@ -6,8 +6,14 @@ import static com.aliyun.auikits.aiagent.ARTCAICallEngine.ARTCAICallAgentType.Ch
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Message;
+import android.view.LayoutInflater;
 import android.view.WindowManager;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -18,11 +24,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
-import android.text.Spannable;
-import android.text.SpannableString;
 import android.text.TextPaint;
 import android.text.TextUtils;
-import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -30,7 +33,6 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -49,9 +51,11 @@ import com.aliyun.auikits.aicall.util.ToastHelper;
 import com.aliyun.auikits.aicall.widget.AICallAudioTipsDialog;
 import com.aliyun.auikits.aicall.widget.AICallDebugDialog;
 import com.aliyun.auikits.aicall.widget.AICallNoticeDialog;
-import com.aliyun.auikits.aicall.widget.AICallRatingDialog;
 import com.aliyun.auikits.aicall.widget.AICallReportingDialog;
 import com.aliyun.auikits.aicall.widget.AICallSettingDialog;
+import com.aliyun.auikits.aicall.widget.AICallSubtitleMessageItem;
+import com.aliyun.auikits.aicall.widget.AICallSubtitleRecyclerViewAdapter;
+import com.aliyun.auikits.aicall.widget.AICallSubtitleSpacingItemDecoraion;
 import com.aliyun.auikits.aicall.widget.AUIAICallAgentAnimator;
 import com.aliyun.auikits.aicall.widget.AUIAICallAgentAvatarAnimator;
 import com.aliyun.auikits.aiagent.ARTCAICallEngine;
@@ -62,7 +66,6 @@ import com.orhanobut.dialogplus.DialogPlus;
 import com.orhanobut.dialogplus.OnDismissListener;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -86,15 +89,16 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
     private long mLastCallMillis = 0;
     private ARTCAICallEngine.ARTCAICallAgentType mAiAgentType = ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent;
     private boolean mIsSharedAgent = false;
-    private boolean mFirstAvatarFrameDrawn = false;
     private boolean mIsPushToTalkMode = false;
     private boolean mIsVoicePrintRecognized = false;
 
-    private SubtitleHolder mSubtitleHolder = new SubtitleHolder();
+    private SubtitleHolder mSubtitleHolder = null;
+    private boolean mIsFullScreenSubtitleOpen = false;
     private ActionLayerHolder mActionLayerHolder = null;
     private SmallVideoViewHolder mSmallVideoViewHolder = new SmallVideoViewHolder();
 
     private AUIAICallAgentAnimator mAICallAgentAnimator = null;
+    private boolean mIsPreviewShowInSmallView = true;
 
     private ARTCAICallController.IARTCAICallStateCallback mCallStateCallback = new ARTCAICallController.IARTCAICallStateCallback() {
         @Override
@@ -152,7 +156,11 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             Log.i("AUIAICALL", "onUserAsrSubtitleNotify: [sentenceId: " + sentenceId + ", isSentenceEnd" + isSentenceEnd + ", text: " + text + ", voicePrintStatusCode: " + voicePrintStatusCode + "]");
 
             if (IS_SUBTITLE_ENABLE) {
-                mSubtitleHolder.updateSubtitle(true, isSentenceEnd, text, sentenceId);
+                // 无效的Asr字幕直接不显示
+                if(voicePrintStatusCode != ARTCAICallEngine.VoicePrintStatusCode.UndetectedSpeakerWithAIVad &&
+                voicePrintStatusCode != ARTCAICallEngine.VoicePrintStatusCode.SpeakerNotRecognized) {
+                    mSubtitleHolder.updateSubtitle(true, isSentenceEnd, text, sentenceId);
+                }
                  if (voicePrintStatusCode == ARTCAICallEngine.VoicePrintStatusCode.SpeakerNotRecognized ||
                         voicePrintStatusCode == ARTCAICallEngine.VoicePrintStatusCode.SpeakerRecognized) {
                      mIsVoicePrintRecognized = true;
@@ -169,8 +177,6 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                 } else if (voicePrintStatusCode == ARTCAICallEngine.VoicePrintStatusCode.UndetectedSpeakerWithAIVad && BuildConfig.TEST_ENV_MODE) {
                     setSecondaryCallTips(true, getResources().getString(R.string.aival_main_speaker_not_recognized), null, null);
                 }
-            } else {
-                mSubtitleHolder.setSubtitleLayoutVisibility(false);
             }
         }
 
@@ -180,8 +186,6 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
 
             if (IS_SUBTITLE_ENABLE) {
                 mSubtitleHolder.updateSubtitle(false, end, text, userAsrSentenceId);
-            } else {
-                mSubtitleHolder.setSubtitleLayoutVisibility(false);
             }
         }
 
@@ -255,11 +259,14 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             Log.i("AUIAICALL", "onAgentVideoAvailable: [available: " + available + "]");
         }
 
+        public void onAgentDataChannelAvailable() {
+            Log.i("AUIAICALL", "onAgentDataChannelAvailable");
+        }
+
         @Override
         public void onAgentAvatarFirstFrameDrawn() {
             Log.i("AUIAICALL", "onAgentAvatarFirstFrameDrawn");
-            mFirstAvatarFrameDrawn = true;
-            mSubtitleHolder.updateSubtitleVisibility();
+//            mSubtitleHolder.updateSubtitleVisibility();
         }
 
         @Override
@@ -396,6 +403,30 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                         mIsVoicePrintRecognized, mIsSharedAgent, mARTCAICallController.getAgentVoiceList());
             }
         });
+
+        findViewById(R.id.video_agent_small_view_change).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                changeVideoView();
+            }
+        });
+
+        // 字幕开关控制全屏字幕的可见性
+        mSubtitleHolder = new SubtitleHolder(this);
+        TextView tvBtnSubtitle = findViewById(R.id.btn_ai_call_full_screen_subtitle);
+        tvBtnSubtitle.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view) {
+                if(mIsFullScreenSubtitleOpen) {
+                    tvBtnSubtitle.setBackgroundResource(R.drawable.bg_btn_subtitle_black);
+                    tvBtnSubtitle.setTextColor(getResources().getColor(R.color.layout_base_white_default));
+                } else {
+                    tvBtnSubtitle.setBackgroundResource(R.drawable.bg_btn_subtitle_white);
+                    tvBtnSubtitle.setTextColor(getResources().getColor(R.color.layout_base_black_alpha_50));
+                }
+                mSubtitleHolder.setFullScreenSubtitleVisibility(!mIsFullScreenSubtitleOpen);
+            }
+        });
         findViewById(R.id.avatar_layer).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -457,6 +488,8 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             titleResId = R.string.vision_agent_call;
         } else if (mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent) {
             titleResId = R.string.digital_human_call;
+        } else if (mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VideoAgent) {
+            titleResId = R.string.video_agent_call;
         }
         tvAICallTitle.setText(titleResId);
         tvAICallTitle.setOnClickListener(new View.OnClickListener() {
@@ -479,7 +512,6 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             }
         });
 
-
         ARTCAICallEngineDebuger.enableDumpData = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_AUDIO_DUMP_SWITCH);
         ARTCAICallEngineDebuger.enableUserSpecifiedAudioTips = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_AUDIO_TIPS_SWITCH);
         ARTCAICallEngineDebuger.enableLabEnvironment = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_USE_RTC_PRE_ENV_SWITCH);
@@ -487,57 +519,71 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
 
         boolean useDeposit = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_DEPOSIT_SWITCH, SettingStorage.DEFAULT_DEPOSIT_SWITCH);
         ARTCAICallEngine.ARTCAICallConfig artcaiCallConfig = new ARTCAICallEngine.ARTCAICallConfig();
-        artcaiCallConfig.mAiCallAgentTemplateConfig.aiAgentRegion = aiAgentRegion;
-        artcaiCallConfig.mAiCallAgentTemplateConfig.aiAgentId = aiAgentId;
+        artcaiCallConfig.region = aiAgentRegion;
+        artcaiCallConfig.agentId = aiAgentId;
         artcaiCallConfig.mAiCallAgentTemplateConfig.isSharedAgent = mIsSharedAgent;
         boolean usePreHost = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_APP_SERVER_TYPE, SettingStorage.DEFAULT_APP_SERVER_TYPE);
         artcaiCallConfig.mAiCallAgentTemplateConfig.appServerHost = usePreHost ? AUIAICallAgentDebug.PRE_HOST : AppServiceConst.HOST;
         artcaiCallConfig.mAiCallAgentTemplateConfig.loginUserId = loginUserId;
         artcaiCallConfig.mAiCallAgentTemplateConfig.loginAuthrization = loginAuthorization;
         mIsPushToTalkMode = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_PUSH_TO_TALK, SettingStorage.DEFAULT_ENABLE_PUSH_TO_TALK);
-        artcaiCallConfig.mAiCallAgentTemplateConfig.enablePushToTalk = mIsPushToTalkMode;
-        artcaiCallConfig.mAiCallAgentTemplateConfig.enableVoicePrint = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_VOICE_PRINT, SettingStorage.DEFAULT_ENABLE_VOICE_PRINT);
-        artcaiCallConfig.mAiCallAgentTemplateConfig.userExtendData = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_USER_EXTEND_DATA);
-        artcaiCallConfig.mAiCallVideoConfig.useHighQualityPreview = true;
-        artcaiCallConfig.mAiCallVideoConfig.cameraCaptureFrameRate = 15;
+        artcaiCallConfig.agentConfig.enablePushToTalk = mIsPushToTalkMode;
+        artcaiCallConfig.agentConfig.voiceprintConfig.useVoicePrint = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_VOICE_PRINT, SettingStorage.DEFAULT_ENABLE_VOICE_PRINT);
+        artcaiCallConfig.userData = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_USER_EXTEND_DATA);
+        artcaiCallConfig.videoConfig.useHighQualityPreview = true;
+        artcaiCallConfig.videoConfig.cameraCaptureFrameRate = 15;
         // 这里frameRate设置为5，需要根据控制台上的智能体的抽帧帧率（一般为2）进行调整，最大不建议超过15fps
         // videoEncoderBitRate: videoEncoderFrameRate超过10可以设置为512
-        artcaiCallConfig.mAiCallVideoConfig.videoEncoderFrameRate = 5;
-        artcaiCallConfig.mAiCallVideoConfig.videoEncoderBitRate = 340;
+        artcaiCallConfig.videoConfig.videoEncoderFrameRate = 5;
+        artcaiCallConfig.videoConfig.videoEncoderBitRate = 340;
+        if(mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VideoAgent) {
+            artcaiCallConfig.videoConfig.useFrontCameraDefault = true;
+        }
 
         if(BuildConfig.TEST_ENV_MODE) {
-            updateTemplateConfig(artcaiCallConfig.mAiCallAgentTemplateConfig);
+            updateAgentConfig(artcaiCallConfig.agentConfig);
         }
         artcaiCallConfig.enableAudioDelayInfo = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_AUDIO_DELAY_INFO, true);;
         if(chatSyncConfig) {
             if(BuildConfig.TEST_ENV_MODE) {
-                artcaiCallConfig.mAiCallChatSyncConfig.chatBotAgentId = usePreHost ? AUIAICallAgentDebug.getAIAgentId(ChatBot, false) : AUIAICallAgentIdConfig.getAIAgentId(ChatBot, false);
+                artcaiCallConfig.chatSyncConfig.chatBotAgentId = usePreHost ? AUIAICallAgentDebug.getAIAgentId(ChatBot, false) : AUIAICallAgentIdConfig.getAIAgentId(ChatBot, false);
             }
             else {
-                artcaiCallConfig.mAiCallChatSyncConfig.chatBotAgentId = AUIAICallAgentIdConfig.getAIAgentId(ChatBot, false);
+                artcaiCallConfig.chatSyncConfig.chatBotAgentId = AUIAICallAgentIdConfig.getAIAgentId(ChatBot, false);
             }
-            artcaiCallConfig.mAiCallChatSyncConfig.sessionId = loginUserId + "_" + artcaiCallConfig.mAiCallChatSyncConfig.chatBotAgentId;
-            artcaiCallConfig.mAiCallChatSyncConfig.receiverId = loginUserId;
+            artcaiCallConfig.chatSyncConfig.sessionId = loginUserId + "_" + artcaiCallConfig.chatSyncConfig.chatBotAgentId;
+            artcaiCallConfig.chatSyncConfig.receiverId = loginUserId;
         }
 
-        if(TextUtils.isEmpty(artcaiCallConfig.mAiCallAgentTemplateConfig.voiceprintId)) {
-            artcaiCallConfig.mAiCallAgentTemplateConfig.voiceprintId = loginUserId;
+        if(TextUtils.isEmpty(artcaiCallConfig.agentConfig.voiceprintConfig.voiceprintId)) {
+            artcaiCallConfig.agentConfig.voiceprintConfig.voiceprintId = loginUserId;
         }
+        artcaiCallConfig.agentType = mAiAgentType;
         mARTCAICallController = useDeposit ? new ARTCAICallDepositController(this, loginUserId) :
                 new ARTCAICustomController(this, loginUserId);
         mARTCAICallController.setBizCallEngineCallback(mARTCAIEngineCallback);
         mARTCAICallController.setCallStateCallback(mCallStateCallback);
         mARTCAICallController.init(artcaiCallConfig);
-        mARTCAICallController.setAiAgentType(mAiAgentType);
+        mARTCAICallController.setAICallAgentType(mAiAgentType);
         mARTCAICallController.enableFetchVoiceIdList(false);
 
         mARTCAICallEngine = mARTCAICallController.getARTCAICallEngine();
         if (mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent) {
-            mARTCAICallEngine.setAvatarAgentView(findViewById(R.id.avatar_layer),
+            mARTCAICallEngine.setAgentView(findViewById(R.id.avatar_layer),
                     new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
             );
         } else if (mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VisionAgent) {
-            mARTCAICallEngine.setVisionPreviewView(findViewById(R.id.avatar_layer),
+            mARTCAICallEngine.setLocalView(findViewById(R.id.avatar_layer),
+                    new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+            );
+        } else if(mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VideoAgent) {
+            ARTCAICallEngine.ARTCAICallVideoCanvas remoteCanvas = new ARTCAICallEngine.ARTCAICallVideoCanvas();
+            remoteCanvas.zOrderOnTop = false;
+            remoteCanvas.zOrderMediaOverlay = false;
+            mARTCAICallEngine.setAgentView(findViewById(R.id.avatar_layer),
+                    new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT), remoteCanvas
+            );
+            mARTCAICallEngine.setLocalView(findViewById(R.id.video_agent_small_view_layer),
                     new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
             );
         }
@@ -607,18 +653,85 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         if (mCallState == ARTCAICallController.AICallState.Connected) {
             if (useVideo()) {
                 if (mARTCAICallEngine.isLocalCameraMute()) {
-                    findViewById(R.id.ll_ai_agent_logo).setVisibility(View.VISIBLE);
-                    findViewById(R.id.avatar_layer).setVisibility(View.GONE);
-                    findViewById(R.id.ai_call_agent_avatar_container).setVisibility(View.GONE);
+                    if(aiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VisionAgent) {
+                        findViewById(R.id.ll_ai_agent_logo).setVisibility(View.VISIBLE);
+                        findViewById(R.id.avatar_layer).setVisibility(View.GONE);
+                        findViewById(R.id.ai_call_agent_avatar_container).setVisibility(View.GONE);
+                    }
                 } else {
                     findViewById(R.id.ll_ai_agent_logo).setVisibility(View.GONE);
                     findViewById(R.id.avatar_layer).setVisibility(View.VISIBLE);
                     findViewById(R.id.ai_call_agent_avatar_container).setVisibility(View.GONE);
                 }
+                if(aiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VideoAgent) {
+                    findViewById(R.id.small_view_layer).setVisibility(View.VISIBLE);
+
+                    if(mIsPreviewShowInSmallView) {
+                        if(mARTCAICallEngine.isLocalCameraMute()) {
+                            findViewById(R.id.small_view_camera_mute).setVisibility(View.VISIBLE);
+                            findViewById(R.id.video_agent_small_view_layer).setVisibility(View.GONE);
+                        } else {
+                            findViewById(R.id.small_view_camera_mute).setVisibility(View.GONE);
+                            findViewById(R.id.video_agent_small_view_layer).setVisibility(View.VISIBLE);
+                        }
+                    } else {
+                        if(mARTCAICallEngine.isLocalCameraMute()) {
+                            findViewById(R.id.ll_ai_agent_logo).setVisibility(View.VISIBLE);
+                            findViewById(R.id.avatar_layer).setVisibility(View.GONE);
+                            findViewById(R.id.ai_call_agent_avatar_container).setVisibility(View.GONE);
+                        } else {
+                            findViewById(R.id.ll_ai_agent_logo).setVisibility(View.GONE);
+                            findViewById(R.id.avatar_layer).setVisibility(View.VISIBLE);
+                            findViewById(R.id.ai_call_agent_avatar_container).setVisibility(View.GONE);
+                        }
+                    }
+                }
             } else {
                 findViewById(R.id.ll_ai_agent_logo).setVisibility(View.GONE);
                 findViewById(R.id.avatar_layer).setVisibility(View.GONE);
                 findViewById(R.id.ai_call_agent_avatar_container).setVisibility(View.VISIBLE);
+            }
+        }
+    }
+
+    private void changeVideoView() {
+        ((FrameLayout)findViewById(R.id.video_agent_small_view_layer)).removeAllViews();
+        ((FrameLayout)findViewById(R.id.avatar_layer)).removeAllViews();
+        if(mIsPreviewShowInSmallView) {
+            mARTCAICallEngine.setAgentView(findViewById(R.id.video_agent_small_view_layer),
+                    new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+            );
+            ARTCAICallEngine.ARTCAICallVideoCanvas localCanvas = new ARTCAICallEngine.ARTCAICallVideoCanvas();
+            localCanvas.zOrderOnTop = false;
+            localCanvas.zOrderMediaOverlay = false;
+            mARTCAICallEngine.setLocalView(findViewById(R.id.avatar_layer),
+                    new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT), localCanvas
+            );
+            mIsPreviewShowInSmallView = false;
+        } else {
+            ARTCAICallEngine.ARTCAICallVideoCanvas remoteCanvas = new ARTCAICallEngine.ARTCAICallVideoCanvas();
+            remoteCanvas.zOrderMediaOverlay = false;
+            remoteCanvas.zOrderOnTop = false;
+            mARTCAICallEngine.setAgentView(findViewById(R.id.avatar_layer),
+                    new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+            );
+            mARTCAICallEngine.setLocalView(findViewById(R.id.video_agent_small_view_layer),
+                    new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+            );
+            mIsPreviewShowInSmallView = true;
+        }
+
+        if(mARTCAICallEngine.isLocalCameraMute()) {
+            if(mIsPreviewShowInSmallView) {
+                findViewById(R.id.small_view_camera_mute).setVisibility(View.VISIBLE);
+                findViewById(R.id.video_agent_small_view_layer).setVisibility(View.GONE);
+                findViewById(R.id.ll_ai_agent_logo).setVisibility(View.GONE);
+                findViewById(R.id.avatar_layer).setVisibility(View.VISIBLE);
+            } else {
+                findViewById(R.id.small_view_camera_mute).setVisibility(View.GONE);
+                findViewById(R.id.video_agent_small_view_layer).setVisibility(View.VISIBLE);
+                findViewById(R.id.ll_ai_agent_logo).setVisibility(View.VISIBLE);
+                findViewById(R.id.avatar_layer).setVisibility(View.GONE);
             }
         }
     }
@@ -646,12 +759,12 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
     }
 
     private boolean useAvatar() {
-        return mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent;
+        return mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent || mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VideoAgent;
     }
 
     private boolean useVideo() {
         return mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent ||
-                mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VisionAgent;
+                mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VisionAgent || mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VideoAgent;
     }
 
     private void updateProgressUI() {
@@ -662,7 +775,7 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             ((TextView)findViewById(R.id.tv_call_duration)).setText(TimeUtil.formatDuration(duration));
 
             // 更新实时字幕
-            mSubtitleHolder.refreshSubtitle();
+//            mSubtitleHolder.refreshSubtitle();
 
             // 数字人体验超过5分钟，自动结束
             if (useAvatar() && duration > 5 * 60 * 1000) {
@@ -708,18 +821,18 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
     private void updateActionLayerHolder() {
         boolean needInit = false;
         if (mIsPushToTalkMode) {
-            if (mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VisionAgent && !(mActionLayerHolder instanceof VisionPushToTalkLayerHolder)) {
+            if ((mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VisionAgent || mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VideoAgent) && !(mActionLayerHolder instanceof VisionPushToTalkLayerHolder)) {
                 mActionLayerHolder = new VisionPushToTalkLayerHolder();
                 needInit = true;
-            } else if (mAiAgentType != ARTCAICallEngine.ARTCAICallAgentType.VisionAgent && !(mActionLayerHolder instanceof AudioPushToTalkLayerHolder)) {
+            } else if ((mAiAgentType != ARTCAICallEngine.ARTCAICallAgentType.VisionAgent &&   mAiAgentType != ARTCAICallEngine.ARTCAICallAgentType.VideoAgent) && !(mActionLayerHolder instanceof AudioPushToTalkLayerHolder)) {
                 mActionLayerHolder = new AudioPushToTalkLayerHolder();
                 needInit = true;
             }
         } else {
-            if (mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VisionAgent && !(mActionLayerHolder instanceof VisionActionLayerHolder)) {
+            if ((mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VisionAgent  || mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VideoAgent) && !(mActionLayerHolder instanceof VisionActionLayerHolder)) {
                 mActionLayerHolder = new VisionActionLayerHolder();
                 needInit = true;
-            } else if (mAiAgentType != ARTCAICallEngine.ARTCAICallAgentType.VisionAgent && !(mActionLayerHolder instanceof AudioActionLayerHolder)) {
+            } else if (mAiAgentType != ARTCAICallEngine.ARTCAICallAgentType.VisionAgent && mAiAgentType != ARTCAICallEngine.ARTCAICallAgentType.VideoAgent && !(mActionLayerHolder instanceof AudioActionLayerHolder)) {
                 mActionLayerHolder = new AudioActionLayerHolder();
                 needInit = true;
             }
@@ -860,59 +973,90 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         }
     }
 
-    private void updateTemplateConfig(ARTCAICallEngine.ARTCAICallAgentTemplateConfig templateConfig) {
+    private void updateAgentConfig(ARTCAICallEngine.ARTCAICallAgentConfig agentConfig) {
         try {
             String enableVoiceInterruptKey = SettingStorage.getInstance().get(SettingStorage.KEY_ENABLE_VOICE_INTERRUPT);
             if(TextUtils.isEmpty(enableVoiceInterruptKey) || !enableVoiceInterruptKey.equals("0")) {
-                templateConfig.enableVoiceInterrupt = true;
+                agentConfig.interruptConfig.enableVoiceInterrupt = true;
             } else {
-                templateConfig.enableVoiceInterrupt = false;
+                agentConfig.interruptConfig.enableVoiceInterrupt = false;
             }
-            templateConfig.aiAgentVoiceId = SettingStorage.getInstance().get(SettingStorage.KEY_VOICE_ID);
-            templateConfig.aiAgentUserOfflineTimeout = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_USER_OFFLINE_TIMEOUT));
-            templateConfig.aiAgentMaxIdleTime = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_MAX_IDLE_TIME));
-            templateConfig.aiAgentWorkflowOverrideParams = SettingStorage.getInstance().get(SettingStorage.KEY_WORK_FLOW_OVERRIDE_PARAMS);
-            templateConfig.aiAgentBailianAppParams = SettingStorage.getInstance().get(SettingStorage.KEY_BAILIAN_APP_PARAMS);
-            templateConfig.llmSystemPrompt = SettingStorage.getInstance().get(SettingStorage.KEY_LLM_SYSTEM_PROMPT);
-            templateConfig.aiAgentVolume = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_VOLUME));
-            templateConfig.aiAgentGreeting = SettingStorage.getInstance().get(SettingStorage.KEY_GREETING);
-            templateConfig.voiceprintId = SettingStorage.getInstance().get(SettingStorage.KEY_VOICE_PRINT_ID);
-            templateConfig.enableIntelligentSegment = SettingStorage.getInstance().get(SettingStorage.KEY_ENABLE_INTELLIGENT_SEGMENT).equals("1") ? true:false;
-            templateConfig.aiAgentAvatarId = SettingStorage.getInstance().get(SettingStorage.KEY_AVATAR_ID);
-            templateConfig.aiAgentAsrMaxSilence = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_ASR_MAX_SILENCE));
-            templateConfig.aiAgentUserOnlineTimeout = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_USER_ONLINE_TIME_OUT));
-            templateConfig.asrLanguageId = SettingStorage.getInstance().get(SettingStorage.KEY_USER_ASR_LANGUAGE);
+            agentConfig.ttsConfig.agentVoiceId = SettingStorage.getInstance().get(SettingStorage.KEY_VOICE_ID);
+            agentConfig.userOfflineTimeout = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_USER_OFFLINE_TIMEOUT));
+            agentConfig.agentMaxIdleTime = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_MAX_IDLE_TIME));
+            agentConfig.workflowOverrideParams = SettingStorage.getInstance().get(SettingStorage.KEY_WORK_FLOW_OVERRIDE_PARAMS);
+            agentConfig.llmConfig.bailianAppParams = SettingStorage.getInstance().get(SettingStorage.KEY_BAILIAN_APP_PARAMS);
+            agentConfig.llmConfig.llmSystemPrompt = SettingStorage.getInstance().get(SettingStorage.KEY_LLM_SYSTEM_PROMPT);
+            agentConfig.volume = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_VOLUME));
+            agentConfig.agentGreeting = SettingStorage.getInstance().get(SettingStorage.KEY_GREETING);
+            agentConfig.voiceprintConfig.voiceprintId = SettingStorage.getInstance().get(SettingStorage.KEY_VOICE_PRINT_ID);
+            agentConfig.enableIntelligentSegment = SettingStorage.getInstance().get(SettingStorage.KEY_ENABLE_INTELLIGENT_SEGMENT).equals("1") ? true:false;
+            agentConfig.avatarConfig.agentAvatarId = SettingStorage.getInstance().get(SettingStorage.KEY_AVATAR_ID);
+            agentConfig.asrConfig.asrMaxSilence = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_ASR_MAX_SILENCE));
+            agentConfig.userOnlineTimeout = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_USER_ONLINE_TIME_OUT));
+            agentConfig.asrConfig.asrLanguageId = SettingStorage.getInstance().get(SettingStorage.KEY_USER_ASR_LANGUAGE);
             String interruptWorks = SettingStorage.getInstance().get(SettingStorage.KEY_INTERRUPT_WORDS);
-            templateConfig.aiAgentVadLevel = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_VAD_LEVEL));
+            agentConfig.asrConfig.vadLevel = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_VAD_LEVEL));
+            String asrHotWords = SettingStorage.getInstance().get(SettingStorage.KEY_ASR_HOT_WORDS);
+            String turnEndWords = SettingStorage.getInstance().get(SettingStorage.KEY_TURN_END_WORDS);
 
             if(!TextUtils.isEmpty(interruptWorks)) {
-                templateConfig.interruptWords = new ArrayList<String>();
+                agentConfig.interruptConfig.interruptWords = new ArrayList<String>();
                 if(interruptWorks.contains(",")) {
                     String[] inputs = interruptWorks.split(",");
                     if(inputs.length > 0) {
                         for(String input : inputs) {
-                            templateConfig.interruptWords.add(input);
+                            agentConfig.interruptConfig.interruptWords.add(input);
                         }
                     }
                 } else {
-                    templateConfig.interruptWords.add(interruptWorks);
+                    agentConfig.interruptConfig.interruptWords.add(interruptWorks);
                 }
             }
+            if(!TextUtils.isEmpty(asrHotWords)) {
+                agentConfig.asrConfig.asrHotWords = new ArrayList<String>();
+                if(asrHotWords.contains(",")) {
+                    String[] inputs = asrHotWords.split(",");
+                    if(inputs.length > 0) {
+                        for(String input : inputs) {
+                            agentConfig.asrConfig.asrHotWords.add(input);
+                        }
+                    }
+                } else {
+                    agentConfig.asrConfig.asrHotWords.add(asrHotWords);
+                }
+            }
+
+            if(!TextUtils.isEmpty(turnEndWords)) {
+                agentConfig.turnDetectionConfig.turnEndWords = new ArrayList<String>();
+                if(turnEndWords.contains(",")) {
+                    String[] inputs = turnEndWords.split(",");
+                    if(inputs.length > 0) {
+                        for(String input : inputs) {
+                            agentConfig.turnDetectionConfig.turnEndWords.add(input);
+                        }
+                    }
+                } else {
+                    agentConfig.turnDetectionConfig.turnEndWords.add(turnEndWords);
+                }
+            }
+
         } catch (Exception ex) {
             ex.printStackTrace();
         }
     }
 
     private class SubtitleHolder {
-        private ImageView mIvSubtitle = null;
-        private TextView mTvSubtitle = null;
-
+        private ImageView mIvBtnSetting = null;
+        private TextView mTvBtnReporting = null;
         private LinearLayout mLlFullScreenSubtitle = null;
-        private ImageView mBtnCloseFullScreenSubtitle = null;
-        private ScrollView mSvFullScreenSubtitle = null;
-        private TextView mTvFullScreenSubtitle = null;
 
         private List<SubtitleTextPart> mSubtitlePartList = new ArrayList<>();
+        // 展开全屏字幕显示
+        private RecyclerView mRvFullScreenSubtitle = null;
+        private List<AICallSubtitleMessageItem> mFullScreenSubtitleMessageList = new ArrayList<>();
+        private AICallSubtitleRecyclerViewAdapter mSubtitleItemAdapter = null;
+        private boolean shouldSubtitleAutoScroll = true;
         private Integer mAsrSentenceId = null;
         private Boolean isLastSubtitleOfAsr = null;
         private static final int INTERNATIONAL_WORD_INTERVAL = 30;
@@ -920,20 +1064,40 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         private static final String SINGLE_WORD = "龍";
         private static final String TARGET_WORD = " > ";
 
+        // 问答消息字幕片段
         private class SubtitleTextPart {
             long receiveTime = 0;
             String text;
             long displayEndTime = 0;
         }
 
-        private void updateSubtitleVisibility() {
-            if (!useAvatar() || mFirstAvatarFrameDrawn) {
-                Log.i("AUIAICall", "updateSubtitleVisibility setSubtitleLayoutVisibility true");
-                setSubtitleLayoutVisibility(true);
-            } else {
-                Log.i("AUIAICall", "updateSubtitleVisibility setSubtitleLayoutVisibility false");
-                setSubtitleLayoutVisibility(false);
-            }
+        public SubtitleHolder(Context context) {
+            mIvBtnSetting = findViewById(R.id.btn_setting);
+            mTvBtnReporting = findViewById(R.id.btn_reporting);
+            initUIComponent();
+            mSubtitleItemAdapter = new AICallSubtitleRecyclerViewAdapter(context, mFullScreenSubtitleMessageList);
+            mRvFullScreenSubtitle.setAdapter(mSubtitleItemAdapter);
+            LinearLayoutManager layoutManager = new LinearLayoutManager(context);
+            layoutManager.setStackFromEnd(true);
+            mRvFullScreenSubtitle.setLayoutManager(layoutManager);
+            // 设置列表项间距
+            mRvFullScreenSubtitle.addItemDecoration(new AICallSubtitleSpacingItemDecoraion(20));
+            // 添加手动滚动监听
+            mRvFullScreenSubtitle.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                @Override
+                public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                    super.onScrollStateChanged(recyclerView, newState);
+                    // 判断用户是否在手动滚动
+                    if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                        if(!mRvFullScreenSubtitle.canScrollVertically(1)) {
+                            // 当前在底部，恢复自动滚动
+                            shouldSubtitleAutoScroll = true;
+                        }
+                    } else {
+                        shouldSubtitleAutoScroll = false;
+                    }
+                }
+            });
         }
 
         private void updateSubtitle(boolean isAsrText, boolean end, String text, int asrSentenceId) {
@@ -955,22 +1119,21 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             subtitleTextPart.receiveTime = SystemClock.elapsedRealtime();
             mSubtitlePartList.add(subtitleTextPart);
 
-            updateSubtitleVisibility();
-
-            initUIComponent();
-
-            mIvSubtitle.setImageResource(
-                    isAsrText ? R.drawable.ic_subtitle_user : R.drawable.ic_subtitle_robot
-            );
-            if (mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VisionAgent) {
-                mTvSubtitle.setTextColor(mARTCAICallEngine.isLocalCameraMute() ?
-                        getResources().getColor(R.color.layout_base_light_white) :
-                        getResources().getColor(R.color.layout_base_gray));
+            AICallSubtitleMessageItem subtitleMessageItem = new AICallSubtitleMessageItem(isAsrText, asrSentenceId, subtitleTextPart.receiveTime,text,subtitleTextPart.displayEndTime);
+            if (resetSubtitle) {
+                if(isAsrText) {
+                    mSubtitleItemAdapter.replaceLastSubtitle(subtitleMessageItem);
+                } else {
+                    mSubtitleItemAdapter.addSubtitleItem(subtitleMessageItem);
+                }
+            } else {
+                mSubtitleItemAdapter.appendToLastSubtitle(subtitleMessageItem);
             }
-        }
-
-        private void setSubtitleLayoutVisibility(boolean isVisible) {
-            findViewById(R.id.ll_subtitle).setVisibility(isVisible ? View.VISIBLE : View.GONE);
+            // 更新字幕时检查是否应该自动滚动
+            if(shouldSubtitleAutoScroll) {
+                mRvFullScreenSubtitle.scrollToPosition(mSubtitleItemAdapter.getItemCount() - 1);
+            }
+            initUIComponent();
         }
 
         private void refreshSubtitle() {
@@ -1025,24 +1188,6 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
 
                 }
                 String displayText = displayTextBuilder.toString();
-                { // 收缩字幕显示逻辑
-                    int maxDisplayCapacity = getCropDisplayIndex(displayText); //initMaxDisplayCapacity();
-                    if (displayText.length() <= maxDisplayCapacity) {
-                        mTvSubtitle.setText(displayText);
-                    } else {
-                        SpannableString spannableString = new SpannableString(displayText.substring(0, maxDisplayCapacity) + TARGET_WORD);
-
-                        spannableString.setSpan(
-                                new ForegroundColorSpan(getResources().getColor(R.color.layout_base_light_blue)),
-                                maxDisplayCapacity, spannableString.length(),
-                                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-
-                        mTvSubtitle.setText(spannableString);
-                    }
-                }
-                { // 展开字幕显示逻辑
-                    mTvFullScreenSubtitle.setText(displayText);
-                }
             }
         }
 
@@ -1053,93 +1198,44 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                 return textPaint.measureText(ch);
             }
         }
-
-        private int getCropDisplayIndex(String displayText) {
-            int cropIndex = 0;
-            if (!TextUtils.isEmpty(displayText)) {
-                TextPaint textPaint = mTvSubtitle.getPaint();
-
-                float targetWordMeasureWidth = textPaint.measureText(TARGET_WORD);
-                float lineWidth = mTvSubtitle.getWidth();
-                float maxWidth = lineWidth * mTvSubtitle.getMaxLines() - targetWordMeasureWidth*3f;
-                float displayWidth = 0f;
-
-                char displayCharArray[] = displayText.toCharArray();
-                cropIndex = displayCharArray.length;
-                for (int i = 0; i < displayCharArray.length; i++) {
-                    String ch = String.valueOf(displayCharArray[i]);
-                    displayWidth += measureText(textPaint, ch, lineWidth);
-//                    Log.i("AUIAICall", "getCropDisplayIndex [index: " + i + ", str: " + ch + ", maxWidth: " + maxWidth + ", displayWidth" + displayWidth + "]");
-                    if (maxWidth <= displayWidth) {
-                        cropIndex = i - 1;
-                        break;
-                    }
-                }
-            }
-            return cropIndex;
-        }
         
         private void initUIComponent() {
-            if (null == mIvSubtitle) {
-                mIvSubtitle = findViewById(R.id.iv_subtitle);
-            }
-            if (null == mTvSubtitle) {
-                mTvSubtitle = findViewById(R.id.tv_subtitle);
-                mTvSubtitle.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        setFullScreenSubtitleVisibility(true);
-                    }
-                });
-            }
             if (null == mLlFullScreenSubtitle) {
                 mLlFullScreenSubtitle = findViewById(R.id.ll_full_screen_subtitle);
-                mLlFullScreenSubtitle.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Log.i("AUIAICall", "mLlFullScreenSubtitle onClick");
-                        setFullScreenSubtitleVisibility(false);
-                    }
-                });
             }
-            if (null == mBtnCloseFullScreenSubtitle) {
-                mBtnCloseFullScreenSubtitle = findViewById(R.id.btn_close_full_screen_subtitle);
-                mBtnCloseFullScreenSubtitle.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Log.i("AUIAICall", "mBtnCloseFullScreenSubtitle onClick");
-                        setFullScreenSubtitleVisibility(false);
-                    }
-                });
-            }
-            if (null == mSvFullScreenSubtitle) {
-                mSvFullScreenSubtitle = findViewById(R.id.sv_full_screen_subtitle);
-                mSvFullScreenSubtitle.setOnTouchListener(new View.OnTouchListener() {
-                    @Override
-                    public boolean onTouch(View v, MotionEvent event) {
-//                        Log.i("AUIAICall", "mSvFullScreenSubtitle onTouch : " + event.getAction());
-                        if (event.getAction() == MotionEvent.ACTION_UP) {
-                            setFullScreenSubtitleVisibility(false);
-                        }
-                        return false;
-                    }
-                });
-            }
-            if (null == mTvFullScreenSubtitle) {
-                mTvFullScreenSubtitle = findViewById(R.id.tv_full_screen_subtitle);
-                mTvFullScreenSubtitle.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Log.i("AUIAICall", "mTvFullScreenSubtitle onClick");
-                    }
-                });
+            if (null == mRvFullScreenSubtitle) {
+                mRvFullScreenSubtitle = findViewById(R.id.rv_full_screen_subtitle);
             }
         }
 
         private void setFullScreenSubtitleVisibility(boolean visible) {
             if (null != mLlFullScreenSubtitle) {
                 mLlFullScreenSubtitle.setVisibility(visible ? View.VISIBLE : View.GONE);
+                findViewById(R.id.ll_full_screen_subtitle_top_container).setVisibility(visible ? View.VISIBLE : View.GONE);
+                findViewById(R.id.ll_full_screen_subtitle_bottom_container).setVisibility(visible ? View.VISIBLE : View.GONE);
+
+                mIsFullScreenSubtitleOpen = visible;
+                setTobBarBtnVisibility(!visible);
+                setEngineTipVisibility(!visible);
+                // 启动的时候自动滚动到底部
+                if(visible) {
+                    mRvFullScreenSubtitle.scrollToPosition(mSubtitleItemAdapter.getItemCount() - 1);
+                }
             }
+        }
+
+        // 设置顶部栏设置、reporting按钮的可见性
+        private void setTobBarBtnVisibility(boolean visible) {
+            if(null != mTvBtnReporting) {
+                mTvBtnReporting.setVisibility(visible ? View.VISIBLE : View.GONE);
+            }
+            if(null != mIvBtnSetting) {
+                mIvBtnSetting.setVisibility(visible ? View.VISIBLE : View.GONE);
+            }
+        }
+
+        private void setEngineTipVisibility(boolean visible) {
+            findViewById(R.id.tv_call_tips).setVisibility(visible ? View.VISIBLE : View.GONE);
         }
 
         private boolean containsChinese(String str) {

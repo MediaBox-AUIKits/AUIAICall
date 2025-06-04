@@ -13,11 +13,13 @@ import ARTCAICallKit
 let VoiceAgentId = ""
 let AvatarAgentId = ""
 let VisionAgentId = ""
+let VideoAgentId = ""
 let ChatAgentId = ""
 
 let VoiceAgentEmotionalId = ""
 let AvatarAgentEmotionalId = ""
 let VisionAgentEmotionalId = ""
+let VideoAgentEmotionalId = ""
 
 let Region = "cn-shanghai"
 
@@ -46,6 +48,8 @@ let Region = "cn-shanghai"
             ret = self.emotional ? AvatarAgentEmotionalId : AvatarAgentId
         case .VisionAgent:
             ret = self.emotional ? VisionAgentEmotionalId : VisionAgentId
+        case .VideoAgent:
+            ret = self.emotional ? VideoAgentEmotionalId : VideoAgentId
         }
         
         // 为空值的情况下，使用在AppServer上配置的智能体Id

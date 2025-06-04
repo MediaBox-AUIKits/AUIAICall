@@ -23,7 +23,7 @@ function Voice() {
   const speakingTimerRef = useRef(0);
   const animationTimerRef = useRef(0);
 
-  const avatarUrl = controller?.config.templateConfig?.avatarUrl;
+  const avatarUrl = controller?.engineConfig.templateConfig?.avatarUrl;
 
   // 先停止动画，再执行切换状态进行 transition
   // stop animation first, then switch state to trigger transition

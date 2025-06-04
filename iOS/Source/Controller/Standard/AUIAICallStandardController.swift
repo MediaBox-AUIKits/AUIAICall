@@ -21,7 +21,7 @@ import ARTCAICallKit
         ARTCAICallEngineLog.StartLog(fileName: UUID().uuidString)
         ARTCAICallEngineLog.WriteLog("Start Call For Standard")
         ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "AgentId", value: self.config.agentId ?? "")
-        ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "AgentType", value: ARTCAICallTemplateConfig.getTemplateConfigKey(self.config.agentType))
+        ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "AgentType", value: self.config.getWorkflowType())
         ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "UserId", value: self.userId)
         
         self.generateAIAgentCall(userId: self.userId) {[weak self] agent, token, error, reqId in
@@ -47,7 +47,17 @@ import ARTCAICallKit
 
                 _ = self.engine.muteLocalCamera(mute: self.config.muteLocalCamera)
                 _ = self.engine.muteMicrophone(mute: self.config.muteMicrophone)
-                _ = self.engine.enablePushToTalk(enable: self.config.templateConfig.enablePushToTalk)
+                _ = self.engine.enablePushToTalk(enable: self.config.agentConfig.enablePushToTalk)
+                
+                // 这里frameRate设置为5，需要根据控制台上的智能体的抽帧帧率（一般为2）进行调整，最大不建议超过15fps
+                // bitrate: frameRate超过10可以设置为512
+                if self.config.agentType == .VisionAgent{
+                    self.engine.videoConfig = ARTCAICallVideoConfig(frameRate: 5, bitrate: 340, useFrontCameraDefault: false)
+                }
+                if self.config.agentType == .VideoAgent {
+                    self.engine.videoConfig = ARTCAICallVideoConfig(frameRate: 5, bitrate: 340, useFrontCameraDefault: true)
+                }
+                
                 self.engine.call(userId: self.userId, token: token, agentInfo: agent) { [weak self] error in
                     ARTCAICallEngineLog.WriteLog("Start Call Engine Join Result: \(error == nil ? "Success" : "Failed")")
                     guard let self = self else { return }
@@ -99,15 +109,16 @@ extension AUIAICallStandardController {
         }
         
         let workflow_type = self.config.getWorkflowType()
-        let template_config = self.config.getTemplateConfigString()
-        
+        let agent_config = self.config.agentConfig.toData().aicall_jsonString
+
         var body: [String: Any] = [:]
         if let agentId = self.config.agentId {
             body = [
                 "ai_agent_id": agentId,
                 "user_id": userId,
                 "expire": self.config.expireSecond,
-                "template_config": template_config
+                "template_config": "{}",
+                "agent_config": agent_config
             ]
         }
         else {
@@ -115,7 +126,8 @@ extension AUIAICallStandardController {
                 "workflow_type": workflow_type,
                 "user_id": userId,
                 "expire": self.config.expireSecond,
-                "template_config": template_config
+                "template_config": "{}",
+                "agent_config": agent_config
             ]
         }
         if let region = self.config.region {

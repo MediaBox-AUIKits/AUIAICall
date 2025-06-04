@@ -2,7 +2,7 @@ import { useContext, useEffect, useRef } from 'react';
 import ControllerContext from '@/Mobile/Call/ControlerContext';
 import Footer from './Footer';
 import Header from './Header';
-import Subtitle from './Subtitle';
+// import Subtitle from './Subtitle';
 import Tip from './Tip';
 
 import Voice from './Voice';
@@ -20,21 +20,23 @@ import ARTCAICallEngine, {
 import { Dialog, Toast } from 'antd-mobile';
 import Connecting from './Connecting';
 import { useTranslation } from '@/common/i18nContext';
+import Video from './Video';
 
 interface StageProps {
   autoCall?: boolean;
-  agentType: AICallAgentType;
   onStateChange?: (callState: AICallState) => void;
   onExit: () => void;
   onAuthFail: () => void;
   limitSecond?: number;
 }
 
-function Stage({ agentType, onStateChange, onExit, onAuthFail, limitSecond, autoCall = false }: StageProps) {
+function Stage({ onStateChange, onExit, onAuthFail, limitSecond, autoCall = false }: StageProps) {
   const controller = useContext(ControllerContext);
   const { t, e } = useTranslation();
   const callState = useCallStore((state) => state.callState);
   const cameraMuted = useCallStore((state) => state.cameraMuted);
+
+  const resumeDialogVisibleRef = useRef(false);
 
   const countdownRef = useRef(0);
   const startTimeRef = useRef(0);
@@ -43,11 +45,6 @@ function Stage({ agentType, onStateChange, onExit, onAuthFail, limitSecond, auto
   // if controller changed, reset state
   useEffect(() => {
     if (!controller) return;
-    controller.config.agentType = agentType;
-
-    useCallStore.setState({
-      agentType,
-    });
 
     if (autoCall) {
       startCall();
@@ -116,13 +113,13 @@ function Stage({ agentType, onStateChange, onExit, onAuthFail, limitSecond, auto
     });
 
     controller.on('AICallAgentSubtitleNotify', (data) => {
-      useCallStore.getState().setCurrentSubtitle({
+      useCallStore.getState().updateSubtitle({
         data,
         source: 'agent',
       });
     });
     controller.on('AICallUserSubtitleNotify', (data, voiceprintResult) => {
-      useCallStore.getState().setCurrentSubtitle({
+      useCallStore.getState().updateSubtitle({
         data,
         source: 'user',
         voiceprintResult,
@@ -148,10 +145,15 @@ function Stage({ agentType, onStateChange, onExit, onAuthFail, limitSecond, auto
     });
 
     controller.on('AICallBegin', (elapsedTime) => {
+      console.log(`Connected Time: ${elapsedTime}ms`);
       if (countdownRef.current) {
         window.clearInterval(countdownRef.current);
       }
-      if (controller.config.agentType === AICallAgentType.AvatarAgent && limitSecond && limitSecond > 0) {
+      if (
+        (controller.agentType === AICallAgentType.AvatarAgent || controller.agentType === AICallAgentType.VideoAgent) &&
+        limitSecond &&
+        limitSecond > 0
+      ) {
         startTimeRef.current = Date.now();
         countdownRef.current = window.setInterval(() => {
           const delta = Date.now() - startTimeRef.current;
@@ -218,21 +220,46 @@ function Stage({ agentType, onStateChange, onExit, onAuthFail, limitSecond, auto
     controller.on('AICallSpeakingInterrupted', (reason) => {
       console.log(t('agent.interrupted', { reason: `${reason}` }));
     });
+    controller.on('AICallAgentConfigLoaded', (config) => {
+      if (config.AvatarUrl) {
+        useCallStore.setState({
+          voiceAvatarUrl: config.AvatarUrl as string,
+        });
+      }
+      if (config.VoiceId) {
+        useCallStore.setState({
+          voiceId: config.VoiceId as string,
+        });
+      }
+      if (config.VoiceIdList) {
+        useCallStore.setState({
+          agentVoiceIdList: config.VoiceIdList as string[],
+        });
+      }
+    });
+    controller.on('AICallAgentAutoPlayFailed', async () => {
+      if (resumeDialogVisibleRef.current) return;
+      resumeDialogVisibleRef.current = true;
+      await Dialog.alert({
+        closeOnMaskClick: true,
+        getContainer: getRootElement,
+        title: t('resume.title'),
+        content: t('resume.content'),
+        confirmText: t('resume.btn'),
+      });
 
-    const currentTemplateConfig = controller.config.templateConfig;
+      resumeDialogVisibleRef.current = false;
+    });
+
+    const currentAgentConfig = controller.config.agentConfig;
     useCallStore.setState({
-      enablePushToTalk: currentTemplateConfig.enablePushToTalk,
-      enableVoiceInterrupt: currentTemplateConfig.enableVoiceInterrupt,
-      voiceId: currentTemplateConfig.agentVoiceId || '',
+      enablePushToTalk: !!currentAgentConfig?.enablePushToTalk,
+      enableVoiceInterrupt: !!currentAgentConfig?.interruptConfig.enableVoiceInterrupt,
+      voiceId: currentAgentConfig?.ttsConfig.agentVoiceId,
     });
 
     try {
       await controller.start();
-      if (controller.config.templateConfig?.agentVoiceId) {
-        useCallStore.setState({
-          voiceId: controller.config.templateConfig.agentVoiceId,
-        });
-      }
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       if ((error as AICallAgentError).name === 'ServiceAuthError') {
@@ -256,20 +283,24 @@ function Stage({ agentType, onStateChange, onExit, onAuthFail, limitSecond, auto
   // is avatar or vision agent or camera not muted
   const hasVideo =
     callState === AICallState.Connected &&
-    (agentType === AICallAgentType.AvatarAgent || (agentType === AICallAgentType.VisionAgent && !cameraMuted));
+    (controller?.agentType === AICallAgentType.AvatarAgent ||
+      controller?.agentType === AICallAgentType.VideoAgent ||
+      (controller?.agentType === AICallAgentType.VisionAgent && !cameraMuted));
 
   let CharacterComponent = Voice;
-  if (agentType === AICallAgentType.AvatarAgent) {
+  if (controller?.agentType === AICallAgentType.AvatarAgent) {
     CharacterComponent = Avatar;
-  } else if (agentType === AICallAgentType.VisionAgent) {
+  } else if (controller?.agentType === AICallAgentType.VisionAgent) {
     CharacterComponent = Vision;
+  } else if (controller?.agentType === AICallAgentType.VideoAgent) {
+    CharacterComponent = Video;
   }
 
   return (
     <div className='stage'>
       <Header />
       <div className={`stage-bd  ${hasVideo ? 'has-video' : ''}`} onClick={interruptSpeaking}>
-        <Subtitle />
+        {/* <Subtitle /> */}
         {callState === AICallState.Connected ? <CharacterComponent /> : <Connecting />}
         {callState === AICallState.Connected && <Tip />}
         <Footer onStop={stopCall} onCall={startCall} />

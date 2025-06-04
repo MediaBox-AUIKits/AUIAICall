@@ -146,7 +146,7 @@ function Footer({ onStop, onCall }: CallFooterProps) {
       </li>
     );
 
-    if (agentType === AICallAgentType.VisionAgent) {
+    if (agentType === AICallAgentType.VisionAgent || agentType === AICallAgentType.VideoAgent) {
       const cameraBtn = (
         <li key='camera' className='_camera'>
           {!cameraMuted && isMobile() && (

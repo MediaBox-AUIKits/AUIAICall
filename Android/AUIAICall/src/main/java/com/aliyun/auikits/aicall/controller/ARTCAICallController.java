@@ -183,6 +183,13 @@ public abstract class ARTCAICallController {
         }
 
         @Override
+        public void onAgentDataChannelAvailable() {
+            if (null != mBizCallEngineCallback) {
+                mBizCallEngineCallback.onAgentDataChannelAvailable();
+            }
+        }
+
+        @Override
         public void onAgentVideoAvailable(boolean available) {
             if (null != mBizCallEngineCallback) {
                 mBizCallEngineCallback.onAgentVideoAvailable(available);
@@ -307,7 +314,7 @@ public abstract class ARTCAICallController {
         }
     }
 
-    public void setAiAgentType(ARTCAICallEngine.ARTCAICallAgentType aiAgentType) {
+    public void setAICallAgentType(ARTCAICallEngine.ARTCAICallAgentType aiAgentType) {
         this.mAiAgentType = aiAgentType;
         if (null != mARTCAICallEngine) {
             mARTCAICallEngine.setAICallAgentType(aiAgentType);
@@ -361,7 +368,7 @@ public abstract class ARTCAICallController {
              * timbre	timbre	音色拟真度：1~5
              */
             args.put("atype", mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent ? "avatar" : "voice");
-            args.put("aid", mARTCAiCallConfig.mAiCallAgentTemplateConfig.aiAgentId);
+            args.put("aid", mARTCAiCallConfig.agentId);
             args.put("ains", mAIAgentInstanceId);
             args.put("ach", mChannelId);
             args.put("auid", mAIAgentUserId);
@@ -387,7 +394,7 @@ public abstract class ARTCAICallController {
             {
                 JSONObject args = new JSONObject();
                 args.put("req_id", mAIAgentRequestId);
-                args.put("aid", mARTCAiCallConfig.mAiCallAgentTemplateConfig.aiAgentId);
+                args.put("aid", mARTCAiCallConfig.agentId);
                 args.put("ains", mAIAgentInstanceId);
                 args.put("auid", mAIAgentUserId);
                 args.put("uid", mUserId);
@@ -399,6 +406,8 @@ public abstract class ARTCAICallController {
                     args.put("atype", "AvatarChat3D");
                 } else if (mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VisionAgent) {
                     args.put("atype", "VisionChat");
+                } else if(mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VideoAgent) {
+                    args.put("atype", "VideoChat");
                 }
                 if (!TextUtils.isEmpty(mRtcAuthToken)) {
                     String decodeJson = new String(Base64.decode(mRtcAuthToken, Base64.DEFAULT));
@@ -468,16 +477,16 @@ public abstract class ARTCAICallController {
 
     private void parseVoiceIdList(JSONObject jsonObject) {
         try {
-            if (jsonObject.has("template_config")) {
+            if (jsonObject.has("agent_config")) {
 
-                JSONObject templateConfig = new JSONObject(jsonObject.optString("template_config"));
-                if(templateConfig.has(getAgentStrByType(mAiAgentType))) {
-                    JSONObject agentConfig = templateConfig.getJSONObject(getAgentStrByType(mAiAgentType));
-                    if(agentConfig.has("VoiceId")) {
-                        mARTCAiCallConfig.mAiCallAgentTemplateConfig.aiAgentVoiceId = agentConfig.optString("VoiceId");
+                JSONObject agent_config = new JSONObject(jsonObject.optString("agent_config"));
+                if(agent_config.has("TtsConfig")) {
+                    JSONObject ttsConfig = agent_config.getJSONObject("TtsConfig");
+                    if(ttsConfig.has("VoiceId")) {
+                        mARTCAiCallConfig.agentConfig.ttsConfig.agentVoiceId = ttsConfig.optString("VoiceId");
                     }
-                    if(agentConfig.has("VoiceIdList")) {
-                        JSONArray voiceIdList = agentConfig.getJSONArray("VoiceIdList");
+                    if(ttsConfig.has("VoiceIdList")) {
+                        JSONArray voiceIdList = ttsConfig.getJSONArray("VoiceIdList");
                         mAgentVoiceIdList.clear();
                         for(int i = 0; i < voiceIdList.length(); i++) {
                             String voiceId = (String) voiceIdList.get(i);
@@ -510,6 +519,9 @@ public abstract class ARTCAICallController {
                 break;
             case VisionAgent:
                 agentTypeStr = "VisionChat";
+                break;
+            case VideoAgent:
+                agentTypeStr = "VideoChat";
                 break;
             case VoiceAgent:
             default:
@@ -608,6 +620,8 @@ public abstract class ARTCAICallController {
             aiCallAgentType = ARTCAICallEngine.ARTCAICallAgentType.VisionAgent;
         } else if("MessageChat".equals(shareInfo.workflowType)) {
             aiCallAgentType = ARTCAICallEngine.ARTCAICallAgentType.ChatBot;
+        } else if("VideoChat".equals(shareInfo.workflowType)) {
+            aiCallAgentType = ARTCAICallEngine.ARTCAICallAgentType.VideoAgent;
         }
         Intent intent = null;
         if(aiCallAgentType == ARTCAICallEngine.ARTCAICallAgentType.ChatBot) {

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import Welcome from './Welcome';
-import { AICallAgentType, AICallTemplateConfig, AIChatAgentType, AIChatTemplateConfig } from 'aliyun-auikit-aicall';
+import { AICallAgentConfig, AICallAgentType, AIChatAgentType, AIChatTemplateConfig } from 'aliyun-auikit-aicall';
 
 import './App.css';
 import { Toast } from 'antd-mobile';
@@ -16,6 +16,7 @@ Toast.config({
 });
 
 interface AppProps {
+  mode?: 'standard' | 'proxy';
   userId?: string;
   userToken?: string;
 
@@ -27,7 +28,8 @@ interface AppProps {
   agentId?: string;
 
   userData?: string | JSONObject;
-  templateConfig?: AICallTemplateConfig | AIChatTemplateConfig;
+  agentConfig?: AICallAgentConfig;
+  chatTemplateConfig?: AIChatTemplateConfig;
 
   onAuthFail?: () => void;
 }
@@ -35,6 +37,7 @@ interface AppProps {
 function App(props: AppProps) {
   const runConfig = getRuntimeConfig(runUserConfig);
   const {
+    mode,
     userId = 'YourUserId',
     userToken = 'YourToken',
     shareToken,
@@ -44,13 +47,14 @@ function App(props: AppProps) {
     agentType = runConfig.agentType,
     agentId,
     userData,
-    templateConfig,
+    agentConfig = runConfig.callAgentConfig,
+    chatTemplateConfig,
   } = props;
   const [stateAgentType, setStateAgentType] = useState<AICallAgentType | AIChatAgentType | undefined>(agentType);
 
   useEffect(() => {
-    if (runConfig.appServer) {
-      service.setAppServer(runConfig.appServer);
+    if (appServer) {
+      service.setAppServer(appServer);
     }
 
     const preventContextMenu = function (e: Event) {
@@ -62,7 +66,7 @@ function App(props: AppProps) {
     return () => {
       document.removeEventListener('contextmenu', preventContextMenu);
     };
-  }, []);
+  }, [appServer]);
 
   if (stateAgentType === undefined)
     return (
@@ -82,9 +86,7 @@ function App(props: AppProps) {
           userToken={userToken}
           agentId={agentId || runConfig.chatAgentId}
           appServer={appServer}
-          templateConfig={
-            templateConfig instanceof AIChatTemplateConfig ? templateConfig : runConfig.chatTemplateConfig
-          }
+          templateConfig={chatTemplateConfig}
           userData={(userData as JSONObject) || runConfig.chatUserData}
           onExit={() => {
             setStateAgentType(undefined);
@@ -92,7 +94,9 @@ function App(props: AppProps) {
         />
       ) : (
         <Call
+          mode={mode}
           rc={runConfig}
+          autoCall
           userId={userId}
           userToken={userToken}
           agentType={stateAgentType}
@@ -101,11 +105,11 @@ function App(props: AppProps) {
           appServer={appServer}
           region={region}
           userData={typeof userData === 'object' ? JSON.stringify(userData) : userData || runConfig.callUserData}
-          templateConfig={
-            templateConfig instanceof AICallTemplateConfig ? templateConfig : runConfig.callTemplateConfig
-          }
+          agentConfig={agentConfig}
           onExit={() => {
-            setStateAgentType(undefined);
+            if (!shareToken) {
+              setStateAgentType(undefined);
+            }
           }}
           onAuthFail={() => {
             onAuthFail?.();

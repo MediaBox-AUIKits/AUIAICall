@@ -3,18 +3,17 @@ import './header.less';
 import { backSVG, settingSVG } from './Icons';
 import useChatStore from './store';
 import { getRootElement } from '@/common/utils';
-import { useContext, useState } from 'react';
+import { useState } from 'react';
 import { VoiceOneSVG, VoiceThreeSVG, VoiceTwoSVG } from '../Call/Icons';
-
-import ChatEngineContext from './ChatEngineContext';
 import { useTranslation } from '@/common/i18nContext';
+
 
 function ChatHeader({ onBack }: { onBack: () => void }) {
   const { t } = useTranslation();
-  const engine = useContext(ChatEngineContext);
   const voiceIdList = useChatStore((state) => state.voiceIdList);
   const voiceId = useChatStore((state) => state.voiceId);
   const [settingVisible, setSettingVisible] = useState(false);
+
 
   return (
     <div className='chat-header'>

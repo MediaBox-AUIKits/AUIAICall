@@ -147,13 +147,13 @@ function AICall(props: AICallProps) {
     });
 
     controller.on('AICallAgentSubtitleNotify', (data) => {
-      useCallStore.getState().setCurrentSubtitle({
+      useCallStore.getState().updateSubtitle({
         data,
         source: 'agent',
       });
     });
     controller.on('AICallUserSubtitleNotify', (data) => {
-      useCallStore.getState().setCurrentSubtitle({
+      useCallStore.getState().updateSubtitle({
         data,
         source: 'user',
       });
@@ -182,11 +182,11 @@ function AICall(props: AICallProps) {
       }
     });
 
-    const currentTemplateConfig = controller.config.templateConfig;
+    const currentAgentConfig = controller.config.agentConfig;
     useCallStore.setState({
-      enablePushToTalk: currentTemplateConfig.enablePushToTalk,
-      enableVoiceInterrupt: currentTemplateConfig.enableVoiceInterrupt,
-      voiceId: currentTemplateConfig.agentVoiceId || '',
+      enablePushToTalk: !!currentAgentConfig?.enablePushToTalk,
+      enableVoiceInterrupt: !!currentAgentConfig?.interruptConfig.enableVoiceInterrupt,
+      voiceId: currentAgentConfig?.ttsConfig.agentVoiceId || '',
     });
 
     try {

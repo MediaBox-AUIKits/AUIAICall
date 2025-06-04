@@ -15,7 +15,7 @@ import ARTCAICallKit
     
     public override init() {
         super.init()
-        self.templateConfig = ARTCAICallTemplateConfig()
+        self.agentConfig = ARTCAICallAgentConfig()
     }
     
     // =================== 启动通话智能体信息 ====================================
@@ -24,7 +24,7 @@ import ARTCAICallKit
     open var expireSecond: UInt32 = 3600           // 用户入会后失效的时间，超过这个时间会触发onAICallUserTokenExpired事件
     open var limitSecond: UInt32 = 0               // 通话限制时间，为0表示不限制，否则通话时间到达秒数后，会自动结束通话
     open var region: String? = nil                 // 智能体服务所在的区域
-    open var templateConfig: ARTCAICallTemplateConfig!        // 用户自定义信息，该信息最终传给智能体
+    open var agentConfig: ARTCAICallAgentConfig!              // 智能体启动配置，该信息最终传给智能体
     open var userData: [String: Any]? = nil                   // 用户自定义信息，该信息最终传给智能体
 
     open var chatSyncConfig: ARTCAICallChatSyncConfig? = nil  // 关联的chat智能体配置，如果设置了，那么在通话过程中会把通话记录同步到chat智能体上
@@ -36,10 +36,6 @@ import ARTCAICallKit
     
     open func getWorkflowType() -> String {
         return ARTCAICallTemplateConfig.getTemplateConfigKey(self.agentType)
-    }
-    
-    open func getTemplateConfigString() -> String {
-        return self.templateConfig.getJsonString(self.agentType)
     }
 }
 

@@ -1,6 +1,6 @@
 .header {
   position: relative;
-  z-index: 4;
+  z-index: 7;
   background-color: #fff;
 
   display: flex;
@@ -13,7 +13,7 @@
   line-height: 24px;
   text-align: center;
 
-  .adm-button {
+  ._no-border-btn {
     position: absolute;
     height: 40px;
     width: 40px;
@@ -49,6 +49,26 @@
         width: auto;
         white-space: nowrap;
       }
+    }
+  }
+
+  ._subtitle-btn {
+    position: absolute;
+    right: 55px;
+    padding: 4px 6px;
+    border-radius: 4px;
+    box-sizing: border-box;
+    border: 1px solid #3a3d48;
+    font-size: 12px;
+    line-height: 15px;
+    color: #3a3d48;
+    &.is-visible {
+      background-color: #3a3d48;
+      color: #fff;
+    }
+    & > span {
+      width: auto;
+      height: 15px;
     }
   }
 }

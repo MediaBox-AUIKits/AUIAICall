@@ -1,5 +1,5 @@
 import { AICallRunConfig } from '@/interface.ts';
-import { useContext, useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Popup, Toast } from 'antd-mobile';
 
 import {
@@ -10,6 +10,7 @@ import {
   toVisionSVG,
   closeExtraSVG,
   attachmentAddSVG,
+  toVideoSVG,
 } from '../Icons';
 import ChatEngineContext from '../ChatEngineContext';
 import { AICallAgentType, AICallChatSyncConfig } from 'aliyun-auikit-aicall';
@@ -121,18 +122,20 @@ function ChatFooter({ userId, userToken, rc }: { userId: string; userToken: stri
       uploaderRef.current = undefined;
     }
   };
-  const afterSend = (success: boolean) => {
-    // 发送成功，清空 uploader
-    // send success, clear uploader
-    if (success) {
-      uploaderRef.current?.destroy();
-      uploaderRef.current = undefined;
-    }
+  const afterSend = useMemo(() => {
+    return (success: boolean) => {
+      // 发送成功，清空 uploader
+      // send success, clear uploader
+      if (success) {
+        uploaderRef.current?.destroy();
+        uploaderRef.current = undefined;
+      }
 
-    useChatStore.setState({
-      attachmentList: [],
-    });
-  };
+      useChatStore.setState({
+        attachmentList: [],
+      });
+    };
+  }, []);
 
   const fromShare = new URLSearchParams(window.location.search).get('token');
 
@@ -207,6 +210,20 @@ function ChatFooter({ userId, userToken, rc }: { userId: string; userToken: stri
                   </Button>
                   <div className='_extra-action-label'>
                     <span>{t('chat.actions.toVision')}</span>
+                  </div>
+                </li>
+                <li>
+                  <Button
+                    onClick={() => {
+                      setExtraViewVisible(false);
+                      setCallAgentType(AICallAgentType.VideoAgent);
+                      setCallVisible(true);
+                    }}
+                  >
+                    {toVideoSVG}
+                  </Button>
+                  <div className='_extra-action-label'>
+                    <span>{t('chat.actions.toVideo')}</span>
                   </div>
                 </li>
               </>

@@ -4,14 +4,14 @@ import { SettingSVG, VoiceOneSVG, VoiceThreeSVG, VoiceTwoSVG } from './Icons';
 import useCallStore from '@/Mobile/Call/store';
 import { AICallAgentType, AICallState } from 'aliyun-auikit-aicall';
 
-import './header.less';
 import ControllerContext from '@/Mobile/Call/ControlerContext';
 import { RadioValue } from 'antd-mobile/es/components/radio';
 import logger from '@/common/logger';
 import { getRootElement } from '@/common/utils';
-
-import { getWorkflowType } from '@/service/interface';
 import { useTranslation } from '@/common/i18nContext';
+import SubtitleList from './SubtitleList';
+import './header.less';
+
 
 function Header() {
   const controller = useContext(ControllerContext);
@@ -26,8 +26,10 @@ function Header() {
   const enablePushToTalk = useCallStore((state) => state.enablePushToTalk);
   const updatingPushToTalk = useCallStore((state) => state.updatingPushToTalk);
 
-  const [settingVisible, setSettingVisible] = useState(false);
+  const agentVoiceIdList = useCallStore((state) => state.agentVoiceIdList);
 
+  const [settingVisible, setSettingVisible] = useState(false);
+  const [subtitleListVisible, setSubtitleListVisible] = useState(false);
   const onVoiceInterruptChange = async (checked: boolean) => {
     const original = useCallStore.getState().enableVoiceInterrupt;
     useCallStore.setState({ enableVoiceInterrupt: checked, updatingVoiceInterrupt: true });
@@ -90,6 +92,8 @@ function Header() {
       return t('agent.avatar');
     } else if (agentType === AICallAgentType.VisionAgent) {
       return t('agent.vision');
+    } else if (agentType === AICallAgentType.VideoAgent) {
+      return t('agent.video');
     }
     return t('agent.voice');
   }, [agentType, t]);
@@ -99,15 +103,20 @@ function Header() {
       <SafeArea position='top' />
       <div className='header'>
         {agentName}
-        <Button
-          onClick={() => {
-            logger.info('Header', 'OpenSetting');
-            setSettingVisible(true);
-          }}
-          disabled={callState !== AICallState.Connected}
-        >
-          {SettingSVG}
-        </Button>
+
+        <SubtitleList onVisibleChange={setSubtitleListVisible} />
+        {!subtitleListVisible && (
+          <Button
+            className='_no-border-btn'
+            onClick={() => {
+              logger.info('Header', 'OpenSetting');
+              setSettingVisible(true);
+            }}
+            disabled={callState !== AICallState.Connected}
+          >
+            {SettingSVG}
+          </Button>
+        )}
         <Popup
           className='header-pop setting-pop'
           visible={settingVisible}
@@ -159,8 +168,8 @@ function Header() {
               </li>
             )}
             {agentType !== AICallAgentType.AvatarAgent &&
-              !controller?.config.fromShare &&
-              (controller?.config.agentVoiceIdList.length || 0) > 0 && (
+              agentType !== AICallAgentType.VideoAgent &&
+              (agentVoiceIdList.length || 0) > 0 && (
                 <li
                   className='_voiceId'
                   style={{
@@ -177,7 +186,7 @@ function Header() {
                   </div>
                   <Radio.Group value={voiceId} disabled={updatingVoiceId} onChange={onVoiceChange}>
                     <Space direction='vertical' block>
-                      {controller?.config.agentVoiceIdList.map((voiceId, index) => {
+                      {agentVoiceIdList.map((voiceId, index) => {
                         const iconIndex = index % 3;
                         const VoiceSVG = [VoiceOneSVG, VoiceTwoSVG, VoiceThreeSVG][iconIndex];
                         return (

@@ -15,7 +15,7 @@ body {
   max-width: 576px;
 
   --adm-color-primary: #624aff;
-  --adm-mask-z-index: 5;
+  --adm-mask-z-index: 8;
   .adm-popup {
     position: static;
   }
@@ -25,17 +25,20 @@ body {
   .adm-center-popup {
     position: static;
     .adm-center-popup-mask {
-      z-index: 5;
+      z-index: 8;
     }
   }
 
   .adm-center-popup-wrap,
   .adm-popup-body {
     position: absolute;
-    z-index: 5;
+    z-index: 8;
   }
 
-  .adm-toast-mask .adm-toast-wrap {
-    position: absolute;
+  .adm-toast-mask {
+    z-index: 9;
+    .adm-toast-wrap {
+      position: absolute;
+    }
   }
 }

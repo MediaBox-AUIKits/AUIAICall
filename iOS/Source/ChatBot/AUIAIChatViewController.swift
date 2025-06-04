@@ -196,6 +196,10 @@ import PhotosUI
             self?.tryStartCall(agentType: .VisionAgent)
             self?.bottomView.reset()
         }
+        view.videoCallBtn.tappedAction = {[weak self] btn in
+            self?.tryStartCall(agentType: .VideoAgent)
+            self?.bottomView.reset()
+        }
         view.addPhotoBtn.tappedAction = {[weak self] btn in
             self?.openPhotoLibrary()
             self?.bottomView.reset()

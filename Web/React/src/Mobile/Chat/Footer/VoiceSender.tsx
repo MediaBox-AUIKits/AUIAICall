@@ -34,6 +34,7 @@ function VoiceSender({
   const { t } = useTranslation();
   const engine = useContext(ChatEngineContext);
   const reponseState = useChatStore((state) => state.chatResponseState);
+  const [audioAllowed, setAudioAllowed] = useState(false);
   const attachmentCanSend = useChatStore((state) => state.attachmentCanSend);
   const [pushing, setPushing] = useState(false);
   const [willCancel, setWillCancel] = useState(false);
@@ -51,6 +52,21 @@ function VoiceSender({
   }, [willCancel]);
 
   useEffect(() => {
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(
+      (stream) => {
+        setAudioAllowed(true);
+        stream.getTracks().forEach((track) => {
+          track.stop();
+        });
+      },
+      () => {
+        Toast.show({ content: t('chat.send.voice.noPermission'), getContainer: getRootElement });
+        setAudioAllowed(false);
+      }
+    );
+  }, [engine]);
+
+  useEffect(() => {
     const element = buttonRef.current?.nativeElement;
 
     const isTouchSupported = 'ontouchstart' in window;
@@ -59,49 +75,60 @@ function VoiceSender({
       setWillCancel(false);
       setPushing(true);
       setTimeString('0"');
-      isPushingRef.current = true;
-      const msg = await engine?.startPushVoiceMessage(uploaderRef.current || undefined);
-      if (!msg) return;
-      const stream = engine?.currentRecordStream;
-      if (stream) {
-        startTimeRef.current = Date.now();
-        timerRef.current = window.setInterval(() => {
-          const seconds = Math.floor((Date.now() - startTimeRef.current) / 1000);
-          if (seconds >= MAX_TIME_IN_SECONDS) {
-            willCancelRef.current = true;
-            onEnd();
+      try {
+        const msg = await engine?.startPushVoiceMessage(uploaderRef.current || undefined);
+        if (!msg) return;
+        isPushingRef.current = true;
+        const stream = engine?.currentRecordStream;
+        if (stream) {
+          startTimeRef.current = Date.now();
+          timerRef.current = window.setInterval(() => {
+            const seconds = Math.floor((Date.now() - startTimeRef.current) / 1000);
+            if (seconds >= MAX_TIME_IN_SECONDS) {
+              willCancelRef.current = true;
+              onEnd();
+            }
+            setTimeString(`${seconds}"`);
+          }, 1000);
+
+          const audioContext = engine?.audioContext || new (window.AudioContext || window.webkitAudioContext)();
+          const source = audioContext.createMediaStreamSource(stream);
+          const analyser = audioContext.createAnalyser();
+          analyser.fftSize = 256;
+          const bufferLength = analyser.frequencyBinCount;
+          const dataArray = new Uint8Array(bufferLength);
+
+          source.connect(analyser);
+
+          function draw() {
+            requestAnimationFrame(draw);
+            analyser.getByteFrequencyData(dataArray);
+
+            const smoothedData = smoothData(dataArray);
+
+            visualizerRef.current?.querySelectorAll('li').forEach((bar, index) => {
+              const barHeight = (smoothedData[index] / 255) * 8 + 4;
+              bar.style.height = `${barHeight}px`;
+            });
           }
-          setTimeString(`${seconds}"`);
-        }, 1000);
 
-        const audioContext = engine?.audioContext || new (window.AudioContext || window.webkitAudioContext)();
-        const source = audioContext.createMediaStreamSource(stream);
-        const analyser = audioContext.createAnalyser();
-        analyser.fftSize = 256;
-        const bufferLength = analyser.frequencyBinCount;
-        const dataArray = new Uint8Array(bufferLength);
-
-        source.connect(analyser);
-
-        function draw() {
-          requestAnimationFrame(draw);
-          analyser.getByteFrequencyData(dataArray);
-
-          const smoothedData = smoothData(dataArray);
-
-          visualizerRef.current?.querySelectorAll('li').forEach((bar, index) => {
-            const barHeight = (smoothedData[index] / 255) * 8 + 4;
-            bar.style.height = `${barHeight}px`;
-          });
+          draw();
         }
-
-        draw();
+      } catch (e) {
+        console.warn(`startPushVoiceMessage failed: ${e}`);
+        Toast.show({ content: t('chat.send.voice.failed'), getContainer: getRootElement });
+        setPushing(false);
+        setTimeString('0"');
+        if (timerRef.current) {
+          clearInterval(timerRef.current);
+        }
+        engine?.cancelPushVoiceMessage();
       }
     };
     const onTouchStart = (e: TouchEvent) => {
       const target = e.currentTarget as HTMLButtonElement;
       if (target.disabled) {
-        if (!attachmentCanSend) {
+        if (!useChatStore.getState().attachmentCanSend) {
           Toast.show({ content: t('chat.uploader.notReady'), getContainer: getRootElement });
         }
         return;
@@ -112,7 +139,7 @@ function VoiceSender({
     const onMouseDown = (e: MouseEvent) => {
       const target = e.currentTarget as HTMLButtonElement;
       if (target.disabled) {
-        if (!attachmentCanSend) {
+        if (!useChatStore.getState().attachmentCanSend) {
           Toast.show({ content: t('chat.uploader.notReady'), getContainer: getRootElement });
         }
         return;
@@ -132,7 +159,9 @@ function VoiceSender({
       }
 
       isPushingRef.current = false;
-      if (!willCancelRef.current) {
+
+      const hasEnoughTime = Date.now() - startTimeRef.current >= 500;
+      if (!willCancelRef.current && hasEnoughTime) {
         try {
           const message = await engine?.finishPushVoiceMessage();
           afterSend?.(true);
@@ -147,6 +176,10 @@ function VoiceSender({
           afterSend?.(false);
         }
       } else {
+        if (!hasEnoughTime) {
+          Toast.show({ content: t('chat.send.voice.tooShort'), getContainer: getRootElement });
+          return;
+        }
         engine?.cancelPushVoiceMessage();
       }
     };
@@ -200,7 +233,7 @@ function VoiceSender({
         element?.removeEventListener('mousemove', onMouseMove);
       }
     };
-  }, [engine]);
+  }, [afterSend, engine, t, uploaderRef]);
 
   const interruptMessage = async () => {
     try {
@@ -216,7 +249,7 @@ function VoiceSender({
         className='_push-btn'
         block
         ref={buttonRef}
-        disabled={reponseState !== AIChatAgentResponseState.Listening || !attachmentCanSend}
+        disabled={reponseState !== AIChatAgentResponseState.Listening || !attachmentCanSend || !audioAllowed}
       >
         {t('chat.send.voice.tip')}
       </Button>
@@ -232,7 +265,7 @@ function VoiceSender({
       <div className='_pushing'>
         <div className='_pushing-content'>
           <div className={`_tip ${willCancel ? 'is-will-cancel' : ''}`}>
-            {willCancel ? t('chat.send.voice.releaseToSend') : t('chat.send.voice.releaseToCancel')}
+            {willCancel ? t('chat.send.voice.releaseToCancel') : t('chat.send.voice.releaseToSend')}
           </div>
           <div className={`_recording-status ${willCancel ? 'is-will-cancel' : ''}`}>
             <div className='_time'>{timeString}</div>

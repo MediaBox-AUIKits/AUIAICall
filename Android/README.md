@@ -46,7 +46,8 @@ private static String VOICE_AGENT_ID = "<控制台语音通话智能体ID>";
 private static String Avatar_AGENT_ID = "<控制台数字人通话智能体ID>";
 // 你的视觉理解通话智能体ID
 private static String VISION_AGENT_ID = "<控制台视觉理解通话智能体ID>";
-
+// 你的视频通话智能体ID
+private static String VIDEO_AGENT_ID = "<控制台视频通话智能体ID>";
 //配置区域
 private static String Region = "cn-shanghai";
 ```
@@ -112,7 +113,7 @@ dependencies {
     implementation 'com.google.android.material:material:x.x.x'             //修改x.x.x为你工程适配的版本
     androidTestImplementation 'androidx.test.espresso:espresso-core:x.x.x'  //修改x.x.x为你工程适配的版本
     implementation 'com.aliyun.aio:AliVCSDK_ARTC:7.2.0'                  //修改x.x.x为你工程适配的版本
-    implementation 'com.aliyun.auikits.android:ARTCAICallKit:2.4.0'
+    implementation 'com.aliyun.auikits.android:ARTCAICallKit:2.5.0'
     //如果你的业务还需要支持消息对话，还需要集成AliVCInteractionMessage，版本最低是1.7.0
     implementation 'com.aliyun.sdk.android:AliVCInteractionMessage:1.7.0'
 }
@@ -135,6 +136,8 @@ private static String VOICE_AGENT_ID = "<控制台语音通话智能体ID>";
 private static String Avatar_AGENT_ID = "<控制台数字人通话智能体ID>";
 // 你的视觉理解通话智能体ID
 private static String VISION_AGENT_ID = "<控制台视觉理解通话智能体ID>";
+// 你的视频通话智能体ID
+private static String VIDEO_AGENT_ID = "<控制台视频通话智能体ID>";
 
 //配置区域
 private static String Region = "cn-shanghai";

@@ -72,6 +72,7 @@ export default {
     avatar: '数字人通话',
     vision: '视觉理解通话',
     chatbot: '消息对话',
+    video: '视频通话',
 
     ended: '通话已经结束',
     endedByInactivity: '由于你长时间未进行通话，该通话已经结束',
@@ -93,6 +94,16 @@ export default {
     clickToCall: '点击拨打，开始进行通话',
     call: '拨打',
     handup: '挂断',
+  },
+
+  resume: {
+    title: '音视频自动播放失败',
+    content: '请点击“确认”按钮恢复播放',
+    btn: '确认',
+  },
+
+  subtitleList: {
+    btn: '字幕',
   },
 
   settings: {
@@ -257,6 +268,8 @@ export default {
       deleteFailed: '删除失败',
 
       customReceived: '接收到自定义消息：{msg}',
+
+      tableTitle: '表格',
     },
 
     actions: {
@@ -264,6 +277,7 @@ export default {
       toVoice: '音频通话',
       toAvatar: '数字人通话',
       toVision: '视觉理解通话',
+      toVideo: '视频通话',
     },
 
     send: {
@@ -274,6 +288,8 @@ export default {
         releaseToCancel: '松开取消',
         failed: '发送语音消息失败',
         noText: '未识别到文字',
+        noPermission: '启动麦克风失败，请检查设备和权限',
+        tooShort: '按住时间太短，已取消发送',
       },
     },
 

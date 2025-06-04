@@ -27,6 +27,7 @@ function CallSettingsPopover() {
   const voiceId = useCallStore((state) => state.voiceId);
   const updatingVoiceId = useCallStore((state) => state.updatingVoiceId);
   const agentType = useCallStore((state) => state.agentType);
+  const agentVoiceIdList = useCallStore((state) => state.agentVoiceIdList);
 
   const onPushToTalkChange = async (e: RadioChangeEvent) => {
     const checked = e.target.value === 'pushToTalk';
@@ -93,21 +94,23 @@ function CallSettingsPopover() {
         </Form.Item>
       )}
 
-      {agentType !== AICallAgentType.AvatarAgent && (controller?.config.agentVoiceIdList.length || 0) > 0 && (
-        <Form.Item label={t('settings.voiceId.title')} help={t('settings.voiceId.help')}>
-          <Radio.Group name='voiceId' value={voiceId} disabled={updatingVoiceId} onChange={onVoiceChange}>
-            <Space direction='vertical'>
-              {controller?.config.agentVoiceIdList.map((voiceId, index) => {
-                return (
-                  <Radio key={index} value={voiceId}>
-                    {voiceId}
-                  </Radio>
-                );
-              })}
-            </Space>
-          </Radio.Group>
-        </Form.Item>
-      )}
+      {agentType !== AICallAgentType.AvatarAgent &&
+        agentType !== AICallAgentType.VideoAgent &&
+        (agentVoiceIdList.length || 0) > 0 && (
+          <Form.Item label={t('settings.voiceId.title')} help={t('settings.voiceId.help')}>
+            <Radio.Group name='voiceId' value={voiceId} disabled={updatingVoiceId} onChange={onVoiceChange}>
+              <Space direction='vertical'>
+                {agentVoiceIdList.map((voiceId, index) => {
+                  return (
+                    <Radio key={index} value={voiceId}>
+                      {voiceId}
+                    </Radio>
+                  );
+                })}
+              </Space>
+            </Radio.Group>
+          </Form.Item>
+        )}
     </Form>
   );
 }

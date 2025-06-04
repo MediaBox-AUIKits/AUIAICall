@@ -118,7 +118,7 @@ export const longPressEvents = function ({
   let target: EventTarget | null;
 
   const start: ILongPressStartMethod = (event) => {
-    if (event.nativeEvent instanceof TouchEvent || event.nativeEvent instanceof MouseEvent)
+    if ((window.TouchEvent && event.nativeEvent instanceof TouchEvent) || event.nativeEvent instanceof MouseEvent)
       target = event.nativeEvent.target;
     return (timeout = window.setTimeout(() => onStartCallback(target), ms));
   };
@@ -126,7 +126,7 @@ export const longPressEvents = function ({
     if (timeout) {
       window.clearTimeout(timeout);
     }
-    if (event.nativeEvent instanceof TouchEvent) target = event.nativeEvent.target;
+    if (window.TouchEvent && event.nativeEvent instanceof TouchEvent) target = event.nativeEvent.target;
     onEndCallback?.(target);
   };
 

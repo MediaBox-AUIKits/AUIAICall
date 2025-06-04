@@ -1,5 +1,11 @@
 import { JSONObject } from '@/service/interface.ts';
-import { AICallAgentType, AIChatAgentType, AICallTemplateConfig, AIChatTemplateConfig } from 'aliyun-auikit-aicall';
+import {
+  AICallAgentType,
+  AIChatAgentType,
+  AICallTemplateConfig,
+  AIChatTemplateConfig,
+  AICallAgentConfig,
+} from 'aliyun-auikit-aicall';
 
 export interface AICallRunConfig {
   // 可选，默认使用上海区域 cn-shanghai
@@ -16,14 +22,17 @@ export interface AICallRunConfig {
   callTemplateConfig?: AICallTemplateConfig;
   // 可选，通话智能体用户数据
   callUserData?: string;
+  callAgentConfig?: AICallAgentConfig;
 
   // 智能体 id 可通过控制台获取 https://ice.console.aliyun.com/ai/robot/list
-  // 可选，语音通话智能体 id，不传入则由 AppServer 决定
+  // 语音通话智能体 id
   voiceAgentId?: string;
-  // 可选，数字人智能体 id，不传入则由 AppServer 决定
+  // 数字人智能体 id
   avatarAgentId?: string;
-  // 可选，视觉智能体 id，不传入则由 AppServer 决定
+  // 视觉智能体 id
   visionAgentId?: string;
+  // 语音通话智能体配置
+  videoAgentId?: string;
   // 必选，消息通话智能体 id
   chatAgentId: string;
 
@@ -40,9 +49,6 @@ export const getRuntimeConfig = (runConfig: AICallUserRunConfig) => {
   return rc;
 };
 export const getCallAgentId = (rc: AICallRunConfig, agentType?: AICallAgentType) => {
-  if (agentType === undefined || agentType < AICallAgentType.VoiceAgent || agentType > AICallAgentType.VisionAgent) {
-    return;
-  }
   if (agentType === AICallAgentType.VoiceAgent) {
     return rc.voiceAgentId;
   }
@@ -52,4 +58,8 @@ export const getCallAgentId = (rc: AICallRunConfig, agentType?: AICallAgentType)
   if (agentType === AICallAgentType.VisionAgent) {
     return rc.visionAgentId;
   }
+  if (agentType === AICallAgentType.VideoAgent) {
+    return rc.videoAgentId;
+  }
+  return '';
 };

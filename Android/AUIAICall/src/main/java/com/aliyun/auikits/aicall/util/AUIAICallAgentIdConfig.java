@@ -9,10 +9,12 @@ public class AUIAICallAgentIdConfig {
     private static String Avatar_AGENT_ID = "";
     private static String VISION_AGENT_ID = "";
     private static String ChatBot_AGENT_ID = "";
+    private static String VIDEO_AGENT_ID = "";
 
     private static String VOICE_AGENT_EMOTION_ID = "";
     private static String Avatar_AGENT_EMOTION_ID = "";
     private static String VISION_AGENT_EMOTION_ID = "";
+    private static String VIDEO_AGENT_EMOTION_ID = "";
 
     private static String Region = "cn-shanghai";
 
@@ -27,6 +29,9 @@ public class AUIAICallAgentIdConfig {
                 break;
             case VisionAgent:
                 agentId = openEmotion ? VISION_AGENT_EMOTION_ID : VISION_AGENT_ID;
+                break;
+            case VideoAgent:
+                agentId = openEmotion ? VIDEO_AGENT_EMOTION_ID : VIDEO_AGENT_ID;
                 break;
             case ChatBot:
                 agentId =  ChatBot_AGENT_ID;

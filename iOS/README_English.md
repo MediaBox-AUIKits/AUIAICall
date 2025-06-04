@@ -42,6 +42,7 @@ You need to create an agent. For details, please refer to the official website d
 let VoiceAgentId = "xxx"
 let AvatarAgentId = "xxx"
 let VisionAgentId = "xxx"
+let VideoAgentId = "xxx"
 let ChatAgentId = "xxx"
 
 // Configure the region
@@ -115,8 +116,8 @@ target 'Your App target' do
     pod 'AliVCSDK_ARTC', '~> 7.2.0'
 
     # AI real-time interactive call scenario SDK
-    # If your business also needs to support message conversations, use "ARTCAICallKit/Chatbot" for integration, change the line below to: pod 'ARTCAICallKit/Chatbot', '~> 2.4.0'
-    pod 'ARTCAICallKit', '~> 2.4.0'
+    # If your business also needs to support message conversations, use "ARTCAICallKit/Chatbot" for integration, change the line below to: pod 'ARTCAICallKit/Chatbot', '~> 2.5.0'
+    pod 'ARTCAICallKit', '~> 2.5.0'
 
     # Basic UI component source code
     pod 'AUIFoundation', :path => "./AUIAICall/AUIBaseKits/AUIFoundation/", :modular_headers => true
@@ -126,7 +127,7 @@ target 'Your App target' do
     pod 'AUIAICall',  :path => "./AUIAICall/"
 
     # If your business also needs to support message conversations, you also need to integrate AliVCInteractionMessage, minimum version is 1.7.0
-    pod 'AliVCInteractionMessage', '~> 1.7.0'
+    pod 'AliVCInteractionMessage', '~> 1.7.1'
 
 end
 ```
@@ -135,7 +136,7 @@ end
 
 
 ### Project Configuration
-- Open the project's info.plist, add microphone permissions, and include other permissions as needed, such as camera permissions (used by the vision agent) and photo library permissions (used by the multi-modal messaging conversation agent).
+- Open the project's info.plist, add microphone permissions, and include other permissions as needed, such as camera permissions (used by the vision/video agent) and photo library permissions (used by the multi-modal messaging conversation agent).
 - Open the project settings, enable "Background Modes" in "Signing & Capabilities". If background mode is not enabled, you need to handle ending the call when entering the background yourself.
 
 ### Source Code Configuration
@@ -160,7 +161,7 @@ import AUIAICall
 import ARTCAICallKit
 import AUIFoundation
 
-// Check if microphone permission is enabled
+// Check if microphone permission is enabled. Check the camera permission if using the vision or video agent.
 AVDeviceAuth.checkMicAuth { auth in
     if auth == false {
         return

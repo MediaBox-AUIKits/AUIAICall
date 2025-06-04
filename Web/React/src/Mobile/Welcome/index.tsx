@@ -4,8 +4,8 @@ import { Tabs, Swiper, SwiperRef, Button, SafeArea } from 'antd-mobile';
 import './index.less';
 import { AICallAgentType, AIChatAgentType } from 'aliyun-auikit-aicall';
 import { WorkflowType } from '@/service/interface';
-
 import { useTranslation } from '@/common/i18nContext';
+
 
 interface WelcomeProps {
   onAgentTypeSelected: (type: AICallAgentType | AIChatAgentType) => void;
@@ -48,6 +48,12 @@ function Welcome({ onAgentTypeSelected }: WelcomeProps) {
       title: t('agent.chatbot'),
       imgUrl: 'https://gw.alicdn.com/imgextra/i3/O1CN01e6vxYV1pJm28uCaRD_!!6000000005340-2-tps-426-852.png',
     },
+    {
+      key: WorkflowType.VideoChat,
+      value: AICallAgentType.VideoAgent,
+      title: t('agent.video'),
+      imgUrl: 'https://gw.alicdn.com/imgextra/i4/O1CN017klMfb1FtCW2Y4nOJ_!!6000000000544-49-tps-426-852.webp',
+    },
   ];
 
   return (
@@ -84,7 +90,6 @@ function Welcome({ onAgentTypeSelected }: WelcomeProps) {
         <Button color='primary' block onClick={onClick}>
           {t('welcome.btn')}
         </Button>
-        
       </div>
       <SafeArea position='bottom' />
     </div>

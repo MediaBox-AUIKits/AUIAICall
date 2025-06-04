@@ -1,11 +1,16 @@
-import { AICallAgentError, AICallAgentInfo, AICallErrorCode, AICallState } from 'aliyun-auikit-aicall';
+import {
+  AICallAgentError,
+  AICallAgentInfo,
+  AICallEngineConfig,
+  AICallErrorCode,
+  AICallState,
+} from 'aliyun-auikit-aicall';
 import AUIAICallController from './AUIAICallController';
 import standardService from '../../service/standard';
-import AUIAICallConfig from './AUIAICallConfig';
 import logger from '@/common/logger';
 
 class AUIAICallStandardController extends AUIAICallController {
-  constructor(userId: string, token: string, config?: AUIAICallConfig) {
+  constructor(userId: string, token: string, config?: AICallEngineConfig) {
     super(userId, token, config);
   }
 
@@ -62,8 +67,8 @@ class AUIAICallStandardController extends AUIAICallController {
 
       await this.engine?.call(this.userId, instanceInfo);
 
-      if (this.config.agentView) {
-        this.engine?.setAgentView(this.config.agentView);
+      if (this.engineConfig?.agentElement) {
+        this.engine?.setAgentView(this.engineConfig.agentElement);
       }
 
       // @ts-expect-error state may change

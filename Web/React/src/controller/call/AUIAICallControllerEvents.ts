@@ -5,6 +5,7 @@ import {
   AICallState,
   AICallSubtitleData,
   AICallVoiceprintResult,
+  JSONObject,
 } from 'aliyun-auikit-aicall';
 
 interface AUIAICallControllerEvents {
@@ -123,6 +124,18 @@ interface AUIAICallControllerEvents {
    * agent speaking interrupted
    */
   AICallSpeakingInterrupted: (reason: AICallSpeakingInterruptedReason) => void;
+
+  /**
+   * 智能体配置加载完成
+   * agent config loaded
+   */
+  AICallAgentConfigLoaded: (config: JSONObject) => void;
+
+  /**
+   * 智能体自动播放失败
+   * agent auto play failed
+   */
+  AICallAgentAutoPlayFailed: () => void;
 }
 
 export default AUIAICallControllerEvents;

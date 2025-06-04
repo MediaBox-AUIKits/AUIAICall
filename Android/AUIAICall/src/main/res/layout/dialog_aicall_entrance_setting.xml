@@ -938,6 +938,68 @@
                     android:backgroundTint="@color/layout_base_iv_border"
                     />
             </LinearLayout>
+            <LinearLayout
+                android:id="@+id/ll_asr_hot_words"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp"
+                android:layout_marginLeft="12dp"
+                android:layout_marginRight="12dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                android:visibility="visible">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    style="@style/layout_base_text_style_12"
+                    android:text="AsrHotWords"
+                    />
+                <EditText
+                    android:id="@+id/asr_hot_words_input"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    style="@style/layout_base_text_style_12"
+                    android:text=""
+                    android:textColorHint="@color/layout_base_gray"
+                    android:backgroundTint="@color/layout_base_iv_border"
+                    />
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/ll_turn_end_words"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp"
+                android:layout_marginLeft="12dp"
+                android:layout_marginRight="12dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                android:visibility="visible">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    style="@style/layout_base_text_style_12"
+                    android:text="TurnEndWorkd"
+                    />
+                <EditText
+                    android:id="@+id/turn_end_words_input"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    style="@style/layout_base_text_style_12"
+                    android:text=""
+                    android:textColorHint="@color/layout_base_gray"
+                    android:backgroundTint="@color/layout_base_iv_border"
+                    />
+            </LinearLayout>
             <View
         android:id="@+id/divider"
         android:layout_width="match_parent"

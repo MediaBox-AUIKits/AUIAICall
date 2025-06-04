@@ -7,47 +7,6 @@
     android:background="@color/layout_base_background"
     android:fitsSystemWindows="true"
     tools:context=".AUIAICallInCallActivity">
-
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/top_bar"
-        android:layout_width="match_parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        android:layout_height="44dp">
-        <ImageView
-            android:id="@+id/btn_setting"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            android:layout_marginStart="10dp"
-            android:padding="10dp"
-            android:src="@drawable/ic_config"/>
-
-        <TextView
-            android:id="@+id/tv_ai_call_title"
-            style="@style/layout_base_text_style_16"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/in_call_text"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <TextView
-            android:id="@+id/btn_reporting"
-            style="@style/layout_base_text_style_12"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="24dp"
-            android:text="@string/reporting_title"
-            android:textColor="@color/layout_base_light_white"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
     
     <FrameLayout
         android:id="@+id/ai_call_agent_avatar_container"
@@ -74,7 +33,7 @@
             android:id="@+id/tv_ai_agent"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/ic_ai_agent"
+            android:src="@drawable/ic_in_call_video_mute_big"
             android:layout_gravity="center"
             android:visibility="visible"
             />
@@ -88,6 +47,62 @@
         app:layout_constraintBottom_toBottomOf="parent"
         android:visibility="gone"
         />
+
+    <com.aliyun.auikits.aicall.widget.AUIAICallDraggableConstraintLayout
+        android:id="@+id/small_view_layer"
+        android:layout_width="120dp"
+        android:layout_height="213dp"
+        app:layout_constraintTop_toBottomOf="@id/top_bar"
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginTop="67dp"
+        android:layout_marginRight="14dp"
+        android:background="@color/layout_base_background"
+        android:visibility="gone"
+       >
+
+        <ImageView
+            android:id="@+id/small_view_camera_mute"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            android:src="@drawable/ic_in_call_video_mute"
+            android:layout_gravity="center"
+            android:visibility="gone"
+            />
+
+        <FrameLayout
+            android:id="@+id/video_agent_small_view_layer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintRight_toRightOf="parent"/>
+        <LinearLayout
+            android:layout_width="27dp"
+            android:layout_height="25dp"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_marginEnd="7dp"
+            android:layout_marginBottom="7dp"
+            android:background="@drawable/bg_in_call_video_small_selector"
+            >
+            <ImageView
+                android:id="@+id/video_agent_small_view_change"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                android:layout_marginLeft="3dp"
+                android:layout_marginTop="2dp"
+                android:src="@drawable/ic_call_small_video_change"/>
+        </LinearLayout>
+
+    </com.aliyun.auikits.aicall.widget.AUIAICallDraggableConstraintLayout>
+
 
     <FrameLayout
         android:id="@+id/small_avatar_layer_container"
@@ -106,7 +121,7 @@
             android:layout_marginLeft="10dp"
             android:layout_marginTop="10dp"
             />
-    </FrameLayout>>
+    </FrameLayout>
 
     <View
         android:layout_width="match_parent"
@@ -114,32 +129,6 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         android:background="@drawable/bg_in_call_mask"/>
-
-    <LinearLayout
-        android:id="@+id/ll_subtitle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/top_bar"
-        android:paddingLeft="48dp"
-        android:paddingRight="48dp"
-        android:paddingTop="32dp"
-        android:orientation="horizontal">
-        <ImageView
-            android:id="@+id/iv_subtitle"
-            android:layout_width="14dp"
-            android:layout_height="14dp"
-            android:layout_marginTop="4dp"
-            />
-        <TextView
-            android:id="@+id/tv_subtitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="10dp"
-            android:text=""
-            android:maxLines="4"
-            style="@style/layout_base_text_style_14"
-            />
-    </LinearLayout>
 
     <LinearLayout
         android:id="@+id/ll_call_secondary_tips"
@@ -184,6 +173,65 @@
         android:textAlignment="center"
         android:text=""/>
 
+    <!-- 顶部蒙版，开启字幕时修改顶部栏背景颜色 -->
+    <LinearLayout
+        android:id="@+id/ll_full_screen_subtitle_top_container"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="#CC000000"
+        android:orientation="vertical"
+        android:paddingLeft="25dp"
+        android:paddingRight="25dp"
+        android:visibility="gone"
+        android:clickable="true"
+        android:focusable="true"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="@id/top_bar">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/ll_full_screen_subtitle"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="#CC000000"
+        android:orientation="vertical"
+        android:visibility="gone"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp"
+        android:paddingLeft="15dp"
+        android:paddingRight="15dp"
+        android:clickable="true"
+        android:focusable="true"
+        app:layout_constraintTop_toBottomOf="@+id/top_bar"
+        app:layout_constraintBottom_toTopOf="@+id/tv_call_duration">
+        <androidx.recyclerview.widget.RecyclerView
+            android:id='@+id/rv_full_screen_subtitle'
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
+    <!-- 底部蒙版，开启字幕时修改底部背景颜色 -->
+    <LinearLayout
+        android:id="@+id/ll_full_screen_subtitle_bottom_container"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="#CC000000"
+        android:orientation="vertical"
+        android:visibility="gone"
+        android:paddingLeft="25dp"
+        android:paddingRight="25dp"
+        android:clickable="true"
+        android:focusable="true"
+        app:layout_constraintTop_toTopOf="@+id/tv_call_duration"
+        app:layout_constraintBottom_toBottomOf="parent">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+    </LinearLayout>
+
     <TextView
         android:id="@+id/tv_call_duration"
         android:layout_width="wrap_content"
@@ -194,6 +242,64 @@
         style="@style/layout_base_text_style_12"
         android:layout_marginBottom="8dp"
         android:text="00:00"/>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/top_bar"
+        android:layout_width="match_parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:layout_height="44dp">
+        <ImageView
+            android:id="@+id/btn_setting"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:layout_marginStart="10dp"
+            android:padding="10dp"
+            android:src="@drawable/ic_config"/>
+
+        <TextView
+            android:id="@+id/btn_ai_call_full_screen_subtitle"
+            style="@style/layout_base_text_style_16"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/btn_text_ai_call_full_screen_subtitle"
+            android:background="@drawable/bg_btn_subtitle_black"
+            android:textColor="#FFFFFFFF"
+            android:textSize="12dp"
+            android:padding="6dp"
+            android:gravity="center"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintRight_toLeftOf="@+id/btn_setting"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_goneMarginRight="44dp"
+            />
+
+        <TextView
+            android:id="@+id/tv_ai_call_title"
+            style="@style/layout_base_text_style_16"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/in_call_text"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/btn_reporting"
+            style="@style/layout_base_text_style_12"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="24dp"
+            android:text="@string/reporting_title"
+            android:textColor="@color/layout_base_light_white"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <FrameLayout
         android:id="@+id/action_layer"
@@ -232,38 +338,4 @@
             android:visibility="gone"
             />
     </FrameLayout>
-
-    <LinearLayout
-        android:id="@+id/ll_full_screen_subtitle"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="#CC000000"
-        android:orientation="vertical"
-        android:visibility="gone"
-        >
-        <ImageView
-            android:id="@+id/btn_close_full_screen_subtitle"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:padding="10dp"
-            android:src="@drawable/ic_voice_agent_close"
-            android:layout_gravity="right"/>
-        <ScrollView
-            android:id="@+id/sv_full_screen_subtitle"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:paddingTop="15dp"
-            android:paddingBottom="88dp"
-            android:paddingLeft="25dp"
-            android:paddingRight="25dp">
-            <TextView
-                android:id="@+id/tv_full_screen_subtitle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                style="@style/layout_base_text_style_14"
-                android:paddingTop="10dp"
-                android:paddingBottom="10dp"
-                />
-        </ScrollView>
-    </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,6 +1,7 @@
 package com.aliyun.auikits.aicall;
 
 import static com.aliyun.auikits.aiagent.ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent;
+import static com.aliyun.auikits.aiagent.ARTCAICallEngine.ARTCAICallAgentType.VideoAgent;
 import static com.aliyun.auikits.aiagent.ARTCAICallEngine.ARTCAICallAgentType.VisionAgent;
 import static com.aliyun.auikits.aiagent.ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent;
 import static com.aliyun.auikits.aiagent.ARTCAIChatEngine.ARTCAIChatAgentState.Listening;
@@ -1578,6 +1579,14 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     jumpToInCallActivity(VisionAgent);
+                    mLayoutHolder.resetAddMoreLayoutToDefault();
+                }
+            });
+
+            findViewById(R.id.bottom_down_video_chat_action).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    jumpToInCallActivity(VideoAgent);
                     mLayoutHolder.resetAddMoreLayoutToDefault();
                 }
             });

@@ -244,6 +244,8 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
         ((EditText) view.findViewById(R.id.llmSystemPrompt_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_LLM_SYSTEM_PROMPT));
         ((EditText) view.findViewById(R.id.interrupt_words_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_INTERRUPT_WORDS, ""));
         ((EditText) view.findViewById(R.id.vad_level_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_VAD_LEVEL, "3"));
+        ((EditText) view.findViewById(R.id.asr_hot_words_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_ASR_HOT_WORDS, ""));
+        ((EditText) view.findViewById(R.id.turn_end_words_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_TURN_END_WORDS, ""));
 
 
         if (!showExtraDebugConfig) {
@@ -340,6 +342,8 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
                         SettingStorage.getInstance().set(SettingStorage.KEY_LLM_SYSTEM_PROMPT, ((EditText)view.findViewById(R.id.llmSystemPrompt_input)).getText().toString());
                         SettingStorage.getInstance().set(SettingStorage.KEY_INTERRUPT_WORDS, ((EditText)view.findViewById(R.id.interrupt_words_input)).getText().toString());
                         SettingStorage.getInstance().set(SettingStorage.KEY_VAD_LEVEL, ((EditText)view.findViewById(R.id.vad_level_input)).getText().toString());
+                        SettingStorage.getInstance().set(SettingStorage.KEY_ASR_HOT_WORDS, ((EditText)view.findViewById(R.id.asr_hot_words_input)).getText().toString());
+                        SettingStorage.getInstance().set(SettingStorage.KEY_TURN_END_WORDS, ((EditText)view.findViewById(R.id.turn_end_words_input)).getText().toString());
 
                     }
                     if (v.getId() == R.id.btn_confirm || v.getId() == R.id.btn_cancel) {
@@ -437,6 +441,8 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
                             aiCallAgentType = ARTCAICallEngine.ARTCAICallAgentType.VisionAgent;
                         } else if("MessageChat".equals(shareInfo.workflowType)) {
                             aiCallAgentType = ARTCAICallEngine.ARTCAICallAgentType.ChatBot;
+                        } else if("VideoChat".equals(shareInfo.workflowType)) {
+                            aiCallAgentType = ARTCAICallEngine.ARTCAICallAgentType.VideoAgent;
                         }
                         mLayoutHolder.getCustomLayerHolder().setExperienceTokenCallType(aiCallAgentType);
                         mLayoutHolder.getCustomLayerHolder().setExperienceRegion(shareInfo.region);
@@ -637,6 +643,8 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
                 return context.getString(R.string.vision_agent_call);
             case ChatBot:
                 return context.getString(R.string.chat_bot);
+            case VideoAgent:
+                return context.getString(R.string.video_agent_call);
             default:
                 break;
         }
@@ -657,6 +665,7 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
             mCallTypeList.add(ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent);
             mCallTypeList.add(ARTCAICallEngine.ARTCAICallAgentType.VisionAgent);
             mCallTypeList.add(ChatBot);
+            mCallTypeList.add(ARTCAICallEngine.ARTCAICallAgentType.VideoAgent);
 
             mMotionalLayout = findViewById(R.id.config_layout);
             mTabCallType = findViewById(R.id.tab_function_detail_call_type);
@@ -771,6 +780,8 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
                 mIvPreview.setImageResource(R.drawable.bg_entrance_vision_agent);
             } else if(mCallAgentType == ARTCAICallEngine.ARTCAICallAgentType.ChatBot) {
                 mIvPreview.setImageResource(R.drawable.bg_entrance_chatbot_agent);
+            } else if(mCallAgentType == ARTCAICallEngine.ARTCAICallAgentType.VideoAgent) {
+                mIvPreview.setImageResource(R.drawable.bg_entrance_video_agent);
             } else {
                 mIvPreview.setImageResource(R.drawable.bg_entrance_voice_agent);
             }

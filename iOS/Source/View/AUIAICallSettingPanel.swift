@@ -179,12 +179,12 @@ public typealias AUIAICallSettingDefaultBlock = (_ sender: AUIAICallSettingPanel
     }
 
     private func refreshUI() {
-        self.onPushToTalkSwitchChanged(ptt: self.config?.templateConfig.enablePushToTalk == true)
+        self.onPushToTalkSwitchChanged(ptt: self.config?.agentConfig.enablePushToTalk == true)
 
-        self.interruptSwitch.switchBtn.isOn = self.config?.templateConfig.enableVoiceInterrupt ?? true
-        self.voiceprintSettingView.voiceprintSwitch.switchBtn.isOn = self.config?.templateConfig.useVoiceprint ?? true
+        self.interruptSwitch.switchBtn.isOn = self.config?.agentConfig.interruptConfig.enableVoiceInterrupt ?? true
+        self.voiceprintSettingView.voiceprintSwitch.switchBtn.isOn = self.config?.agentConfig.voiceprintConfig.useVoiceprint ?? true
         self.selectItem = self.voiceItemList.first { item in
-            return item.voiceId == self.config?.templateConfig.agentVoiceId
+            return item.voiceId == self.config?.agentConfig.ttsConfig.agentVoiceId
         }
         
         self.setNeedsLayout()

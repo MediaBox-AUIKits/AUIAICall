@@ -16,16 +16,8 @@ import ARTCAICallKit
         super.init(frame: frame)
                 
         self.addSubview(self.tipsLabel)
-        self.addSubview(self.voiceprintTipsLabel)
         self.addSubview(self.agentAni)
-        
-        self.addSubview(self.subtitleIcon)
-        self.addSubview(self.subtitleLabel)
-        
-        self.subtitleLabel.tappedAction = { [weak self] label in
-            self?.openSubtileFullscreen()
-        }
-        
+
         self.setup()
     }
     
@@ -40,14 +32,8 @@ import ARTCAICallKit
         self.agentAni.frame = CGRect(x: 0, y: UIView.av_safeTop + 44, width: self.av_width, height: hei - UIView.av_safeTop - 44)
         
         self.updateAgentLayout()
-        
-        self.subtitleIcon.frame = CGRect(x: 50, y: 121, width: 14, height: 14)
-        self.subtitleLabel.frame = CGRect(x: self.subtitleIcon.av_right + 8, y: self.subtitleIcon.av_top - 3, width: self.av_width - self.subtitleIcon.av_right - 8 - 48, height: 0)
-        self.subtitleLabel.text = self.subtitleLabel.originalText
     }
-    
-    open var subtileFullscreenView: AUISubtileFullscreenView? = nil
-        
+            
     open lazy var tipsLabel: UILabel = {
         let label = UILabel()
         label.textColor = AVTheme.text_strong
@@ -56,69 +42,50 @@ import ARTCAICallKit
         label.text = ""
         return label
     }()
-    
-    open lazy var subtitleLabel: AUISubtileReadMoreLabel = {
-        let label = AUISubtileReadMoreLabel()
-        label.textColor = AVTheme.text_weak
-        label.textAlignment = .left
-        label.font = AVTheme.regularFont(14)
-        label.text = ""
-        label.numberOfLines = 4
-        label.isHidden = true
-//        label.backgroundColor = UIColor.red.withAlphaComponent(0.5)
-        return label
-    }()
-    
-    open lazy var subtitleIcon: UIButton = {
-        let icon = UIButton()
-        icon.setImage(AUIAICallBundle.getCommonImage("ic_sub_asr"), for: .normal)
-        icon.setImage(AUIAICallBundle.getCommonImage("ic_sub_llm"), for: .selected)
-        icon.isHidden = true
-        icon.isUserInteractionEnabled = false
-        return icon
-    }()
-    
-    open lazy var voiceprintTipsLabel: AUIVoiceprintTipsView = {
-        let label = AUIVoiceprintTipsView()
-        return label
-    }()
 
     public let agentType: ARTCAICallAgentType!
     open lazy var agentAni: AUIAICallAgentAnimator = {
         let view = self.agentType == .VoiceAgent ? AUIAICallAgentAvatarAnimator() :  AUIAICallAgentSimpleAnimator()
+        view.isUserInteractionEnabled = false
         return view
     }()
     
-    open var avatarAgentView: UIView? = nil
-    open var visionCameraView: UIView? = nil
-    open var visionAgentView: UIView? = nil
+    open private(set) var agentView: AUIAICallContentAgentView? = nil
+    open private(set) var cameraView: AUIAICallContentCameraView? = nil
     
     private func setup() {
         if agentType == .VoiceAgent {
-            self.voiceprintTipsLabel.isSelected = false
         }
         else if agentType == .AvatarAgent {
-            let view = UIView()
-            // view.backgroundColor = UIColor.white
-            view.isHidden = true
-            self.insertSubview(view, at: 0)
-            self.avatarAgentView = view
-            self.voiceprintTipsLabel.isSelected = true
+            let agentView = AUIAICallContentAgentView()
+            agentView.isHidden = true
+            self.insertSubview(agentView, at: 0)
+            self.agentView = agentView
         }
         else if agentType == .VisionAgent {
-            let cameraView = UIView()
-            // view.backgroundColor = UIColor.white
+            let cameraView = AUIAICallContentCameraView()
             cameraView.isHidden = true
             self.insertSubview(cameraView, at: 0)
-            self.visionCameraView = cameraView
+            self.cameraView = cameraView
+        }
+        else if  agentType == .VideoAgent {
+            let agentView = AUIAICallContentAgentView()
+            agentView.isHidden = true
+            agentView.switchBtn.clickBlock = { [weak self] btn in
+                self?.switchWindow()
+            }
+            self.insertSubview(agentView, at: 0)
+            self.agentView = agentView
             
-            let agentView = UIImageView()
-            agentView.image = AUIAICallBundle.getCommonImage("ic_agent")
-            agentView.contentMode = .center
-            agentView.isHidden = false
-            self.visionCameraView?.addSubview(agentView)
-            self.visionAgentView = agentView
-            self.voiceprintTipsLabel.isSelected = true
+            let cameraView = AUIAICallContentCameraView()
+            cameraView.isHidden = true
+            cameraView.switchBtn.clickBlock = { [weak self] btn in
+                self?.switchWindow()
+            }
+            self.insertSubview(cameraView, aboveSubview: agentView)
+            self.cameraView = cameraView
+            self.cameraView?.isSmallWindow = true
+            self.addGestureRecognizer(flowtView: self.cameraView!)
         }
     }
     
@@ -130,270 +97,274 @@ import ARTCAICallKit
         else if agentType == .AvatarAgent {
             let hei = self.av_bottom - 228 - 18
             self.tipsLabel.frame = CGRect(x: 0, y: hei, width: self.av_width, height: 18)
-            self.avatarAgentView?.frame = self.bounds
+            self.agentView?.frame = self.bounds
         }
         else if agentType == .VisionAgent {
             let hei = self.av_bottom - 240 - 18
             self.tipsLabel.frame = CGRect(x: 0, y: hei, width: self.av_width, height: 18)
-            self.visionCameraView?.frame = self.bounds
-            self.visionAgentView?.frame = CGRect(x: 0, y: UIView.av_safeTop + 44, width: self.av_width, height: hei - UIView.av_safeTop - 44)
+            self.cameraView?.frame = self.bounds
         }
-        self.voiceprintTipsLabel.layoutAt(frame: CGRect(x: 0, y: tipsLabel.av_top - 40 - 10, width: self.av_width, height: 40))
-    }
-    
-    open func updateSubTitle(enable: Bool, isLLM: Bool, text: String, clear: Bool) {
-        self.subtitleIcon.isHidden = !enable
-        self.subtitleIcon.isSelected = isLLM
-        self.subtitleLabel.isHidden = !enable
-        self.subtitleLabel.text = text
-        if clear {
-//            self.exitSubtileFullscreen()
+        else if agentType == .VideoAgent {
+            let hei = self.av_bottom - 240 - 18
+            self.tipsLabel.frame = CGRect(x: 0, y: hei, width: self.av_width, height: 18)
             
-        }
-        else {
-            self.subtileFullscreenView?.updateSubtitle(subtitle: self.subtitleLabel.originalText)
+            self.updateVideoAgentLayout()
         }
     }
     
-    private func openSubtileFullscreen() {
-        self.exitSubtileFullscreen()
-        if let container = self.superview {
-            
-            let view = AUISubtileFullscreenView(frame: container.bounds)
-            view.tappedAction = { [weak self] sender in
-                self?.exitSubtileFullscreen()
+    private func switchWindow() {
+        if self.agentView?.isSmallWindow == true {
+            if CGRectIsEmpty(self.smallWindowFrame) == false {
+                self.smallWindowFrame = self.agentView!.frame
             }
-            view.updateSubtitle(subtitle: self.subtitleLabel.originalText)
-            container.addSubview(view)
-            self.subtileFullscreenView = view
+            self.removeGestureRecognizer(flowtView: self.agentView!)
+            self.agentView?.isSmallWindow = false
+            self.cameraView?.isSmallWindow = true
+            self.insertSubview(self.cameraView!, aboveSubview: self.agentView!)
+            self.addGestureRecognizer(flowtView: self.cameraView!)
+        }
+        else if self.cameraView?.isSmallWindow == true {
+            if CGRectIsEmpty(self.smallWindowFrame) == false {
+                self.smallWindowFrame = self.cameraView!.frame
+            }
+            self.removeGestureRecognizer(flowtView: self.cameraView!)
+            self.agentView?.isSmallWindow = true
+            self.cameraView?.isSmallWindow = false
+            self.insertSubview(self.agentView!, aboveSubview: self.cameraView!)
+            self.addGestureRecognizer(flowtView: self.agentView!)
+        }
+        self.setNeedsLayout()
+    }
+    
+    private func updateVideoAgentLayout() {
+        let size = CGSize(width: 120, height: 120 * 16 / 9.0)
+        let y = self.av_height / 5.0
+        let defauleFrame = CGRect(x: self.av_width - size.width - 16, y: y, width: size.width, height: size.height)
+        if CGRectIsEmpty(self.smallWindowFrame) {
+            self.smallWindowFrame = defauleFrame
+        }
+        if self.agentView?.isSmallWindow == true {
+            self.cameraView?.frame = self.bounds
+            self.agentView?.frame = self.smallWindowFrame
+        }
+        else if self.cameraView?.isSmallWindow == true {
+            self.agentView?.frame = self.bounds
+            self.cameraView?.frame = self.smallWindowFrame
         }
     }
     
-    private func exitSubtileFullscreen() {
-        self.subtileFullscreenView?.removeFromSuperview()
-        self.subtileFullscreenView = nil
-    }
-}
-
-@objcMembers open class AUISubtileFullscreenView: UIView {
-        
-    public override init(frame: CGRect) {
-        super.init(frame: frame)
-        
-        self.backgroundColor = UIColor.black.withAlphaComponent(0.8)
-
-        self.addSubview(self.closeBtn)
-        self.addSubview(self.titleLabel)
-        
-        self.isUserInteractionEnabled = true
-        self.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(onClicked(recognizer:))))
-    }
     
-    required public init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    open lazy var closeBtn: AVBlockButton = {
-        let close = AVBlockButton(frame: CGRect(x: self.av_width - 6 - 44, y: UIView.av_safeTop, width: 44, height: 44))
-        close.setImage(AVTheme.getImage("ic_close"), for: .normal)
-        close.clickBlock = { [weak self] btn in
-            self?.tappedAction?(self!)
+    private lazy var panGestureRecognizer: UIPanGestureRecognizer? = nil
+    private lazy var tapGestureRecognizer: UITapGestureRecognizer? = nil
+    private lazy var smallWindowFrame: CGRect = CGRect.zero
+
+    func removeGestureRecognizer(flowtView: UIView) {
+        if let panGestureRecognizer = self.panGestureRecognizer {
+            flowtView.removeGestureRecognizer(panGestureRecognizer)
         }
-        return close
-    }()
-    
-    open lazy var titleLabel: UILabel = {
-        let label = UILabel()
-        label.textColor = AVTheme.text_strong
-        label.textAlignment = .left
-        label.numberOfLines = 0
-        label.font = AVTheme.regularFont(14)
-        label.frame = CGRect(x: 25, y: self.closeBtn.av_bottom + 20, width: self.av_width - 50, height: 0)
-        return label
-    }()
-    
-    open func updateSubtitle(subtitle: String?) {
-        self.titleLabel.text = subtitle
-        self.titleLabel.sizeToFit()
-        self.titleLabel.frame = CGRect(x: 25, y: self.closeBtn.av_bottom + 20, width: self.av_width - 50, height: min(self.titleLabel.av_height, self.av_height - self.closeBtn.av_bottom - 20 - UIView.av_safeBottom))
+        if let tapGestureRecognizer = self.tapGestureRecognizer {
+            flowtView.removeGestureRecognizer(tapGestureRecognizer)
+        }
+        self.panGestureRecognizer = nil
+        self.tapGestureRecognizer = nil
     }
     
-    open var tappedAction: ((_ sender: AUISubtileFullscreenView)->Void)? = nil
+    func addGestureRecognizer(flowtView: UIView) {
+        self.panGestureRecognizer = UIPanGestureRecognizer()
+        self.panGestureRecognizer!.addTarget(self, action: #selector(panGesture(recognizer:)))
+        flowtView.addGestureRecognizer(self.panGestureRecognizer!)
+        
+        self.tapGestureRecognizer = UITapGestureRecognizer()
+        self.tapGestureRecognizer!.addTarget(self, action: #selector(tapGesture(recognizer:)))
+        flowtView.addGestureRecognizer(self.tapGestureRecognizer!)
+    }
     
-    @objc open func onClicked(recognizer: UIGestureRecognizer) {
-        let location = recognizer.location(in: self)
-        if self.titleLabel.frame.contains(location) {
+    @objc func panGesture(recognizer: UIPanGestureRecognizer) {
+        guard let view = recognizer.view else {
             return
         }
-        self.tappedAction?(self)
+        let point: CGPoint = recognizer.translation(in: view)
+        let center = CGPoint(x: view.center.x + point.x, y: view.center.y + point.y)
+        view.center = center
+        recognizer.setTranslation(CGPoint.zero, in: view)
+        
+        // 拖拽停止/取消/失败
+        if recognizer.state == .ended || recognizer.state == .cancelled || recognizer.state == .failed {
+            self.updateViewPosition(view: view)
+        }
+    }
+    
+    @objc func tapGesture(recognizer: UITapGestureRecognizer) {
+        self.switchWindow()
+    }
+    
+    
+    // 更新位置
+    open func updateViewPosition(view: UIView) {
+        
+        let rect = UIScreen.main.bounds
+        var frame = view.frame
+        if frame.minX < 16 {
+            frame.origin.x = 16
+        }
+        
+        if frame.minY < UIView.av_safeTop {
+            frame.origin.y = UIView.av_safeTop
+        }
+        
+        if frame.maxX >= rect.maxX - 16 {
+            frame.origin.x = rect.maxX - 16 - view.av_width
+        }
+        
+        if frame.maxY >= rect.maxY - UIView.av_safeBottom {
+            frame.origin.y = rect.maxY - UIView.av_safeBottom - view.av_height
+        }
+        
+        UIView.animate(withDuration: 0.3) {
+            view.frame = frame
+        } completion: { success in
+            
+        }
     }
 }
 
-@objcMembers open class AUISubtileReadMoreLabel: UILabel {
-
-    var originalText: String?
-    var maximumNumberOfLines: Int = 3
+@objcMembers open class AUIAICallContentCameraView: UIView {
     
     public override init(frame: CGRect) {
         super.init(frame: frame)
-        self.setupGesture()
+                
+        self.addSubview(self.renderView)
+        self.addSubview(self.muteView)
+        self.addSubview(self.switchBtn)
+        
+        self.backgroundColor = AVTheme.bg_medium
     }
     
     public required init?(coder: NSCoder) {
-        super.init(coder: coder)
-        self.setupGesture()
+        fatalError("init(coder:) has not been implemented")
     }
     
     open override func layoutSubviews() {
         super.layoutSubviews()
-        self.expandButton.frame = CGRect(x: self.av_width - 40, y: self.av_height - 40, width: 60, height: 60)
+        
+        self.renderView.frame = self.bounds
+        
+        if self.isSmallWindow {
+            self.muteView.frame = CGRect(x: 0, y: 0, width: 44, height: 44)
+            self.muteView.center = CGPoint(x: self.av_width / 2.0, y: (self.av_height - 30) / 2.0)
+        }
+        else {
+            self.muteView.frame = CGRect(x: 0, y: 0, width: 75, height: 75)
+            self.muteView.center = CGPoint(x: self.av_width / 2.0, y: self.av_height * 2.0 / 5.0)
+        }
+        
+        
+        self.switchBtn.sizeToFit()
+        self.switchBtn.center = CGPoint(x: self.av_width - self.switchBtn.av_width / 2 - 8, y: self.av_height - self.switchBtn.av_height / 2 - 8)
     }
     
-    private let expandButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setImage(AUIAICallBundle.getCommonImage("ic_subtile_more"), for: .normal)
-        button.isHidden = true
-        return button
+    open private(set) var renderView: UIView = {
+        let view = UIView()
+        view.isHidden = false
+        return view
     }()
     
-    private func setupGesture() {
-        self.isUserInteractionEnabled = true
-        self.addSubview(self.expandButton)
-        self.expandButton.addTarget(self, action: #selector(toggleText), for: .touchUpInside)
-        self.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(onClicked(recognizer:))))
-    }
+    private var muteView: UIImageView = {
+        let agentView = UIImageView()
+        agentView.image = AUIAICallBundle.getImage("ic_user")
+        agentView.contentMode = .scaleAspectFit
+        agentView.isHidden = true
+        return agentView
+    }()
     
-    open override var text: String? {
+    open var isMute = false {
         didSet {
-            self.originalText = self.text
-            self.truncateTextIfNeeded()
-            let width = self.av_width
-            self.sizeToFit()
-            self.av_width = width
+            self.renderView.isHidden = self.isMute
+            self.muteView.isHidden = !self.isMute
         }
     }
     
-    private func truncateTextIfNeeded() {
-        self.expandButton.isHidden = true
-        guard let originalText = originalText else { return }
-        
-        let nsText = originalText as NSString
-        let attributes: [NSAttributedString.Key: Any] = [NSAttributedString.Key.font: self.font!]
-        
-        let boundingRect = nsText.boundingRect(with: CGSize(width: self.frame.size.width, height: CGFloat.infinity), options: .usesLineFragmentOrigin, attributes: attributes, context: nil)
-        
-        if boundingRect.size.height / self.font.lineHeight > CGFloat(self.maximumNumberOfLines) {
-            var truncatedEndIndex = nsText.length
-            
-            var truncatedText: String?
-            
-            while truncatedEndIndex > 0 {
-                let candidateText = nsText.substring(to: truncatedEndIndex) + "...  >"
-                let candidateBoundingRect = (candidateText as NSString).boundingRect(with: CGSize(width: self.frame.size.width, height: CGFloat.infinity), options: .usesLineFragmentOrigin, attributes: attributes, context: nil)
-                
-                if candidateBoundingRect.size.height / self.font.lineHeight <= CGFloat(maximumNumberOfLines) {
-                    truncatedText = nsText.substring(to: truncatedEndIndex) + "..."
-                    self.expandButton.isHidden = false
-                    break
-                }
-                
-                truncatedEndIndex -= 1
+    open private(set) var switchBtn: AVBlockButton = {
+        let btn = AVBlockButton()
+        btn.setImage(AUIAICallBundle.getCommonImage("ic_video_switch"), for: .normal)
+        btn.isHidden = true
+        btn.isUserInteractionEnabled = false
+        return btn
+    }()
+    
+    open var isSmallWindow = false {
+        didSet {
+            self.switchBtn.isHidden = !self.isSmallWindow
+            if self.isSmallWindow {
+                self.layer.cornerRadius = 4
+                self.layer.borderWidth = 1
+                self.layer.borderColor = AVTheme.fill_ultraweak.cgColor
+                self.layer.masksToBounds = true
             }
-            
-            super.text = truncatedText
+            else {
+                self.layer.cornerRadius = 0
+                self.layer.borderWidth = 0
+                self.layer.borderColor = AVTheme.fill_ultraweak.cgColor
+                self.layer.masksToBounds = true
+            }
+            self.setNeedsLayout()
         }
-    }
-    
-    open var tappedAction: ((_ label: AUISubtileReadMoreLabel)->Void)? = nil
-
-    
-    @objc private func toggleText() {
-        self.tappedAction?(self)
-    }
-    
-    @objc open func onClicked(recognizer: UIGestureRecognizer) {
-        self.tappedAction?(self)
     }
 }
 
-
-@objcMembers open class AUIVoiceprintTipsView: UIView {
+@objcMembers open class AUIAICallContentAgentView: UIView {
     
     public override init(frame: CGRect) {
         super.init(frame: frame)
+                
+        self.addSubview(self.renderView)
+        self.addSubview(self.switchBtn)
         
-        self.addSubview(self.textLabel)
-        self.addSubview(self.clearBtn)
-        self.isHidden = true
+        self.backgroundColor = AVTheme.bg_medium
     }
     
     public required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
-    open func showTips() {
-        self.isHidden = false
-        NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(hideTips(_:)), object: nil)
-        self.perform(#selector(hideTips(_:)), with: nil, afterDelay: 8)
+    open override func layoutSubviews() {
+        super.layoutSubviews()
+        
+        self.renderView.frame = self.bounds
+        
+        self.switchBtn.sizeToFit()
+        self.switchBtn.center = CGPoint(x: self.av_width - self.switchBtn.av_width / 2 - 8, y: self.av_height - self.switchBtn.av_height / 2 - 8)
     }
     
-    open func hideTips() {
-        self.isHidden = true
-        NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(hideTips(_:)), object: nil)
-    }
-    
-    @objc func hideTips(_ myObject: Any?) {
-        self.isHidden = true
-    }
-    
-    open func layoutAt(frame: CGRect) {
-        self.textLabel.sizeToFit()
-        self.clearBtn.sizeToFit()
-        self.clearBtn.av_size = CGSize(width: self.clearBtn.av_width + 18, height: 18)
-
-        var width = self.textLabel.av_width + self.clearBtn.av_width + 24
-        if width > frame.width {
-            width = frame.width
-        }
-        self.textLabel.av_left = 8
-        self.textLabel.av_height = 40
-        self.clearBtn.av_left = self.textLabel.av_right + 8
-        self.clearBtn.av_centerY = 20
-        self.center = CGPoint(x: frame.midX, y: frame.midY)
-        self.av_size = CGSize(width: self.clearBtn.av_right + 8, height: 40)
-        self.layer.cornerRadius = 20
-        self.layer.masksToBounds = true
-    }
-    
-    open var isSelected = false {
-        didSet {
-            if self.isSelected {
-                self.backgroundColor = UIColor.av_color(withHexString: "#868686")
-            }
-            else {
-                self.backgroundColor = UIColor.clear
-            }
-        }
-    }
-    
-    open lazy var textLabel: UILabel = {
-        let label = UILabel()
-        label.textColor = AVTheme.text_strong
-        label.font = AVTheme.regularFont(12)
-        label.text = AUIAICallBundle.getString("Detected other speaking, stop responded this question.")
-        label.numberOfLines = 0
-        return label
+    open private(set) var renderView: UIView = {
+        let view = UIView()
+        view.isHidden = false
+        return view
     }()
     
-    
-    open lazy var clearBtn: AVBlockButton = {
+    open private(set) var switchBtn: AVBlockButton = {
         let btn = AVBlockButton()
-        btn.setTitle(AUIAICallBundle.getString("Restore"), for: .normal)
-        btn.setTitleColor(AVTheme.text_strong, for: .normal)
-        btn.setBorderColor(AVTheme.colourful_border_strong, for: .normal)
-        btn.titleLabel?.font = AVTheme.regularFont(10)
-        btn.layer.borderWidth = 1
-        btn.layer.cornerRadius = 9
+        btn.setImage(AUIAICallBundle.getCommonImage("ic_video_switch"), for: .normal)
+        btn.isHidden = true
+        btn.isUserInteractionEnabled = false
         return btn
     }()
+    
+    open var isSmallWindow = false {
+        didSet {
+            self.switchBtn.isHidden = !self.isSmallWindow
+            if self.isSmallWindow {
+                self.layer.cornerRadius = 4
+                self.layer.borderWidth = 1
+                self.layer.borderColor = AVTheme.fill_ultraweak.cgColor
+                self.layer.masksToBounds = true
+            }
+            else {
+                self.layer.cornerRadius = 0
+                self.layer.borderWidth = 0
+                self.layer.borderColor = AVTheme.fill_ultraweak.cgColor
+                self.layer.masksToBounds = true
+            }
+        }
+    }
 }

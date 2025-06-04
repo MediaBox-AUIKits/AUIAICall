@@ -16,7 +16,7 @@
 
 # 应用详情
 
-- 关于技术选型 
+- 关于技术选型
   - 基于主流的Java8 + Springboot2搭建框架
 - 关于部署
   - 理论上只要安装了Java8即可运行在各个ECS或容器上
@@ -35,23 +35,20 @@ spring:
     date-format: yyyy-MM-dd'T'HH:mm:ss
     default-property-inclusion: non_null
 
-# pop配置。需要配置账号的AccessKey ID和AccessKey Secret，用于调用IMS机器人服务
 biz:
+  # 阿里云AK、SK，参考 https://help.aliyun.com/zh/ram/user-guide/create-an-accesskey-pair。 创建RAM用户时，最小权限为AliyunICEFullAccess
   openapi:
+    # 调用generateMessageToken 获取chatBot token时需要配置
+    # 调用describeAIAgentInstance 获取智能体信息时需要配置
     access:
       key: "*******"
       secret: "*******"
-  # 连麦应用信息
+
+  # 实时音视频应用ID和AppKey，通话场景下需要配置
   live_mic:
     app_id: "*******"
     app_key: "*******"
-  #ai智能体配置
-  ai_aent:
-    # Ai语单智能体id
-    voice_chat_ai_agent_id: "*******"
-    # 3d数字人智能体id
-    avatar_ai_chat_3d_agent_id: "*******"
-    region: "cn-shanghai"
+
 # 配置允许跨域的请求域名
 http:
   cors:

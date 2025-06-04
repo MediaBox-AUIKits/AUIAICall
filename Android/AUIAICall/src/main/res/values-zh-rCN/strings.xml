@@ -36,6 +36,7 @@
     <string name="robot_speaking_tips">我正在回复中，可以轻触屏幕或说话打断我</string>
     <string name="robot_speaking_tips_without_voice_interrupt">我正在回复中，可以轻触屏幕打断我</string>
 
+    <string name="btn_text_ai_call_full_screen_subtitle">字幕</string>
     <string name="setting_title">设置</string>
     <string name="config_interrupt_title">智能打断</string>
     <string name="config_interrupt_tips">根据声音和环境智能打断AI机器人</string>
@@ -74,11 +75,12 @@
     <string name="digital_human_call">数字人通话</string>
     <string name="vision_agent_call">视觉理解通话</string>
     <string name="chat_bot">消息对话</string>
+    <string name="video_agent_call">视频通话</string>
     <string name="temporary_experience_token">授权AI智能体</string>
     <string name="et_token_hints">请扫描二维码获取授权的AI智能体</string>
     <string name="token_expired_tips">AI智能体授权已经过期</string>
     <string name="token_resource_exhausted">数字人通话火爆，请稍后尝试或先享AI音频通话新体验</string>
-    <string name="token_time_lit_tips">通话结束，数字人通话仅可以体验5分钟</string>
+    <string name="token_time_lit_tips">通话结束，数字人或视频通话仅可以体验5分钟</string>
     <string name="error_tips_avatar_leave_join">通话失败，智能体停止通话了</string>
     <string name="error_tips_avatar_subscribe_fail">通话失败，智能体拉流失败</string>
     <string name="error_tips_asr_unavailable">第三方ASR服务不可用</string>

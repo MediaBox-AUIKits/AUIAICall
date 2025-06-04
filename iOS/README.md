@@ -46,6 +46,7 @@ AUI Kits AI智能体集成工具适用于网络客服、AI助理、撮合助手�
 let VoiceAgentId = "你的语音通话智能体Id"
 let AvatarAgentId = "你的数字人通话智能体Id"
 let VisionAgentId = "你的视觉理解通话智能体Id"
+let VideoAgentId = "你的视频通话智能体Id"
 let ChatAgentId = "你的消息对话智能体Id"
 
 // 配置区域
@@ -118,8 +119,8 @@ target '你的App target' do
     pod 'AliVCSDK_ARTC', '~> 7.2.0'
 
     # AI实时互动通话场景SDK
-    # 如果你的业务还需要支持消息对话，则使用“ARTCAICallKit/Chatbot”进行集成，把下面一行改为：pod 'ARTCAICallKit/Chatbot', '~> 2.4.0'
-    pod 'ARTCAICallKit', '~> 2.4.0'
+    # 如果你的业务还需要支持消息对话，则使用“ARTCAICallKit/Chatbot”进行集成，把下面一行改为：pod 'ARTCAICallKit/Chatbot', '~> 2.5.0'
+    pod 'ARTCAICallKit', '~> 2.5.0'
 
     # 基础UI组件源码
     pod 'AUIFoundation', :path => "./AUIAICall/AUIBaseKits/AUIFoundation/", :modular_headers => true
@@ -129,7 +130,7 @@ target '你的App target' do
     pod 'AUIAICall',  :path => "./AUIAICall/"
 
     # 如果你的业务还需要支持消息对话，还需要集成AliVCInteractionMessage，版本最低是1.7.0
-    pod 'AliVCInteractionMessage', '~> 1.7.0'
+    pod 'AliVCInteractionMessage', '~> 1.7.1'
 
 end
 ```
@@ -137,7 +138,7 @@ end
 - 源码集成完成
 
 ### 工程配置
-- 打开工程info.Plist，添加麦克风权限，根据需要添加其他权限，例如摄像头权限（视觉理解智能体会用到）、相册权限（消息对话多模态智能体会用到）。
+- 打开工程info.Plist，添加麦克风权限，根据需要添加其他权限，例如摄像头权限（视觉理解/视频通话智能体会用到）、相册权限（消息对话多模态智能体会用到）。
 - 打开工程设置，在”Signing & Capabilities“中开启“Background Modes”，如果不开启后台模式，则需要自行处理在进入后台时结束通话。
 
 
@@ -160,7 +161,7 @@ import AUIAICall
 import ARTCAICallKit
 import AUIFoundation
 
-// 检查是否开启麦克风权限
+// 检查是否开启麦克风权限，如果是视觉理解/视频通话智能体，还需要开启摄像头权限
 AVDeviceAuth.checkMicAuth { auth in
     if auth == false {
         return
@@ -172,7 +173,7 @@ AVDeviceAuth.checkMicAuth { auth in
     let controller = AUIAICallController(userId: userId)
     // 设置智能体Id，不能为nil
     controller.config.agentId = "xxx"
-    // 设置通话的类型（语音、数字人或视觉理解），需要与AgentId的类型对应
+    // 设置通话的类型（语音、数字人、视觉理解、视频通话），需要与AgentId的类型对应
     controller.config.agentType = agentType
     // agent所在的区域，不能为nil
     controller.config.region = "xx-xxx"

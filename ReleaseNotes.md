@@ -95,3 +95,11 @@
 ## v2.4.0
 发布时间：2025-05-16
 * Android&iOS：体验优化，包括支持数据传输通道建链完成事件，支持设置热词
+
+
+## v2.5.0
+发布时间：2025-06-04
+* Android&iOS&Web：新增视频通话智能体
+* Android&iOS&Web：优化通话智能体字幕展示
+* Android&iOS&Web：使用AgentConfig作为启动通话配置
+

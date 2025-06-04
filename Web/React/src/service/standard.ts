@@ -1,5 +1,10 @@
-import { AICallAgentError, AICallAgentInfo, AICallErrorCode, AIChatAuthToken } from 'aliyun-auikit-aicall';
-import AUIAICallConfig from '../controller/call/AUIAICallConfig';
+import {
+  AICallAgentError,
+  AICallAgentInfo,
+  AICallConfig,
+  AICallErrorCode,
+  AIChatAuthToken,
+} from 'aliyun-auikit-aicall';
 
 import { getWorkflowType, TemplateConfig, WorkflowType } from './interface';
 
@@ -24,7 +29,7 @@ class StandardAppService {
    * @note 调用之前需要先设置用户 id 和 token
    * @note id and token are required before calling this method
    */
-  generateAIAgent = async (userId: string, token: string, config: AUIAICallConfig): Promise<AICallAgentInfo> => {
+  generateAIAgent = async (userId: string, token: string, config: AICallConfig): Promise<AICallAgentInfo> => {
     if (!userId) {
       throw new AICallAgentError('userId is empty');
     }
@@ -34,6 +39,7 @@ class StandardAppService {
       workflow_type?: WorkflowType;
       ai_agent_id?: string;
       template_config?: string;
+      agent_config?: string;
       expire?: number;
       user_data?: string;
       region?: string;
@@ -42,13 +48,19 @@ class StandardAppService {
     } = {
       user_id: userId,
       expire: 24 * 60 * 60,
-      template_config: config.templateConfig.getJsonString(config.agentType),
+      template_config: JSON.stringify({}),
     };
 
     if (config.agentId) {
       param.ai_agent_id = config.agentId;
     } else {
       param.workflow_type = getWorkflowType(config.agentType);
+    }
+    if (config.templateConfig) {
+      param.template_config = config.templateConfig.getJsonString(config.agentType);
+    }
+    if (config.agentConfig) {
+      param.agent_config = JSON.stringify(config.agentConfig.toJSON());
     }
 
     if (config.userData) {
@@ -142,7 +154,12 @@ class StandardAppService {
       });
   };
 
-  describeAIAgent = async (userId: string, token: string, instanceId: string): Promise<TemplateConfig> => {
+  describeAIAgent = async (
+    userId: string,
+    token: string,
+    region: string,
+    instanceId: string
+  ): Promise<TemplateConfig> => {
     if (!userId || !instanceId) {
       throw new AICallAgentError('userId or instanceId is empty');
     }
@@ -150,9 +167,11 @@ class StandardAppService {
     const param: {
       user_id: string;
       ai_agent_instance_id: string;
+      region: string;
     } = {
       user_id: userId,
       ai_agent_instance_id: instanceId,
+      region,
     };
 
     return fetch(`${this.appServer}/api/v2/aiagent/describeAIAgentInstance`, {

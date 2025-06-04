@@ -72,15 +72,15 @@ export const I18nContext = createContext<I18nContextType>({
   e: (code) => `${code}`,
 });
 
-export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  // 获取嵌套对象属性的辅助函数
-  // get nested object property
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const getNestedValue = (obj: any, path: string): string => {
-    const keys = path.split('.');
-    return keys.reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : undefined), obj);
-  };
+// 获取嵌套对象属性的辅助函数
+// get nested object property
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const getNestedValue = (obj: any, path: string): string => {
+  const keys = path.split('.');
+  return keys.reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : undefined), obj);
+};
 
+export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   // 翻译函数
   // translation function
   const t = (key: string, params?: Record<string, string>): string => {
@@ -115,6 +115,12 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   return <I18nContext.Provider value={{ t, e }}>{children}</I18nContext.Provider>;
+};
+
+export const getText = (key: string) => {
+  const value = getNestedValue(messages, key);
+  if (!value) return key;
+  return value;
 };
 
 export const useTranslation = () => {

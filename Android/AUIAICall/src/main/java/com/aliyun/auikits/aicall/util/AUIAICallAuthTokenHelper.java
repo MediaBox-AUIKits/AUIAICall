@@ -101,8 +101,6 @@ public class AUIAICallAuthTokenHelper {
             tokenJson.put("userid", userId);
             tokenJson.put("nonce", "");
             tokenJson.put("timestamp", timestamp);
-            String[] gslb = {"https://gw.rtn.aliyuncs.com"};
-            tokenJson.put("gslb",gslb);
             tokenJson.put("token", token);
             String base64Token = Base64.encodeToString(tokenJson.toString().getBytes(StandardCharsets.UTF_8), Base64.NO_WRAP);
             return base64Token;

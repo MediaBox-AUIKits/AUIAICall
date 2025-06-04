@@ -10,7 +10,6 @@ import Vision from './svg/vision.svg?react';
 import useCallStore from '@/Mobile/Call/store';
 
 import './index.less';
-
 import { useTranslation } from '@/common/i18nContext';
 
 interface CallWelcomeProps {
@@ -90,7 +89,6 @@ function CallWelcome({ onAgentTypeSelected }: CallWelcomeProps) {
             <div className='_tip'>{t('agent.vision')}</div>
           </div>
         </div>
-        
       </>
     );
   }
