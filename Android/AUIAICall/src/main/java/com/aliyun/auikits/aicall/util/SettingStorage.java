@@ -27,6 +27,8 @@ public class SettingStorage {
     public static final String KEY_BOOT_USER_EXTEND_DATA = "KEY_BOOT_USER_EXTEND_DATA";
     public static final String KEY_BOOT_ENABLE_EMOTION = "KEY_BOOT_ENABLE_EMOTION";
     public static final String KEY_BOOT_ENABLE_AUDIO_DELAY_INFO = "KEY_BOOT_ENABLE_AUDIO_DELAY_INFO";
+    public static final String KEY_BOOT_ENABLE_AGENT_AUTO_EXIT = "KEY_BOOT_ENABLE_AGENT_AUTO_EXIT";
+    public static final String KEY_BOOT_ENABLE_SEMATNIC = "KEY_BOOT_ENABLE_SEMATNIC";
 
     public static final String KEY_ENABLE_VOICE_INTERRUPT = "KEY_ENABLE_VOICE_INTERRUPT";
     public static final String KEY_VOICE_ID = "KEY_VOICE_ID";
@@ -48,7 +50,10 @@ public class SettingStorage {
     public static final String KEY_USE_APP_SERVER_START_AGENT = "KEY_USE_APP_SERVER_START_AGENT";
     public static final String KEY_ASR_HOT_WORDS = "KEY_ASR_HOT_WORDS";
     public static final String KEY_TURN_END_WORDS = "KEY_TURN_END_WORDS";
-
+    public static final String KEY_ASR_CUSTOM_PARAMS = "KEY_ASR_CUSTOM_PARAMS";
+    public static final String KEY_PRONUNCIATION_RULES = "KEY_PRONUNCIATION_RULES";
+    public static final String KEY_VCR_CONFIG_RULES = "KEY_VCR_CONFIG_RULES";
+    public static final String KEY_BOOT_SEMATNIC_DURATION = "KEY_BOOT_SEMATNIC_DURATION";
 
 
 

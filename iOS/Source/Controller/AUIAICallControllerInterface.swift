@@ -138,6 +138,23 @@ import ARTCAICallKit
      * 用户Token过期
      */
     @objc optional func onAICallUserTokenExpired()
+    
+    /**
+     * 收到当前智能体发过来VCR结果
+     */
+    @objc optional func onAICallReceivedAgentVcrResult(result: ARTCAICallAgentVcrResult)
+    
+    /**
+     * 用户对话延时通知
+     * @param sentenceId 对话ID。
+     * @param delayMs 对话音频回环延迟（毫秒）
+     *
+     * User conversation delay notification
+     * @param sentenceId The ID of the conversation.
+     * @param delayMs The audio loopback delay of the conversation (in milliseconds).
+     *
+     */
+    @objc optional func onAudioDelayInfo(sentenceId: Int32, delayMs: Int64)
 }
 
 @objc public protocol AUIAICallControllerInterface {

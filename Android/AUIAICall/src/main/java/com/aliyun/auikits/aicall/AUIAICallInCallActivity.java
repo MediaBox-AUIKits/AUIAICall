@@ -3,10 +3,13 @@ package com.aliyun.auikits.aicall;
 
 import static com.aliyun.auikits.aiagent.ARTCAICallEngine.AICallErrorCode.AgentConcurrentLimit;
 import static com.aliyun.auikits.aiagent.ARTCAICallEngine.ARTCAICallAgentType.ChatBot;
+import static com.aliyun.auikits.aiagent.ARTCAICallEngine.ARTCAICallTurnDetectionMode.ARTCAICallTurnDetectionNormalMode;
+import static com.aliyun.auikits.aiagent.ARTCAICallEngine.ARTCAICallTurnDetectionMode.ARTCAICallTurnDetectionSemanticMode;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -52,6 +55,8 @@ import com.aliyun.auikits.aicall.widget.AICallAudioTipsDialog;
 import com.aliyun.auikits.aicall.widget.AICallDebugDialog;
 import com.aliyun.auikits.aicall.widget.AICallNoticeDialog;
 import com.aliyun.auikits.aicall.widget.AICallReportingDialog;
+import com.aliyun.auikits.aicall.widget.AICallSentenceLatencyItem;
+import com.aliyun.auikits.aicall.widget.AICallSentenceLatencyViewModel;
 import com.aliyun.auikits.aicall.widget.AICallSettingDialog;
 import com.aliyun.auikits.aicall.widget.AICallSubtitleMessageItem;
 import com.aliyun.auikits.aicall.widget.AICallSubtitleRecyclerViewAdapter;
@@ -65,8 +70,15 @@ import com.aliyun.auikits.aicall.widget.AUIAICallAgentSimpleAnimator;
 import com.orhanobut.dialogplus.DialogPlus;
 import com.orhanobut.dialogplus.OnDismissListener;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class AUIAICallInCallActivity extends AppCompatActivity {
@@ -95,10 +107,15 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
     private SubtitleHolder mSubtitleHolder = null;
     private boolean mIsFullScreenSubtitleOpen = false;
     private ActionLayerHolder mActionLayerHolder = null;
-    private SmallVideoViewHolder mSmallVideoViewHolder = new SmallVideoViewHolder();
+    private final SmallVideoViewHolder mSmallVideoViewHolder = new SmallVideoViewHolder();
 
     private AUIAICallAgentAnimator mAICallAgentAnimator = null;
     private boolean mIsPreviewShowInSmallView = true;
+
+    // 对话延时
+    private final List<AICallSentenceLatencyItem> aiCallSentenceLatencyItems = new ArrayList<>();
+
+    private AICallSentenceLatencyViewModel mAICallSentenceLatencyViewModel;
 
     private ARTCAICallController.IARTCAICallStateCallback mCallStateCallback = new ARTCAICallController.IARTCAICallStateCallback() {
         @Override
@@ -154,7 +171,6 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         @Override
         public void onUserAsrSubtitleNotify(String text, boolean isSentenceEnd, int sentenceId, ARTCAICallEngine.VoicePrintStatusCode voicePrintStatusCode) {
             Log.i("AUIAICALL", "onUserAsrSubtitleNotify: [sentenceId: " + sentenceId + ", isSentenceEnd" + isSentenceEnd + ", text: " + text + ", voicePrintStatusCode: " + voicePrintStatusCode + "]");
-
             if (IS_SUBTITLE_ENABLE) {
                 // 无效的Asr字幕直接不显示
                 if(voicePrintStatusCode != ARTCAICallEngine.VoicePrintStatusCode.UndetectedSpeakerWithAIVad &&
@@ -183,7 +199,6 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         @Override
         public void onAIAgentSubtitleNotify(String text, boolean end, int userAsrSentenceId) {
             Log.i("AUIAICALL", "onRobotSubtitleNotify: [userAsrSentenceId: " + userAsrSentenceId + ", end: " + end + ", text: " + text + "]");
-
             if (IS_SUBTITLE_ENABLE) {
                 mSubtitleHolder.updateSubtitle(false, end, text, userAsrSentenceId);
             }
@@ -221,7 +236,7 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
 
         @Override
         public void onCallBegin() {
-            Log.i("AUIAICALL", "onCallBegin");
+            Log.i("AUIAICALL", "onCallBegin, instanceid: " + mARTCAICallEngine.getAgentInfo().instanceId);
             long current = SystemClock.elapsedRealtime();
 
             if(BuildConfig.TEST_ENV_MODE) {
@@ -328,6 +343,9 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             if(BuildConfig.TEST_ENV_MODE) {
                 ToastHelper.showToast(AUIAICallInCallActivity.this, "AudioDelayInfo: id :" + id + ", delay: " + delay_ms, Toast.LENGTH_SHORT);
             }
+            AICallSentenceLatencyItem aICallSentenceLatencyItem = new AICallSentenceLatencyItem(id, delay_ms);
+            aiCallSentenceLatencyItems.add(aICallSentenceLatencyItem);
+            mAICallSentenceLatencyViewModel.updateData(aiCallSentenceLatencyItems);
         }
         @Override
         public void onVisionCustomCapture(boolean enable) {
@@ -344,12 +362,19 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                 ToastHelper.showToast(AUIAICallInCallActivity.this, "onSpeakingInterrupted reason " + reason, Toast.LENGTH_SHORT);
             }
         }
+        @Override
+        public void onReceivedAgentVcrResult(ARTCAICallEngine.ARTCAICallAgentVcrResult result) {
+            Log.i("AUIAICall", "onReceivedAgentVcrResult: " + result);
+            if(BuildConfig.TEST_ENV_MODE) {
+                ToastHelper.showToast(AUIAICallInCallActivity.this, "VCR result " + result, Toast.LENGTH_SHORT);
+            }
+        }
     };
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
+        aiCallSentenceLatencyItems.clear();
         // 去掉屏幕常亮
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
@@ -358,6 +383,9 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_auiaicall_in_call);
+
+        // Sentence Latency
+        mAICallSentenceLatencyViewModel = new ViewModelProvider(this).get(AICallSentenceLatencyViewModel.class);
 
         // 设置屏幕常亮
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -543,7 +571,30 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         if(BuildConfig.TEST_ENV_MODE) {
             updateAgentConfig(artcaiCallConfig.agentConfig);
         }
-        artcaiCallConfig.enableAudioDelayInfo = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_AUDIO_DELAY_INFO, true);;
+        artcaiCallConfig.enableAudioDelayInfo = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_AUDIO_DELAY_INFO, true);
+        String pronunciationStr = SettingStorage.getInstance().get(SettingStorage.KEY_PRONUNCIATION_RULES);
+        if(!TextUtils.isEmpty(pronunciationStr)) {
+            List<JSONObject> list = new ArrayList<>();
+            JSONArray jsonArray = null;
+            try {
+                jsonArray = new JSONArray(pronunciationStr);
+                for (int i = 0; i < jsonArray.length(); i++) {
+                    list.add(jsonArray.getJSONObject(i));
+                }
+                artcaiCallConfig.agentConfig.ttsConfig.pronunciationRules = list;
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        String vcrConfigStr = SettingStorage.getInstance().get(SettingStorage.KEY_VCR_CONFIG_RULES);
+        if(!TextUtils.isEmpty(vcrConfigStr)) {
+            try {
+                JSONObject jsonObject = new JSONObject(vcrConfigStr);
+                artcaiCallConfig.agentConfig.vcrConfig = new ARTCAICallEngine.ARTCAICallAgentVcrConfig(jsonObject);
+            }catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
         if(chatSyncConfig) {
             if(BuildConfig.TEST_ENV_MODE) {
                 artcaiCallConfig.chatSyncConfig.chatBotAgentId = usePreHost ? AUIAICallAgentDebug.getAIAgentId(ChatBot, false) : AUIAICallAgentIdConfig.getAIAgentId(ChatBot, false);
@@ -997,8 +1048,11 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             agentConfig.asrConfig.asrLanguageId = SettingStorage.getInstance().get(SettingStorage.KEY_USER_ASR_LANGUAGE);
             String interruptWorks = SettingStorage.getInstance().get(SettingStorage.KEY_INTERRUPT_WORDS);
             agentConfig.asrConfig.vadLevel = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_VAD_LEVEL));
+            agentConfig.asrConfig.customParams = SettingStorage.getInstance().get(SettingStorage.KEY_ASR_CUSTOM_PARAMS);
             String asrHotWords = SettingStorage.getInstance().get(SettingStorage.KEY_ASR_HOT_WORDS);
             String turnEndWords = SettingStorage.getInstance().get(SettingStorage.KEY_TURN_END_WORDS);
+            String sematnicDuration = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_SEMATNIC_DURATION);
+
 
             if(!TextUtils.isEmpty(interruptWorks)) {
                 agentConfig.interruptConfig.interruptWords = new ArrayList<String>();
@@ -1039,6 +1093,10 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                 } else {
                     agentConfig.turnDetectionConfig.turnEndWords.add(turnEndWords);
                 }
+            }
+            agentConfig.turnDetectionConfig.mode = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_SEMATNIC, false) ? ARTCAICallTurnDetectionSemanticMode : ARTCAICallTurnDetectionNormalMode;
+            if(!TextUtils.isEmpty(sematnicDuration)) {
+                agentConfig.turnDetectionConfig.semanticWaitDuration = Integer.parseInt(sematnicDuration);
             }
 
         } catch (Exception ex) {
@@ -1277,9 +1335,9 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             mActionLayer.findViewById(R.id.btn_mute_call).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    boolean isMicrophoneOn = !mARTCAICallEngine.isMicrophoneOn();
-                    mARTCAICallEngine.switchMicrophone(isMicrophoneOn);
-                    updateMuteButtonUI(isMicrophoneOn);
+                    boolean isMicrophoneOn = mARTCAICallEngine.isMicrophoneOn();
+                    mARTCAICallEngine.muteMicrophone(isMicrophoneOn);
+                    updateMuteButtonUI(!isMicrophoneOn);
                     updateUIByEngineState();
                 }
             });

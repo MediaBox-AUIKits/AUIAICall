@@ -76,6 +76,7 @@
     <string name="vision_agent_call">视觉理解通话</string>
     <string name="chat_bot">消息对话</string>
     <string name="video_agent_call">视频通话</string>
+    <string name="phone_agent_call">AI电话通话</string>
     <string name="temporary_experience_token">授权AI智能体</string>
     <string name="et_token_hints">请扫描二维码获取授权的AI智能体</string>
     <string name="token_expired_tips">AI智能体授权已经过期</string>
@@ -117,6 +118,11 @@
     <string name="mode_natural_conversation">自然对话模式</string>
     <string name="mode_push_to_talk">对讲机模式</string>
     <string name="voiceprint_recognition_test_title">声纹识别(邀测)</string>
+    <string name="latency_rate_title">延时率</string>
+    <string name="btn_text_click_to_view_latency_rate">查看 ></string>
+    <string name="aicall_sentence_latency_title">对话延迟</string>
+    <string name="aicall_sentence_latency_introduction">在一个通话轮次中，从用户讲完最后一个字，到接收到 AI 智能体首字响应的延时。注：对话延时有一定的统计失败率，当有不可抗拒的脏数据时，系统将会自动舍弃对话延时数据。</string>
+    <string name="aicall_sentence_latency_sentence_id">Sentence ID</string>
     <string name="voiceprint_recognition_test_desc">AI仅把您的声音作为输入，即使同时有多个人在讲话</string>
     <string name="voiceprint_recognized">声纹已识别</string>
     <string name="delete_voiceprint">删除声纹</string>
@@ -171,4 +177,15 @@
     <string name="chat_bot_image_uploading">部分图片上传中，暂不能发送</string>
     <string name="chatbot_selected_image_limit">一次对话最多上传9张图片</string>
     <string name="chatbot_selected_image_size_limit">文件大小超过10MB，暂不支持发送</string>
+
+    <string name="pstn_out_called_number">被叫号码</string>
+    <string name="pstn_out_input_number">请输入手机号</string>
+    <string name="pstn_out_called_tips">仅支持中国内地手机号</string>
+    <string name="pstn_out_call_after_tips">体验后，系统将会被被叫号码拨通AI电话，请注意查收</string>
+    <string name="pstn_out_call_number_vaild">号码非法</string>
+    <string name="pstn_out_call_title">AI电话呼出</string>
+    <string name="pstn_out_calling_tips">电话呼出中</string>
+    <string name="pstn_out_call_tips">呼出成功，请注意接收手机来电</string>
+    <string name="pstn_out_call_failed_tips">呼出失败</string>
+    <string name="pstn_out_call_instanceid_copied">实例ID已复制</string>
 </resources>

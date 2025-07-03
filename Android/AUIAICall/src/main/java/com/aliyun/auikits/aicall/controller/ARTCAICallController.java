@@ -299,6 +299,13 @@ public abstract class ARTCAICallController {
                 mBizCallEngineCallback.onAliRtcEngineCreated(engine);
             }
         }
+
+        @Override
+        public void onReceivedAgentVcrResult(ARTCAICallEngine.ARTCAICallAgentVcrResult result) {
+            if(null != mBizCallEngineCallback) {
+                mBizCallEngineCallback.onReceivedAgentVcrResult(result);
+            }
+        }
     };
 
     protected ARTCAICallController(Context context, String userId) {

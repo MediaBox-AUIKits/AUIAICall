@@ -472,6 +472,18 @@ extension AUIAICallController: ARTCAICallEngineDelegate {
     public func onLLMReplyCompleted(text: String, userAsrSentenceId: Int) {
         debugPrint("AUIAICallController onLLMReplyCompleted:\(text) userAsrSentenceId:\(userAsrSentenceId)")
     }
+    
+    public func onReceivedAgentVcrResult(result: ARTCAICallAgentVcrResult) {
+        if let resultData = result.resultData {
+            debugPrint("AUIAICallController onReceivedAgentVcrResult:\(resultData.aicall_jsonString)")
+        }
+        self.delegate?.onAICallReceivedAgentVcrResult?(result: result)
+    }
+    
+    public func onAudioDelayInfo(sentenceId: Int32, delayMs: Int64) {
+        debugPrint("AUIAICalController onAudioDelayInfo: sentenceId:\(sentenceId), delayMs: \(delayMs)")
+        self.delegate?.onAudioDelayInfo?(sentenceId: sentenceId, delayMs: delayMs)
+    }
 }
 
 // 获取音色列表
@@ -488,8 +500,7 @@ extension AUIAICallController {
            
         let body: [String: Any] = [
             "user_id": self.userId,
-            "ai_agent_instance_id": instanceId,
-            "region": self.config.region ?? "",
+            "ai_agent_instance_id": instanceId
         ]
         
         self.appserver.request(path: "/api/v2/aiagent/describeAIAgentInstance", body: body) { [weak self] response, data, error in

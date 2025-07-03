@@ -1,0 +1,285 @@
+.chat-item {
+  position: relative;
+  margin: 12px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  color: #716f8a;
+
+  ._bd {
+    position: relative;
+    box-sizing: border-box;
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+
+  ._box {
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 12px;
+    border-radius: 14px 14px 12px 0px;
+    font-size: 14px;
+    line-height: 22px;
+    background-color: #fff;
+  }
+
+  ._send-attachment + ._box {
+    margin-top: 12px;
+  }
+
+  ._interrupted {
+    font-size: 10px;
+    line-height: 16px;
+    color: #747a8c;
+  }
+
+  ._reasoning {
+    margin: 8px 0;
+  }
+
+  ._reasoning-title {
+    display: flex;
+    line-height: 20px;
+    color: #878aab;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  ._reasoning-text {
+    font-size: 14px;
+    color: #878aab;
+    padding-left: 12px;
+    border-left: 1px solid #878aab;
+    word-wrap: break-word;
+  }
+
+  ._reasoning-end-icon {
+    display: inline-block;
+    height: 16px;
+    margin-right: 8px;
+    line-height: 16px;
+  }
+
+  .adm-button._reasoning-expand-btn {
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    margin: 0 0 0 3px;
+
+    & > span {
+      height: 6px;
+      line-height: 6px;
+    }
+
+    svg {
+      transition: 100ms linear;
+    }
+
+    &.is-expanded {
+      svg {
+        transform: rotate(180deg);
+      }
+    }
+  }
+
+  .aicall-text-render {
+    user-select: auto;
+    word-break: break-all;
+  }
+
+  ._actions {
+    margin-bottom: -8px;
+
+    .is-playing {
+      ._volume-1 {
+        animation: chat-playing-volume-animation-1 1s ease-in-out infinite;
+      }
+
+      ._volume-2 {
+        animation: chat-playing-volume-animation-2 1s ease-in-out infinite;
+      }
+    }
+  }
+
+  ._status {
+    position: absolute;
+    top: 50%;
+    left: -24px;
+    margin-top: -8px;
+    color: #624aff;
+
+    .adm-button {
+      margin: 0;
+      padding: 0;
+    }
+  }
+
+  .adm-button {
+    color: inherit;
+    border: none;
+    background-color: transparent;
+    padding: 4px;
+    line-height: 16px;
+    margin: 4px;
+
+    span {
+      display: inline-block;
+      height: 16px;
+    }
+
+    svg {
+      vertical-align: bottom;
+    }
+
+    &:active::before {
+      opacity: 0.05;
+    }
+
+    &::before {
+      border: none;
+    }
+  }
+
+  ._actions .adm-button {
+    line-height: 20px;
+
+    span {
+      height: 20px;
+    }
+  }
+
+  ._action-tip {
+    padding-top: 4px;
+    font-size: 10px;
+    line-height: 16px;
+  }
+
+  &.is-agent {
+    ._box {
+      background: #f6f7fb;
+    }
+
+    ._actions {
+      color: #747a8c;
+      margin-left: -4px;
+
+      .adm-button.is-playing,
+      .adm-button.is-copying {
+        color: #56597e;
+      }
+    }
+
+    &::after {
+      content: ' ';
+      flex: 1;
+      min-width: 12px;
+    }
+
+    ._action-tip {
+      padding-left: 4px;
+    }
+  }
+
+  &.is-self {
+    color: #fff;
+    align-items: flex-end;
+
+    ._box {
+      background-color: #624aff;
+      border-radius: 14px 14px 0px 12px;
+    }
+
+    ._actions {
+      color: #d8d9e6;
+      text-align: right;
+      margin-right: -8px;
+
+      .adm-button.is-playing,
+      .adm-button.is-copying {
+        color: #fff;
+      }
+    }
+
+    &::before {
+      content: ' ';
+      flex: 1;
+      min-width: 12px;
+    }
+
+    ._action-tip {
+      padding-right: 8px;
+    }
+  }
+}
+
+.chat-item-delete {
+  .adm-button {
+    width: 48px;
+    height: 48px;
+    color: #e6e7ec;
+    border: none;
+    background-color: transparent;
+    padding: 4px;
+    line-height: 16px;
+    margin: 0;
+  }
+
+  ._text {
+    margin-top: 4px;
+    font-size: 12px;
+    line-height: 18px;
+  }
+}
+
+.chat-item-delete-confirm {
+  .adm-mask {
+    z-index: 1050 !important;
+  }
+
+  .adm-center-popup-wrap {
+    z-index: 1055 !important;
+  }
+
+  .adm-dialog-footer .adm-dialog-action-row {
+    .adm-button:first-child {
+      color: #26244c;
+    }
+
+    .adm-button:last-child {
+      color: #f23139;
+      font-weight: normal;
+    }
+  }
+}
+
+@keyframes chat-playing-volume-animation-1 {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes chat-playing-volume-animation-2 {
+  0% {
+    opacity: 0;
+  }
+  60% {
+    opacity: 0;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+  }
+}

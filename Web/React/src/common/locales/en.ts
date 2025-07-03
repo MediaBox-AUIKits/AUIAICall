@@ -44,9 +44,16 @@ export default {
     },
   },
 
+  logout: {
+    text: 'Logout',
+  },
+
   welcome: {
     title: 'AI Agent',
     btn: 'Start',
+    call: 'Agent Call',
+    pstn: 'AI Phone Call',
+
     optionsTitle: 'Options',
     options: {
       emotion: {
@@ -311,6 +318,30 @@ export default {
     playback: {
       failed: 'Playback failed',
       generating: 'Generating speech reading...',
+    },
+  },
+
+  pstn: {
+    title: 'AI OutboundCall',
+    phone: {
+      required: 'Phone number is required',
+      error: 'Phone number is not valid',
+      label: 'Calling Number',
+      placeholder: 'Input your phone number',
+      tip: 'Only mainland China phone numbers are supported.',
+    },
+    interrupt: {
+      label: 'Smart Interrupt',
+    },
+    voiceId: {
+      label: 'Choose Voice Tone',
+    },
+    help: 'The system will place an AI call to the recipient after you proceed. Please be ready to receive it.',
+    start: 'Start',
+    result: {
+      fail: 'Call failed，Code: {code}',
+      success: 'The call is being placed, please be ready to answer',
+      copy: 'Copy',
     },
   },
 };

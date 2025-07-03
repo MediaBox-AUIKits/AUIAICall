@@ -75,6 +75,7 @@
     <string name="vision_agent_call">AI Vision Call</string>
     <string name="chat_bot">AI Chat</string>
     <string name="video_agent_call">AI Video Call</string>
+    <string name="phone_agent_call">AI Phone calls</string>
     <string name="temporary_experience_token">Entrusting authorized AI agents</string>
     <string name="et_token_hints">Please scan the QR code to obtain authorized AI agents</string>
     <string name="token_expired_tips">AI agent authorization has expired</string>
@@ -116,6 +117,11 @@
     <string name="mode_natural_conversation">Natural Conversation Mode</string>
     <string name="mode_push_to_talk">Push To Talk Mode</string>
     <string name="voiceprint_recognition_test_title">Voiceprint Recognition (Invite Only)</string>
+    <string name="latency_rate_title">Latency Rate</string>
+    <string name="btn_text_click_to_view_latency_rate">Click To View ></string>
+    <string name="aicall_sentence_latency_title">Sentence Latency</string>
+    <string name="aicall_sentence_latency_introduction">The latency in an AI conversation turn, measured from the moment the user finishes their last word to when the AI agent begins its first response. Note: There is a statistical failure rate for conversation latency measurements. When unavoidable dirty data occurs, the system will automatically discard the conversation latency data.</string>
+    <string name="aicall_sentence_latency_sentence_id">Sentence ID</string>
     <string name="voiceprint_recognition_test_desc">AI only uses your voice as input, even if multiple people are speaking at the same time</string>
     <string name="voiceprint_recognized">Voiceprint Recognized</string>
     <string name="delete_voiceprint">Delete Voiceprint</string>
@@ -170,4 +176,15 @@
     <string name="chat_bot_image_uploading">Some pictures are being uploaded and cannot be sent yet.</string>
     <string name="chatbot_selected_image_limit">A maximum of 9 pictures can be uploaded in a conversation</string>
     <string name="chatbot_selected_image_size_limit">Files larger than 10MB are not supported for sending</string>
+
+    <string name="pstn_out_called_number">Called number</string>
+    <string name="pstn_out_input_number">Please enter your phone number</string>
+    <string name="pstn_out_called_tips">Only supports mainland China mobile phone numbers</string>
+    <string name="pstn_out_call_after_tips">After the experience, the system will dial the AI phone number from the called number, please check it</string>
+    <string name="pstn_out_call_number_vaild">Illegal phone number</string>
+    <string name="pstn_out_call_title">AI Outgoing Phone Call</string>
+    <string name="pstn_out_calling_tips">Outgoing call</string>
+    <string name="pstn_out_call_tips">The outgoing call is successful. Please pay attention to receiving the incoming call on your mobile phone.</string>
+    <string name="pstn_out_call_failed_tips">The outgoing call is failed</string>
+    <string name="pstn_out_call_instanceid_copied">Instance ID copied</string>
 </resources>

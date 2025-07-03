@@ -47,8 +47,12 @@
 "Turn Off Camera" = "关摄像头";
 "Turn On Camera" = "开摄像头";
 "Settings" = "设置";
+"Latency Rate" = "延时率";
+"Click To View >" = "查看 >";
+"Sentence Latency" = "对话延迟";
+"The latency in an AI conversation turn, measured from the moment the user finishes their last word to when the AI agent begins its first response. Note: There is a statistical failure rate for conversation latency measurements. When unavoidable dirty data occurs, the system will automatically discard the conversation latency data." = "在一个通话轮次中，从用户讲完最后一个字，到接收到 AI 智能体首字响应的延时。注：对话延时有一定的统计失败率，当有不可抗拒的脏数据时，系统将会自动舍弃对话延时数据。";
 "Smart Interrupt" = "智能打断";
-"Interrupt AI Based on Sound and Environment" = "据声音和环境智能打断AI智能体";
+"Interrupt Agent Based on Sound and Environment" = "根据声音和环境智能打断AI智能体";
 "Choose Voice Tone" = "选择音色";
 "New Voice Tone Will Take Effect in Next Response" = "切换音色后，AI将在下一次回答中使用新的音色";
 "Use" = "使用";

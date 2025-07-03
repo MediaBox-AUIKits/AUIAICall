@@ -26,6 +26,8 @@ public typealias AUIAICallSettingDefaultBlock = (_ sender: AUIAICallSettingPanel
         self.collectionView.addSubview(self.collectionHeaderView)
         self.collectionHeaderView.addSubview(self.normalModeBtn)
         self.collectionHeaderView.addSubview(self.pptModeBtn)
+        // 添加延迟率按钮
+        self.collectionHeaderView.addSubview(self.latencyRateView)
         self.collectionHeaderView.addSubview(self.interruptSwitch)
         self.collectionHeaderView.addSubview(self.voiceprintSettingView)
         self.collectionHeaderView.addSubview(self.voiceIdSwitch)
@@ -124,11 +126,43 @@ public typealias AUIAICallSettingDefaultBlock = (_ sender: AUIAICallSettingPanel
         }
         return btn
     }()
+    
+    // 延时率
+    open lazy var latencyRateView: UIView = {
+        let latencyRateView = UIView()
+        latencyRateView.addSubview(latencyRateTitleLabel)
+        latencyRateView.addSubview(latencyRateButton)
+        return latencyRateView
+    }()
+    
+    open lazy var latencyRateTitleLabel: UILabel = {
+        let label = UILabel()
+        label.text = AUIAICallBundle.getString("Latency Rate")
+        label.textColor = AVTheme.text_strong
+        label.font = AVTheme.regularFont(14)
+        return label
+    }()
+    
+    open lazy var latencyRateButton: UIButton = {
+        let btn = UIButton(type: .system)
+        btn.setTitle(AUIAICallBundle.getString("Click To View >"), for: .normal)
+        btn.setTitleColor(AVTheme.text_strong, for: .normal)
+        btn.titleLabel?.font = UIFont.systemFont(ofSize: 14)
+        btn.semanticContentAttribute = .forceLeftToRight
+        btn.addTarget(self, action: #selector(handleLatencyRate), for: .touchUpInside)
+        return btn
+    }()
+    
+    // 延时率按钮点击事件
+    @objc private func handleLatencyRate() {
+        self.onLatencyRateViewTapped?()
+    }
+
         
     open lazy var interruptSwitch: AVSwitchBar = {
         let view = AVSwitchBar()
         view.titleLabel.text = AUIAICallBundle.getString("Smart Interrupt")
-        view.infoLabel.text = AUIAICallBundle.getString("Interrupt AI Based on Sound and Environment")
+        view.infoLabel.text = AUIAICallBundle.getString("Interrupt Agent Based on Sound and Environment")
         view.lineView.isHidden = true
         view.onSwitchValueChanged = { [weak self] bar in
             self?.interruptBlock?(bar.switchBtn.isOn)
@@ -171,6 +205,14 @@ public typealias AUIAICallSettingDefaultBlock = (_ sender: AUIAICallSettingPanel
     open var interruptBlock: AUIAICallSettingEnableBlock? = nil
     open var voiceprintBlock: AUIAICallSettingEnableBlock? = nil
     open var clearVoiceprintBlock: AUIAICallSettingDefaultBlock? = nil
+    
+    // 延迟率按钮点击闭包
+    open var onLatencyRateViewTapped: (() -> Void)?
+    // 控制是否显示延迟率按钮
+    open func hiddenLatencyView(_ isHidden: Bool) {
+        self.latencyRateView.isHidden = isHidden
+        self.updateLayout()
+    }
 
     open var config: AUIAICallConfig? = nil {
         didSet {
@@ -206,6 +248,11 @@ public typealias AUIAICallSettingDefaultBlock = (_ sender: AUIAICallSettingPanel
         self.normalModeBtn.frame = CGRect(x: 20, y: top, width: w, height: 52)
         self.pptModeBtn.frame = CGRect(x: self.normalModeBtn.av_right + 16, y: top, width: w, height: 52)
         top = self.pptModeBtn.av_bottom + 16
+        
+        self.latencyRateView.frame =  CGRect(x: 20, y: top, width: self.collectionView.av_width, height: 74)
+        top = self.latencyRateView.isHidden ? top : self.latencyRateView.av_bottom
+        self.latencyRateTitleLabel.frame = CGRect(x: 0, y: 0, width: self.latencyRateView.av_width/2, height: 74)
+        self.latencyRateButton.frame = CGRect(x: self.latencyRateView.av_width/2, y: 0, width: self.latencyRateView.av_width/2, height: 74)
         
         self.interruptSwitch.frame = CGRect(x: 0, y: top, width: self.collectionView.av_width, height: 74)
         top = self.interruptSwitch.isHidden ? top : self.interruptSwitch.av_bottom

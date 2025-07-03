@@ -1,6 +1,7 @@
 import {
   AICallAgentInfo,
   AICallAgentState,
+  AICallAgentVcrResult,
   AICallSpeakingInterruptedReason,
   AICallState,
   AICallSubtitleData,
@@ -136,6 +137,15 @@ interface AUIAICallControllerEvents {
    * agent auto play failed
    */
   AICallAgentAutoPlayFailed: () => void;
+
+  /**
+   * 收到当前智能体发过来VCR结果
+   * @param result vcr结果
+   *
+   * Received a VCR result from the current agent
+   * @param result VCR Result
+   */
+  AICallReceivedAgentVcrResult: (result: AICallAgentVcrResult) => void;
 }
 
 export default AUIAICallControllerEvents;

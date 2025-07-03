@@ -11,12 +11,6 @@ import ARTCAICallKit
 
 public let AUIAIMainBundle = AUIAICallTheme("AUIAIMain")
 
-let VoiceAgentTypeIndex: Int = 0
-let AvatarAgentTypeIndex: Int = 1
-let VisionAgentTypeIndex: Int = 2
-let VideoAgentTypeIndex: Int = 3
-let ChatAgentTypeIndex: Int = 100
-
 
 @objcMembers open class AUIAICallMainViewController: AVBaseViewController {
     
@@ -54,23 +48,20 @@ let ChatAgentTypeIndex: Int = 100
 
         self.sysAgentTabView.agentWillChanged = { [weak self] agentIndex in
             self?.sysAgentContentView.scrollToAgent(agentIndex)
-            self?.updateConfigBtnVisible()
+            self?.onTabIndexChanged()
         }
         self.sysAgentContentView.pageChanged = { [weak self] agentIndex in
             self?.sysAgentTabView.agentIndex = agentIndex
-            self?.updateConfigBtnVisible()
+            self?.onTabIndexChanged()
+        }
+        self.sysAgentContentView.outboundCallView.onInputPhoneNumberChanged = { [weak self] in
+            self?.onTabIndexChanged()
         }
         
         self.selectAgent(isCus: false, isAni: false)
         
         // 提前获取Token
         AUIAICallAuthTokenHelper.shared.fetchAuthToken(userId: AUIAICallManager.defaultManager.userId!, completed: nil)
-    }
-    
-    public static var isEnableChat: Bool {
-        get {
-            return ChatAgentId.isEmpty == false
-        }
     }
     
     open lazy var agentTypeBgView: UIView = {
@@ -140,7 +131,7 @@ let ChatAgentTypeIndex: Int = 100
         btn.layer.masksToBounds = true
         btn.setTitle(AUIAIMainBundle.getString("Start"), for: .normal)
         btn.setBackgroundColor(AVTheme.colourful_fill_strong, for: .normal)
-        btn.setBackgroundColor(AVTheme.fill_medium, for: .disabled)
+        btn.setBackgroundColor(UIColor.av_color(withHexString: "004C61"), for: .disabled)
         btn.setTitleColor(AVTheme.text_strong, for: .normal)
         btn.setTitleColor(AVTheme.text_ultraweak, for: .disabled)
         btn.titleLabel?.font = AVTheme.regularFont(16)
@@ -169,6 +160,11 @@ let ChatAgentTypeIndex: Int = 100
                 if agentIndex == ChatAgentTypeIndex {
                     self.startChat()
                 }
+                else if agentIndex == OutboundCallTypeIndex {
+                    let outboundCallView = self.sysAgentContentView.outboundCallView
+                    guard let phoneNumber = outboundCallView.phoneNumber else { return }
+                    AUIAICallManager.defaultManager.startOutboundCall(phoneNumber: phoneNumber, voiceId: outboundCallView.voiceId, enableVoiceInterrupt: outboundCallView.isVoiceInterrupted, viewController: self)
+                }
                 else {
                     self.startCall(agentType: ARTCAICallAgentType(rawValue: Int32(agentIndex))!)
                 }
@@ -189,7 +185,9 @@ let ChatAgentTypeIndex: Int = 100
     
     open lazy var cusAgentContentView: AUIAICallCusAgentContentView = {
         let view = AUIAICallCusAgentContentView(frame: CGRect(x: 20, y: self.cusAgentBtn.av_bottom + 16, width: self.contentView.av_width - 40, height: self.startCallBtn.av_top - self.cusAgentBtn.av_bottom - 16 - 38))
+#if !DEMO_FOR_DEBUG
         view.inputField.isEnabled = false
+#endif
         view.scanBtn.clickBlock = { [weak self] btn in
             let qr = AVQRCodeScanner()
             qr.scanResultBlock = { scaner, content in
@@ -209,16 +207,25 @@ let ChatAgentTypeIndex: Int = 100
     }
 #endif
     
-    open func updateConfigBtnVisible() {
+    open func onTabIndexChanged() {
         var visible = false
         if self.sysAgentBtn.isSelected == true {
             let agentIndex = self.sysAgentTabView.agentIndex
-            if agentIndex != ChatAgentTypeIndex {
+            if agentIndex != ChatAgentTypeIndex && agentIndex != OutboundCallTypeIndex {
                 visible = true
             }
         }
         self.configCallBtn.isHidden = !visible
         self.startCallBtn.frame = visible ? CGRect(x: 36.0, y: self.contentView.av_height - 36.0 - UIView.av_safeBottom - 44.0, width: self.contentView.av_width - 36.0 - 36.0 - 32 - 8, height: 44.0) : CGRect(x: 36.0, y: self.contentView.av_height - 36.0 - UIView.av_safeBottom - 44.0, width: self.contentView.av_width - 36.0 - 36.0, height: 44.0)
+        
+        var enable = true
+        if self.sysAgentBtn.isSelected == true {
+            if self.sysAgentTabView.agentIndex == OutboundCallTypeIndex {
+                enable = self.sysAgentContentView.outboundCallView.phoneNumber?.isEmpty == false
+            }
+        }
+        self.startCallBtn.isEnabled = enable
+
     }
     
     open func selectAgent(isCus: Bool, isAni: Bool) {
@@ -240,7 +247,7 @@ let ChatAgentTypeIndex: Int = 100
             self.sysAgentContentView.isHidden = false
             self.cusAgentContentView.isHidden = true
         }
-        self.updateConfigBtnVisible()
+        self.onTabIndexChanged()
         if isAni {
             UIView.animate(withDuration: 0.25) {
                 self.agentSeletctBgView.av_left = isCus ? self.cusAgentBtn.av_left : 0.0
@@ -323,360 +330,5 @@ let ChatAgentTypeIndex: Int = 100
         let region = json["Region"] as? String
         
         return (agentId, agentIndex, region)
-    }
-}
-
-
-@objcMembers open class AUIAICallSysAgentTabView: UIScrollView {
-    
-    public override init(frame: CGRect) {
-        super.init(frame: frame)
-        
-        let isEnableChat = AUIAICallMainViewController.isEnableChat
-        
-        var right = 28.0
-        self.audioCallBtn.sizeToFit()
-        self.audioCallBtn.av_left = right
-        self.addSubview(self.audioCallBtn)
-        right = self.audioCallBtn.av_right + 20
-        
-        self.avatarCallBtn.sizeToFit()
-        self.avatarCallBtn.av_left = right
-        self.addSubview(self.avatarCallBtn)
-        right = self.avatarCallBtn.av_right + 20
-        
-        self.visionCallBtn.sizeToFit()
-        self.visionCallBtn.av_left = right
-        self.addSubview(self.visionCallBtn)
-        right = self.visionCallBtn.av_right + 20
-
-        if isEnableChat {
-            self.chatBtn.sizeToFit()
-            self.chatBtn.av_left = right
-            self.addSubview(self.chatBtn)
-            right = self.chatBtn.av_right + 20
-        }
-        
-        self.videoCallBtn.sizeToFit()
-        self.videoCallBtn.av_left = right
-        self.addSubview(self.videoCallBtn)
-        right = self.videoCallBtn.av_right + 28
-        
-        self.addSubview(self.lineView)
-        self.contentSize = CGSize(width: right, height: self.av_height)
-        self.showsHorizontalScrollIndicator = false
-        self.showsHorizontalScrollIndicator = false
-        
-        self.updateAgent()
-    }
-    
-    required public init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    open lazy var audioCallBtn: AVBlockButton = {
-        let btn = AVBlockButton(frame: CGRect(x: 20.0, y: 0, width: 0, height: 0))
-        btn.setTitle(AUIAIMainBundle.getString("AI Voice Call"), for: .normal)
-        btn.setTitleColor(AVTheme.text_weak, for: .normal)
-        btn.setTitleColor(AVTheme.colourful_text_strong, for: .selected)
-        btn.titleLabel?.font = AVTheme.mediumFont(12)
-        btn.tag = VoiceAgentTypeIndex
-        btn.clickBlock = { [weak self] sender in
-            let agentIndex: Int = sender.tag
-            self?.agentIndex = agentIndex
-            self?.agentWillChanged?(agentIndex)
-        }
-        return btn
-    }()
-    
-    open lazy var avatarCallBtn: AVBlockButton = {
-        let btn = AVBlockButton(frame: CGRect(x: self.audioCallBtn.av_right + 20.0, y: 0, width: 0, height: 0))
-        btn.setTitle(AUIAIMainBundle.getString("AI Avatar Call"), for: .normal)
-        btn.setTitleColor(AVTheme.text_weak, for: .normal)
-        btn.setTitleColor(AVTheme.colourful_text_strong, for: .selected)
-        btn.titleLabel?.font = AVTheme.mediumFont(12)
-        btn.tag = AvatarAgentTypeIndex
-        btn.clickBlock = { [weak self] sender in
-            let agentIndex: Int = sender.tag
-            self?.agentIndex = agentIndex
-            self?.agentWillChanged?(agentIndex)
-        }
-        return btn
-    }()
-    
-    open lazy var visionCallBtn: AVBlockButton = {
-        let btn = AVBlockButton(frame: CGRect(x: self.avatarCallBtn.av_right + 20.0, y: 0, width: 0, height: 0))
-        btn.setTitle(AUIAIMainBundle.getString("AI Vision Call"), for: .normal)
-        btn.setTitleColor(AVTheme.text_weak, for: .normal)
-        btn.setTitleColor(AVTheme.colourful_text_strong, for: .selected)
-        btn.titleLabel?.font = AVTheme.mediumFont(12)
-        btn.tag = VisionAgentTypeIndex
-        btn.clickBlock = { [weak self] sender in
-            let agentIndex: Int = sender.tag
-            self?.agentIndex = agentIndex
-            self?.agentWillChanged?(agentIndex)
-        }
-        return btn
-    }()
-    
-    open lazy var chatBtn: AVBlockButton = {
-        let btn = AVBlockButton(frame: CGRect(x: self.visionCallBtn.av_right + 20.0, y: 0, width: 0, height: 0))
-        btn.setTitle(AUIAIMainBundle.getString("AI Chat"), for: .normal)
-        btn.setTitleColor(AVTheme.text_weak, for: .normal)
-        btn.setTitleColor(AVTheme.colourful_text_strong, for: .selected)
-        btn.titleLabel?.font = AVTheme.mediumFont(12)
-        btn.tag = ChatAgentTypeIndex
-        btn.clickBlock = { [weak self] sender in
-            let agentIndex: Int = sender.tag
-            self?.agentIndex = agentIndex
-            self?.agentWillChanged?(agentIndex)
-        }
-        return btn
-    }()
-    
-    open lazy var videoCallBtn: AVBlockButton = {
-        let btn = AVBlockButton(frame: CGRect(x: self.chatBtn.av_right + 20.0, y: 0, width: 0, height: 0))
-        btn.setTitle(AUIAIMainBundle.getString("AI Video Call"), for: .normal)
-        btn.setTitleColor(AVTheme.text_weak, for: .normal)
-        btn.setTitleColor(AVTheme.colourful_text_strong, for: .selected)
-        btn.titleLabel?.font = AVTheme.mediumFont(12)
-        btn.tag = VideoAgentTypeIndex
-        btn.clickBlock = { [weak self] sender in
-            let agentIndex: Int = sender.tag
-            self?.agentIndex = agentIndex
-            self?.agentWillChanged?(agentIndex)
-        }
-        return btn
-    }()
-    
-    open lazy var lineView: UIView = {
-        let view = UIView(frame: CGRect(x: self.audioCallBtn.av_left, y: self.audioCallBtn.av_bottom + 4, width: self.audioCallBtn.av_width, height: 1))
-        view.backgroundColor = AVTheme.colourful_text_strong
-        return view
-    }()
-    
-    open var agentIndex: Int = VoiceAgentTypeIndex {
-        didSet {
-            self.updateAgent()
-        }
-    }
-    
-    func updateAgent() {
-        let agentIndex = self.agentIndex
-        var rect = self.lineView.frame
-        if agentIndex == VoiceAgentTypeIndex {
-            self.audioCallBtn.isSelected = true
-            self.audioCallBtn.titleLabel?.font = AVTheme.mediumFont(12)
-            self.avatarCallBtn.isSelected = false
-            self.avatarCallBtn.titleLabel?.font = AVTheme.regularFont(12)
-            self.visionCallBtn.isSelected = false
-            self.visionCallBtn.titleLabel?.font = AVTheme.regularFont(12)
-            self.chatBtn.isSelected = false
-            self.chatBtn.titleLabel?.font = AVTheme.regularFont(12)
-            self.videoCallBtn.isSelected = false
-            self.videoCallBtn.titleLabel?.font = AVTheme.regularFont(12)
-            rect = CGRect(x: self.audioCallBtn.av_left, y: self.audioCallBtn.av_bottom + 4, width: self.audioCallBtn.av_width, height: 1)
-        }
-        else if agentIndex == AvatarAgentTypeIndex {
-            self.audioCallBtn.isSelected = false
-            self.audioCallBtn.titleLabel?.font = AVTheme.regularFont(12)
-            self.avatarCallBtn.isSelected = true
-            self.avatarCallBtn.titleLabel?.font = AVTheme.mediumFont(12)
-            self.visionCallBtn.isSelected = false
-            self.visionCallBtn.titleLabel?.font = AVTheme.regularFont(12)
-            self.chatBtn.isSelected = false
-            self.chatBtn.titleLabel?.font = AVTheme.regularFont(12)
-            self.videoCallBtn.isSelected = false
-            self.videoCallBtn.titleLabel?.font = AVTheme.regularFont(12)
-            rect = CGRect(x: self.avatarCallBtn.av_left, y: self.avatarCallBtn.av_bottom + 4, width: self.avatarCallBtn.av_width, height: 1)
-        }
-        else if agentIndex == VisionAgentTypeIndex {
-            self.audioCallBtn.isSelected = false
-            self.audioCallBtn.titleLabel?.font = AVTheme.regularFont(12)
-            self.avatarCallBtn.isSelected = false
-            self.avatarCallBtn.titleLabel?.font = AVTheme.regularFont(12)
-            self.visionCallBtn.isSelected = true
-            self.visionCallBtn.titleLabel?.font = AVTheme.mediumFont(12)
-            self.chatBtn.isSelected = false
-            self.chatBtn.titleLabel?.font = AVTheme.regularFont(12)
-            self.videoCallBtn.isSelected = false
-            self.videoCallBtn.titleLabel?.font = AVTheme.regularFont(12)
-            rect = CGRect(x: self.visionCallBtn.av_left, y: self.visionCallBtn.av_bottom + 4, width: self.visionCallBtn.av_width, height: 1)
-        }
-        else if agentIndex == VideoAgentTypeIndex {
-            self.audioCallBtn.isSelected = false
-            self.audioCallBtn.titleLabel?.font = AVTheme.regularFont(12)
-            self.avatarCallBtn.isSelected = false
-            self.avatarCallBtn.titleLabel?.font = AVTheme.regularFont(12)
-            self.visionCallBtn.isSelected = false
-            self.visionCallBtn.titleLabel?.font = AVTheme.regularFont(12)
-            self.chatBtn.isSelected = false
-            self.chatBtn.titleLabel?.font = AVTheme.regularFont(12)
-            self.videoCallBtn.isSelected = true
-            self.videoCallBtn.titleLabel?.font = AVTheme.mediumFont(12)
-            rect = CGRect(x: self.videoCallBtn.av_left, y: self.videoCallBtn.av_bottom + 4, width: self.videoCallBtn.av_width, height: 1)
-        }
-        else if agentIndex == ChatAgentTypeIndex {
-            self.audioCallBtn.isSelected = false
-            self.audioCallBtn.titleLabel?.font = AVTheme.regularFont(12)
-            self.avatarCallBtn.isSelected = false
-            self.avatarCallBtn.titleLabel?.font = AVTheme.regularFont(12)
-            self.visionCallBtn.isSelected = false
-            self.visionCallBtn.titleLabel?.font = AVTheme.regularFont(12)
-            self.chatBtn.isSelected = true
-            self.chatBtn.titleLabel?.font = AVTheme.mediumFont(12)
-            self.videoCallBtn.isSelected = false
-            self.videoCallBtn.titleLabel?.font = AVTheme.regularFont(12)
-            rect = CGRect(x: self.chatBtn.av_left, y: self.chatBtn.av_bottom + 4, width: self.chatBtn.av_width, height: 1)
-        }
-        UIView.animate(withDuration: 0.3) {
-            self.lineView.frame = rect
-        }
-    }
-    
-    open var agentWillChanged: ((_ agentIndex: Int) -> Void)? = nil
-}
-
-
-@objcMembers open class AUIAICallSysAgentContentView: UIScrollView, UIScrollViewDelegate {
-    
-    public override init(frame: CGRect) {
-        super.init(frame: frame)
-        
-        var left: CGFloat = 0
-        self.listView.forEach { view in
-            
-            if view.tag == ChatAgentTypeIndex && AUIAICallMainViewController.isEnableChat == false {
-                return
-            }
-            view.av_left = left
-            self.addSubview(view)
-            left = view.av_right
-        }
-        
-        self.contentSize = CGSize(width: left, height: self.av_height)
-        self.isPagingEnabled = true
-        self.showsHorizontalScrollIndicator = false
-        self.showsHorizontalScrollIndicator = false
-        self.delegate = self
-    }
-    
-    required public init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    func creatImageView(bg: UIImage?, tag: Int) -> UIImageView {
-        let view = UIImageView(frame: CGRect(x: 0, y: 0, width: self.av_width, height: self.av_height))
-        view.contentMode = .scaleAspectFit
-        view.image = bg
-        view.backgroundColor = UIColor.clear
-        view.tag = tag
-        return view
-    }
-    
-    open lazy var listView: [UIImageView] = {
-        return [
-            self.creatImageView(bg: AUIAIMainBundle.getCommonImage("bg_main_voice"), tag: VoiceAgentTypeIndex),
-            self.creatImageView(bg: AUIAIMainBundle.getCommonImage("bg_main_avatar"), tag: AvatarAgentTypeIndex),
-            self.creatImageView(bg: AUIAIMainBundle.getCommonImage("bg_main_vision"), tag: VisionAgentTypeIndex),
-            self.creatImageView(bg: AUIAIMainBundle.getCommonImage("bg_main_chat"), tag: ChatAgentTypeIndex),
-            self.creatImageView(bg: AUIAIMainBundle.getCommonImage("bg_main_video"), tag: VideoAgentTypeIndex),
-        ]
-    }()
-    
-    open var pageChanged: ((_ agentIndex: Int) -> Void)? = nil
-    
-    open func scrollToAgent(_ agentIndex: Int) {
-        let find = self.listView.first { view in
-            return view.tag == agentIndex
-        }
-        for i in 0..<self.listView.count {
-            if self.listView[i].tag == agentIndex {
-                let pageWidth = self.frame.size.width
-                let targetOffset = CGPoint(x: pageWidth * CGFloat(i), y: 0)
-                self.setContentOffset(targetOffset, animated: true)
-                return
-            }
-        }
-    }
-    
-    public func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        
-    }
-    
-    public func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
-        let pageWidth = scrollView.frame.size.width
-        let currentPage = Int(scrollView.contentOffset.x / pageWidth)
-        if currentPage < self.listView.count {
-            self.pageChanged?(self.listView[currentPage].tag)
-        }
-    }
-}
-
-@objcMembers open class AUIAICallCusAgentContentView: UIView, UITextFieldDelegate {
-    
-    public override init(frame: CGRect) {
-        super.init(frame: frame)
-        
-        self.addSubview(self.titleLabel)
-        self.addSubview(self.scanBtn)
-        self.addSubview(self.inputField)
-        self.addSubview(self.lineView)
-    }
-    
-    required public init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    open lazy var titleLabel: UILabel = {
-        let title = UILabel(frame: CGRect(x: 0, y: 16, width: self.av_width, height: 24))
-        title.text = AUIAIMainBundle.getString("Authorized AI Agent")
-        title.textColor = AVTheme.text_strong
-        title.font = AVTheme.regularFont(14)
-        return title
-    }()
-    
-    open lazy var scanBtn: AVBlockButton = {
-        let scan = AVBlockButton(frame: CGRect(x: self.av_width - 24, y: self.titleLabel.av_bottom + 2, width: 24, height: 42))
-        scan.setImage(AUIAIMainBundle.getImage("ic_scan"), for: .normal)
-        return scan
-    }()
-    
-    open lazy var inputField: UITextField = {
-        let input = UITextField(frame: CGRect(x: 0, y: self.titleLabel.av_bottom + 2, width: self.av_width - 24 , height: 42))
-        input.textColor = AVTheme.text_strong
-        input.keyboardType = .default
-        input.returnKeyType = .done
-        input.delegate = self
-        let placeholderText = AUIAIMainBundle.getString("Please Scan Code to Get Authorized Token")
-        let placeholderColor = AVTheme.text_ultraweak
-        let attributes: [NSAttributedString.Key: Any] = [
-            .foregroundColor: placeholderColor,
-            .font: AVTheme.regularFont(14)
-        ]
-        input.attributedPlaceholder = NSAttributedString(string: placeholderText, attributes: attributes)
-        return input
-    }()
-    
-    open lazy var lineView: UIView = {
-        let line = UIView(frame: CGRect(x: 0, y: self.inputField.av_bottom, width: self.av_width, height: 1))
-        line.backgroundColor = AVTheme.border_weak
-        return line
-    }()
-    
-    open override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
-        let view = super.hitTest(point, with: event)
-        if self.inputField.isFirstResponder && view != self.inputField {
-            self.inputField.resignFirstResponder()
-        }
-        return view
-    }
-    
-    public func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
-        if string == "\n" {
-            textField.resignFirstResponder()
-            return false
-        }
-        return true
     }
 }

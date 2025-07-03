@@ -31,10 +31,13 @@ export interface AICallRunConfig {
   avatarAgentId?: string;
   // 视觉智能体 id
   visionAgentId?: string;
-  // 语音通话智能体配置
+  // 视频通话智能体 id
   videoAgentId?: string;
   // 必选，消息通话智能体 id
   chatAgentId: string;
+
+  // 电话通话智能体 id
+  pstnAgentId?: string;
 
   // 可选，消息通话智能体模板
   chatTemplateConfig?: AIChatTemplateConfig;

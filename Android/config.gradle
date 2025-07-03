@@ -64,7 +64,7 @@ ext {
 
     //Aliyun SDK
     externalFatAarPlugin = 'com.github.kezong:fat-aar:1.3.8'
-    externalAllInOne = 'com.aliyun.aio:AliVCSDK_ARTC:7.2.0'
+    externalAllInOne = 'com.aliyun.aio:AliVCSDK_ARTC:7.3.0'
     externalAliVCInteractionMessage = 'com.aliyun.sdk.android:AliVCInteractionMessage:1.7.0'
 
 //    externalAUIRoomEngine = 'com.aliyun.auikits.android:roomengine:1.3.0'

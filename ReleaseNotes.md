@@ -103,3 +103,12 @@
 * Android&iOS&Web：优化通话智能体字幕展示
 * Android&iOS&Web：使用AgentConfig作为启动通话配置
 
+## v2.6.0
+发布时间：2025-07-03
+* Android&iOS&Web：新增AI电话呼出
+* Android&iOS&Web：新增VCR配置及反馈识别结果
+* Android&iOS&Web：新增查看语音智能体的通话延时
+* Android&iOS&Web：支持通话过程中动态透传asr参数
+* Android&iOS&Web：支持TTS发音优化
+* Android&iOS&Web：支持通话过程中更新百炼业务参数
+* Android&iOS&Web：支持语义断句

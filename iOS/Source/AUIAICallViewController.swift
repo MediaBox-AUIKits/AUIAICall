@@ -33,6 +33,11 @@ import ARTCAICallKit
 #endif
     }
     
+    // 延迟记录
+    private var latencyData: [(id: Int32, latency: Int64)] = []
+    private weak var latencyVC: AUIAICallLatencyRateViewController? = nil
+
+    
     open override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -390,6 +395,24 @@ extension AUIAICallViewController {
                 }
             }
         }
+        // 暂时只有非数字人有延迟数据
+        if self.controller.config.agentType != .VoiceAgent, self.controller.config.agentType != .VisionAgent {
+            panel.hiddenLatencyView(true)
+        }
+        // 设置延迟率查看逻辑
+        panel.onLatencyRateViewTapped = { [weak self] in
+            guard let self = self else {
+                return
+            }
+            
+            if self.latencyVC == nil {
+                let newLatencyVC = AUIAICallLatencyRateViewController()
+                newLatencyVC.latencyData = self.latencyData // 更新延迟率数据
+                self.av_presentFullScreenViewController(newLatencyVC, animated: true)
+                self.latencyVC = newLatencyVC
+            }
+        }
+        
         panel.show(on: self.view, with: .clickToClose)
         self.settingPanel = panel
     }
@@ -660,6 +683,19 @@ extension AUIAICallViewController: AUIAICallControllerDelegate {
         self.printDebugInfo(AUIAICallBundle.getString("Speaking interrupted") + ": \(reason.rawValue)")
 #endif
         self.callContentView.agentAni.onAgentInterrupted()
+    }
+    
+    public func onAICallReceivedAgentVcrResult(result: ARTCAICallAgentVcrResult) {
+#if DEMO_FOR_DEBUG
+        if let resultData = result.resultData {
+            AVToastView.show("VCR Result: \(resultData.aicall_jsonString)", view: self.view, position: .mid)
+        }
+#endif
+    }
+    
+    public func onAudioDelayInfo(sentenceId: Int32, delayMs: Int64) {
+        latencyData.insert((sentenceId, Int64(delayMs)), at: 0)
+        self.latencyVC?.updateLatencyData(newData: latencyData)
     }
 }
 

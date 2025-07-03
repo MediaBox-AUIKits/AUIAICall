@@ -1,0 +1,123 @@
+.subtitle-list-pop.adm-center-popup {
+  .adm-mask.adm-center-popup-mask {
+    position: fixed;
+    background: none !important;
+    z-index: 6;
+  }
+
+  .adm-dialog-content {
+    text-align: left;
+  }
+
+  .adm-center-popup-wrap {
+    position: fixed;
+    left: 0;
+    right: 0;
+    transform: none;
+    top: 0;
+    bottom: 0;
+    max-width: none;
+    height: 100%;
+    z-index: 6 !important;
+
+    & > div {
+      height: 100%;
+    }
+  }
+
+  .adm-dialog-body {
+    position: relative;
+    height: 100%;
+    box-sizing: border-box;
+    padding-top: 44px;
+    padding-bottom: 180px;
+    background: linear-gradient(180deg, #ffffff 65%, rgba(255, 255, 255, 0) 130%);
+    backdrop-filter: blur(20px);
+    z-index: 6 !important;
+    max-height: none;
+    border-radius: 0;
+
+    &::before {
+      content: ' ';
+      position: absolute;
+      height: 20px;
+      width: 100%;
+      left: 0;
+      top: 44px;
+      background: linear-gradient(180deg, #ffffff 0%, rgba(255, 255, 255, 0) 100%);
+    }
+  }
+}
+
+.subtitle-list {
+  height: 100%;
+  box-sizing: border-box;
+  overflow-y: auto;
+  padding: 0 20px;
+  font-size: 16px;
+  line-height: 24px;
+  color: #56597e;
+
+  ._close {
+    display: none;
+  }
+
+  ol {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+}
+
+.subtitle-list-item {
+  margin: 14px 0;
+  &.is-agent {
+    color: #aaacc4;
+  }
+}
+
+@media screen and (min-width: 768px) {
+  .subtitle-list-pop.adm-center-popup {
+    .adm-mask.adm-center-popup-mask {
+      background: rgba(0, 0, 0, 0.55) !important;
+      z-index: 8 !important;
+    }
+    .adm-center-popup-wrap {
+      position: fixed;
+      z-index: 1;
+      top: 50%;
+      left: 50%;
+      width: auto;
+      height: auto;
+      min-width: var(--min-width);
+      max-width: var(--max-width);
+      transform: translate(-50%, -50%);
+      z-index: 8 !important;
+    }
+
+    .adm-dialog-body {
+      position: relative;
+      height: 100%;
+      box-sizing: border-box;
+      padding-top: 44px;
+      padding-bottom: 40px;
+      background: #fff;
+      backdrop-filter: blur(20px);
+      z-index: 6 !important;
+      max-height: 70vh;
+      border-radius: var(--border-radius);
+    }
+  }
+
+  .subtitle-list {
+    ._close {
+      display: block;
+      position: absolute;
+
+      top: 20px;
+      right: 40px;
+
+      border: none;
+    }
+  }
+}

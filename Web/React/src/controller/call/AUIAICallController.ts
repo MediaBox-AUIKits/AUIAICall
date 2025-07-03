@@ -223,6 +223,9 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
     this._currentEngine.on('autoPlayFailed', () => {
       this.emit('AICallAgentAutoPlayFailed');
     });
+    this._currentEngine.on('receivedAgentVcrResult', (result) => {
+      this.emit('AICallReceivedAgentVcrResult', result);
+    });
   }
 
   abstract start(): Promise<void>;
@@ -273,6 +276,12 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
     if (agent && currentState === AICallState.Connected) {
       await this.stopAIAgent();
     }
+    logger.setParams({
+      instanceId: undefined,
+      channelId: undefined,
+      userId: undefined,
+      reqId: undefined,
+    });
     await this.engine?.handup();
     this.engine?.removeAllListeners();
     this.removeAllListeners();
@@ -351,8 +360,8 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
   /**
    * 开启/关闭麦克风
    * open or close microphone
-   * @param off 是否关闭
-   * @param off mute or unmute
+   * @param mute 是否关闭
+   * @param mute mute or unmute
    */
   muteMicrophone(mute: boolean): boolean {
     logger.info('Controller', 'MuteMicrophone', { mute: mute ? 'off' : 'on' });

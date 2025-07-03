@@ -44,11 +44,17 @@ export default {
     },
   },
 
+  logout: {
+    text: '退出登录',
+  },
+
   welcome: {
     title: 'AI智能体',
     btn: '开始体验',
-    optionsTitle: '配置项',
+    call: '智能体通话',
+    pstn: 'AI电话通话',
 
+    optionsTitle: '配置项',
     options: {
       emotion: {
         title: '情绪音色',
@@ -312,6 +318,30 @@ export default {
     playback: {
       failed: '播放失败',
       generating: '语音朗读生成中',
+    },
+  },
+
+  pstn: {
+    title: 'AI电话呼出',
+    phone: {
+      required: '手机号不能为空!',
+      error: '手机号格式不正确',
+      label: '被叫号码',
+      placeholder: '请输入被叫号码',
+      tip: '仅支持中国内地手机号',
+    },
+    interrupt: {
+      label: '智能打断',
+    },
+    voiceId: {
+      label: '音色选择',
+    },
+    help: '体验后，系统将会被被叫号码拨通AI电话，请注意查收',
+    start: '开始体验',
+    result: {
+      fail: '呼叫失败，Code: {code}',
+      success: '呼出中，请注意接收手机来电',
+      copy: '复制',
     },
   },
 };

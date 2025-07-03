@@ -15,7 +15,7 @@
         android:id="@+id/tab_function_detail_call_type"
         android:layout_width="match_parent"
         android:layout_height="46dp"
-        app:tabMode="fixed"
+        app:tabMode="scrollable"
         app:tabGravity="fill"
         android:background="@color/layout_base_background"
         app:layout_constraintTop_toTopOf="parent"

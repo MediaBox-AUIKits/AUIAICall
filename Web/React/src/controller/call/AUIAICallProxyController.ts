@@ -39,6 +39,11 @@ class AUIAICallProxyController extends AUIAICallController {
         this.state = AICallState.Connected;
       });
 
+      this.engine!.once('agentDataChannelAvailable', () => {
+        const elapsedTime = Date.now() - startTs;
+        logger.info('ProxyController', 'AgentDataChannelAvailable', { value: elapsedTime });
+      });
+
       const authToken = await AUIAICallAuthTokenHelper.shared.fetchAuthToken(this.userId);
       this.config.userJoinToken = authToken;
       await this.engine!.callWithConfig(this.config);

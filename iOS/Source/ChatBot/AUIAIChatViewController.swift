@@ -867,7 +867,6 @@ extension AUIAIChatViewController {
         
     @objc open func onSettingBtnClicked() {
         let panel = AUIAIChatSettingPanel(frame: CGRect(x: 0, y: 0, width: self.view.av_width, height: 0))
-        panel.voiceIdList = self.engine.voiceIdList
         panel.setup(voiceIdList: self.engine.voiceIdList, selectItemId: self.currentVoiceId)
         panel.applyPlayBlock = { [weak self] item in
             self?.currentVoiceId = item.voiceId

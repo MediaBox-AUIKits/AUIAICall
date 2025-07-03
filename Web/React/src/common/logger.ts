@@ -15,7 +15,8 @@ const logLevelMap = {
 
 export type AUIAICallExternalTarget = {
   log: (level: AUIAICallLogLevel, ...args: any[]) => void;
-  setParams: (params: { [key: string]: string | number }) => void;
+  setParams: (params: { [key: string]: string | number | undefined }) => void;
+  params: { [key: string]: string | number | undefined };
 };
 
 class AUIAICallLogger {
@@ -26,6 +27,7 @@ class AUIAICallLogger {
   getLogLevel() {
     return this._logLevel;
   }
+
   setLogLevel(level: AUIAICallLogLevel) {
     this._logLevel = level;
   }
@@ -34,7 +36,7 @@ class AUIAICallLogger {
     this.externalTarget = logger;
   }
 
-  setParams(params: { [key: string]: string | number }) {
+  setParams(params: { [key: string]: string | number | undefined }) {
     try {
       if (this.externalTarget) {
         this.externalTarget.setParams(params);
@@ -48,6 +50,7 @@ class AUIAICallLogger {
   debug(...args: any[]) {
     this.log(AUIAICallLogLevel.DEBUG, ...args);
   }
+
   info(
     module: string,
     name: string,

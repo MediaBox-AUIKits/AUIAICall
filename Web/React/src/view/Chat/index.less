@@ -1,0 +1,47 @@
+.chat-wrapper {
+  position: relative;
+  height: 100%;
+}
+
+.chat {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  min-width: 320px;
+
+  * {
+    -webkit-user-select: none; /* For Safari and Chrome */
+    -moz-user-select: none; /* For Firefox */
+    -ms-user-select: none; /* For Internet Explorer/Edge */
+
+    -webkit-touch-callout: none; /* Disable callout, browser's default context menu */
+    user-select: none; /* For modern browsers */
+  }
+
+  input,
+  input:before,
+  input:after,
+  textarea,
+  textarea:before,
+  textarea:after {
+    -webkit-user-select: initial;
+    -khtml-user-select: initial;
+    -moz-user-select: initial;
+    -ms-user-select: initial;
+    user-select: initial;
+  }
+}
+
+@media screen and (min-width: 768px) {
+  .chat-wrapper {
+    box-sizing: border-box;
+    padding: 24px;
+  }
+
+  .chat {
+    border: 1px solid #d8d9e6;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+}

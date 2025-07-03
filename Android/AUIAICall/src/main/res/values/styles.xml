@@ -50,6 +50,11 @@
         <item name="android:textColor">@color/layout_base_light_white</item>
     </style>
 
+    <style name="layout_base_text_style_12_gray">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/layout_base_gray</item>
+    </style>
+
 
     <style name="layout_base_text_style_10">
         <item name="android:textSize">10sp</item>
@@ -75,6 +80,11 @@
 
     <style name="layout_base_text_style_8_gray">
         <item name="android:textSize">8sp</item>
+        <item name="android:textColor">@color/layout_base_gray</item>
+    </style>
+
+    <style name="layout_base_text_style_13_gray">
+        <item name="android:textSize">13sp</item>
         <item name="android:textColor">@color/layout_base_gray</item>
     </style>
 

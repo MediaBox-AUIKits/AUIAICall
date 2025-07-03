@@ -1,6 +1,7 @@
 package com.aliyun.auikits.aicall.widget;
 
 import android.content.Context;
+import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,6 +14,13 @@ import com.orhanobut.dialogplus.OnDismissListener;
 import com.orhanobut.dialogplus.ViewHolder;
 import com.orhanobut.dialogplus.DialogPlus;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+
 public class AICallDebugDialog {
     public static void show(Context context, ARTCAICallEngine engine) {
         View view = LayoutInflater.from(context).inflate(R.layout.dialog_aicall_custom_debug_setting, null, false);
@@ -21,11 +29,13 @@ public class AICallDebugDialog {
         EditText editTextAppServer = view.findViewById(R.id.et_debug_send_custom_message_to_server);
         EditText editTextllmPrompt = view.findViewById(R.id.et_debug_update_llm_prompt);
         EditText editTextCustomCapture = view.findViewById(R.id.et_debug_update_custom_capture);
+        EditText editTextVcrConfig = view.findViewById(R.id.et_debug_vcr_update);
+        EditText editTextBailianParams = view.findViewById(R.id.et_debug_bailian_params_update);
 
         DialogPlus dialog = DialogPlus.newDialog(context)
                 .setContentHolder(viewHolder)
                 .setGravity(Gravity.BOTTOM)
-                .setExpanded(true, DisplayUtil.dip2px(580))
+                .setExpanded(true, DisplayUtil.dip2px(650))
                 .setOverlayBackgroundResource(android.R.color.transparent)
                 .setContentBackgroundResource(R.color.layout_base_dialog_background)
                 .setOnClickListener((dialog1, v) -> {
@@ -47,6 +57,22 @@ public class AICallDebugDialog {
                         engine.muteAgentAudioPlaying(false);
                     } else if(v.getId() == R.id.debug_send_text_to_agent) {
                         engine.sendTextToAgent(new ARTCAICallEngine.ARTCAICallSendTextToAgentRequest("今天天气怎么样"));
+                    } else if(v.getId() == R.id.debug_update_vcr_config) {
+                        String vcrConfigStr = editTextVcrConfig.getText().toString();
+                        if(!TextUtils.isEmpty(vcrConfigStr)) {
+                            try {
+                                JSONObject jsonObject = new JSONObject(vcrConfigStr);
+
+                                engine.updateVcrConfig(new ARTCAICallEngine.ARTCAICallAgentVcrConfig(jsonObject));
+                            }catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    } else if (v.getId() == R.id.debug_update_update_bailian_params) {
+                        String bailianParams = editTextBailianParams.getText().toString();
+                        if(!TextUtils.isEmpty(bailianParams)) {
+                            engine.updateBailianAppParams(bailianParams);
+                        }
                     }
                     dialog1.dismiss();
                 })

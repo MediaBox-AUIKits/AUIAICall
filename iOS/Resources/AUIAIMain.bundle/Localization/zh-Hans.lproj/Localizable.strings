@@ -16,3 +16,20 @@
 "AI Vision Call" = "视觉理解通话";
 "AI Chat" = "消息对话";
 "AI Video Call" = "视频通话";
+"AI Call Out" = "AI电话呼出";
+
+
+"Calling Number" = "被叫号码";
+"Input your phone number" = "请输入手机号";
+"Only mainland China phone numbers are supported." = "仅支持中国内地手机号";
+"Smart Interrupt" = "智能打断";
+"Interrupt Agent Based on Sound and Environment" = "根据声音和环境智能打断智能体";
+"Choose Voice Tone" = "音色选择";
+"The system will place an AI call to the recipient after you proceed. Please be ready to receive it." = "体验后，系统将会被被叫号码拨通AI电话，请注意查收";
+"Default" = "默认";
+
+"Report Issues" = "问题反馈";
+"Copy" = "拷贝";
+"The call is being placed, please be ready to answer" = "呼出中，请注意接收手机来电";
+"Call failed" = "呼叫失败";
+"InstanceId copied" = "实例ID已复制";

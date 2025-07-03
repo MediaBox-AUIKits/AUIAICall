@@ -39,17 +39,19 @@ let Region = "cn-shanghai"
         }
     }
     
-    public func getAgentID(agentType: ARTCAICallAgentType) -> String? {
+    let enableOutboundCall = false
+
+    public func getAgentID(agentType: ARTCAICallAgentType, emotional: Bool = true) -> String? {
         var ret: String? = nil
         switch agentType {
         case .VoiceAgent:
-            ret = self.emotional ? VoiceAgentEmotionalId : VoiceAgentId
+            ret = emotional && self.emotional ? VoiceAgentEmotionalId : VoiceAgentId
         case .AvatarAgent:
-            ret = self.emotional ? AvatarAgentEmotionalId : AvatarAgentId
+            ret = emotional && self.emotional ? AvatarAgentEmotionalId : AvatarAgentId
         case .VisionAgent:
-            ret = self.emotional ? VisionAgentEmotionalId : VisionAgentId
+            ret = emotional && self.emotional ? VisionAgentEmotionalId : VisionAgentId
         case .VideoAgent:
-            ret = self.emotional ? VideoAgentEmotionalId : VideoAgentId
+            ret = emotional && self.emotional ? VideoAgentEmotionalId : VideoAgentId
         }
         
         // 为空值的情况下，使用在AppServer上配置的智能体Id

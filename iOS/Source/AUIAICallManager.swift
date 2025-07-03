@@ -158,6 +158,32 @@ import ARTCAICallKit
 #endif  // define AICALL_ENABLE_CHATBOT
     }
     
+    open func startOutboundCall(phoneNumber: String, agentId: String? = nil, region: String? = nil, voiceId: String? = nil, enableVoiceInterrupt: Bool, viewController: UIViewController? = nil) {
+        
+        if self.userId == nil {
+            self.userId = NSString.av_random()
+        }
+        
+        let config = self.getDefaultCallAgentConfig()
+        if voiceId?.isEmpty == false {
+            config.ttsConfig.agentVoiceId = voiceId
+        }
+        config.interruptConfig.enableVoiceInterrupt = enableVoiceInterrupt
+        
+        let model = AUIAICallOutboundCallReqModel()
+        model.phoneNumber = phoneNumber
+        model.agentId = agentId ?? VoiceAgentId
+        model.region = region ?? AUIAICallAgentConfig.shared.getRegion()
+        model.userId = self.userId!
+        model.config = config
+        model.userData = nil
+        
+        let vc = AUIAICallOutboundCallViewController()
+        vc.reqModel = model
+        
+        let topVC = viewController ?? UIViewController.av_top()
+        topVC.navigationController?.pushViewController(vc, animated: true)
+    }
     
 #endif  // undefine DEMO_FOR_DEBUG
 }
@@ -209,6 +235,16 @@ extension AUIAICallManager {
         }
         
         AUIAICallDebugManager.shared.startChat(agentShareInfo: agentShareInfo, viewController: viewController)
+    }
+    
+    // 电话外呼，
+    open func startOutboundCall(phoneNumber: String, agentId: String? = nil, region: String? = nil, voiceId: String? = nil, enableVoiceInterrupt: Bool, viewController: UIViewController? = nil) {
+        
+        if self.userId == nil {
+            self.userId = NSString.av_random()
+        }
+        
+        AUIAICallDebugManager.shared.startOutboundCall(phoneNumber: phoneNumber, agentId: agentId, region: region, voiceId: voiceId, enableVoiceInterrupt: enableVoiceInterrupt, viewController: viewController)
     }
 }
 #endif

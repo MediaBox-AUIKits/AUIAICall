@@ -12,4 +12,7 @@ public class AUIAIConstStrKey {
     public static final String BUNDLE_KEY_RTC_AUTH_TOKEN = "BUNDLE_KEY_RTC_AUTH_TOKEN";
     public static final String BUNDLE_KEY_EXTERNAL_WEBVIEW_URL = "BUNDLE_KEY_EXTERNAL_WEBVIEW_URL";
     public static final String BUNDLE_KEY_EXTERNAL_IMAGE_URL = "BUNDLE_KEY_EXTERNAL_IMAGE_URL";
+    public static final String BUNDLE_KEY_PSTN_OUT_NUMBER = "BUNDLE_KEY_PSTN_OUT_NUMBER";
+    public static final String BUNDLE_KEY_PSTN_SMART_INTERRUPT = "BUNDLE_KEY_PSTN_SMART_INTERRUPT";
+    public static final String BUNDLE_KEY_PSTN_OUT_VOICE = "BUNDLE_KEY_PSTN_OUT_VOICE";
 }

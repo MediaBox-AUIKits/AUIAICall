@@ -68,8 +68,8 @@ public typealias AUIAIChatSettingSelectedBlock = (_ item: AUIAICallVoiceItem) ->
         
         self.voiceItemList.removeAll()
         self.voiceItemList.append(self.defaultVoiceItem)
-        for i in 0 ..< self.voiceIdList.count {
-            let vid = self.voiceIdList[i]
+        for i in 0 ..< voiceIdList.count {
+            let vid = voiceIdList[i]
             let item = AUIAICallVoiceItem()
             item.voiceId = vid
             item.voiceName = vid
@@ -84,22 +84,6 @@ public typealias AUIAIChatSettingSelectedBlock = (_ item: AUIAICallVoiceItem) ->
         self.voiceIdSwitch.isHidden = self.voiceItemList.count == 0
     }
     
-    public var voiceIdList: [String] = [] {
-        didSet {
-            self.voiceItemList.removeAll()
-            self.voiceItemList.append(self.defaultVoiceItem)
-            for i in 0 ..< self.voiceIdList.count {
-                let vid = self.voiceIdList[i]
-                let item = AUIAICallVoiceItem()
-                item.voiceId = vid
-                item.voiceName = vid
-                item.icon = "ic_sound_\(i % 3)"
-                self.voiceItemList.append(item)
-            }
-            self.voiceIdSwitch.isHidden = self.voiceItemList.count == 0
-        }
-    }
-    
     private var selectItem: AUIAICallVoiceItem? = nil {
         didSet {
             self.collectionView.reloadData()
@@ -111,7 +95,7 @@ public typealias AUIAIChatSettingSelectedBlock = (_ item: AUIAICallVoiceItem) ->
     private func updateLayout() {
         
         self.voiceIdSwitch.frame = CGRect(x: 0, y: 0, width: self.collectionView.av_width, height: 64)
-        let top = self.voiceIdSwitch.av_bottom
+        let top = self.voiceIdSwitch.isHidden ? 0 : self.voiceIdSwitch.av_bottom
         self.collectionHeaderView.frame = CGRect(x: 0, y: -top, width: self.collectionView.av_width, height: top)
         self.collectionView.contentInset = UIEdgeInsets(top: top, left: 0, bottom: 0, right: 0)
         self.collectionView.setContentOffset(CGPoint(x: 0, y: -top), animated: false)

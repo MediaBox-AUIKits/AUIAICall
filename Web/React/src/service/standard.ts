@@ -248,6 +248,64 @@ class StandardAppService {
         throw new AICallAgentError(`generateMessageChatToken error, message: ${data.message || 'request error'}`);
       });
   };
+
+  startAIAgentOutboundCall = async (userId: string, phoneNumber: string, config: AICallConfig) => {
+    const body: {
+      ai_agent_id?: string;
+      region?: string;
+      called_number: string;
+      user_id: string;
+      config?: string;
+      user_data?: string;
+    } = {
+      ai_agent_id: config.agentId,
+      region: config.region,
+      called_number: phoneNumber,
+      user_id: userId,
+    };
+
+    if (config.agentConfig) {
+      body.config = JSON.stringify(config.agentConfig.toJSON());
+    }
+    if (config.userData) {
+      body.user_data = config.userData;
+    }
+
+    return fetch(`${this.appServer}/api/v2/aiagent/startAIAgentOutboundCall`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: this.serverAuth || '',
+      },
+      body: JSON.stringify(body),
+    })
+      .then((res) => {
+        if (res.status === 403) {
+          const error = new AICallAgentError('token is invalid');
+          error.name = 'ServiceAuthError';
+          throw error;
+        } else if (res.status !== 200) {
+          throw new AICallAgentError(`response status is ${res.status}`);
+        }
+
+        return res.json();
+      })
+      .then((data) => {
+        if (data.code === 200) {
+          return {
+            instanceId: data.instance_id,
+            reqId: data.request_id || '',
+          };
+        }
+        const error = new AICallAgentError(
+          `request error, message: ${data.message || 'request error'}`,
+          data.error_code
+        );
+        // @ts-expect-error reqId
+        error.reqId = data.request_id || '';
+        throw error;
+      });
+  };
 }
 
 export default new StandardAppService();

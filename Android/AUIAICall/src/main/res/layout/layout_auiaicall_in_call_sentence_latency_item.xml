@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/layout_base_dialog_background"
+    android:paddingStart="20dp"
+    android:paddingEnd="20dp"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- sentence ID -->
+    <TextView
+        android:id="@+id/tv_latency_rate_sentence_id_title"
+        style="@style/layout_base_text_style_14"
+        android:text="@string/aicall_sentence_latency_sentence_id"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="10dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <TextView
+        android:id="@+id/tv_latency_rate_sentence_id"
+        style="@style/layout_base_text_style_14"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingBottom="10dp"
+        app:layout_constraintHorizontal_bias="0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_latency_rate_sentence_id_title"/>
+
+    <TextView
+        android:id="@+id/tv_latency_rate_sentence_latency_value"
+        style="@style/layout_base_text_style_14"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingBottom="10dp"
+        app:layout_constraintHorizontal_bias="1"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_latency_rate_sentence_id_title"
+        app:layout_constraintBottom_toTopOf="@+id/v_latency_rate_divider"
+        app:layout_constraintStart_toEndOf="@+id/tv_latency_rate_sentence_id"/>
+    
+    <View
+        android:id="@+id/v_latency_rate_divider"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/layout_base_light_white"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

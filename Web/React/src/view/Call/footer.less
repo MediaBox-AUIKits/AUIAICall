@@ -1,0 +1,135 @@
+.footer {
+  position: relative;
+  z-index: 7;
+  height: 126px;
+  text-align: center;
+  user-select: none;
+
+  ._action-list {
+    display: flex;
+    justify-content: center;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+
+    li {
+      position: relative;
+      margin: 0 10px;
+      width: 52px;
+      padding-bottom: 40px;
+    }
+
+    .adm-button {
+      width: 40px;
+      height: 40px;
+      border-radius: 20px;
+      border-color: #d8d9e6;
+      padding: 0;
+
+      & > span {
+        display: inline-block;
+        width: 24px;
+        height: 24px;
+      }
+
+      svg {
+        vertical-align: middle;
+      }
+    }
+
+    ._camera-switch {
+      position: absolute;
+      border: none;
+      top: 0;
+      left: -60px;
+      padding-bottom: 40px;
+      .adm-button {
+        border: none;
+        background: none !important;
+      }
+    }
+
+    ._label {
+      position: absolute;
+      bottom: 0;
+      margin-top: 8px;
+      font-size: 12px;
+      line-height: 32px;
+      color: #878aab;
+      white-space: nowrap;
+      left: 50%;
+      transform: translate3d(-50%, 0, 0);
+    }
+
+    ._call {
+      .adm-button {
+        background: #20c591;
+        border-color: #20c591;
+        transition: background ease-in-out 200ms;
+        & > span {
+          transform: rotate(-130deg);
+          transition: transform ease-in-out 200ms;
+        }
+        svg {
+          vertical-align: 3px;
+        }
+      }
+
+      &.is-connected {
+        .adm-button {
+          background: #f23139;
+          border-color: #f23139;
+          & > span {
+            transform: rotate(0);
+          }
+        }
+      }
+    }
+
+    ._microphone.is-push-to-talk {
+      width: 82px;
+      .adm-button {
+        width: 70px;
+        &::before {
+          display: none;
+        }
+        &.is-pushing {
+          background: var(--adm-color-primary);
+          color: #fff;
+        }
+      }
+    }
+  }
+}
+
+@media screen and (min-width: 768px) {
+  .footer ._action-list {
+    li {
+      width: 60px;
+      margin: 0 28px;
+    }
+    ._call {
+      .adm-button {
+        svg {
+          vertical-align: -5px;
+        }
+      }
+    }
+
+    .adm-button {
+      width: 60px;
+      height: 60px;
+      border-radius: 30px;
+
+      & > span {
+        width: 30px;
+        height: 30px;
+      }
+
+      svg {
+        width: 30px;
+        height: 30px;
+      }
+    }
+  }
+}

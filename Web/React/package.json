@@ -22,10 +22,10 @@
     "react-dom": "^18.3.1",
     "uuid": "^11.1.0",
     "zustand": "^4.5.5",
-    "aliyun-auikit-aicall": "2.5.0"
+    "aliyun-auikit-aicall": "2.6.0"
   },
   "devDependencies": {
-    "@arms/rum-browser": "^0.0.33",
+    "@arms/rum-browser": "^0.0.37",
     "@eslint/js": "^9.8.0",
     "@types/markdown-it": "^14.1.2",
     "@types/react": "^18.3.3",

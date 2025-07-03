@@ -10,16 +10,16 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.lifecycle.ViewModelStoreOwner;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.aliyun.auikits.aiagent.util.Logger;
-import com.aliyun.auikits.aicall.BuildConfig;
 import com.aliyun.auikits.aicall.R;
 import com.aliyun.auikits.aicall.base.card.CardEntity;
 import com.aliyun.auikits.aicall.base.card.CardListAdapter;
 import com.aliyun.auikits.aicall.base.card.DefaultCardViewFactory;
-import com.aliyun.auikits.aicall.base.feed.AbsContentModel;
 import com.aliyun.auikits.aicall.base.feed.BizParameter;
 import com.aliyun.auikits.aicall.base.feed.ContentViewModel;
 import com.aliyun.auikits.aicall.bean.AudioToneData;
@@ -52,11 +52,22 @@ public class AICallSettingDialog {
     TextView mTvPushToTalk = null;
     ViewGroup mVgInterruptConfig = null;
     ViewGroup mVgVoicePrintStatus = null;
+    private static boolean isShouldShowLatencyRateDialog = false;
 
     public static void show(Context context, ARTCAICallEngine aRTCAICallEngine, boolean isAvatarAgent, boolean isVoicePrintRecognized, boolean isSharedAgent, List<AudioToneData> audioToneList) {
         View view = LayoutInflater.from(context).inflate(R.layout.dialog_aicall_setting, null, false);
         AICallSettingDialog aiCallSettingDialog = new AICallSettingDialog(view, aRTCAICallEngine, isAvatarAgent, isVoicePrintRecognized, isSharedAgent, audioToneList);
         view.setTag(aiCallSettingDialog);
+
+        // 设置仅在语音通话时显示
+        if(aRTCAICallEngine != null && aRTCAICallEngine.getAgentInfo().agentType != ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent
+                && aRTCAICallEngine.getAgentInfo().agentType != ARTCAICallEngine.ARTCAICallAgentType.VisionAgent) {
+            // 隐藏延时率界面
+            View latencyView = view.findViewById(R.id.cl_latency_rate);
+            if(latencyView != null) {
+                latencyView.setVisibility(View.GONE);
+            }
+        }
 
         ViewHolder viewHolder = new ViewHolder(view);
         DialogPlus dialog = DialogPlus.newDialog(context)
@@ -66,12 +77,23 @@ public class AICallSettingDialog {
                 .setOverlayBackgroundResource(android.R.color.transparent)
                 .setContentBackgroundResource(R.color.layout_base_dialog_background)
                 .setOnClickListener((dialog1, v) -> {
+                    if(v.getId() == R.id.btn_latency_rate) { // 延时率查看按钮被点击
+                        isShouldShowLatencyRateDialog = true;
+                        dialog1.dismiss();
+                        return;
+                    }
                     aiCallSettingDialog.onClick(v);
                 })
                 .setOnDismissListener(new OnDismissListener() {
                     @Override
                     public void onDismiss(DialogPlus dialog) {
+                        if(isShouldShowLatencyRateDialog) {
+                            // 退出设置界面时检查是否需要开启延迟率页面
+                            isShouldShowLatencyRateDialog = false;
+                            AICallLatencyRateDialog.showDialog(context, new ViewModelProvider((ViewModelStoreOwner) context), ()->{
 
+                            });
+                        }
                     }
                 })
                 .create();

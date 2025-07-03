@@ -19,12 +19,10 @@ AUI Kits AI 智能体集成工具适用于网络客服、AI 助理、撮合助�
 └── React
     ├── README.md
     ├── eslint.config.js
-    ├── index.html     // PC版入口
-    ├── mobile.html    // 手机版入口
+    ├── index.html     // 入口
     ├── package.json
     ├── src
-    │   ├── Mobile     // 手机版UI实现
-    │   ├── PC         // PC版UI实现
+    │   ├── view     // UI实现
     │   ├── common     // 公共业务方法
     │   ├── controller
     │   ├── interface.ts
@@ -59,8 +57,7 @@ const runConfig: AICallRunConfig = {
 
 - 根据业务情况，完善获取 UserId / Token（用于 AppServer 接口鉴权） 的逻辑
 - 执行命令 `npm run dev` 启动本地服务
-  - 访问 http://localhost:5173 即可查看 PC Demo
-  - 访问 http://localhost:5173/mobile 即可查看 Mobile Demo
+  - 访问 http://localhost:5173 即可查看 Demo
 
 ## 常见问题
 
