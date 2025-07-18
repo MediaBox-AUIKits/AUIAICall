@@ -39,7 +39,7 @@ TODO: Add long description of the pod here.
   s.subspec 'Standard' do |ss|
     ss.resources = 'Resources/AUIAICall.bundle'
     ss.source_files = 'Source/**/*.{swift,h,m,mm}'
-    ss.exclude_files = 'Source/AUIAICallMainViewController.swift', 'Source/ChatBot/**/*.{swift,h,m,mm}'
+    ss.exclude_files = 'Source/Main/**/*.{swift,h,m,mm}', 'Source/ChatBot/**/*.{swift,h,m,mm}'
     ss.dependency 'AUIFoundation'
     ss.dependency 'ARTCAICallKit'
     ss.dependency 'lottie-ios'
@@ -49,12 +49,13 @@ TODO: Add long description of the pod here.
   s.subspec 'Chatbot' do |ss|
     ss.resources = 'Resources/AUIAICall.bundle', 'Resources/AUIAIChat.bundle'
     ss.source_files = 'Source/**/*.{swift,h,m,mm}'
-    ss.exclude_files = 'Source/AUIAICallMainViewController.swift'
+    ss.exclude_files = 'Source/Main/**/*.{swift,h,m,mm}'
     ss.dependency 'AUIFoundation'
     ss.dependency 'ARTCAICallKit/Chatbot'
     ss.dependency 'MJRefresh'
     ss.dependency 'SwiftyMarkdown'
     ss.dependency 'SDWebImage'
+    ss.dependency 'lottie-ios'
     ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => '$(inherited) AICALL_ENABLE_CHATBOT'}
   end
   
@@ -67,7 +68,7 @@ TODO: Add long description of the pod here.
     ss.dependency 'SwiftyMarkdown'
     ss.dependency 'SDWebImage'
     ss.dependency 'lottie-ios'
-    ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => '$(inherited) AICALL_ENABLE_CHATBOT '}
+    ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => '$(inherited) AICALL_ENABLE_CHATBOT AICALL_ENABLE_DEMO '}
   end
   
   s.subspec 'Demo_For_Debug' do |ss|

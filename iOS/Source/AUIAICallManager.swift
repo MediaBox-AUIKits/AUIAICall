@@ -157,9 +157,14 @@ import ARTCAICallKit
         topVC.navigationController?.pushViewController(vc, animated: true)
 #endif  // define AICALL_ENABLE_CHATBOT
     }
-    
+
+#endif  // undefine DEMO_FOR_DEBUG
+}
+
+
+#if AICALL_ENABLE_DEMO
+extension AUIAICallManager {
     open func startOutboundCall(phoneNumber: String, agentId: String? = nil, region: String? = nil, voiceId: String? = nil, enableVoiceInterrupt: Bool, viewController: UIViewController? = nil) {
-        
         if self.userId == nil {
             self.userId = NSString.av_random()
         }
@@ -184,12 +189,8 @@ import ARTCAICallKit
         let topVC = viewController ?? UIViewController.av_top()
         topVC.navigationController?.pushViewController(vc, animated: true)
     }
-    
-#endif  // undefine DEMO_FOR_DEBUG
 }
-
-
-
+#endif  // undefine AICALL_ENABLE_DEMO
 
 
 #if DEMO_FOR_DEBUG
