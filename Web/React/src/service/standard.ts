@@ -4,6 +4,7 @@ import {
   AICallConfig,
   AICallErrorCode,
   AIChatAuthToken,
+  JSONObject,
 } from 'aliyun-auikit-aicall';
 
 import { getWorkflowType, TemplateConfig, WorkflowType } from './interface';
@@ -154,7 +155,7 @@ class StandardAppService {
       });
   };
 
-  describeAIAgent = async (
+  describeAIAgentInstance = async (
     userId: string,
     token: string,
     region: string,
@@ -197,6 +198,47 @@ class StandardAppService {
           return JSON.parse(data.template_config);
         }
         throw new AICallAgentError(`describeAIAgentInstance error, message: ${data.message || 'request error'}`);
+      });
+  };
+
+  describeAIAgent = async (userId: string, region: string, agentId: string): Promise<JSONObject> => {
+    if (!userId || !agentId) {
+      throw new AICallAgentError('userId or agentId is empty');
+    }
+
+    const param: {
+      user_id: string;
+      ai_agent_id: string;
+      region: string;
+    } = {
+      user_id: userId,
+      ai_agent_id: agentId,
+      region,
+    };
+
+    return fetch(`${this.appServer}/api/v2/aiagent/describeAIAgent`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: this.serverAuth || '',
+      },
+      body: JSON.stringify(param),
+    })
+      .then((res) => {
+        if (res.status === 403) {
+          const error = new AICallAgentError('token is invalid');
+          error.name = 'ServiceAuthError';
+          throw error;
+        } else if (res.status !== 200) {
+          throw new AICallAgentError(`describeAIAgent error, response status: ${res.status}`);
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (data.code === 200) {
+          return JSON.parse(data.ai_agent);
+        }
+        throw new AICallAgentError(`describeAIAgent error, message: ${data.message || 'request error'}`);
       });
   };
 
@@ -304,6 +346,96 @@ class StandardAppService {
         // @ts-expect-error reqId
         error.reqId = data.request_id || '';
         throw error;
+      });
+  };
+
+  getOssConfig = async (userId: string): Promise<JSONObject> => {
+    if (!userId) {
+      throw new AICallAgentError('userId is empty');
+    }
+
+    const param: {
+      user_id: string;
+    } = {
+      user_id: userId,
+    };
+
+    return fetch(`${this.appServer}/api/v2/aiagent/getOssConfig`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: this.serverAuth || '',
+      },
+      body: JSON.stringify(param),
+    })
+      .then((res) => {
+        if (res.status === 403) {
+          const error = new AICallAgentError('token is invalid');
+          error.name = 'ServiceAuthError';
+          throw error;
+        } else if (res.status !== 200) {
+          throw new AICallAgentError(`getOssConfig error, response status: ${res.status}`);
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (data.code === 200) {
+          return data;
+        }
+        throw new AICallAgentError(`getOssConfig error, message: ${data.message || 'request error'}`);
+      });
+  };
+
+  setAIAgentVoiceprint = async (
+    userId: string,
+    region: string,
+    voiceprintId: string,
+    input: string
+  ): Promise<JSONObject> => {
+    if (!userId || !voiceprintId || !input) {
+      throw new AICallAgentError('userId or voiceprintId or input is empty');
+    }
+
+    const param: {
+      user_id: string;
+      region: string;
+      voiceprint_id: string;
+      input: string;
+    } = {
+      user_id: userId,
+      region,
+      voiceprint_id: voiceprintId,
+      input,
+    };
+
+    return fetch(`${this.appServer}/api/v2/aiagent/setAIAgentVoiceprint`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: this.serverAuth || '',
+      },
+      body: JSON.stringify(param),
+    })
+      .then((res) => {
+        if (res.status === 403) {
+          const error = new AICallAgentError('token is invalid');
+          error.name = 'ServiceAuthError';
+          throw error;
+        } else if (res.status !== 200) {
+          throw new AICallAgentError(`setAIAgentVoiceprint error, response status: ${res.status}`);
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (data.code === 200) {
+          return data;
+        }
+        if (data.error_code === 'InvalidAudioDuration') {
+          const error = new AICallAgentError('InvalidAudioDuration');
+          error.name = 'InvalidAudioDuration';
+          throw error;
+        }
+        throw new AICallAgentError(`setAIAgentVoiceprint error, message: ${data.message || 'request error'}`);
       });
   };
 }

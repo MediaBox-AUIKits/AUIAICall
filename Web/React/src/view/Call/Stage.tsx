@@ -1,16 +1,17 @@
-import { useContext, useEffect, useRef } from 'react';
 import ControllerContext from '@/view/Call/ControlerContext';
+import { useContext, useEffect, useRef } from 'react';
 import Footer from './Footer';
 import Header from './Header';
 // import Subtitle from './Subtitle';
 import Tip from './Tip';
 
-import Voice from './Voice';
 import Avatar from './Avatar';
 import Vision from './Vision';
+import Voice from './Voice';
 
-import useCallStore from '@/view/Call/store';
+import { useTranslation } from '@/common/i18nContext';
 import { debounce, getRootElement, isMobile } from '@/common/utils';
+import useCallStore from '@/view/Call/store';
 import ARTCAICallEngine, {
   AICallAgentError,
   AICallAgentType,
@@ -19,7 +20,6 @@ import ARTCAICallEngine, {
 } from 'aliyun-auikit-aicall';
 import { Dialog, Toast } from 'antd-mobile';
 import Connecting from './Connecting';
-import { useTranslation } from '@/common/i18nContext';
 import Video from './Video';
 
 interface StageProps {
@@ -92,7 +92,7 @@ function Stage({ onStateChange, onExit, onAuthFail, limitSecond, autoCall = fals
 
     document.addEventListener('keydown', onKeyDown, true);
     return () => {
-      document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('keydown', onKeyDown, true);
     };
   }, [controller]);
 
@@ -101,6 +101,15 @@ function Stage({ onStateChange, onExit, onAuthFail, limitSecond, autoCall = fals
 
     const supportedResult = await ARTCAICallEngine.isSupported();
     if (!supportedResult.support) {
+      if (!window.isSecureContext) {
+        Dialog.show({
+          className: 'ai-not-support-dialog',
+          content: t('system.notSecureContext'),
+          actions: [],
+        });
+        return;
+      }
+
       Dialog.show({
         content: t('system.notSupported'),
         actions: [],
@@ -152,19 +161,13 @@ function Stage({ onStateChange, onExit, onAuthFail, limitSecond, autoCall = fals
         source: 'user',
         voiceprintResult,
       });
-      if (voiceprintResult === AICallVoiceprintResult.UndetectedSpeaker) {
-        Toast.show({
-          content: t('agent.voiceprintIgnored'),
-          getContainer: () => getRootElement(),
-        });
-      } else if (voiceprintResult === AICallVoiceprintResult.UndetectedSpeakerWithAIVad) {
-        Toast.show({
-          content: t('agent.aivadIgnored'),
-          getContainer: () => getRootElement(),
-        });
-      }
+
 
       console.log(`voiceprintResult to ${voiceprintResult}`);
+    });
+
+    controller.on('AICallLatencyStats', (stats) => {
+      useCallStore.getState().addLatencyRecord(stats);
     });
 
     controller.on('AICallUserTokenExpired', () => {
@@ -288,6 +291,8 @@ function Stage({ onStateChange, onExit, onAuthFail, limitSecond, autoCall = fals
       enablePushToTalk: !!currentAgentConfig?.enablePushToTalk,
       enableVoiceInterrupt: !!currentAgentConfig?.interruptConfig.enableVoiceInterrupt,
       voiceId: currentAgentConfig?.ttsConfig.agentVoiceId,
+      voiceprintId: currentAgentConfig?.voiceprintConfig.voiceprintId,
+      enableVoiceprint: currentAgentConfig?.voiceprintConfig.useVoiceprint,
     });
 
     try {

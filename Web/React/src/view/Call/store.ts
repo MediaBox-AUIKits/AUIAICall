@@ -6,6 +6,7 @@ import {
   AICallState,
   AICallSubtitleData,
   AICallVoiceprintResult,
+  LatencyStat,
 } from 'aliyun-auikit-aicall';
 
 type SubtitleItem = {
@@ -34,6 +35,10 @@ interface CallStore {
   enableVoiceInterrupt: boolean;
   updatingVoiceInterrupt: boolean;
 
+  enableVoiceprint: boolean;
+  updatingVoiceprint: boolean;
+  voiceprintId?: string;
+
   voiceId: string;
   updatingVoiceId: boolean;
 
@@ -42,11 +47,13 @@ interface CallStore {
 
   agentVoiceIdList: string[];
   voiceAvatarUrl: string;
+  latencyStats: LatencyStat[];
 
   reset: (reserveAgentType?: boolean) => void;
+  addLatencyRecord: (stats: LatencyStat) => void;
 }
 
-const initialCallState: Omit<CallStore, 'updateSubtitle' | 'reset'> = {
+const initialCallState: Omit<CallStore, 'updateSubtitle' | 'reset' | 'addLatencyRecord'> = {
   callState: AICallState.None,
   agentType: undefined,
   agentState: AICallAgentState.Listening,
@@ -58,12 +65,15 @@ const initialCallState: Omit<CallStore, 'updateSubtitle' | 'reset'> = {
   pushingToTalk: false,
   enableVoiceInterrupt: true,
   updatingVoiceInterrupt: false,
+  enableVoiceprint: false,
+  updatingVoiceprint: false,
   voiceId: '',
   updatingVoiceId: false,
   microphoneMuted: false,
   cameraMuted: false,
   agentVoiceIdList: [],
   voiceAvatarUrl: '',
+  latencyStats: [],
 };
 
 const useCallStore = create<CallStore>((set) => ({
@@ -71,6 +81,16 @@ const useCallStore = create<CallStore>((set) => ({
   updateSubtitle: (subtitle) =>
     set((state: CallStore) => {
       const newState: Partial<CallStore> = {};
+
+      // Agent 未识别到主讲人，跳过
+      // Agent did not recognize the speaker, skip
+      if (
+        subtitle.source === 'user' &&
+        (subtitle.voiceprintResult === AICallVoiceprintResult.UndetectedSpeaker ||
+          subtitle.voiceprintResult === AICallVoiceprintResult.UndetectedSpeakerWithAIVad)
+      ) {
+        return state;
+      }
 
       const existSubtitleIndex = state.subtitleList.findIndex(
         (item) => item.data.sentenceId === subtitle.data.sentenceId && item.source === subtitle.source
@@ -92,6 +112,12 @@ const useCallStore = create<CallStore>((set) => ({
       newState.currentSubtitle = subtitle;
 
       return newState;
+    }),
+  addLatencyRecord: (stats: LatencyStat) =>
+    set((state: CallStore) => {
+      return {
+        latencyStats: [stats, ...state.latencyStats],
+      };
     }),
   reset: (reserveAgentType = false) => {
     set((state: CallStore) => ({

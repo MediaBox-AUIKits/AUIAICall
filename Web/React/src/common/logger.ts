@@ -20,7 +20,7 @@ export type AUIAICallExternalTarget = {
 };
 
 class AUIAICallLogger {
-  private _logLevel = AUIAICallLogLevel.ERROR;
+  private _logLevel = AUIAICallLogLevel.WARN;
 
   private externalTarget?: AUIAICallExternalTarget;
 
@@ -70,8 +70,8 @@ class AUIAICallLogger {
   }
 
   log(level: AUIAICallLogLevel, ...args: any[]) {
-    if (level > this._logLevel) {
-      console.log([`[${logLevelMap[level]}]`], ...args);
+    if (level >= this._logLevel) {
+      console.log(`[${logLevelMap[level]}]`, ...args);
     }
     try {
       if (this.externalTarget) {

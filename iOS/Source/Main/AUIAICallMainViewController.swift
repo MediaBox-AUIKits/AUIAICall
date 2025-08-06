@@ -58,7 +58,13 @@ public let AUIAIMainBundle = AUIAICallTheme("AUIAIMain")
             self?.onTabIndexChanged()
         }
         
+        self.sysAgentContentView.inboundCallView.onPhoneNumAvailable = { [weak self] in
+            self?.onTabIndexChanged()
+        }
+        
         self.selectAgent(isCus: false, isAni: false)
+        
+        self.showVoiceprintBubbleIfNeed()
         
         // 提前获取Token
         AUIAICallAuthTokenHelper.shared.fetchAuthToken(userId: AUIAICallManager.defaultManager.userId!, completed: nil)
@@ -118,8 +124,14 @@ public let AUIAIMainBundle = AUIAICallTheme("AUIAIMain")
             guard let self = self else {
                 return
             }
-            
+            self.hideVoiceprintBubble()
             let panel = AUIAICallAgentConfigPanel(frame: CGRect(x: 0, y: 0, width: self.view.av_width, height: 0))
+            panel.voiceprintSettingView.registerBtn.clickBlock = { [weak self, weak panel] btn in
+                panel?.hide()
+                if let self = self {
+                    self.navigationController?.pushViewController(AUIAICallVoiceprintViewController(), animated: true)
+                }
+            }
             panel.show(on: self.view, with: .clickToClose)
         }
         return btn
@@ -164,6 +176,17 @@ public let AUIAIMainBundle = AUIAICallTheme("AUIAIMain")
                     let outboundCallView = self.sysAgentContentView.outboundCallView
                     guard let phoneNumber = outboundCallView.phoneNumber else { return }
                     AUIAICallManager.defaultManager.startOutboundCall(phoneNumber: phoneNumber, voiceId: outboundCallView.voiceId, enableVoiceInterrupt: outboundCallView.isVoiceInterrupted, viewController: self)
+                }
+                else if agentIndex == InboundCallTypeIndex {
+                    let inboundCallView = self.sysAgentContentView.inboundCallView
+                    guard let phoneNumber = inboundCallView.phoneNumber else { return }
+                    if let url = URL(string: "tel://\(phoneNumber)") {
+                        UIApplication.shared.open(url, options: [:]) { success in
+                            if !success {
+                                debugPrint("无法打开电话功能，请检查设备设置")
+                            }
+                        }
+                    }
                 }
                 else {
                     self.startCall(agentType: ARTCAICallAgentType(rawValue: Int32(agentIndex))!)
@@ -211,11 +234,12 @@ public let AUIAIMainBundle = AUIAICallTheme("AUIAIMain")
         var visible = false
         if self.sysAgentBtn.isSelected == true {
             let agentIndex = self.sysAgentTabView.agentIndex
-            if agentIndex != ChatAgentTypeIndex && agentIndex != OutboundCallTypeIndex {
+            if agentIndex != ChatAgentTypeIndex && agentIndex != OutboundCallTypeIndex && agentIndex != InboundCallTypeIndex {
                 visible = true
             }
         }
         self.configCallBtn.isHidden = !visible
+        self.voiceprintBubbleView?.isHidden = !visible
         self.startCallBtn.frame = visible ? CGRect(x: 36.0, y: self.contentView.av_height - 36.0 - UIView.av_safeBottom - 44.0, width: self.contentView.av_width - 36.0 - 36.0 - 32 - 8, height: 44.0) : CGRect(x: 36.0, y: self.contentView.av_height - 36.0 - UIView.av_safeBottom - 44.0, width: self.contentView.av_width - 36.0 - 36.0, height: 44.0)
         
         var enable = true
@@ -223,9 +247,20 @@ public let AUIAIMainBundle = AUIAICallTheme("AUIAIMain")
             if self.sysAgentTabView.agentIndex == OutboundCallTypeIndex {
                 enable = self.sysAgentContentView.outboundCallView.phoneNumber?.isEmpty == false
             }
+            else if self.sysAgentTabView.agentIndex == InboundCallTypeIndex {
+                enable = self.sysAgentContentView.inboundCallView.phoneNumber?.isEmpty == false
+            }
         }
         self.startCallBtn.isEnabled = enable
-
+        
+        var startCallText = AUIAIMainBundle.getString("Start")
+        if self.sysAgentBtn.isSelected == true {
+            if self.sysAgentTabView.agentIndex == InboundCallTypeIndex {
+                self.sysAgentContentView.inboundCallView.fetchCalledNumber(force: false)
+                startCallText = AUIAIMainBundle.getString("Call Immediately")
+            }
+        }
+        self.startCallBtn.setTitle(startCallText, for: .normal)
     }
     
     open func selectAgent(isCus: Bool, isAni: Bool) {
@@ -330,5 +365,35 @@ public let AUIAIMainBundle = AUIAICallTheme("AUIAIMain")
         let region = json["Region"] as? String
         
         return (agentId, agentIndex, region)
+    }
+    
+    open var voiceprintBubbleView: AUIAICallVoiceprintBubbleView? = nil
+    
+    func showVoiceprintBubbleIfNeed() {
+        
+        let showTips = UserDefaults.standard.object(forKey: "aui_voiceprint_tips") as? Bool
+        if showTips == true {
+            return
+        }
+        
+        let view = AUIAICallVoiceprintBubbleView()
+        view.text = "新增声纹特征信息录入"
+        view.textAlignment = .center
+        view.font = AVTheme.regularFont(12)
+        view.textColor = AVTheme.text_strong
+        view.sizeToFit()
+        view.av_height += 26
+        view.av_width += 32
+        view.av_right = self.configCallBtn.av_right - 6
+        view.av_bottom = self.configCallBtn.av_top - 14
+        self.contentView.addSubview(view)
+        self.voiceprintBubbleView = view
+    }
+    
+    func hideVoiceprintBubble() {
+        self.voiceprintBubbleView?.removeFromSuperview()
+        self.voiceprintBubbleView = nil
+        
+        UserDefaults.standard.set(true, forKey: "aui_voiceprint_tips")
     }
 }

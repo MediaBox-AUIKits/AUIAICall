@@ -40,6 +40,7 @@ let Region = "cn-shanghai"
     }
     
     let enableOutboundCall = false
+    let enableInboundCall = false
 
     public func getAgentID(agentType: ARTCAICallAgentType, emotional: Bool = true) -> String? {
         var ret: String? = nil
@@ -77,11 +78,13 @@ let Region = "cn-shanghai"
         super.init(frame: frame)
         
         self.titleView.text = AUIAICallBundle.getString("Options")
+        self.contentView.addSubview(self.voiceprintSettingView)
         self.contentView.addSubview(self.emotionLabel)
         self.contentView.addSubview(self.emotionInfoLabel)
         self.contentView.addSubview(self.unemotionalBtn)
         self.contentView.addSubview(self.emotionalBtn)
         
+        self.updateVoiceprintState()
         self.emotionalBtn.isSelected = AUIAICallAgentConfig.shared.emotional
         self.unemotionalBtn.isSelected = !self.emotionalBtn.isSelected
     }
@@ -97,12 +100,18 @@ let Region = "cn-shanghai"
     }
     
     open override class func panelHeight() -> CGFloat {
-        return 156 + 46
+        let vp = 74.0 + 48.0
+        return 156 + 46 + vp
     }
     
     private func updateLayout() {
         
         var top: CGFloat = 16
+        
+        let vp = 74.0 + (self.voiceprintSettingView.voiceprintIsApply ? 48.0 : 0.0)
+        self.voiceprintSettingView.frame = CGRect(x: 0, y: top, width: self.contentView.av_width, height: vp)
+        top = self.voiceprintSettingView.av_bottom + 16
+        
         self.emotionLabel.frame = CGRect(x: 20, y: top, width: self.contentView.av_width - 40, height: 22)
         
         top = self.emotionLabel.av_bottom + 4
@@ -114,6 +123,26 @@ let Region = "cn-shanghai"
         self.emotionalBtn.sizeToFit()
         self.emotionalBtn.frame = CGRect(x: self.unemotionalBtn.av_right + 16, y: top, width: self.emotionalBtn.av_width, height: 32)
     }
+    
+    private func updateVoiceprintState() {
+        self.voiceprintSettingView.voiceprintSwitch.switchBtn.isOn = AUIAICallVoiceprintManager.shared.isEnable
+        self.voiceprintSettingView.voiceprintIsApply = AUIAICallVoiceprintManager.shared.isEnable
+        if AUIAICallVoiceprintManager.shared.isRegistedVoiceprint() {
+            self.voiceprintSettingView.updateTextAfterRegstered()
+        }
+        self.setNeedsLayout()
+    }
+    
+    open lazy var voiceprintSettingView: AUIAICallVoiceprintSettingView = {
+        let view = AUIAICallVoiceprintSettingView()
+        view.voiceprintSwitch.switchBtn.isOn = AUIAICallVoiceprintManager.shared.isEnable
+        view.voiceprintSwitch.onSwitchValueChanged = { [weak self] bar in
+            AUIAICallVoiceprintManager.shared.enableVoiceprint(bar.switchBtn.isOn)
+            view.voiceprintSwitch.switchBtn.isOn = AUIAICallVoiceprintManager.shared.isEnable
+            self?.updateVoiceprintState()
+        }
+        return view
+    }()
     
     lazy var emotionLabel: UILabel = {
         let label = UILabel()
@@ -170,4 +199,85 @@ let Region = "cn-shanghai"
         }
         return btn
     }()
+}
+
+
+
+@objcMembers open class AUIAICallVoiceprintSettingView: UIView {
+    
+    public override init(frame: CGRect) {
+        super.init(frame: frame)
+        
+        self.clipsToBounds = true
+        self.addSubview(voiceprintSwitch)
+        self.addSubview(self.stateView)
+        self.stateView.addSubview(self.titleLabel)
+        self.stateView.addSubview(self.registerBtn)
+    }
+    
+    required public init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    open override func layoutSubviews() {
+        super.layoutSubviews()
+        
+        self.voiceprintSwitch.frame = CGRect(x: 0, y: 0, width: self.av_width, height: 74)
+        self.stateView.frame = CGRect(x: 20, y: self.voiceprintSwitch.av_bottom, width: self.av_width - 20 - 20, height: 48)
+
+        self.registerBtn.sizeToFit()
+        let width = self.registerBtn.av_width + 24
+        self.registerBtn.frame = CGRect(x: self.stateView.av_width - width - 16, y: (self.stateView.av_height - 22) / 2, width: width, height: 22)
+        
+        self.titleLabel.frame = CGRect(x: 16, y: 0, width: self.registerBtn.av_left - 16 - 8, height: self.stateView.av_height)
+    }
+    
+    open var voiceprintIsApply: Bool = false {
+        didSet {
+            self.stateView.isHidden = !self.voiceprintIsApply
+        }
+    }
+    
+    open lazy var voiceprintSwitch: AVSwitchBar = {
+        let view = AVSwitchBar()
+        view.titleLabel.text = AUIAICallBundle.getString("Voiceprint")
+        view.infoLabel.text = AUIAICallBundle.getString("The AI only uses your voice as input.")
+        view.lineView.isHidden = true
+        return view
+    }()
+    
+    open lazy var stateView: UIView = {
+        let view = UIView()
+        view.backgroundColor = AVTheme.fill_weak
+        view.layer.cornerRadius = 4
+        view.layer.masksToBounds = true
+        return view
+    }()
+    
+    open lazy var titleLabel: UILabel = {
+        let label = UILabel()
+        label.font = AVTheme.regularFont(12)
+        label.textColor = AVTheme.text_weak
+        label.numberOfLines = 0
+        label.text = AUIAICallBundle.getString("Voiceprint Feature Information") + "(\(AUIAICallBundle.getString("Unavailable in calls unless registered")))"
+        return label
+    }()
+    
+    open lazy var registerBtn: AVBlockButton = {
+        let btn = AVBlockButton()
+        btn.titleLabel?.font = AVTheme.regularFont(12)
+        btn.setImage(nil, for: .normal)
+        btn.setBorderColor(AVTheme.border_strong, for: .normal)
+        btn.setTitleColor(AVTheme.text_strong, for: .normal)
+        btn.setTitle(AUIAICallBundle.getString("Register") + " >", for: .normal)
+        btn.setTitle(AUIAICallBundle.getString("Re-register") + " >", for: .selected)
+        btn.isHidden = false
+        return btn
+    }()
+    
+    open func updateTextAfterRegstered() {
+        self.titleLabel.text = AUIAICallBundle.getString("Voiceprint Feature Information") + "(\(AUIAICallBundle.getString("Registered")))"
+        self.registerBtn.isSelected = true
+        self.setNeedsLayout()
+    }
 }

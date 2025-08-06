@@ -52,9 +52,14 @@ export default {
     title: 'AI智能体',
     btn: '开始体验',
     call: '智能体通话',
-    pstn: 'AI电话通话',
+    pstn: {
+      title: 'AI电话通话',
+      outbound: '电话呼出',
+      inbound: '电话呼入',
+    },
 
     optionsTitle: '配置项',
+    optionsTip: '新增声纹特征信息录入',
     options: {
       emotion: {
         title: '情绪音色',
@@ -68,6 +73,7 @@ export default {
   },
 
   system: {
+    notSecureContext: 'WebRTC 需要安全上下文，需要通过 localhost 或 HTTPS 访问页面',
     notSupported: '当前浏览器不支持WebRTC，建议您使用钉钉或微信打开',
     generateByAI: '内容由 AI 生成，仅供参考',
     connecting: '接通中，请稍后',
@@ -120,6 +126,13 @@ export default {
       natural: '自然对话模式',
     },
 
+    latency: {
+      title: '延时',
+      toDetail: '查看',
+      type: '对话延迟',
+      tip: '在一个通话轮次中，从用户讲完最后一个字，到接收到 AI 智能体首字响应的延时。注：对话延时有一定的统计失败率，当有不可抗拒的脏数据时，系统将会自动舍弃对话延时数据。',
+    },
+
     failed: '操作失败了',
     interrupt: {
       title: '智能打断',
@@ -127,6 +140,13 @@ export default {
       enabled: '智能打断已开启',
       disabled: '智能打断已关闭',
     },
+    voiceprint: {
+      title: '声纹识别',
+      help: 'AI仅把您的声音作为输入，即使同时有多个人在讲话',
+      enabled: '声纹识别已开启',
+      disabled: '声纹识别已关闭',
+    },
+
     voiceId: {
       title: '选择音色',
       help: '切换音色后，AI将在下一次回答中使用新的音色',
@@ -322,26 +342,56 @@ export default {
   },
 
   pstn: {
-    title: 'AI电话呼出',
-    phone: {
-      required: '手机号不能为空!',
-      error: '手机号格式不正确',
-      label: '被叫号码',
-      placeholder: '请输入被叫号码',
-      tip: '仅支持中国内地手机号',
+    outbound: {
+      title: 'AI电话呼出',
+      phone: {
+        required: '手机号不能为空!',
+        error: '手机号格式不正确',
+        label: '被叫号码',
+        placeholder: '请输入被叫号码',
+        tip: '仅支持中国内地手机号',
+      },
+      interrupt: {
+        label: '智能打断',
+      },
+      voiceId: {
+        label: '音色选择',
+      },
+      help: '体验后，系统将会被被叫号码拨通AI电话，请注意查收',
+      start: '开始体验',
+      result: {
+        fail: '呼叫失败，Code: {code}',
+        success: '呼出中，请注意接收手机来电',
+        copy: '复制',
+      },
     },
-    interrupt: {
-      label: '智能打断',
+
+    inbound: {
+      title: 'AI电话呼入',
+      number: '坐席号码',
+      numberHelp: '此号码可前往控制台配置',
+      copyed: '坐席号码已复制',
+      getting: '获取坐席号码中...',
+      failed: '无法获取号码，请刷新重试',
+      start: '马上拨打',
     },
-    voiceId: {
-      label: '音色选择',
-    },
-    help: '体验后，系统将会被被叫号码拨通AI电话，请注意查收',
-    start: '开始体验',
-    result: {
-      fail: '呼叫失败，Code: {code}',
-      success: '呼出中，请注意接收手机来电',
-      copy: '复制',
-    },
+  },
+
+  voiceprint: {
+    title: '声纹特征信息',
+    intro: '朗读一段文字，让AI识别你的声音作为输入',
+    instruction: '请在安静的环境下朗读下面这段话',
+    instructionText:
+      ' “哇，我觉得你今天穿的这件裙子特别鲜艳，款式很优雅，特别衬托你的气质，真的太漂亮了。你能告诉我是在哪家店买的这么好看的裙子嘛，我也去淘一件。”',
+    recording: '录音中',
+    recordingSecond: '秒',
+    duration: '录制时长：最少12秒最多60秒',
+    uploading: '声纹信息正在上传中，请耐心等待',
+    tooShort: '声纹录入时间过短，请重新录制',
+    failed: '声纹录入失败，请重新录制',
+    noiseReduction: '声纹降噪',
+    help: 'AI仅把您的声音作为输入，即使同时有多个人在讲话',
+    enrolled: '声纹特征信息（已录入）',
+    enroll: '录入',
   },
 };

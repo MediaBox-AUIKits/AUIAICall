@@ -29,6 +29,9 @@ public class SettingStorage {
     public static final String KEY_BOOT_ENABLE_AUDIO_DELAY_INFO = "KEY_BOOT_ENABLE_AUDIO_DELAY_INFO";
     public static final String KEY_BOOT_ENABLE_AGENT_AUTO_EXIT = "KEY_BOOT_ENABLE_AGENT_AUTO_EXIT";
     public static final String KEY_BOOT_ENABLE_SEMATNIC = "KEY_BOOT_ENABLE_SEMATNIC";
+    public static final String KEY_BOOT_ENABLE_AUDIO_AEC = "KEY_BOOT_ENABLE_AUDIO_AEC";
+    public static final String KEY_BOOT_ENABLE_LLM_COMPLETE_REPLY = "KEY_BOOT_ENABLE_LLM_COMPLETE_REPLY";
+    public static final String KEY_BOOT_ENABLE_BRUST_SEND_RECV = "KEY_BOOT_ENABLE_BRUST_SEND_RECV";
 
     public static final String KEY_ENABLE_VOICE_INTERRUPT = "KEY_ENABLE_VOICE_INTERRUPT";
     public static final String KEY_VOICE_ID = "KEY_VOICE_ID";
@@ -37,9 +40,13 @@ public class SettingStorage {
     public static final String KEY_WORK_FLOW_OVERRIDE_PARAMS = "KEY_WORK_FLOW_OVERRIDE_PARAMS";
     public static final String KEY_BAILIAN_APP_PARAMS = "KEY_BAILIAN_APP_PARAMS";
     public static final String KEY_LLM_SYSTEM_PROMPT = "KEY_LLM_SYSTEM_PROMPT";
+    public static final String KEY_LLM_HISTORY_LIMIT = "KEY_LLM_HISTORY_LIMIT";
     public static final String KEY_VOLUME = "KEY_VOLUME";
     public static final String KEY_GREETING = "KEY_GREETING";
     public static final String KEY_VOICE_PRINT_ID = "KEY_VOICE_PRINT_ID";
+    public static final String KEY_VOICE_PRINT_RECORD_ALRAEDY = "KEY_VOICE_PRINT_RECORD_ALRAEDY";
+    public static final String KEY_VOICE_PRINT_NOT_RECORD_NOT_WORK = "KEY_VOICE_PRINT_NOT_RECORD_NOT_WORK";
+    public static final String KEY_VOICE_PRINT_FIRST_RECORD_TIPS = "KEY_VOICE_PRINT_FIRST_RECORD_TIPS";
     public static final String KEY_ENABLE_INTELLIGENT_SEGMENT = "KEY_ENABLE_INTELLIGENT_SEGMENT";
     public static final String KEY_AVATAR_ID = "KEY_AVATAR_ID";
     public static final String KEY_ASR_MAX_SILENCE = "KEY_ASR_MAX_SILENCE";
@@ -54,7 +61,12 @@ public class SettingStorage {
     public static final String KEY_PRONUNCIATION_RULES = "KEY_PRONUNCIATION_RULES";
     public static final String KEY_VCR_CONFIG_RULES = "KEY_VCR_CONFIG_RULES";
     public static final String KEY_BOOT_SEMATNIC_DURATION = "KEY_BOOT_SEMATNIC_DURATION";
-
+    public static final String KEY_BOOT_VAD_DURATION = "KEY_BOOT_VAD_DURATION";
+    public static final String KEY_BOOT_TTS_SPEECH_RATE = "KEY_BOOT_TTS_SPEECH_RATE";
+    public static final String KEY_BOOT_TTS_LANGUAGE_ID = "KEY_BOOT_TTS_LANGUAGE_ID";
+    public static final String KEY_BOOT_TTS_EMOTION = "KEY_BOOT_TTS_EMOTION";
+    public static final String KEY_BOOT_TTS_MODEL_ID = "KEY_BOOT_TTS_MODEL_ID";
+    public static final String KEY_BOOT_OPENAI_EXTRA_QUERY = "KEY_BOOT_OPENAI_EXTRA_QUERY";
 
 
     public static final boolean DEFAULT_DEPOSIT_SWITCH = BuildConfig.TEST_ENV_MODE ?
@@ -73,8 +85,8 @@ public class SettingStorage {
             false :
             false;  // 发布包默认要为false
     public static final boolean DEFAULT_ENABLE_VOICE_PRINT = BuildConfig.TEST_ENV_MODE ?
-            false :
-            false;  // 发布包默认要为false
+            true :
+            true;  // 发布包默认要为false
     public static final boolean DEFAULT_SHARE_BOOT_USE_DEMO_APP_SERVER = BuildConfig.TEST_ENV_MODE ?
             false :
             false; // 发布包默认改为false

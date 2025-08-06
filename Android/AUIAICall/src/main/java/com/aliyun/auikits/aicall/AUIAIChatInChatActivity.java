@@ -73,6 +73,7 @@ import com.aliyun.auikits.aicall.model.ChatBotSelectImagesContentModel;
 import com.aliyun.auikits.aicall.util.AUIAICallAgentDebug;
 import com.aliyun.auikits.aicall.util.AUIAICallAgentIdConfig;
 import com.aliyun.auikits.aicall.util.AUIAICallAuthTokenHelper;
+import com.aliyun.auikits.aicall.util.AUIAICallClipboardUtils;
 import com.aliyun.auikits.aicall.util.AUIAIChatAuthTokenHelper;
 import com.aliyun.auikits.aicall.util.AUIAIChatFileUtil;
 import com.aliyun.auikits.aicall.util.AUIAIChatMessageCacheHelper;
@@ -299,7 +300,7 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
                                     R.string.copy, new AICallNoticeDialog.IActionHandle() {
                                         @Override
                                         public void handleAction() {
-                                            copyToClipboard(AUIAIChatInChatActivity.this, requestId);
+                                            AUIAICallClipboardUtils.copyToClipboard(AUIAIChatInChatActivity.this, requestId);
                                             ToastHelper.showToast(AUIAIChatInChatActivity.this, R.string.chat_bot_copy_text_tips, Toast.LENGTH_SHORT);
                                         }
                                     }
@@ -1348,7 +1349,7 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
                             ChatBotChatMessage uiMessage = (ChatBotChatMessage) cardEntity.bizData;
                             if(uiMessage.getMessage() != null) {
                                 if(!TextUtils.isEmpty(uiMessage.getMessage().text)) {
-                                    copyToClipboard(mContextRef.get(), uiMessage.getMessage().text);
+                                    AUIAICallClipboardUtils.copyToClipboard(mContextRef.get(), uiMessage.getMessage().text);
                                     ToastHelper.showToast(mContextRef.get(), "Text has copyed", Toast.LENGTH_SHORT);
                                     copyIcon.setImageResource(R.drawable.ic_chatbot_message_copyed);
                                     new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
@@ -1838,14 +1839,5 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
         }
 
 
-    }
-
-    public void copyToClipboard(Context context, String text) {
-        // 获取剪贴板管理器
-        ClipboardManager clipboard = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
-        // 创建剪贴板数据
-        ClipData clip = ClipData.newPlainText("AUIAICall", text); // "label" 可以自定义
-        // 将数据放入剪贴板
-        clipboard.setPrimaryClip(clip);
     }
 }

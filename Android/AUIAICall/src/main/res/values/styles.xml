@@ -55,6 +55,11 @@
         <item name="android:textColor">@color/layout_base_gray</item>
     </style>
 
+    <style name="layout_base_text_style_12_light_graw">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/layout_voiceprint_record_time_color</item>
+    </style>
+
 
     <style name="layout_base_text_style_10">
         <item name="android:textSize">10sp</item>

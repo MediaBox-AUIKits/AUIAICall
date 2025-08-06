@@ -1,5 +1,8 @@
 package com.aliyun.auikits.aicall;
 
+import static com.aliyun.auikits.aiagent.ARTCAICallEngine.ARTCAICallTurnDetectionMode.ARTCAICallTurnDetectionNormalMode;
+import static com.aliyun.auikits.aiagent.ARTCAICallEngine.ARTCAICallTurnDetectionMode.ARTCAICallTurnDetectionSemanticMode;
+
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -19,6 +22,7 @@ import com.aliyun.auikits.aiagent.service.ARTCAICallServiceImpl;
 import com.aliyun.auikits.aiagent.util.Logger;
 import com.aliyun.auikits.aicall.util.AUIAICallAgentDebug;
 import com.aliyun.auikits.aicall.util.AUIAICallAgentIdConfig;
+import com.aliyun.auikits.aicall.util.AUIAICallClipboardUtils;
 import com.aliyun.auikits.aicall.util.AUIAIConstStrKey;
 import com.aliyun.auikits.aicall.util.AppServiceConst;
 import com.aliyun.auikits.aicall.util.BizStatHelper;
@@ -74,7 +78,7 @@ public class AUIAICallInPhoneCallActivity extends AppCompatActivity {
        findViewById(R.id.iv_call_instanceid_copy).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                copyToClipboard(AUIAICallInPhoneCallActivity.this, mInstanceId);
+                AUIAICallClipboardUtils.copyToClipboard(AUIAICallInPhoneCallActivity.this, mInstanceId);
                 ToastHelper.showToast(AUIAICallInPhoneCallActivity.this, R.string.pstn_out_call_instanceid_copied, Toast.LENGTH_SHORT);
             }
        });
@@ -98,7 +102,7 @@ public class AUIAICallInPhoneCallActivity extends AppCompatActivity {
                                     R.string.copy, new AICallNoticeDialog.IActionHandle() {
                                         @Override
                                         public void handleAction() {
-                                            copyToClipboard(AUIAICallInPhoneCallActivity.this, mInstanceId);
+                                            AUIAICallClipboardUtils.copyToClipboard(AUIAICallInPhoneCallActivity.this, mInstanceId);
                                             ToastHelper.showToast(AUIAICallInPhoneCallActivity.this, R.string.copied, Toast.LENGTH_SHORT);
                                         }
                                     }
@@ -165,7 +169,9 @@ public class AUIAICallInPhoneCallActivity extends AppCompatActivity {
                 }
 
                 ARTCAICallEngine.ARTCAICallAgentConfig agentConfig = new ARTCAICallEngine.ARTCAICallAgentConfig();
+                agentConfig.asrConfig.asrMaxSilence = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_ASR_MAX_SILENCE, "400"));
                 agentConfig.asrConfig.asrLanguageId = SettingStorage.getInstance().get(SettingStorage.KEY_USER_ASR_LANGUAGE);
+                agentConfig.asrConfig.customParams = SettingStorage.getInstance().get(SettingStorage.KEY_ASR_CUSTOM_PARAMS);
                 String asrHotWords = SettingStorage.getInstance().get(SettingStorage.KEY_ASR_HOT_WORDS);
                 if(!TextUtils.isEmpty(asrHotWords)) {
                     agentConfig.asrConfig.asrHotWords = new ArrayList<String>();
@@ -180,9 +186,13 @@ public class AUIAICallInPhoneCallActivity extends AppCompatActivity {
                         agentConfig.asrConfig.asrHotWords.add(asrHotWords);
                     }
                 }
+                agentConfig.asrConfig.vadLevel = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_VAD_LEVEL, "11"));
+                agentConfig.asrConfig.vadDuration = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_VAD_DURATION, "0"));
+
                 agentConfig.agentGreeting = SettingStorage.getInstance().get(SettingStorage.KEY_GREETING);
                 agentConfig.llmConfig.bailianAppParams = SettingStorage.getInstance().get(SettingStorage.KEY_BAILIAN_APP_PARAMS);
                 agentConfig.llmConfig.llmSystemPrompt = SettingStorage.getInstance().get(SettingStorage.KEY_LLM_SYSTEM_PROMPT);
+                agentConfig.llmConfig.llmHistoryLimit = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_LLM_HISTORY_LIMIT, "10"));
                 String interruptWorks = SettingStorage.getInstance().get(SettingStorage.KEY_INTERRUPT_WORDS);
                 if(!TextUtils.isEmpty(interruptWorks)) {
                     agentConfig.interruptConfig.interruptWords = new ArrayList<String>();
@@ -204,6 +214,10 @@ public class AUIAICallInPhoneCallActivity extends AppCompatActivity {
                     agentConfig.interruptConfig.enableVoiceInterrupt = false;
                 }
                 agentConfig.ttsConfig.agentVoiceId = mVoiceId;
+                agentConfig.ttsConfig.speechRate = Double.parseDouble(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_TTS_SPEECH_RATE, "1.0"));
+                agentConfig.ttsConfig.languageId = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_TTS_LANGUAGE_ID, "");
+                agentConfig.ttsConfig.emotion = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_TTS_EMOTION, "");
+                agentConfig.ttsConfig.modelId = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_TTS_MODEL_ID, "");
 
                 String turnEndWords = SettingStorage.getInstance().get(SettingStorage.KEY_TURN_END_WORDS);
                 if(!TextUtils.isEmpty(turnEndWords)) {
@@ -220,8 +234,13 @@ public class AUIAICallInPhoneCallActivity extends AppCompatActivity {
                     }
                 }
 
-                agentConfig.enableIntelligentSegment = SettingStorage.getInstance().get(SettingStorage.KEY_ENABLE_INTELLIGENT_SEGMENT).equals("1") ? true:false;
+                agentConfig.turnDetectionConfig.mode = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_SEMATNIC, true) ? ARTCAICallTurnDetectionSemanticMode : ARTCAICallTurnDetectionNormalMode;
+                String sematnicDuration = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_SEMATNIC_DURATION, "-1");
+                if(!TextUtils.isEmpty(sematnicDuration)) {
+                    agentConfig.turnDetectionConfig.semanticWaitDuration = Integer.parseInt(sematnicDuration);
+                }
 
+                agentConfig.enableIntelligentSegment = SettingStorage.getInstance().get(SettingStorage.KEY_ENABLE_INTELLIGENT_SEGMENT).equals("1") ? true:false;
 
                 JSONObject outboundCallObject = new JSONObject();
                 jsonObject.put("config",agentConfig.toData().toString());
@@ -291,14 +310,6 @@ public class AUIAICallInPhoneCallActivity extends AppCompatActivity {
         });
     }
 
-    public void copyToClipboard(Context context, String text) {
-        // 获取剪贴板管理器
-        ClipboardManager clipboard = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
-        // 创建剪贴板数据
-        ClipData clip = ClipData.newPlainText("AUIAICall", text); // "label" 可以自定义
-        // 将数据放入剪贴板
-        clipboard.setPrimaryClip(clip);
-    }
 
     private void commitReporting(List<Integer> reportTypeIdList, String otherTypeDesc) {
 

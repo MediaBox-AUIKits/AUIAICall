@@ -112,3 +112,10 @@
 * Android&iOS&Web：支持TTS发音优化
 * Android&iOS&Web：支持通话过程中更新百炼业务参数
 * Android&iOS&Web：支持语义断句
+
+
+## v2.7.0
+发布时间：2025-08-06
+* Android&iOS&Web：新增AI电话呼入
+* Android&iOS&Web：新增声纹识别2.0
+* Android&iOS&Web：代码优化及bug修复

@@ -17,7 +17,7 @@
 "AI Chat" = "消息对话";
 "AI Video Call" = "视频通话";
 "AI Call Out" = "AI电话呼出";
-
+"AI Call In" = "AI电话呼入";
 
 "Calling Number" = "被叫号码";
 "Input your phone number" = "请输入手机号";
@@ -33,3 +33,11 @@
 "The call is being placed, please be ready to answer" = "呼出中，请注意接收手机来电";
 "Call failed" = "呼叫失败";
 "InstanceId copied" = "实例ID已复制";
+
+
+"Agent Number" = "坐席号码";
+"This number is from the console configuration" = "此号码来自控制台配置";
+"Call Immediately" = "马上拨打";
+"The agent number has been copied." = "坐席号码已复制";
+"Getting the agent number..." = "获取坐席号码中...";
+"Failed to get the number, please refresh and try again." = "无法获取号码，请刷新重试";

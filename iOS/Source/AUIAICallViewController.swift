@@ -82,7 +82,7 @@ import ARTCAICallKit
             let agentViewConfig = ARTCAICallViewConfig(view: self.callContentView.agentView!.renderView)
             self.controller.setAgentViewConfig(viewConfig: agentViewConfig)
         }
-        
+                
         self.controller.delegate = self
         self.controller.start()
         
@@ -108,7 +108,11 @@ import ARTCAICallKit
     }
     
     public let controller: AUIAICallControllerInterface
-    public var enableVoiceprintSwitch: Bool = true
+    
+    private var isVoiceprintSupportted: Bool {
+        // 同一区域下，声纹降噪功能才能生效
+        return self.controller.config.region == AUIAICallVoiceprintManager.shared.region
+    }
     
     open lazy var titleLabel: UILabel = {
         let label = UILabel()
@@ -331,8 +335,9 @@ extension AUIAICallViewController {
         }
         let panel = AUIAICallSettingPanel(frame: CGRect(x: 0, y: 0, width: self.view.av_width, height: 0))
         panel.voiceIdList = self.controller.agentVoiceIdList
-        panel.enableVoiceprintSwitch = self.enableVoiceprintSwitch
         panel.config = self.controller.config
+//        panel.canShowVoiceprintSwitch = self.isVoiceprintSupportted
+        panel.canShowVoiceprintSwitch = false   // 暂不支持在通话中开闭声纹识别
         panel.isVoiceprintRegisted = self.controller.isVoiceprintRegisted
         panel.applyPlayBlock = { [weak self] item in
             self?.controller.switchVoiceId(voiceId: item.voiceId, completed: { error in
@@ -367,23 +372,38 @@ extension AUIAICallViewController {
                 }
             })
         }
+        panel.voiceprintSwitch.switchBtn.isOn = AUIAICallVoiceprintManager.shared.canUseVoiceprint()
+        panel.voiceprintSwitch.registerBtn.isHidden = !AUIAICallVoiceprintManager.shared.isRegistedVoiceprint()
         panel.voiceprintBlock = { [weak self, weak panel] isOn in
-            self?.controller.useVoiceprint(isUse: isOn, completed: { error in
-                if let self = self {
-                    if error != nil {
-                        panel?.voiceprintSettingView.voiceprintSwitch.switchBtn.isOn = self.controller.config.agentConfig.voiceprintConfig.useVoiceprint
-                        AVToastView.show(AUIAICallBundle.getString("Failed to switch voiceprint"), view: self.view, position: .mid)
-                        return
+            guard let self = self else {
+                return
+            }
+            let isRegisted = AUIAICallVoiceprintManager.shared.isRegistedVoiceprint()
+            if isRegisted {
+                self.controller.useVoiceprint(isUse: isOn, completed: {[weak self] error in
+                    if let self = self {
+                        if error != nil {
+                            panel?.voiceprintSwitch.switchBtn.isOn = !isOn
+                            AVToastView.show(AUIAICallBundle.getString("Failed to switch voiceprint"), view: self.view, position: .mid)
+                            return
+                        }
+                        
+                        AUIAICallVoiceprintManager.shared.enableVoiceprint(isOn)
+                        if AUIAICallVoiceprintManager.shared.isEnable {
+                            AVToastView.show(AUIAICallBundle.getString("Voiceprint is turned on"), view: self.view, position: .mid)
+                        }
+                        else {
+                            AVToastView.show(AUIAICallBundle.getString("Voiceprint is turned off"), view: self.view, position: .mid)
+                        }
                     }
-                    
-                    if self.controller.config.agentConfig.voiceprintConfig.useVoiceprint {
-                        AVToastView.show(AUIAICallBundle.getString("Voiceprint is turned on"), view: self.view, position: .mid)
-                    }
-                    else {
-                        AVToastView.show(AUIAICallBundle.getString("Voiceprint is turned off"), view: self.view, position: .mid)
-                    }
+                })
+            }
+            else {
+                if isOn == true {
+                    panel?.voiceprintSwitch.switchBtn.isOn = false
+                    AVAlertController.show(AUIAICallBundle.getString("Voiceprint noise reduction is not enabled. This feature is temporarily unavailable. Please go to the Entry Page > Settings to enable it before use."), vc: self)
                 }
-            })
+            }
         }
         panel.clearVoiceprintBlock = { [weak self] sender in
             if let self = self {

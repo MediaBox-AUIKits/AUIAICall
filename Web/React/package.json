@@ -1,7 +1,7 @@
 {
   "name": "amaui-web-aicall",
   "private": true,
-  "version": "2.5.0",
+  "version": "2.7.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -22,7 +22,7 @@
     "react-dom": "^18.3.1",
     "uuid": "^11.1.0",
     "zustand": "^4.5.5",
-    "aliyun-auikit-aicall": "2.6.0"
+    "aliyun-auikit-aicall": "2.7.1"
   },
   "devDependencies": {
     "@arms/rum-browser": "^0.0.37",
@@ -39,6 +39,7 @@
     "globals": "^15.9.0",
     "less": "^4.2.0",
     "prettier": "3.5.3",
+    "prettier-plugin-organize-imports": "^4.2.0",
     "terser": "^5.31.6",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.0",
@@ -47,5 +48,8 @@
     "vite-plugin-dts": "^4.2.2",
     "vite-plugin-svgr": "^4.2.0",
     "yargs-parser": "^21.1.1"
+  },
+  "overrides": {
+    "rollup": "4.44.2"
   }
 }

@@ -1,6 +1,7 @@
 import standardService from '@/service/standard.ts';
 import EventEmitter from 'eventemitter3';
 import {
+  AICallAgentError,
   AICallAgentInfo,
   AICallAgentShareConfig,
   AICallAgentState,
@@ -70,8 +71,8 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
   }
 
   protected set state(state: AICallState) {
-    this.emit('AICallStateChanged', state);
     this._state = state;
+    this.emit('AICallStateChanged', state);
   }
 
   protected _errorCode?: AICallErrorCode;
@@ -132,11 +133,11 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
       this._currentEngine = new ARTCAICallEngine(this.engineConfig);
     }
 
-    this._currentEngine.on('errorOccurred', (errorCode: number) => {
-      this.engine?.handup();
+    this._currentEngine.on('errorOccurred', (errorCode: number, msg: string) => {
       this._errorCode = errorCode;
       this.state = AICallState.Error;
-      logger.error('AICallErrorOccurred', new Error(`code: ${errorCode}`));
+      this.engine?.handup();
+      logger.error('AICallErrorOccurred', new AICallAgentError(msg || `code: ${errorCode}`, errorCode));
     });
 
     // Agent 状态相关
@@ -160,6 +161,9 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
     );
     this._currentEngine.on('agentEmotionNotify', (emotion, sentenceId) => {
       this.emit('AICallAgentEmotionNotify', emotion, sentenceId);
+    });
+    this._currentEngine.on('latencyStats', (stats) => {
+      this.emit('AICallLatencyStats', stats);
     });
 
     // 鉴权相关
@@ -230,7 +234,7 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
 
   abstract start(): Promise<void>;
 
-  protected async describeAIAgent(instanceId: string) {
+  protected async describeAIAgentInstance(instanceId: string) {
     const startTs = Date.now();
     // release remove start
     // 如果是分享链接，则处理
@@ -240,7 +244,7 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
     // release remove end
 
     try {
-      const agentConfig = await standardService.describeAIAgent(
+      const agentConfig = await standardService.describeAIAgentInstance(
         this.userId,
         this.token,
         this.config.region,
@@ -251,9 +255,9 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
       const configValue = agentConfig[configKey];
       if (!configValue) return;
       this.emit('AICallAgentConfigLoaded', configValue as JSONObject);
-      logger.info('Controller', 'DescribeAIAgent', { value: Date.now() - startTs });
+      logger.info('Controller', 'DescribeAIAgentInstance', { value: Date.now() - startTs });
     } catch (error) {
-      logger.info('DescribeAIAgentFailed', (error as Error)?.name || (error as Error)?.message || '');
+      logger.info('DescribeAIAgentInstanceFailed', (error as Error)?.name || (error as Error)?.message || '');
     }
   }
 
@@ -498,6 +502,14 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
     logger.info('Controller', 'StopVisionCustomCapture');
     if (this.state === AICallState.Connected) {
       return !!this.engine?.stopVisionCustomCapture();
+    }
+    return false;
+  }
+
+  enableVoiceprint(enable: boolean) {
+    logger.info('Controller', 'EnableVoiceprint');
+    if (this.state === AICallState.Connected) {
+      return !!this.engine?.enableVoiceprint(enable);
     }
     return false;
   }

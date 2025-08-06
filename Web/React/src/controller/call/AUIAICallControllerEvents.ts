@@ -7,6 +7,7 @@ import {
   AICallSubtitleData,
   AICallVoiceprintResult,
   JSONObject,
+  LatencyStat,
 } from 'aliyun-auikit-aicall';
 
 interface AUIAICallControllerEvents {
@@ -146,6 +147,8 @@ interface AUIAICallControllerEvents {
    * @param result VCR Result
    */
   AICallReceivedAgentVcrResult: (result: AICallAgentVcrResult) => void;
+
+  AICallLatencyStats: (stats: LatencyStat) => void;
 }
 
 export default AUIAICallControllerEvents;

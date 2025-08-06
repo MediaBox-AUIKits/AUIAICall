@@ -306,6 +306,20 @@ public abstract class ARTCAICallController {
                 mBizCallEngineCallback.onReceivedAgentVcrResult(result);
             }
         }
+
+        @Override
+        public void onAgentVideoStats(AliRtcEngine.AliRtcRemoteVideoStats aliRtcStats){
+            if(null != mBizCallEngineCallback) {
+                mBizCallEngineCallback.onAgentVideoStats(aliRtcStats);
+            }
+        }
+
+        @Override
+        public void onAgentAudioStats(AliRtcEngine.AliRtcRemoteAudioStats aliRtcStats){
+            if(null != mBizCallEngineCallback) {
+                mBizCallEngineCallback.onAgentAudioStats(aliRtcStats);
+            }
+        }
     };
 
     protected ARTCAICallController(Context context, String userId) {

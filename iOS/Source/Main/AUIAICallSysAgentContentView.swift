@@ -46,6 +46,12 @@ import AUIFoundation
         return view
     }()
     
+    open lazy var inboundCallView: AUIAICallInboundCallContentView = {
+        let view = AUIAICallInboundCallContentView(frame: CGRect(x: 0, y: 0, width: self.av_width, height: self.av_height))
+        view.tag = InboundCallTypeIndex
+        return view
+    }()
+    
     open lazy var listView: [UIView] = {
         var list: [UIView] = [
             self.creatImageView(bg: AUIAIMainBundle.getCommonImage("bg_main_voice"), tag: VoiceAgentTypeIndex),
@@ -56,6 +62,9 @@ import AUIFoundation
         ]
         if AUIAICallAgentConfig.shared.enableOutboundCall {
             list.append(self.outboundCallView)
+        }
+        if AUIAICallAgentConfig.shared.enableInboundCall {
+            list.append(self.inboundCallView)
         }
         return list
     }()

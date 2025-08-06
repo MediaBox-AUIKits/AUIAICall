@@ -14,6 +14,7 @@ let VisionAgentTypeIndex: Int = 2
 let VideoAgentTypeIndex: Int = 3
 let ChatAgentTypeIndex: Int = 100
 let OutboundCallTypeIndex: Int = 101
+let InboundCallTypeIndex: Int = 102
 
 @objcMembers open class AUIAICallSysAgentTabView: UIScrollView {
     
@@ -51,6 +52,13 @@ let OutboundCallTypeIndex: Int = 101
             self.outboundCallBtn.av_left = right
             self.addSubview(self.outboundCallBtn)
             right = self.outboundCallBtn.av_right + 28
+        }
+        
+        if AUIAICallAgentConfig.shared.enableInboundCall {
+            self.inboundCallBtn.sizeToFit()
+            self.inboundCallBtn.av_left = right
+            self.addSubview(self.inboundCallBtn)
+            right = self.inboundCallBtn.av_right + 28
         }
         
         self.addSubview(self.lineView)
@@ -155,6 +163,21 @@ let OutboundCallTypeIndex: Int = 101
         return btn
     }()
     
+    open lazy var inboundCallBtn: AVBlockButton = {
+        let btn = AVBlockButton(frame: CGRect(x: self.videoCallBtn.av_right + 20.0, y: 0, width: 0, height: 0))
+        btn.setTitle(AUIAIMainBundle.getString("AI Call In"), for: .normal)
+        btn.setTitleColor(AVTheme.text_weak, for: .normal)
+        btn.setTitleColor(AVTheme.colourful_text_strong, for: .selected)
+        btn.titleLabel?.font = AVTheme.mediumFont(12)
+        btn.tag = InboundCallTypeIndex
+        btn.clickBlock = { [weak self] sender in
+            let agentIndex: Int = sender.tag
+            self?.agentIndex = agentIndex
+            self?.agentWillChanged?(agentIndex)
+        }
+        return btn
+    }()
+    
     open lazy var lineView: UIView = {
         let view = UIView(frame: CGRect(x: self.audioCallBtn.av_left, y: self.audioCallBtn.av_bottom + 4, width: self.audioCallBtn.av_width, height: 1))
         view.backgroundColor = AVTheme.colourful_text_strong
@@ -183,6 +206,8 @@ let OutboundCallTypeIndex: Int = 101
             self.videoCallBtn.titleLabel?.font = AVTheme.regularFont(12)
             self.outboundCallBtn.isSelected = false
             self.outboundCallBtn.titleLabel?.font = AVTheme.regularFont(12)
+            self.inboundCallBtn.isSelected = false
+            self.inboundCallBtn.titleLabel?.font = AVTheme.regularFont(12)
             rect = CGRect(x: self.audioCallBtn.av_left, y: self.audioCallBtn.av_bottom + 4, width: self.audioCallBtn.av_width, height: 1)
         }
         else if agentIndex == AvatarAgentTypeIndex {
@@ -198,6 +223,8 @@ let OutboundCallTypeIndex: Int = 101
             self.videoCallBtn.titleLabel?.font = AVTheme.regularFont(12)
             self.outboundCallBtn.isSelected = false
             self.outboundCallBtn.titleLabel?.font = AVTheme.regularFont(12)
+            self.inboundCallBtn.isSelected = false
+            self.inboundCallBtn.titleLabel?.font = AVTheme.regularFont(12)
             rect = CGRect(x: self.avatarCallBtn.av_left, y: self.avatarCallBtn.av_bottom + 4, width: self.avatarCallBtn.av_width, height: 1)
         }
         else if agentIndex == VisionAgentTypeIndex {
@@ -213,6 +240,8 @@ let OutboundCallTypeIndex: Int = 101
             self.videoCallBtn.titleLabel?.font = AVTheme.regularFont(12)
             self.outboundCallBtn.isSelected = false
             self.outboundCallBtn.titleLabel?.font = AVTheme.regularFont(12)
+            self.inboundCallBtn.isSelected = false
+            self.inboundCallBtn.titleLabel?.font = AVTheme.regularFont(12)
             rect = CGRect(x: self.visionCallBtn.av_left, y: self.visionCallBtn.av_bottom + 4, width: self.visionCallBtn.av_width, height: 1)
         }
         else if agentIndex == VideoAgentTypeIndex {
@@ -228,6 +257,8 @@ let OutboundCallTypeIndex: Int = 101
             self.videoCallBtn.titleLabel?.font = AVTheme.mediumFont(12)
             self.outboundCallBtn.isSelected = false
             self.outboundCallBtn.titleLabel?.font = AVTheme.regularFont(12)
+            self.inboundCallBtn.isSelected = false
+            self.inboundCallBtn.titleLabel?.font = AVTheme.regularFont(12)
             rect = CGRect(x: self.videoCallBtn.av_left, y: self.videoCallBtn.av_bottom + 4, width: self.videoCallBtn.av_width, height: 1)
         }
         else if agentIndex == ChatAgentTypeIndex {
@@ -243,6 +274,8 @@ let OutboundCallTypeIndex: Int = 101
             self.videoCallBtn.titleLabel?.font = AVTheme.regularFont(12)
             self.outboundCallBtn.isSelected = false
             self.outboundCallBtn.titleLabel?.font = AVTheme.regularFont(12)
+            self.inboundCallBtn.isSelected = false
+            self.inboundCallBtn.titleLabel?.font = AVTheme.regularFont(12)
             rect = CGRect(x: self.chatBtn.av_left, y: self.chatBtn.av_bottom + 4, width: self.chatBtn.av_width, height: 1)
         }
         else if agentIndex == OutboundCallTypeIndex {
@@ -256,9 +289,28 @@ let OutboundCallTypeIndex: Int = 101
             self.chatBtn.titleLabel?.font = AVTheme.regularFont(12)
             self.videoCallBtn.isSelected = false
             self.videoCallBtn.titleLabel?.font = AVTheme.regularFont(12)
-            self.outboundCallBtn.isSelected = false
+            self.outboundCallBtn.isSelected = true
             self.outboundCallBtn.titleLabel?.font = AVTheme.mediumFont(12)
+            self.inboundCallBtn.isSelected = false
+            self.inboundCallBtn.titleLabel?.font = AVTheme.regularFont(12)
             rect = CGRect(x: self.outboundCallBtn.av_left, y: self.outboundCallBtn.av_bottom + 4, width: self.outboundCallBtn.av_width, height: 1)
+        }
+        else if agentIndex == InboundCallTypeIndex {
+            self.audioCallBtn.isSelected = false
+            self.audioCallBtn.titleLabel?.font = AVTheme.regularFont(12)
+            self.avatarCallBtn.isSelected = false
+            self.avatarCallBtn.titleLabel?.font = AVTheme.regularFont(12)
+            self.visionCallBtn.isSelected = false
+            self.visionCallBtn.titleLabel?.font = AVTheme.regularFont(12)
+            self.chatBtn.isSelected = false
+            self.chatBtn.titleLabel?.font = AVTheme.regularFont(12)
+            self.videoCallBtn.isSelected = false
+            self.videoCallBtn.titleLabel?.font = AVTheme.regularFont(12)
+            self.outboundCallBtn.isSelected = false
+            self.outboundCallBtn.titleLabel?.font = AVTheme.regularFont(12)
+            self.inboundCallBtn.isSelected = true
+            self.inboundCallBtn.titleLabel?.font = AVTheme.mediumFont(12)
+            rect = CGRect(x: self.inboundCallBtn.av_left, y: self.inboundCallBtn.av_bottom + 4, width: self.inboundCallBtn.av_width, height: 1)
         }
         UIView.animate(withDuration: 0.3) {
             self.lineView.frame = rect

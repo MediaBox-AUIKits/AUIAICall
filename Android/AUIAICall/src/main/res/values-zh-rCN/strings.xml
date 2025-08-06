@@ -77,6 +77,7 @@
     <string name="chat_bot">消息对话</string>
     <string name="video_agent_call">视频通话</string>
     <string name="phone_agent_call">AI电话通话</string>
+    <string name="phone_agent_in_call">AI电话呼入</string>
     <string name="temporary_experience_token">授权AI智能体</string>
     <string name="et_token_hints">请扫描二维码获取授权的AI智能体</string>
     <string name="token_expired_tips">AI智能体授权已经过期</string>
@@ -117,7 +118,7 @@
 
     <string name="mode_natural_conversation">自然对话模式</string>
     <string name="mode_push_to_talk">对讲机模式</string>
-    <string name="voiceprint_recognition_test_title">声纹识别(邀测)</string>
+    <string name="voiceprint_recognition_test_title">声纹降噪</string>
     <string name="latency_rate_title">延时率</string>
     <string name="btn_text_click_to_view_latency_rate">查看 ></string>
     <string name="aicall_sentence_latency_title">对话延迟</string>
@@ -131,6 +132,26 @@
     <string name="main_speaker_not_recognized">（声纹）识别到不是常用对话人，暂未响应您的问题</string>
     <string name="aival_main_speaker_not_recognized">(AIVad）识别到不是常用对话人，暂未响应您的问题</string>
     <string name="reset_voiceprint">恢复</string>
+    <string name="voiceprint_info_tipe">声纹特征信息</string>
+    <string name="voiceprint_info_tipe_cannot_use">声纹特征信息(未录入无法在通话中启用)</string>
+    <string name="voiceprint_info_record">录入</string>
+    <string name="voiceprint_info_tipe_desc">请在安静的环境下朗读下面这段话</string>
+    <string name="voiceprint_read_tips">“哇，我觉得你今天穿的这件裙子特别鲜艳，款式很优雅，特别衬托你的气质，真的太漂亮了。你能告诉我是在哪家店买的这么好看的裙子嘛，我也去淘一件。”</string>
+    <string name="voiceprint_push_to_record">按下开始录制，松开结束</string>
+    <string name="voiceprint_push_to_recognizing">声纹信息正在上传中，请耐心等待</string>
+    <string name="voiceprint_put_failed">声纹录入失败，请重新录制</string>
+    <string name="voiceprint_put_success">声纹录入成功</string>
+    <string name="voiceprint_info_title">声纹特征信息（已录入）</string>
+    <string name="voiceprint_rerecord">重新录入</string>
+    <string name="voiceprint_already_record">已录入</string>
+    <string name="voiceprint_can_not_work">声纹降噪未开启，此功能暂不能使用请去进入页-配置项，开启后使用</string>
+    <string name="voiceprint_can_not_work_know">我知道了</string>
+    <string name="voiceprint_not_work_toast_tips">声纹特征未录入，声纹识别功能暂不可用</string>
+    <string name="voiceprint_toast_tips">新增声纹特征信息录入</string>
+    <string name="voiceprint_record_time_desc">录制时长：最少12S最多60S</string>
+    <string name="voiceprint_recording">录音中</string>
+    <string name="voiceprint_record_less_time">录制时长少于12S</string>
+
 
     <string name="push_to_talk">按住说话</string>
     <string name="release_to_send">松开发送</string>
@@ -188,4 +209,12 @@
     <string name="pstn_out_call_tips">呼出成功，请注意接收手机来电</string>
     <string name="pstn_out_call_failed_tips">呼出失败</string>
     <string name="pstn_out_call_instanceid_copied">实例ID已复制</string>
+
+    <string name="pstn_in_called_number">坐席号码</string>
+    <string name="pstn_in_input_number">请输入坐席号码</string>
+    <string name="pstn_in_called_tips">此号码可前往控制台配置</string>
+    <string name="pstn_in_call_entrance_text">马上拨打</string>
+    <string name="pstn_in_call_number_copied">坐席号码已复制</string>
+    <string name="pstn_in_call_get_number_failed">无法获取号码，请刷新重试</string>
+    <string name="pstn_in_call_number_vaild">坐席号码为空，暂不支持呼入</string>
 </resources>

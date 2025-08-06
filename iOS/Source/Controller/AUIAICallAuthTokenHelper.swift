@@ -12,9 +12,9 @@ import CommonCrypto
 
 @objcMembers public class AUIAICallAuthTokenHelper: NSObject {
     
-    private static let EnableDevelopToken: Bool = false
-    private static let RTCDevelopAppId: String = ""
-    private static let RTCDevelopAppKey: String = ""
+    public static var EnableDevelopToken: Bool = false
+    public static var RTCDevelopAppId: String = ""
+    public static var RTCDevelopAppKey: String = ""
     
     public static let shared = AUIAICallAuthTokenHelper()
     
@@ -63,13 +63,13 @@ import CommonCrypto
             ARTCAICallRTCTokenHelper.AppKey = AUIAICallAuthTokenHelper.RTCDevelopAppKey
             let channelId = self.channelId
             DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 0.1) {
-                debugPrint("AUIAICallAuthTokenHelper.requestNewAuthToken result: \(self.authToken)")
 
                 self.requestTime = Date().timeIntervalSince1970
                 self.authToken = ARTCAICallRTCTokenHelper.GenerateToken(channelId: channelId, userId: self.userId, nonce: "")
                 self.completed?(self.authToken, nil)
                 self.isRequesting = false
                 self.completed = nil
+                debugPrint("AUIAICallAuthTokenHelper.requestNewAuthToken result: \(self.authToken)")
             }
         }
         else {

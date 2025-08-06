@@ -76,6 +76,7 @@ import ARTCAICallKit
             if let agentShareConfig = self.agentShareConfig {
                 self.config.agentId = agentShareConfig.shareId
                 self.config.agentType = agentShareConfig.agentType
+                self.config.region = agentShareConfig.region
                 if agentShareConfig.agentType == .AvatarAgent {
                     self.config.limitSecond = 5 * 60
                 }

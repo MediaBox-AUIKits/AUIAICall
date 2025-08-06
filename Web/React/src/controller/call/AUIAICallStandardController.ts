@@ -100,19 +100,19 @@ class AUIAICallStandardController extends AUIAICallController {
         value: Date.now() - startTs,
       });
     } catch (error) {
-      logger.error('GenerateAIAgentFailed', error as Error);
+      logger.info('StandardController', 'GenerateAIAgentFailed');
       throw error;
     }
 
     if (!agentInfo) {
       const error = new AICallAgentError('generate ai agent failed');
-      logger.error('NoAIAgent', error);
+      logger.info('StandardController', 'NoAIAgent');
       throw error;
     }
 
-    // 不需要等待 describeAIAgent 接口返回
-    // no need to wait for describeAIAgent
-    this.describeAIAgent(agentInfo.instanceId);
+    // 不需要等待 describeAIAgentInstance 接口返回
+    // no need to wait for describeAIAgentInstance
+    this.describeAIAgentInstance(agentInfo.instanceId);
 
     return agentInfo;
   }

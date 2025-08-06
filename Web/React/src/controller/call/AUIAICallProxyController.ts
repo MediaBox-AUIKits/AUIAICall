@@ -29,7 +29,7 @@ class AUIAICallProxyController extends AUIAICallController {
 
         // 不需要等待 describeAIAgent 接口返回
         // no need to wait for describeAIAgent
-        this.describeAIAgent(instanceInfo.instanceId);
+        this.describeAIAgentInstance(instanceInfo.instanceId);
       });
 
       this.engine!.once('callBegin', () => {
@@ -61,7 +61,7 @@ class AUIAICallProxyController extends AUIAICallController {
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      this._errorCode = error.errorCode || AICallErrorCode.BeginCallFailed;
+      this._errorCode = error.code || error.errorCode || AICallErrorCode.BeginCallFailed;
       this.state = AICallState.Error;
       this.handup();
       logger.error('StartCallFailed', error);

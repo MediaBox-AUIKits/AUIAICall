@@ -313,7 +313,7 @@
         app:layout_constraintTop_toBottomOf="@id/ll_boot_push_to_talk"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        android:visibility="visible">
+        android:visibility="gone">
         <TextView
             android:id="@+id/tv_boot_use_voice_print"
             android:layout_width="0dp"
@@ -395,7 +395,7 @@
             android:layout_marginRight="12dp"
             android:paddingStart="16dp"
             android:paddingEnd="16dp"
-            app:layout_constraintTop_toBottomOf="@id/ll_boot_use_audio_delay_info"
+            app:layout_constraintTop_toBottomOf="@id/ll_boot_enable_agent_auto_exit"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent">
             <TextView
@@ -411,6 +411,85 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
     </LinearLayout>
+    <LinearLayout
+        android:id="@+id/ll_boot_enable_audio_aec"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="12dp"
+        android:layout_marginLeft="12dp"
+        android:layout_marginRight="12dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        app:layout_constraintTop_toBottomOf="@id/ll_boot_enable_semantic"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent">
+        <TextView
+            android:id="@+id/tv_boot_enable_audio_aec"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            style="@style/layout_base_text_style_12"
+            android:text="是否开启智能AEC"
+            />
+        <Switch
+            android:id="@+id/sv_boot_enable_audio_aec"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+    <LinearLayout
+        android:id="@+id/ll_boot_enable_llm_complete_reply"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="12dp"
+        android:layout_marginLeft="12dp"
+        android:layout_marginRight="12dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        app:layout_constraintTop_toBottomOf="@id/ll_boot_enable_semantic"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent">
+        <TextView
+            android:id="@+id/tv_boot_enable_llm_complete_reply"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            style="@style/layout_base_text_style_12"
+            android:text="llmCompleteReply"
+            />
+        <Switch
+            android:id="@+id/sv_boot_enable_llm_complete_reply"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/ll_enable_brust_send_recv"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="12dp"
+        android:layout_marginLeft="12dp"
+        android:layout_marginRight="12dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        app:layout_constraintTop_toBottomOf="@id/ll_boot_enable_semantic"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent">
+        <TextView
+            android:id="@+id/tv_boot_enable_brust_send_recv"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            style="@style/layout_base_text_style_12"
+            android:text="非流失"
+            />
+        <Switch
+            android:id="@+id/sv_boot_enable_brust_send_recv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
 
     <LinearLayout
         android:id="@+id/ll_boot_user_data"
@@ -422,7 +501,7 @@
         android:layout_marginRight="12dp"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
-        app:layout_constraintTop_toBottomOf="@id/ll_boot_enable_agent_auto_exit"
+        app:layout_constraintTop_toBottomOf="@id/ll_boot_enable_audio_aec"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         android:visibility="visible">
@@ -671,6 +750,38 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/ll_llm_history_limit"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp"
+                android:layout_marginLeft="12dp"
+                android:layout_marginRight="12dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                android:visibility="visible">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    style="@style/layout_base_text_style_12"
+                    android:text="LLMHistoryLimit"
+                    />
+                <EditText
+                    android:id="@+id/llm_history_limit_input"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    style="@style/layout_base_text_style_12"
+                    android:text="10"
+                    android:textColorHint="@color/layout_base_gray"
+                    android:backgroundTint="@color/layout_base_iv_border"
+                    />
+            </LinearLayout>
+
+            <LinearLayout
                 android:id="@+id/ll_Volume"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -748,7 +859,7 @@
                 android:paddingEnd="16dp"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintRight_toRightOf="parent"
-                android:visibility="visible">
+                android:visibility="gone">
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -988,7 +1099,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     style="@style/layout_base_text_style_12"
-                    android:text="3"
+                    android:text="11"
                     android:textColorHint="@color/layout_base_gray"
                     android:backgroundTint="@color/layout_base_iv_border"
                     />
@@ -1174,7 +1285,189 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     style="@style/layout_base_text_style_12"
-                    android:text=""
+                    android:text="5000"
+                    android:textColorHint="@color/layout_base_gray"
+                    android:backgroundTint="@color/layout_base_iv_border"
+                    />
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/ll_vad_duration"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp"
+                android:layout_marginLeft="12dp"
+                android:layout_marginRight="12dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                android:visibility="visible">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    style="@style/layout_base_text_style_12"
+                    android:text="VadDuration"
+                    />
+                <EditText
+                    android:id="@+id/vad_duration_input"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    style="@style/layout_base_text_style_12"
+                    android:text="0"
+                    android:textColorHint="@color/layout_base_gray"
+                    android:backgroundTint="@color/layout_base_iv_border"
+                    />
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/ll_speech_rate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp"
+                android:layout_marginLeft="12dp"
+                android:layout_marginRight="12dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                android:visibility="visible">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    style="@style/layout_base_text_style_12"
+                    android:text="SpeeckRate"
+                    />
+                <EditText
+                    android:id="@+id/speech_rate_input"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    style="@style/layout_base_text_style_12"
+                    android:text="1.0"
+                    android:textColorHint="@color/layout_base_gray"
+                    android:backgroundTint="@color/layout_base_iv_border"
+                    />
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/ll_tts_language_id"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp"
+                android:layout_marginLeft="12dp"
+                android:layout_marginRight="12dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                android:visibility="visible">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    style="@style/layout_base_text_style_12"
+                    android:text="TTSLanguage"
+                    />
+                <EditText
+                    android:id="@+id/tts_language_id_input"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    style="@style/layout_base_text_style_12"
+                    android:textColorHint="@color/layout_base_gray"
+                    android:backgroundTint="@color/layout_base_iv_border"
+                    />
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/ll_tts_emotion"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp"
+                android:layout_marginLeft="12dp"
+                android:layout_marginRight="12dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                android:visibility="visible">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    style="@style/layout_base_text_style_12"
+                    android:text="TTSEmotion"
+                    />
+                <EditText
+                    android:id="@+id/tts_emotion_input"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    style="@style/layout_base_text_style_12"
+                    android:textColorHint="@color/layout_base_gray"
+                    android:backgroundTint="@color/layout_base_iv_border"
+                    />
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/ll_openai_extra_query"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp"
+                android:layout_marginLeft="12dp"
+                android:layout_marginRight="12dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                android:visibility="visible">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    style="@style/layout_base_text_style_12"
+                    android:text="OpenAIExtraQuery"
+                    />
+                <EditText
+                    android:id="@+id/openai_extra_query_input"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    style="@style/layout_base_text_style_12"
+                    android:textColorHint="@color/layout_base_gray"
+                    android:backgroundTint="@color/layout_base_iv_border"
+                    />
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/ll_tts_model_id"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp"
+                android:layout_marginLeft="12dp"
+                android:layout_marginRight="12dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                android:visibility="visible">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    style="@style/layout_base_text_style_12"
+                    android:text="TTSModelID"
+                    />
+                <EditText
+                    android:id="@+id/tts_model_id_input"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    style="@style/layout_base_text_style_12"
                     android:textColorHint="@color/layout_base_gray"
                     android:backgroundTint="@color/layout_base_iv_border"
                     />

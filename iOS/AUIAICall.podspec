@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'AUIAICall'
-  s.version          = '2.6.0'
+  s.version          = '2.7.0'
   s.summary          = 'A short description of AUIAICall.'
 
 # This description is used to generate tags and improve search results.
@@ -43,6 +43,7 @@ TODO: Add long description of the pod here.
     ss.dependency 'AUIFoundation'
     ss.dependency 'ARTCAICallKit'
     ss.dependency 'lottie-ios'
+    ss.dependency 'AliyunOSSiOS'
     ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => '$(inherited)'}
   end
   
@@ -56,6 +57,7 @@ TODO: Add long description of the pod here.
     ss.dependency 'SwiftyMarkdown'
     ss.dependency 'SDWebImage'
     ss.dependency 'lottie-ios'
+    ss.dependency 'AliyunOSSiOS'
     ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => '$(inherited) AICALL_ENABLE_CHATBOT'}
   end
   
@@ -68,6 +70,7 @@ TODO: Add long description of the pod here.
     ss.dependency 'SwiftyMarkdown'
     ss.dependency 'SDWebImage'
     ss.dependency 'lottie-ios'
+    ss.dependency 'AliyunOSSiOS'
     ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => '$(inherited) AICALL_ENABLE_CHATBOT AICALL_ENABLE_DEMO '}
   end
   
@@ -80,6 +83,7 @@ TODO: Add long description of the pod here.
     ss.dependency 'SwiftyMarkdown'
     ss.dependency 'SDWebImage'
     ss.dependency 'lottie-ios'
+    ss.dependency 'AliyunOSSiOS'
     ss.pod_target_xcconfig = {'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => '$(inherited) DEMO_FOR_DEBUG AICALL_ENABLE_CHATBOT '}
   end
   

@@ -21,4 +21,5 @@
     <color name="layout_base_white_alpha70">#B2FFFFFF</color>
     <color name="layout_base_blue">#3295FB</color>
     <color name="layout_chatbot_red">#F95353</color>
+    <color name="layout_voiceprint_record_time_color">#E6E7EC</color>
 </resources>

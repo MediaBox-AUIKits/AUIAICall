@@ -54,3 +54,34 @@ import AUIFoundation
 public let AUIAICallBundle = AUIAICallTheme("AUIAICall")
 public let AUIAIChatBundle = AUIAICallTheme("AUIAIChat")
 
+
+extension AVAlertController {
+    /// Creates and returns a configured alert controller with an "OK" button and a completion handler.
+    ///
+    /// - Parameters:
+    ///   - message: The message to display in the alert.
+    ///   - viewController: The view controller that will present the alert.
+    ///   - completion: A closure that is called when the "OK" button is tapped.
+    ///
+    /// - Returns: A configured `UIAlertController` instance.
+    public static func aicall_show(message: String, on viewController: UIViewController, completion: @escaping () -> Void) {
+        let alertController = UIAlertController(
+            title: nil,
+            message: message,
+            preferredStyle: .alert
+        )
+        AVTheme.updateRootViewControllerInterfaceStyle(alertController)
+
+        let okAction = UIAlertAction(
+            title: AVLocalization.string(withKey: "OK", withModule: "AUIFoundation"),
+            style: .default
+        ) { _ in
+            completion()
+        }
+        
+        alertController.addAction(okAction)
+
+        // Present the alert controller
+        viewController.present(alertController, animated: true, completion: nil)
+    }
+}

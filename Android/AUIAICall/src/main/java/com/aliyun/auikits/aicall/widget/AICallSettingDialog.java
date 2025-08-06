@@ -1,6 +1,9 @@
 package com.aliyun.auikits.aicall.widget;
 
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
+import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,6 +19,8 @@ import androidx.lifecycle.ViewModelStoreOwner;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.aliyun.auikits.aicall.AUIAICallInCallActivity;
+import com.aliyun.auikits.aicall.AUIAICallVoicePrintRecordActivity;
 import com.aliyun.auikits.aicall.R;
 import com.aliyun.auikits.aicall.base.card.CardEntity;
 import com.aliyun.auikits.aicall.base.card.CardListAdapter;
@@ -25,6 +30,7 @@ import com.aliyun.auikits.aicall.base.feed.ContentViewModel;
 import com.aliyun.auikits.aicall.bean.AudioToneData;
 import com.aliyun.auikits.aicall.model.AudioToneContentModel;
 import com.aliyun.auikits.aicall.util.DisplayUtil;
+import com.aliyun.auikits.aicall.util.SettingStorage;
 import com.aliyun.auikits.aicall.util.ToastHelper;
 import com.aliyun.auikits.aicall.widget.card.AudioToneCard;
 import com.aliyun.auikits.aicall.widget.card.CardTypeDef;
@@ -39,7 +45,7 @@ import com.scwang.smart.refresh.layout.SmartRefreshLayout;
 import java.util.List;
 
 public class AICallSettingDialog {
-    private static final boolean IS_VOICE_PRINT_FUNCTION_SHOWN = true;
+    private static final boolean IS_VOICE_PRINT_FUNCTION_SHOWN = false;
 
     CardListAdapter mCardListAdapter;
     AudioToneContentModel mAudioToneContentModel;
@@ -52,6 +58,7 @@ public class AICallSettingDialog {
     TextView mTvPushToTalk = null;
     ViewGroup mVgInterruptConfig = null;
     ViewGroup mVgVoicePrintStatus = null;
+    TextView mVgVoicePrintStatusAlreadyRecord = null;
     private static boolean isShouldShowLatencyRateDialog = false;
 
     public static void show(Context context, ARTCAICallEngine aRTCAICallEngine, boolean isAvatarAgent, boolean isVoicePrintRecognized, boolean isSharedAgent, List<AudioToneData> audioToneList) {
@@ -192,24 +199,47 @@ public class AICallSettingDialog {
 
     private void initVoicePrintButton(View root) {
         if (IS_VOICE_PRINT_FUNCTION_SHOWN) {
+            boolean voicePrint = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_VOICE_PRINT_RECORD_ALRAEDY, false);
             Switch svVoicePrint = root.findViewById(R.id.sv_voiceprint);
             svVoicePrint.setChecked(mARTCAICallEngine.isUsingVoicePrint());
             svVoicePrint.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                    if (!mARTCAICallEngine.useVoicePrint(isChecked)) {
-                        buttonView.setChecked(!isChecked);
-                        ToastHelper.showToast(buttonView.getContext(), R.string.tips_notice_before_connected, Toast.LENGTH_SHORT);
+
+                    if(!voicePrint) {
+                        ToastHelper.showToast(buttonView.getContext(), R.string.voiceprint_can_not_work, Toast.LENGTH_SHORT);
+                        svVoicePrint.setChecked(false);
                     } else {
-                        ToastHelper.showToast(buttonView.getContext(),
-                                isChecked ? R.string.voiceprint_enable : R.string.voiceprint_disable,
-                                Toast.LENGTH_SHORT);
+                        if (!mARTCAICallEngine.useVoicePrint(isChecked)) {
+                            buttonView.setChecked(!isChecked);
+                            ToastHelper.showToast(buttonView.getContext(), R.string.tips_notice_before_connected, Toast.LENGTH_SHORT);
+                        } else {
+                            ToastHelper.showToast(buttonView.getContext(),
+                                    isChecked ? R.string.voiceprint_enable : R.string.voiceprint_disable,
+                                    Toast.LENGTH_SHORT);
+                        }
                     }
                 }
             });
 
-            mVgVoicePrintStatus = root.findViewById(R.id.ll_voiceprint_status);
-            mVgVoicePrintStatus.setVisibility(mIsVoicePrintRecognized ? View.VISIBLE : View.GONE);
+            if(!voicePrint) {
+                boolean showToast = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_VOICE_PRINT_NOT_RECORD_NOT_WORK, true);
+                if(showToast) {
+                    ToastHelper.showToast(root.getContext(), R.string.voiceprint_not_work_toast_tips, Toast.LENGTH_SHORT);
+                    SettingStorage.getInstance().setBoolean(SettingStorage.KEY_VOICE_PRINT_NOT_RECORD_NOT_WORK, false);
+                }
+            }
+
+            //mVgVoicePrintStatus = root.findViewById(R.id.ll_voiceprint_status);
+            //mVgVoicePrintStatus.setVisibility(mIsVoicePrintRecognized ? View.VISIBLE : View.GONE);
+
+            mVgVoicePrintStatusAlreadyRecord = root.findViewById(R.id.tv_voiceprint_already_record);
+            if(voicePrint && mARTCAICallEngine.isUsingVoicePrint()) {
+                mVgVoicePrintStatusAlreadyRecord.setVisibility(View.VISIBLE);
+            } else {
+                mVgVoicePrintStatusAlreadyRecord.setVisibility(View.GONE);
+            }
+
         }
         root.findViewById(R.id.ll_voiceprint).setVisibility(IS_VOICE_PRINT_FUNCTION_SHOWN ?
                 View.VISIBLE : View.GONE);

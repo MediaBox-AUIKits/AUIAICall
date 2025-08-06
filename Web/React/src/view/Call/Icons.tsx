@@ -543,7 +543,7 @@ export const WelcomeArrowRightSVG = (
   </svg>
 );
 
-export const backSVG = (
+export const BackWithLineSVG = (
   <svg
     xmlns='http://www.w3.org/2000/svg'
     xmlnsXlink='http://www.w3.org/1999/xlink'
@@ -562,7 +562,7 @@ export const backSVG = (
   </svg>
 );
 
-export const subtitleListSVG = (
+export const SubtitleListSVG = (
   <svg
     xmlns='http://www.w3.org/2000/svg'
     xmlnsXlink='http://www.w3.org/1999/xlink'
@@ -601,7 +601,7 @@ export const subtitleListSVG = (
   </svg>
 );
 
-export const dialogCloseSVG = (
+export const DialogCloseSVG = (
   <svg
     xmlns='http://www.w3.org/2000/svg'
     xmlnsXlink='http://www.w3.org/1999/xlink'
@@ -616,6 +616,25 @@ export const dialogCloseSVG = (
         d='M6,5.18856L0.811437,0L0,0.811437L5.18856,6L0,11.1886L0.811437,12L6,6.81144L11.1886,12L12,11.1886L6.81144,6L12,0.811437L11.1886,0L6,5.18856Z'
         fillRule='evenodd'
         fill='#555555'
+      />
+    </g>
+  </svg>
+);
+
+export const goSVG = (
+  <svg
+    xmlns='http://www.w3.org/2000/svg'
+    xmlnsXlink='http://www.w3.org/1999/xlink'
+    fill='none'
+    version='1.1'
+    width='18'
+    height='18'
+    viewBox='0 0 18 18'
+  >
+    <g>
+      <path
+        d='M12.070129999999999,9.28988L6.73476,14.3629C6.580343,14.5098,6.33793,14.5098,6.18351,14.3629L5.929691,14.1216C5.763926,13.964,5.76385,13.6997,5.929522,13.542L10.39647,9.289719999999999C10.56207,9.132069999999999,10.56207,8.867930000000001,10.39647,8.710280000000001L5.929522,4.45801C5.76385,4.300302,5.763927,4.036029,5.929691,3.878415L6.18351,3.637075C6.33793,3.490247,6.580343,3.490247,6.73476,3.637075L12.070129999999999,8.71012C12.23596,8.867799999999999,12.23596,9.132200000000001,12.070129999999999,9.28988'
+        fill='#26244C'
       />
     </g>
   </svg>

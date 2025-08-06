@@ -69,3 +69,33 @@ export const CallFailSVG = (
     </g>
   </svg>
 );
+
+export const CopySVG = (
+  <svg
+    xmlns='http://www.w3.org/2000/svg'
+    xmlnsXlink='http://www.w3.org/1999/xlink'
+    fill='none'
+    version='1.1'
+    width='15.75'
+    height='15.75'
+    viewBox='0 0 15.75 15.75'
+  >
+    <g transform='matrix(-1,0,0,1,31.5,0)'>
+      <g>
+        <path
+          d='M20.25,3.375L30.375,3.375C30.9937,3.375,31.5,3.88125,31.5,4.5L31.5,14.625C31.5,15.2437,30.9937,15.75,30.375,15.75L20.25,15.75C19.63125,15.75,19.125,15.2437,19.125,14.625L19.125,4.5C19.125,3.88125,19.63125,3.375,20.25,3.375ZM30.375,14.625L30.375,4.5L20.25,4.5L20.25,14.625L30.375,14.625Z'
+          fillRule='evenodd'
+          fill='currentColor'
+          fillOpacity='1'
+        />
+      </g>
+      <g>
+        <path
+          d='M16.875,9L15.75,9L15.75,1.125C15.75,0.50625,16.25625,0,16.875,0L24.75,0L24.75,1.125L16.875,1.125L16.875,9Z'
+          fill='currentColor'
+          fillOpacity='1'
+        />
+      </g>
+    </g>
+  </svg>
+);

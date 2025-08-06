@@ -1,17 +1,18 @@
+import { AICallAgentConfig, AICallAgentType, AIChatAgentType, AIChatTemplateConfig } from 'aliyun-auikit-aicall';
 import { useEffect, useState } from 'react';
 import Welcome from './Welcome';
-import { AICallAgentConfig, AICallAgentType, AIChatAgentType, AIChatTemplateConfig } from 'aliyun-auikit-aicall';
 
-import './App.css';
-import { Toast } from 'antd-mobile';
-import Call from './Call';
-import Chat from './Chat';
+import { useTranslation } from '@/common/i18nContext';
+import { getCallAgentId, getRuntimeConfig } from '@/interface.ts';
 import runUserConfig from '@/runConfig.ts';
 import { JSONObject } from '@/service/interface.ts';
-import { getCallAgentId, getRuntimeConfig } from '@/interface.ts';
 import service from '@/service/standard';
-import { useTranslation } from '@/common/i18nContext';
+import { Toast } from 'antd-mobile';
+import './App.css';
+import Call from './Call';
+import Chat from './Chat';
 import PSTN from './PSTN';
+import { VOICE_PRINT_CACHE_ENABLE, VOICE_PRINT_CACHE_PREFIX } from './Welcome/Config';
 
 Toast.config({
   position: 'bottom',
@@ -54,6 +55,7 @@ function App(props: AppProps) {
   } = props;
   const [callType, setCallType] = useState('call');
   const [stateAgentType, setStateAgentType] = useState<AICallAgentType | AIChatAgentType | undefined>(agentType);
+  const [pstnType, setPstnType] = useState<string>('Outbound');
 
   useEffect(() => {
     if (appServer) {
@@ -71,9 +73,29 @@ function App(props: AppProps) {
     };
   }, [appServer]);
 
+  if (callType === 'pstn' && pstnType) {
+    return (
+      <PSTN
+        type={pstnType}
+        userId={userId}
+        agentId={agentId!}
+        region={region!}
+        onExit={() => {
+          setPstnType('');
+          setStateAgentType(undefined);
+        }}
+        onAuthFail={() => {
+          onAuthFail?.();
+        }}
+      />
+    );
+  }
+
   if (stateAgentType === undefined)
     return (
       <Welcome
+        userId={userId}
+        region={region}
         initialType={callType}
         showPstn={!!runConfig.pstnAgentId}
         onTypeSelected={(type) => {
@@ -82,23 +104,21 @@ function App(props: AppProps) {
         onAgentTypeSelected={(type) => {
           setStateAgentType(type);
         }}
-      />
-    );
-
-  if (callType === 'pstn') {
-    return (
-      <PSTN
-        userId={userId}
-        agentId={runConfig.voiceAgentId!}
-        region={runConfig.region!}
-        onExit={() => {
-          setStateAgentType(undefined);
+        onPSTNTypeSelected={(type) => {
+          setPstnType(type);
         }}
         onAuthFail={() => {
           onAuthFail?.();
         }}
       />
     );
+
+  const voiceprintId = localStorage?.getItem(`${VOICE_PRINT_CACHE_PREFIX}${props.userId}`);
+  if (voiceprintId && agentConfig) {
+    if (localStorage?.getItem(VOICE_PRINT_CACHE_ENABLE) !== 'false') {
+      agentConfig.voiceprintConfig.useVoiceprint = true;
+    }
+    agentConfig.voiceprintConfig.voiceprintId = voiceprintId;
   }
 
   return (
@@ -110,6 +130,7 @@ function App(props: AppProps) {
           userToken={userToken}
           agentId={agentId || runConfig.chatAgentId}
           appServer={appServer}
+          region={region}
           templateConfig={chatTemplateConfig}
           userData={(userData as JSONObject) || runConfig.chatUserData}
           onExit={() => {

@@ -36,7 +36,7 @@ body {
   }
 
   .adm-toast-mask {
-    z-index: 9;
+    z-index: 1001;
     .adm-toast-wrap {
       position: absolute;
     }

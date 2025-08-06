@@ -17,6 +17,7 @@ public class AUIAICallAgentDebug {
     private static String PRE_VISION_AGENT_EMOTION_ID = "";
     private static String PRE_VIDEO_AGENT_EMOTION_ID = "";
 
+    private static String Region = "cn-shanghai";
 
     public static  String  getAIAgentId(ARTCAICallEngine.ARTCAICallAgentType agentType, boolean openEmotion) {
         String agentId = "";
@@ -37,6 +38,10 @@ public class AUIAICallAgentDebug {
                 agentId = openEmotion ? PRE_VIDEO_AGENT_EMOTION_ID : PRE_VIDEO_AGENT_ID;
         }
         return agentId;
+    }
+
+    public static String getRegion() {
+        return Region;
     }
 
 }

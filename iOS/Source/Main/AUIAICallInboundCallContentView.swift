@@ -1,0 +1,164 @@
+//
+//  AUIAICallOutboundCallContentView.swift
+//  Pods
+//
+//  Created by Bingo on 2025/6/20.
+//
+
+import UIKit
+import AUIFoundation
+import ARTCAICallKit
+
+@objcMembers open class AUIAICallInboundCallContentView: UIView {
+    
+    public override init(frame: CGRect) {
+        super.init(frame: frame)
+        
+        self.addSubview(self.numberLabel)
+        self.addSubview(self.splitView)
+        self.addSubview(self.copyBtn)
+        self.addSubview(self.inputField)
+        self.addSubview(self.self.createLineView(underView: self.numberLabel))
+        self.addSubview(self.numberTipsLabel)
+        self.addSubview(self.refreshBtn)
+    }
+    
+    required public init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    open lazy var numberLabel: UILabel = {
+        let title = UILabel(frame: CGRect.zero)
+        title.text = AUIAIMainBundle.getString("Agent Number")
+        title.textColor = AVTheme.text_strong
+        title.font = AVTheme.regularFont(16)
+        title.sizeToFit()
+        title.av_height = 56
+        title.av_top = -12
+        return title
+    }()
+    
+    open lazy var splitView: UIView = {
+        let line = UIView(frame: CGRect(x: self.numberLabel.av_right + 12, y: 0, width: 1, height: 20))
+        line.backgroundColor = AVTheme.border_weak
+        line.av_centerY = self.numberLabel.av_centerY
+        return line
+    }()
+    
+    open lazy var inputField: UITextField = {
+        let input = UITextField(frame: CGRect(x: self.splitView.av_right + 12, y: 0, width: self.copyBtn.av_left - 12 - self.splitView.av_right - 12 , height: 24))
+        input.textAlignment = .right
+        input.textColor = AVTheme.text_strong
+        input.keyboardType = .phonePad
+        input.font = AVTheme.regularFont(16)
+        input.isEnabled = false
+        input.placeholder = "-"
+        let attributes: [NSAttributedString.Key: Any] = [
+            .foregroundColor: AVTheme.text_ultraweak,
+            .font: AVTheme.regularFont(16)
+        ]
+        input.attributedPlaceholder = NSAttributedString(string: "-", attributes: attributes)
+        input.av_centerY = self.numberLabel.av_centerY
+                
+        return input
+    }()
+    
+    open lazy var copyBtn: AVBlockButton = {
+        let btn = AVBlockButton(frame: CGRect(x: self.av_width - 20 - 20, y: 0, width: 20, height: 20))
+        btn.setImage(AUIAIMainBundle.getImage("ic_copy"), for: .normal)
+        btn.setImage(AUIAIMainBundle.getImage("ic_copy_disable"), for: .disabled)
+        btn.av_centerY = self.numberLabel.av_centerY
+        btn.clickBlock = { [weak self] btn in
+            guard let self = self, let phoneNumber = self.phoneNumber, phoneNumber.isEmpty == false else { return }
+            UIPasteboard.general.string = phoneNumber
+            AVToastView.show(AUIAIMainBundle.getString("The agent number has been copied."), view: self, position: .mid)
+        }
+        btn.isEnabled = false
+        return btn
+    }()
+    
+    open lazy var numberTipsLabel: UILabel = {
+        let title = UILabel(frame: CGRect.zero)
+        title.text = AUIAIMainBundle.getString("This number is from the console configuration")
+        title.textColor = AVTheme.text_weak
+        title.font = AVTheme.regularFont(14)
+        title.sizeToFit()
+        title.av_top = self.numberLabel.av_bottom + 4
+        return title
+    }()
+    
+    open lazy var refreshBtn: AVBlockButton = {
+        let btn = AVBlockButton(frame: CGRect(x: self.numberTipsLabel.av_right + 8, y: 0, width: 24, height: 24))
+        btn.setImage(AUIAIMainBundle.getImage("ic_refresh"), for: .normal)
+        btn.av_centerY = self.numberTipsLabel.av_centerY
+        btn.clickBlock = { [weak self] btn in
+            self?.fetchCalledNumber(force: true)
+        }
+        return btn
+    }()
+    
+    open func createLineView(underView: UIView) -> UIView {
+        let line = UIView(frame: CGRect(x: 0, y: underView.av_bottom, width: self.av_width, height: 1))
+        line.backgroundColor = AVTheme.border_weak
+        return line
+    }
+    
+    open var phoneNumber: String? {
+        get {
+            return self.inputField.text
+        }
+    }
+    
+    internal var appserver: AUIAICallAppServer? = nil
+    
+    public var onPhoneNumAvailable: (()->Void)? = nil
+    
+    public func fetchCalledNumber(force: Bool) {
+        
+        if force == false && self.inputField.text?.isEmpty == false {
+            return
+        }
+        
+#if DEMO_FOR_DEBUG
+        let agentId = AUIAICallDebugManager.shared.getAgentId(agentType: .VoiceAgent) ?? ""
+        let region = AUIAICallDebugManager.shared.getRegion()
+#else
+        let agentId = VoiceAgentId
+        let region = Region
+#endif
+        let body: [String: Any] = [
+            "user_id": AUIAICallManager.defaultManager.userId ?? "",
+            "ai_agent_id": agentId,
+            "region": region,
+        ]
+        
+        let hud = AVProgressHUD.showAdded(to: self, animated: true)
+        hud.iconType = .loading
+        hud.labelText = AUIAIMainBundle.getString("Getting the agent number...")
+        
+        if self.appserver == nil {
+            self.appserver = AUIAICallAppServer()
+        }
+        
+        self.appserver?.request(path: "/api/v2/aiagent/describeAIAgent", body: body) { [weak self] response, data, error in
+            hud.hide(animated: true)
+            guard let self = self else {
+                return
+            }
+            self.appserver = nil
+            
+            if let agent_config = data?["ai_agent"] as? String, let dict = agent_config.aicall_jsonObj() {
+                if let nboundPhoneNumber  = (dict["InboundPhoneNumbers"] as? [String])?.first {
+                    self.inputField.text = nboundPhoneNumber
+                    if self.inputField.text?.isEmpty == false {
+                        self.copyBtn.isEnabled = true
+                        self.onPhoneNumAvailable?()
+                        return
+                    }
+                }
+            }
+            
+            AVToastView.show(AUIAIMainBundle.getString("Failed to get the number, please refresh and try again."), view: self, position: .mid)
+        }
+    }
+}

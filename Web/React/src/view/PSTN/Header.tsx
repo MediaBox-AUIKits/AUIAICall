@@ -1,27 +1,26 @@
 import { Button, SafeArea } from 'antd-mobile';
-import { backSVG } from '../Call/Icons';
+import { BackWithLineSVG } from '../Call/Icons';
 
-import { useTranslation } from '@/common/i18nContext';
 import './header.less';
 
 
 function Header({
+  title,
   onExit,
 }: {
+  title: string;
   instanceId?: string;
   reqId?: string;
   onExit: () => void;
 }) {
-  const { t } = useTranslation();
-
   return (
     <>
       <SafeArea position='top' />
       <div className='header pstn-header'>
         <Button className='_back-btn' onClick={onExit}>
-          {backSVG}
+          {BackWithLineSVG}
         </Button>
-        <span className='_title'>{t('pstn.title')}</span>
+        <span className='_title'>{title}</span>
         <div className='_gap'></div>
         <div className='_actions'>
         </div>

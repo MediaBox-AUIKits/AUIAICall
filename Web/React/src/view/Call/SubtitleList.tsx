@@ -7,7 +7,7 @@ import logger from '@/common/logger';
 
 import useCallStore from './store';
 import './subtitleList.less';
-import { dialogCloseSVG, subtitleListSVG } from './Icons';
+import { DialogCloseSVG, SubtitleListSVG } from './Icons';
 
 const AutoScrollGap = 20;
 
@@ -54,7 +54,7 @@ function SubtitleList({ onVisibleChange }: { onVisibleChange: (visible: boolean)
         onClick={toggleMessages}
         disabled={callState !== AICallState.Connected}
       >
-        <span className='_icon'>{subtitleListSVG}</span>
+        <span className='_icon'>{SubtitleListSVG}</span>
         {t('subtitleList.btn')}
       </Button>
       <Dialog
@@ -74,7 +74,7 @@ function SubtitleList({ onVisibleChange }: { onVisibleChange: (visible: boolean)
                 setListVisible(false);
               }}
             >
-              {dialogCloseSVG}
+              {DialogCloseSVG}
             </Button>
             <ol>
               {subtitleList.map((item) => (

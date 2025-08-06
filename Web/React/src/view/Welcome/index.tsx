@@ -1,23 +1,46 @@
-import { useRef, useState } from 'react';
-import { Tabs, Swiper, SwiperRef, Button, SafeArea } from 'antd-mobile';
+import { useTranslation } from '@/common/i18nContext';
+import { WorkflowType } from '@/service/interface';
+import { getDeviceStream } from '@/view/Welcome/deviceHelper.ts';
+import { AICallAgentType, AIChatAgentType } from 'aliyun-auikit-aicall';
+import { Button, SafeArea, Swiper, SwiperRef, Tabs } from 'antd-mobile';
+import { useEffect, useRef, useState } from 'react';
+import { WelcomeArrowLeftSVG, WelcomeArrowRightSVG } from '../Call/Icons';
+import WelcomeConfig from './Config';
 
 import './index.less';
-import { AICallAgentType, AIChatAgentType } from 'aliyun-auikit-aicall';
-import { WorkflowType } from '@/service/interface';
-import { useTranslation } from '@/common/i18nContext';
-import { WelcomeArrowLeftSVG, WelcomeArrowRightSVG } from '../Call/Icons';
-
 
 interface WelcomeProps {
+  userId: string;
+  region?: string;
+  onAuthFail?: () => void;
   initialType: string;
   showPstn: boolean;
   onTypeSelected: (type: string) => void;
   onAgentTypeSelected: (type: AICallAgentType | AIChatAgentType) => void;
+  onPSTNTypeSelected: (type: string) => void;
 }
 
-const LAST_SELECT_INDEX_CACHE_KEY = 'aicall-welcome-last-select-index';
+const LAST_CALL_SELECT_INDEX_CACHE_KEY = 'aicall-welcome-last-select-index';
+const LAST_PSTN_SELECT_INDEX_CACHE_KEY = 'aicall-welcome-last-pstn-select-index';
 
-function Welcome({ initialType, showPstn, onTypeSelected, onAgentTypeSelected }: WelcomeProps) {
+function hasAudio(typeIndex: number, agentType: AICallAgentType | AIChatAgentType) {
+  return typeIndex === 0 && agentType !== AIChatAgentType.MessageChat;
+}
+
+function hasVideo(typeIndex: number, agentType: AICallAgentType | AIChatAgentType) {
+  return typeIndex === 0 && (agentType === AICallAgentType.VisionAgent || agentType === AICallAgentType.VideoAgent);
+}
+
+function Welcome({
+  userId,
+  region,
+  onAuthFail,
+  initialType,
+  showPstn,
+  onTypeSelected,
+  onAgentTypeSelected,
+  onPSTNTypeSelected,
+}: WelcomeProps) {
   const { t } = useTranslation();
   const typeTabItems = [
     {
@@ -26,7 +49,7 @@ function Welcome({ initialType, showPstn, onTypeSelected, onAgentTypeSelected }:
     },
     {
       key: 'pstn',
-      title: t('welcome.pstn'),
+      title: t('welcome.pstn.title'),
     },
   ];
 
@@ -34,17 +57,21 @@ function Welcome({ initialType, showPstn, onTypeSelected, onAgentTypeSelected }:
     typeTabItems.findIndex((item) => item.key === initialType) || 0
   );
   const [activeCallIndex, setActiveCallIndex] = useState(
-    Number(localStorage.getItem(LAST_SELECT_INDEX_CACHE_KEY)) || 0
+    Number(localStorage.getItem(LAST_CALL_SELECT_INDEX_CACHE_KEY)) || 0
   );
+  const [activePSTNIndex, setActivePSTNIndex] = useState(
+    Number(localStorage.getItem(LAST_PSTN_SELECT_INDEX_CACHE_KEY)) || 0
+  );
+
   const swiperRef = useRef<SwiperRef>(null);
 
   const onClick = () => {
-    localStorage.setItem(LAST_SELECT_INDEX_CACHE_KEY, activeCallIndex.toString());
+    localStorage.setItem(LAST_CALL_SELECT_INDEX_CACHE_KEY, activeCallIndex.toString());
     onTypeSelected(typeTabItems[activeTypeIndex].key);
     if (activeTypeIndex === 0) {
       onAgentTypeSelected(callTabItems[activeCallIndex].value);
     } else {
-      onAgentTypeSelected(callTabItems[0].value);
+      onPSTNTypeSelected(pstnTabItems[activePSTNIndex].value);
     }
   };
 
@@ -96,13 +123,29 @@ function Welcome({ initialType, showPstn, onTypeSelected, onAgentTypeSelected }:
     },
   ];
 
+  const currentAgentType = callTabItems[activeCallIndex].value;
+  const needAudio = hasAudio(activeTypeIndex, currentAgentType);
+  const needVideo = hasVideo(activeTypeIndex, currentAgentType);
+  useEffect(() => {
+    getDeviceStream(needAudio, needVideo);
+  }, [needAudio, needVideo]);
+
   const pstnTabItems = [
     {
       key: 'Outbound',
       value: 'Outbound',
-      title: '',
+      title: t('welcome.pstn.outbound'),
       imgUrl: 'https://img.alicdn.com/imgextra/i3/O1CN01ELAkfg1QErPqPaQxV_!!6000000001945-2-tps-426-852.png',
       desktopImgUrl: 'https://img.alicdn.com/imgextra/i2/O1CN01RnDzyV1ZDn1wnziwW_!!6000000003161-2-tps-604-604.png',
+      width: 302,
+      height: 302,
+    },
+    {
+      key: 'Inbound',
+      value: 'Inbound',
+      title: t('welcome.pstn.inbound'),
+      imgUrl: 'https://img.alicdn.com/imgextra/i2/O1CN01DMhFSN1J4bEzB1cV3_!!6000000000975-2-tps-426-852.png',
+      desktopImgUrl: 'https://img.alicdn.com/imgextra/i2/O1CN01S2fG6J20m8Ml5uRzV_!!6000000006891-2-tps-604-604.png',
       width: 302,
       height: 302,
     },
@@ -127,8 +170,10 @@ function Welcome({ initialType, showPstn, onTypeSelected, onAgentTypeSelected }:
             ))}
           </Tabs>
         )}
-        {activeTypeIndex === 0 && (
+
+        {activeTypeIndex === 0 ? (
           <Tabs
+            key='call-tab'
             className='welcome-call-tab'
             activeKey={callTabItems[activeCallIndex].key}
             onChange={(key) => {
@@ -141,29 +186,47 @@ function Welcome({ initialType, showPstn, onTypeSelected, onAgentTypeSelected }:
               <Tabs.Tab title={item.title} key={item.key} />
             ))}
           </Tabs>
+        ) : (
+          <Tabs
+            key='pstn-tab'
+            className='welcome-call-tab'
+            stretch={false}
+            activeKey={pstnTabItems[activePSTNIndex].key}
+            onChange={(key) => {
+              const index = pstnTabItems.findIndex((item) => item.key === key);
+              setActivePSTNIndex(index);
+              swiperRef.current?.swipeTo(index);
+            }}
+          >
+            {pstnTabItems.map((item) => (
+              <Tabs.Tab title={item.title} key={item.key} />
+            ))}
+          </Tabs>
         )}
+
         <div className='welcome-swiper'>
-          {activeTypeIndex === 0 && (
-            <>
-              <Button className='_left' disabled={activeCallIndex === 0} onClick={() => swiperRef.current?.swipePrev()}>
-                {WelcomeArrowLeftSVG}
-              </Button>
-              <Button
-                className='_right'
-                disabled={activeCallIndex === callTabItems.length - 1}
-                onClick={() => swiperRef.current?.swipeNext()}
-              >
-                {WelcomeArrowRightSVG}
-              </Button>
-            </>
-          )}
+          <Button className='_left' disabled={activeCallIndex === 0} onClick={() => swiperRef.current?.swipePrev()}>
+            {WelcomeArrowLeftSVG}
+          </Button>
+          <Button
+            className='_right'
+            disabled={activeCallIndex === callTabItems.length - 1}
+            onClick={() => swiperRef.current?.swipeNext()}
+          >
+            {WelcomeArrowRightSVG}
+          </Button>
           <Swiper
             direction='horizontal'
+            key={`${activeTypeIndex}`}
             indicator={() => null}
             ref={swiperRef}
-            defaultIndex={activeCallIndex}
+            defaultIndex={activeTypeIndex === 0 ? activeCallIndex : activePSTNIndex}
             onIndexChange={(index) => {
-              setActiveCallIndex(index);
+              if (activeTypeIndex === 0) {
+                setActiveCallIndex(index);
+              } else {
+                setActivePSTNIndex(index);
+              }
             }}
           >
             {(activeTypeIndex === 0 ? callTabItems : pstnTabItems).map((item) => (
@@ -186,6 +249,9 @@ function Welcome({ initialType, showPstn, onTypeSelected, onAgentTypeSelected }:
           <Button color='primary' block onClick={onClick}>
             {t('welcome.btn')}
           </Button>
+          {activeTypeIndex === 0 && activeCallIndex !== 3 && (
+            <WelcomeConfig userId={userId} region={region} onAuthFail={onAuthFail} />
+          )}
         </div>
       </div>
       <SafeArea position='bottom' />

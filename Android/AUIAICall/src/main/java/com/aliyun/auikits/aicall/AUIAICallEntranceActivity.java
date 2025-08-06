@@ -1,7 +1,5 @@
 package com.aliyun.auikits.aicall;
 
-import static com.aliyun.auikits.aiagent.ARTCAICallEngine.ARTCAICallAgentType.ChatBot;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -13,11 +11,12 @@ import androidx.viewpager.widget.ViewPager;
 
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.SystemClock;
-import android.text.Editable;
 import android.text.TextUtils;
-import android.text.TextWatcher;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -26,6 +25,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.PopupWindow;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -33,23 +33,20 @@ import android.widget.Toast;
 import com.acker.simplezxing.activity.CaptureActivity;
 import com.alibaba.android.arouter.facade.annotation.Route;
 import com.aliyun.auikits.aiagent.ARTCAICallEngine;
-import com.aliyun.auikits.aiagent.service.ARTCAICallServiceImpl;
-import com.aliyun.auikits.aiagent.service.IARTCAICallService;
 import com.aliyun.auikits.aiagent.util.ARTCAIAgentUtil;
-import com.aliyun.auikits.aiagent.util.Logger;
 import com.aliyun.auikits.aicall.bean.AudioToneData;
 import com.aliyun.auikits.aicall.controller.ARTCAICallController;
 import com.aliyun.auikits.aicall.util.AUIAICallAgentDebug;
 import com.aliyun.auikits.aicall.util.AUIAICallAgentIdConfig;
 import com.aliyun.auikits.aicall.util.AUIAICallAuthTokenHelper;
+import com.aliyun.auikits.aicall.util.AUIAICallClipboardUtils;
+import com.aliyun.auikits.aicall.util.AUIAICallManager;
 import com.aliyun.auikits.aicall.util.AUIAIConstStrKey;
-import com.aliyun.auikits.aicall.util.AppServiceConst;
 import com.aliyun.auikits.aicall.util.PermissionUtils;
 import com.aliyun.auikits.aicall.util.SettingStorage;
 import com.aliyun.auikits.aicall.util.ToastHelper;
 import com.aliyun.auikits.aicall.widget.AIAgentSettingDialog;
 import com.aliyun.auikits.aicall.widget.AICallPSTNSettingDialog;
-import com.aliyun.auikits.aicall.widget.AICallSettingDialog;
 import com.aliyun.auikits.aicall.widget.GradientTextView;
 import com.google.android.material.tabs.TabLayout;
 import com.orhanobut.dialogplus.DialogPlus;
@@ -72,7 +69,8 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
         AUIAICallTypeVisionChat,
         AUIAICallTypeChatBot,
         AUIAICallTypeVideoChat,
-        AUIAICallTypeOutboundCall
+        AUIAICallTypeOutboundCall,
+        AUIAICallTypeInboundCall
     };
 
     private String mLoginUserId = null;
@@ -132,9 +130,25 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
         findViewById(R.id.config_bgm_view).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                AIAgentSettingDialog.show(AUIAICallEntranceActivity.this);
+                AIAgentSettingDialog.show(AUIAICallEntranceActivity.this, new AIAgentSettingDialog.IAIVoicePrintRecordListener() {
+                    @Override
+                    public void onClick() {
+                        jumpToVoicePrintRecordActivity();
+                    }
+                });
             }
         });
+
+        if(!SettingStorage.getInstance().getBoolean(SettingStorage.KEY_VOICE_PRINT_FIRST_RECORD_TIPS, false)) {
+            new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    showVoiceDialog(findViewById(R.id.config_bgm_view));
+                }
+            }, 1000);
+        }
+
+
 
         PermissionX.init(this)
                 .permissions(PermissionUtils.getPermissions())
@@ -153,6 +167,50 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
         super.onResume();
         featchRtcAuthToken();
     }
+
+   private void showVoiceDialog(View itemView) {
+       // 加载布局
+       LayoutInflater inflater = LayoutInflater.from(this);
+       View popupView = inflater.inflate(R.layout.dialog_auiaicall_voice_print_popup_window, null);
+
+       // 初始化PopupWindow
+       int width = ConstraintLayout.LayoutParams.WRAP_CONTENT;
+       int height = ConstraintLayout.LayoutParams.WRAP_CONTENT;
+       boolean focusable = true; // 让弹出窗口获取焦点
+       PopupWindow popupWindow = new PopupWindow(popupView, width, height, focusable);
+
+       // 设置动画
+       //popupWindow.setAnimationStyle(R.style.PopupAnimation);
+
+       // 显示PopupWindow在屏幕右侧，距离右侧20dp
+       int[] location = new int[2];
+       itemView.getLocationOnScreen(location);
+
+       // 获取itemView的高度
+       int itemViewHeight = itemView.getHeight();
+
+       // 转换20dp为像素值
+       int twentyDpInPx = (int) (20 * getResources().getDisplayMetrics().density + 0.5f);
+
+       // 获取屏幕宽度
+       int screenWidth = getResources().getDisplayMetrics().widthPixels;
+
+       // 获取PopupWindow的测量宽度（需要先measure）
+       popupView.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+       int popupWidth = popupView.getMeasuredWidth();
+
+       // 计算X坐标：屏幕宽度 - Popup宽度 - 20dp = 右侧对齐并留出20dp边距
+       int x = screenWidth - popupWidth - twentyDpInPx;
+
+       // Y坐标保持在itemView下方
+       int y = location[1] + itemViewHeight + twentyDpInPx;
+
+       // 在指定位置显示PopupWindow
+       popupWindow.showAtLocation(itemView, Gravity.NO_GRAVITY, x, y);
+
+       SettingStorage.getInstance().setBoolean(SettingStorage.KEY_VOICE_PRINT_FIRST_RECORD_TIPS, true);
+   }
+
 
 
     private void featchRtcAuthToken() {
@@ -204,8 +262,7 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
 
     private void jumpToInCallActivity() {
         if (mLayoutHolder.isOfficial()) {
-
-            if(mLayoutHolder.getOfficialLayerHolder().getAUIAICallAgentType() != AUIAICallType.AUIAICallTypeOutboundCall) {
+            if(mLayoutHolder.getOfficialLayerHolder().getAUIAICallAgentType() != AUIAICallType.AUIAICallTypeOutboundCall && mLayoutHolder.getOfficialLayerHolder().getAUIAICallAgentType() != AUIAICallType.AUIAICallTypeInboundCall) {
                 Intent intent = new Intent(AUIAICallEntranceActivity.this, mLayoutHolder.getOfficialLayerHolder().getAUIAICallAgentType() == AUIAICallType.AUIAICallTypeChatBot ? AUIAIChatInChatActivity.class:AUIAICallInCallActivity.class);
                 intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_USER_ID, mLoginUserId);
                 intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_AUTHORIZATION, mLoginAuthorization);
@@ -227,31 +284,44 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
                 startActivity(intent);
             } else {
 
-                String pstnCallNumber = mLayoutHolder.getOfficialLayerHolder().getPSTNCallNumber();
-                if(TextUtils.isEmpty(pstnCallNumber)) {
-                   ToastHelper.showToast(AUIAICallEntranceActivity.this, R.string.pstn_out_call_number_vaild, Toast.LENGTH_SHORT);
-                   return;
-                }
-                boolean isInterlligentInterrupt = mLayoutHolder.getOfficialLayerHolder().getPSTNSmartInterrupt();
-                String voiceId = mLayoutHolder.getOfficialLayerHolder().getPSTNVoiceSelect();
-                boolean usePreHost = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_APP_SERVER_TYPE, SettingStorage.DEFAULT_APP_SERVER_TYPE);
-                String agentId = "";
-                if(BuildConfig.TEST_ENV_MODE) {
-                    agentId = usePreHost ? AUIAICallAgentDebug.getAIAgentId(ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent, false) :  AUIAICallAgentIdConfig.getAIAgentId(ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent, false);
-                }
-                else {
-                    agentId = AUIAICallAgentIdConfig.getAIAgentId(ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent, false);
+                if(mLayoutHolder.getOfficialLayerHolder().getAUIAICallAgentType() == AUIAICallType.AUIAICallTypeOutboundCall) {
+                    String pstnCallNumber = mLayoutHolder.getOfficialLayerHolder().getPSTNOutboundCallNumber();
+                    if(TextUtils.isEmpty(pstnCallNumber)) {
+                        ToastHelper.showToast(AUIAICallEntranceActivity.this, R.string.pstn_out_call_number_vaild, Toast.LENGTH_SHORT);
+                        return;
+                    }
+                    boolean isInterlligentInterrupt = mLayoutHolder.getOfficialLayerHolder().getPSTNSmartInterrupt();
+                    String voiceId = mLayoutHolder.getOfficialLayerHolder().getPSTNVoiceSelect();
+                    boolean usePreHost = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_APP_SERVER_TYPE, SettingStorage.DEFAULT_APP_SERVER_TYPE);
+                    String agentId = "";
+                    if(BuildConfig.TEST_ENV_MODE) {
+                        agentId = usePreHost ? AUIAICallAgentDebug.getAIAgentId(ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent, false) :  AUIAICallAgentIdConfig.getAIAgentId(ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent, false);
+                    }
+                    else {
+                        agentId = AUIAICallAgentIdConfig.getAIAgentId(ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent, false);
+                    }
+
+                    Intent intent = new Intent(AUIAICallEntranceActivity.this, AUIAICallInPhoneCallActivity.class);
+                    intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_PSTN_OUT_NUMBER, pstnCallNumber);
+                    intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_USER_ID, mLoginUserId);
+                    intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_ID, agentId);
+                    intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_AUTHORIZATION, mLoginAuthorization);
+                    intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_PSTN_SMART_INTERRUPT, isInterlligentInterrupt);
+                    intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_PSTN_OUT_VOICE, voiceId);
+                    intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_IS_SHARED_AGENT, false);
+                    startActivity(intent);
+                } else {
+                    String pstnInCallNumber = mLayoutHolder.getOfficialLayerHolder().getPSTNInboundCallNumber();
+                    if(TextUtils.isEmpty(pstnInCallNumber)) {
+                        ToastHelper.showToast(AUIAICallEntranceActivity.this, R.string.pstn_in_call_number_vaild, Toast.LENGTH_SHORT);
+                        return;
+                    }
+
+                    Intent intent = new Intent(Intent.ACTION_DIAL);
+                    intent.setData(Uri.parse("tel:" + pstnInCallNumber));
+                    startActivity(intent);
                 }
 
-                Intent intent = new Intent(AUIAICallEntranceActivity.this, AUIAICallInPhoneCallActivity.class);
-                intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_PSTN_OUT_NUMBER, pstnCallNumber);
-                intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_USER_ID, mLoginUserId);
-                intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_ID, agentId);
-                intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_AUTHORIZATION, mLoginAuthorization);
-                intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_PSTN_SMART_INTERRUPT, isInterlligentInterrupt);
-                intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_PSTN_OUT_VOICE, voiceId);
-                intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_IS_SHARED_AGENT, false);
-                startActivity(intent);
             }
         } else {
 
@@ -265,6 +335,14 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
                 ToastHelper.showToast(AUIAICallEntranceActivity.this, R.string.token_expired_tips, Toast.LENGTH_SHORT);
             }
         }
+    }
+
+    private void jumpToVoicePrintRecordActivity() {
+        Intent intent = new Intent(AUIAICallEntranceActivity.this, AUIAICallVoicePrintRecordActivity.class);
+        intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_USER_ID, mLoginUserId);
+        intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_AUTHORIZATION, mLoginAuthorization);
+
+        startActivity(intent);
     }
 
     private void onAllPermissionGranted() {
@@ -286,8 +364,12 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
         ((Switch)view.findViewById(R.id.sv_boot_push_to_talk)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_PUSH_TO_TALK, SettingStorage.DEFAULT_ENABLE_PUSH_TO_TALK));
         ((Switch)view.findViewById(R.id.sv_boot_use_audio_delay_info)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_AUDIO_DELAY_INFO, true));
         ((Switch)view.findViewById(R.id.sv_boot_enable_agent_auto_exit)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_AGENT_AUTO_EXIT, true));
-        ((Switch)view.findViewById(R.id.sv_boot_enable_enable_semantic)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_SEMATNIC, false));
-        ((Switch)view.findViewById(R.id.sv_boot_use_voice_print)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_VOICE_PRINT, SettingStorage.DEFAULT_ENABLE_VOICE_PRINT));
+        ((Switch)view.findViewById(R.id.sv_boot_enable_enable_semantic)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_SEMATNIC, true));
+        ((Switch)view.findViewById(R.id.sv_boot_enable_audio_aec)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_AUDIO_AEC, SettingStorage.DEFAULT_SHARE_BOOT_USE_DEMO_APP_SERVER));
+        ((Switch)view.findViewById(R.id.sv_boot_enable_llm_complete_reply)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_LLM_COMPLETE_REPLY, false));
+        ((Switch)view.findViewById(R.id.sv_boot_enable_brust_send_recv)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_BRUST_SEND_RECV, true));
+
+        //((Switch)view.findViewById(R.id.sv_boot_use_voice_print)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_VOICE_PRINT, SettingStorage.DEFAULT_ENABLE_VOICE_PRINT));
         ((Switch)view.findViewById(R.id.sv_share_boot_use_demo_app_server)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_SHARE_BOOT_USE_DEMO_APP_SERVER, SettingStorage.DEFAULT_SHARE_BOOT_USE_DEMO_APP_SERVER));
         ((EditText)view.findViewById(R.id.et_boot_user_data)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_USER_EXTEND_DATA));
 
@@ -299,21 +381,29 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
         ((EditText) view.findViewById(R.id.BailianAppParams_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_BAILIAN_APP_PARAMS));
         ((EditText) view.findViewById(R.id.Volume_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_VOLUME, "100"));
         ((EditText) view.findViewById(R.id.Greeting_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_GREETING));
-        ((EditText) view.findViewById(R.id.VoiceprintId_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_VOICE_PRINT_ID));
+        //((EditText) view.findViewById(R.id.VoiceprintId_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_VOICE_PRINT_ID));
         ((EditText) view.findViewById(R.id.EnableIntelligentSegment_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_ENABLE_INTELLIGENT_SEGMENT, "1"));
         ((EditText) view.findViewById(R.id.AvatarId_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_AVATAR_ID));
         ((EditText) view.findViewById(R.id.AsrMaxSilence_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_ASR_MAX_SILENCE, "400"));
         ((EditText) view.findViewById(R.id.UserOnlineTimeout_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_USER_ONLINE_TIME_OUT, "60"));
         ((EditText) view.findViewById(R.id.asrLanguage_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_USER_ASR_LANGUAGE, ""));
         ((EditText) view.findViewById(R.id.llmSystemPrompt_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_LLM_SYSTEM_PROMPT));
+        ((EditText) view.findViewById(R.id.llm_history_limit_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_LLM_HISTORY_LIMIT, "10"));
         ((EditText) view.findViewById(R.id.interrupt_words_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_INTERRUPT_WORDS, ""));
-        ((EditText) view.findViewById(R.id.vad_level_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_VAD_LEVEL, "3"));
+        ((EditText) view.findViewById(R.id.vad_level_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_VAD_LEVEL, "11"));
         ((EditText) view.findViewById(R.id.asr_hot_words_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_ASR_HOT_WORDS, ""));
         ((EditText) view.findViewById(R.id.turn_end_words_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_TURN_END_WORDS, ""));
         ((EditText) view.findViewById(R.id.asr_customparams_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_ASR_CUSTOM_PARAMS, ""));
         ((EditText) view.findViewById(R.id.tts_pronunciation_rules_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_PRONUNCIATION_RULES, ""));
         ((EditText) view.findViewById(R.id.vcr_config_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_VCR_CONFIG_RULES, ""));
-        ((EditText) view.findViewById(R.id.semantic_duration_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_SEMATNIC_DURATION, ""));
+        ((EditText) view.findViewById(R.id.semantic_duration_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_SEMATNIC_DURATION, "-1"));
+        ((EditText) view.findViewById(R.id.vad_duration_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_VAD_DURATION, "0"));
+        ((EditText) view.findViewById(R.id.speech_rate_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_TTS_SPEECH_RATE, "1.0"));
+        ((EditText) view.findViewById(R.id.tts_language_id_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_TTS_LANGUAGE_ID, ""));
+        ((EditText) view.findViewById(R.id.tts_emotion_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_TTS_EMOTION, ""));
+        ((EditText) view.findViewById(R.id.openai_extra_query_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_OPENAI_EXTRA_QUERY, ""));
+        ((EditText) view.findViewById(R.id.tts_model_id_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_TTS_MODEL_ID, ""));
+
 
 
         if (!showExtraDebugConfig) {
@@ -362,8 +452,17 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
                         boolean enableSemantic = ((Switch)view.findViewById(R.id.sv_boot_enable_enable_semantic)).isChecked();
                         SettingStorage.getInstance().setBoolean(SettingStorage.KEY_BOOT_ENABLE_SEMATNIC, enableSemantic);
 
-                        boolean bootUseVoicePrint = ((Switch)view.findViewById(R.id.sv_boot_use_voice_print)).isChecked();
-                        SettingStorage.getInstance().setBoolean(SettingStorage.KEY_BOOT_ENABLE_VOICE_PRINT, bootUseVoicePrint);
+                        boolean audioAec = ((Switch)view.findViewById(R.id.sv_boot_enable_audio_aec)).isChecked();
+                        SettingStorage.getInstance().setBoolean(SettingStorage.KEY_BOOT_ENABLE_AUDIO_AEC, audioAec);
+
+                        boolean llmComplete = ((Switch)view.findViewById(R.id.sv_boot_enable_llm_complete_reply)).isChecked();
+                        SettingStorage.getInstance().setBoolean(SettingStorage.KEY_BOOT_ENABLE_LLM_COMPLETE_REPLY, llmComplete);
+
+                        boolean enableBrust = ((Switch)view.findViewById(R.id.sv_boot_enable_brust_send_recv)).isChecked();
+                        SettingStorage.getInstance().setBoolean(SettingStorage.KEY_BOOT_ENABLE_BRUST_SEND_RECV, enableBrust);
+
+                        //boolean bootUseVoicePrint = ((Switch)view.findViewById(R.id.sv_boot_use_voice_print)).isChecked();
+                        //SettingStorage.getInstance().setBoolean(SettingStorage.KEY_BOOT_ENABLE_VOICE_PRINT, bootUseVoicePrint);
 
                         boolean shareBootUseDemoAppServer = ((Switch)view.findViewById(R.id.sv_share_boot_use_demo_app_server)).isChecked();
                         SettingStorage.getInstance().setBoolean(SettingStorage.KEY_SHARE_BOOT_USE_DEMO_APP_SERVER, shareBootUseDemoAppServer);
@@ -395,8 +494,8 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
                         String bootGreeting = ((EditText)view.findViewById(R.id.Greeting_input)).getText().toString();
                         SettingStorage.getInstance().set(SettingStorage.KEY_GREETING, bootGreeting);
 
-                        String bootVoiceprintId = ((EditText)view.findViewById(R.id.VoiceprintId_input)).getText().toString();
-                        SettingStorage.getInstance().set(SettingStorage.KEY_VOICE_PRINT_ID, bootVoiceprintId);
+//                        String bootVoiceprintId = ((EditText)view.findViewById(R.id.VoiceprintId_input)).getText().toString();
+//                        SettingStorage.getInstance().set(SettingStorage.KEY_VOICE_PRINT_ID, bootVoiceprintId);
 
                         String bootEnableIntelligentSegment = ((EditText)view.findViewById(R.id.EnableIntelligentSegment_input)).getText().toString();
                         SettingStorage.getInstance().set(SettingStorage.KEY_ENABLE_INTELLIGENT_SEGMENT, bootEnableIntelligentSegment);
@@ -414,6 +513,7 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
                         SettingStorage.getInstance().set(SettingStorage.KEY_USER_ASR_LANGUAGE, bootAsrLanguage);
 
                         SettingStorage.getInstance().set(SettingStorage.KEY_LLM_SYSTEM_PROMPT, ((EditText)view.findViewById(R.id.llmSystemPrompt_input)).getText().toString());
+                        SettingStorage.getInstance().set(SettingStorage.KEY_LLM_HISTORY_LIMIT, ((EditText)view.findViewById(R.id.llm_history_limit_input)).getText().toString());
                         SettingStorage.getInstance().set(SettingStorage.KEY_INTERRUPT_WORDS, ((EditText)view.findViewById(R.id.interrupt_words_input)).getText().toString());
                         SettingStorage.getInstance().set(SettingStorage.KEY_VAD_LEVEL, ((EditText)view.findViewById(R.id.vad_level_input)).getText().toString());
                         SettingStorage.getInstance().set(SettingStorage.KEY_ASR_HOT_WORDS, ((EditText)view.findViewById(R.id.asr_hot_words_input)).getText().toString());
@@ -422,6 +522,13 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
                         SettingStorage.getInstance().set(SettingStorage.KEY_PRONUNCIATION_RULES, ((EditText)view.findViewById(R.id.tts_pronunciation_rules_input)).getText().toString());
                         SettingStorage.getInstance().set(SettingStorage.KEY_VCR_CONFIG_RULES, ((EditText)view.findViewById(R.id.vcr_config_input)).getText().toString());
                         SettingStorage.getInstance().set(SettingStorage.KEY_BOOT_SEMATNIC_DURATION, ((EditText)view.findViewById(R.id.semantic_duration_input)).getText().toString());
+                        SettingStorage.getInstance().set(SettingStorage.KEY_BOOT_VAD_DURATION, ((EditText)view.findViewById(R.id.vad_duration_input)).getText().toString());
+                        SettingStorage.getInstance().set(SettingStorage.KEY_BOOT_TTS_SPEECH_RATE, ((EditText)view.findViewById(R.id.speech_rate_input)).getText().toString());
+                        SettingStorage.getInstance().set(SettingStorage.KEY_BOOT_TTS_LANGUAGE_ID, ((EditText)view.findViewById(R.id.tts_language_id_input)).getText().toString());
+                        SettingStorage.getInstance().set(SettingStorage.KEY_BOOT_TTS_EMOTION, ((EditText)view.findViewById(R.id.tts_emotion_input)).getText().toString());
+                        SettingStorage.getInstance().set(SettingStorage.KEY_BOOT_OPENAI_EXTRA_QUERY, ((EditText)view.findViewById(R.id.openai_extra_query_input)).getText().toString());
+                        SettingStorage.getInstance().set(SettingStorage.KEY_BOOT_TTS_MODEL_ID, ((EditText)view.findViewById(R.id.tts_model_id_input)).getText().toString());
+
 
                     }
                     if (v.getId() == R.id.btn_confirm || v.getId() == R.id.btn_cancel) {
@@ -726,6 +833,8 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
                 return context.getString(R.string.video_agent_call);
             case AUIAICallTypeOutboundCall:
                 return context.getString(R.string.phone_agent_call);
+            case AUIAICallTypeInboundCall:
+                return context.getString(R.string.phone_agent_in_call);
             default:
                 break;
         }
@@ -749,6 +858,7 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
             if(mShowPstnCallPage) {
                 if(!mInternalBuild) {
                     mAUICallTypeList.add(AUIAICallType.AUIAICallTypeOutboundCall);
+                    mAUICallTypeList.add(AUIAICallType.AUIAICallTypeInboundCall);
                 }
             }
 
@@ -764,7 +874,7 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
             );
 
             for (AUIAICallType aiCallAgentType : mAUICallTypeList) {
-                adapter.addFragment(aiCallAgentType, aiCallAgentTypeTitle(context, aiCallAgentType), context, mBtnCreateRoom);
+                adapter.addFragment(aiCallAgentType, aiCallAgentTypeTitle(context, aiCallAgentType), context, mBtnCreateRoom, mLoginUserId, mLoginAuthorization);
             }
 
             mViewPagerCallType.setAdapter(adapter);
@@ -775,21 +885,18 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
                 @Override
                 public void onTabSelected(TabLayout.Tab tab) {
                     mAICallAgentType = mAUICallTypeList.get(tab.getPosition());
-                    if(mAICallAgentType == AUIAICallType.AUIAICallTypeChatBot || mAICallAgentType == AUIAICallType.AUIAICallTypeOutboundCall) {
+                    if(mAICallAgentType == AUIAICallType.AUIAICallTypeChatBot || mAICallAgentType == AUIAICallType.AUIAICallTypeOutboundCall || mAICallAgentType == AUIAICallType.AUIAICallTypeInboundCall) {
                         mMotionalLayout.setVisibility(View.GONE);
                     } else {
                         mMotionalLayout.setVisibility(View.VISIBLE);
                     }
 
-//                    if(mAICallAgentType != AUIAICallType.AUIAICallTypeOutboundCall) {
-//                        mBtnCreateRoom.setBackgroundResource(R.drawable.btn_entrance_selector);
-//                    } else {
-//                        if(TextUtils.isEmpty(adapter.getPSTNCallNumber())) {
-//                            mBtnCreateRoom.setBackgroundResource(R.drawable.btn_entrance_disable_selector);
-//                        } else {
-//                            mBtnCreateRoom.setBackgroundResource(R.drawable.btn_entrance_selector);
-//                        }
-//                    }
+                    if(mAICallAgentType == AUIAICallType.AUIAICallTypeInboundCall) {
+                        mBtnCreateRoom.setText(R.string.pstn_in_call_entrance_text);
+                        ((ViewPagerAdapter)mViewPagerCallType.getAdapter()).featchInBoundCallerNumber();
+                    } else {
+                        mBtnCreateRoom.setText(R.string.room_entrance_text);
+                    }
                 }
 
                 @Override
@@ -824,8 +931,8 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
             return ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent;
         }
 
-        public String getPSTNCallNumber() {
-            return ((ViewPagerAdapter)mViewPagerCallType.getAdapter()).getPSTNCallNumber();
+        public String getPSTNOutboundCallNumber() {
+            return ((ViewPagerAdapter)mViewPagerCallType.getAdapter()).getPSTNOutCallNumber();
         }
 
         public boolean getPSTNSmartInterrupt() {
@@ -834,6 +941,14 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
 
         public String getPSTNVoiceSelect() {
             return ((ViewPagerAdapter)mViewPagerCallType.getAdapter()).getPSTNVoiceSelect();
+        }
+
+        public String getPSTNInboundCallNumber() {
+            return ((ViewPagerAdapter)mViewPagerCallType.getAdapter()).getPSTNInCallerNumber();
+        }
+
+        public void setPSTNInboundCallNumber(String number) {
+            ((ViewPagerAdapter)mViewPagerCallType.getAdapter()).setPSTNInCallerNumber(number);
         }
     }
 
@@ -865,23 +980,46 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
             fragmentTitleList.add(title);
         }
 
-        public void addFragment(AUIAICallType callAgentType, String title, Context context, Button mCreateRoomBtn) {
-            Fragment fragment = OfficialCallPreviewFragment.newInstance(callAgentType, context, mCreateRoomBtn);
+        public void addFragment(AUIAICallType callAgentType, String title, Context context, Button mCreateRoomBtn, String userId, String auth) {
+            Fragment fragment = OfficialCallPreviewFragment.newInstance(callAgentType, context, mCreateRoomBtn, userId, auth);
             fragmentList.add(fragment);
             fragmentTitleList.add(title);
         }
 
-        public String getPSTNCallNumber() {
+        public String getPSTNOutCallNumber() {
 
             for (Fragment fragment : fragmentList) {
                 if (fragment instanceof OfficialCallPreviewFragment) {
                     OfficialCallPreviewFragment officialCallPreviewFragment = (OfficialCallPreviewFragment) fragment;
                     if (officialCallPreviewFragment.mCallAgentType == AUIAICallType.AUIAICallTypeOutboundCall) {
-                        return officialCallPreviewFragment.mPstnEditText.getText().toString();
+                        return officialCallPreviewFragment.mPstnOutNumberEditText.getText().toString();
                     }
                 }
             }
             return null;
+        }
+
+        public String getPSTNInCallerNumber() {
+            for (Fragment fragment : fragmentList) {
+                if (fragment instanceof OfficialCallPreviewFragment) {
+                    OfficialCallPreviewFragment officialCallPreviewFragment = (OfficialCallPreviewFragment) fragment;
+                    if (officialCallPreviewFragment.mCallAgentType == AUIAICallType.AUIAICallTypeInboundCall) {
+                        return officialCallPreviewFragment.mPSTNInNumberEditText.getText().toString();
+                    }
+                }
+            }
+            return null;
+        }
+
+        public void setPSTNInCallerNumber(String number) {
+            for (Fragment fragment : fragmentList) {
+                if (fragment instanceof OfficialCallPreviewFragment) {
+                    OfficialCallPreviewFragment officialCallPreviewFragment = (OfficialCallPreviewFragment) fragment;
+                    if (officialCallPreviewFragment.mCallAgentType == AUIAICallType.AUIAICallTypeInboundCall) {
+                        officialCallPreviewFragment.mPSTNInNumberEditText.setText(number);
+                    }
+                }
+            }
         }
 
         public boolean getPSTNIsSmartInterrupt() {
@@ -907,6 +1045,17 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
            }
             return null;
         }
+
+        public void featchInBoundCallerNumber() {
+            for (Fragment fragment : fragmentList) {
+                if (fragment instanceof OfficialCallPreviewFragment) {
+                    OfficialCallPreviewFragment officialCallPreviewFragment = (OfficialCallPreviewFragment) fragment;
+                    if (officialCallPreviewFragment.mCallAgentType == AUIAICallType.AUIAICallTypeInboundCall) {
+                         officialCallPreviewFragment.featchInBoundCallerNumber(officialCallPreviewFragment.mUserId, officialCallPreviewFragment.mAuth);
+                    }
+                }
+            }
+        }
     }
 
     public static class OfficialCallPreviewFragment extends Fragment {
@@ -914,20 +1063,26 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
         private ImageView mIvPreview;
         private ImageView mPstnVoiceSelectImageView;
         private TextView mPstnVoiceSelectTextView;
-        private EditText mPstnEditText;
+        private EditText mPstnOutNumberEditText;
         private Context mContext;
         private Button mCreateRoomBtn = null;
         private Switch mSwitchInterrupt = null;
+        private TextView mPSTNInNumberEditText;
+        private String mUserId;
+        private String mAuth;
 
         private OfficialCallPreviewFragment() {}
 
-        private OfficialCallPreviewFragment(Context context,  Button createRoomBtn) {
+        private OfficialCallPreviewFragment(Context context,  Button createRoomBtn, String userId, String auth, AUIAICallType callAgentType) {
             this.mContext = context;
             this.mCreateRoomBtn = createRoomBtn;
+            this.mUserId = userId;
+            this.mAuth = auth;
+            this.mCallAgentType = callAgentType;
         }
 
-        public static OfficialCallPreviewFragment newInstance(AUIAICallType callAgentType, Context context, Button createRoomBtn) {
-            OfficialCallPreviewFragment fragment = new OfficialCallPreviewFragment(context, createRoomBtn);
+        public static OfficialCallPreviewFragment newInstance(AUIAICallType callAgentType, Context context, Button createRoomBtn, String userId, String auth) {
+            OfficialCallPreviewFragment fragment = new OfficialCallPreviewFragment(context, createRoomBtn, userId, auth, callAgentType);
             Bundle args = new Bundle();
             args.putString("callAgentType", callAgentType.name());
             fragment.setArguments(args);
@@ -943,7 +1098,7 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
         @Override
         public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
             printLifeCycle("onCreateView");
-            if(mCallAgentType != AUIAICallType.AUIAICallTypeOutboundCall) {
+            if(mCallAgentType != AUIAICallType.AUIAICallTypeOutboundCall && mCallAgentType != AUIAICallType.AUIAICallTypeInboundCall) {
                 View view = inflater.inflate(R.layout.layout_fragment_aicall_preview, container, false);
                 mIvPreview = view.findViewById(R.id.iv_entrance_preview);
                 if (mCallAgentType == AUIAICallType.AUIAICallTypeAvatarChat) {
@@ -959,57 +1114,81 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
                 }
                 return view;
             } else {
-                View view = inflater.inflate(R.layout.layout_fragment_pstn_out_call_preview, container, false);
+                if(mCallAgentType == AUIAICallType.AUIAICallTypeOutboundCall) {
+                    View view = inflater.inflate(R.layout.layout_fragment_pstn_out_call_preview, container, false);
 
-                mPstnVoiceSelectImageView = view.findViewById(R.id.iv_pstn_out_voice_select);
-                mPstnVoiceSelectTextView = view.findViewById(R.id.tv_pstn_out_voice_value);
-                List<AudioToneData> audioToneList = AICallPSTNSettingDialog.getDefaultAudioToneList();
-                mPstnVoiceSelectTextView.setText(AICallPSTNSettingDialog.currentVoice);
-                mPstnVoiceSelectImageView.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        AICallPSTNSettingDialog.show(mContext, audioToneList, new AICallPSTNSettingDialog.AICallPSTNVoiceChangeListener() {
+                    mPstnVoiceSelectImageView = view.findViewById(R.id.iv_pstn_out_voice_select);
+                    mPstnVoiceSelectTextView = view.findViewById(R.id.tv_pstn_out_voice_value);
+                    List<AudioToneData> audioToneList = AICallPSTNSettingDialog.getDefaultAudioToneList();
+                    mPstnVoiceSelectTextView.setText(AICallPSTNSettingDialog.currentVoice);
+                    mPstnVoiceSelectImageView.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            AICallPSTNSettingDialog.show(mContext, audioToneList, new AICallPSTNSettingDialog.AICallPSTNVoiceChangeListener() {
+                                @Override
+                                public void onVoiceChange(String voice) {
+                                    mPstnVoiceSelectTextView.setText(AICallPSTNSettingDialog.currentVoice);
+                                }
+                            });
+                        }
+                    });
+                    mPstnOutNumberEditText = view.findViewById(R.id.et_pstn_out_called_number);
+                    mSwitchInterrupt = view.findViewById(R.id.sv_pstn_out_interrupt_config);
+                    return view;
+                } else {
+                    View view = inflater.inflate(R.layout.layout_fragment_pstn_in_call_preview, container, false);
+                    mPSTNInNumberEditText = view.findViewById(R.id.et_pstn_in_called_number);
+                    view.findViewById(R.id.iv_pstn_in_copy).setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            AUIAICallClipboardUtils.copyToClipboard(mContext, mPSTNInNumberEditText.getText().toString());
+                            ToastHelper.showToast(mContext, R.string.pstn_in_call_number_copied, Toast.LENGTH_SHORT);
+                        }
+                    });
+                    view.findViewById(R.id.iv_pstn_in_get_number_again).setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            featchInBoundCallerNumber(mUserId, mAuth);
+                        }
+                    });
+                    return view;
+                }
+            }
+        }
+
+        private void featchInBoundCallerNumber(String userId, String auth) {
+            String agentId;
+            boolean usePreHost = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_APP_SERVER_TYPE, SettingStorage.DEFAULT_APP_SERVER_TYPE);
+            if(BuildConfig.TEST_ENV_MODE) {
+                agentId = usePreHost ? AUIAICallAgentDebug.getAIAgentId(ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent, false) :  AUIAICallAgentIdConfig.getAIAgentId(ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent, false);
+            }
+            else {
+                agentId = AUIAICallAgentIdConfig.getAIAgentId(ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent, false);
+            }
+            AUIAICallManager.getInBoundCallNumber(userId, auth, agentId, AUIAICallAgentDebug.getRegion(), new AUIAICallManager.IAUIAICallManagerBoundCallNumberCallback() {
+                @Override
+                public void onSuccess(String data) {
+                    if(data != null) {
+                        new Handler(Looper.getMainLooper()).post(new Runnable() {
                             @Override
-                            public void onVoiceChange(String voice) {
-                                mPstnVoiceSelectTextView.setText(AICallPSTNSettingDialog.currentVoice);
+                            public void run() {
+                                mPSTNInNumberEditText.setText(data);
                             }
                         });
+
                     }
-                });
-                mPstnEditText = view.findViewById(R.id.et_pstn_out_called_number);
-                mSwitchInterrupt = view.findViewById(R.id.sv_pstn_out_interrupt_config);
+                }
 
-//                if(TextUtils.isEmpty( mPstnEditText.getText().toString())) {
-//                    mCreateRoomBtn.setBackgroundResource(R.drawable.btn_entrance_disable_selector);
-//                }
-
-//                mPstnEditText.addTextChangedListener(new TextWatcher() {
-//                    @Override
-//                    public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-//                    }
-//
-//                    @Override
-//                    public void onTextChanged(CharSequence s, int start, int before, int count) {
-//
-//                        String number = mPstnEditText.getText().toString();
-//
-//                        if(mCallAgentType == AUIAICallType.AUIAICallTypeOutboundCall) {
-//                            if(TextUtils.isEmpty(number)) {
-//                                mCreateRoomBtn.setBackgroundResource(R.drawable.btn_entrance_disable_selector);
-//
-//                            } else {
-//                                mCreateRoomBtn.setBackgroundResource(R.drawable.btn_entrance_selector);
-//                            }
-//                        }
-//                    }
-//                    @Override
-//                    public void afterTextChanged(Editable s) {
-//                    }
-//                });
-
-
-                return view;
-            }
+                @Override
+                public void onFailed(int errorCode, String errorMsg) {
+                    new Handler(Looper.getMainLooper()).post(new Runnable() {
+                        @Override
+                        public void run() {
+                            ToastHelper.showToast(mContext, R.string.pstn_in_call_get_number_failed, Toast.LENGTH_SHORT);
+                        }
+                    });
+                }
+            });
         }
 
         @Override

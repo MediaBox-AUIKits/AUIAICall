@@ -75,7 +75,8 @@
     <string name="vision_agent_call">AI Vision Call</string>
     <string name="chat_bot">AI Chat</string>
     <string name="video_agent_call">AI Video Call</string>
-    <string name="phone_agent_call">AI Phone calls</string>
+    <string name="phone_agent_call">AI Outbound Calls</string>
+    <string name="phone_agent_in_call">AI Inbound Calls</string>
     <string name="temporary_experience_token">Entrusting authorized AI agents</string>
     <string name="et_token_hints">Please scan the QR code to obtain authorized AI agents</string>
     <string name="token_expired_tips">AI agent authorization has expired</string>
@@ -116,7 +117,7 @@
 
     <string name="mode_natural_conversation">Natural Conversation Mode</string>
     <string name="mode_push_to_talk">Push To Talk Mode</string>
-    <string name="voiceprint_recognition_test_title">Voiceprint Recognition (Invite Only)</string>
+    <string name="voiceprint_recognition_test_title">Voiceprint Recognition</string>
     <string name="latency_rate_title">Latency Rate</string>
     <string name="btn_text_click_to_view_latency_rate">Click To View ></string>
     <string name="aicall_sentence_latency_title">Sentence Latency</string>
@@ -130,6 +131,26 @@
     <string name="main_speaker_not_recognized">(voiceprint) No response without regular speaker recognized</string>
     <string name="aival_main_speaker_not_recognized">VAD detected other speaking, stop responded this question.</string>
     <string name="reset_voiceprint">Reset</string>
+    <string name="voiceprint_info_tipe">Voiceprint feature information</string>
+    <string name="voiceprint_info_tipe_cannot_use">Voiceprint feature information, Cannot use if not recorded</string>
+    <string name="voiceprint_info_record">Record</string>
+    <string name="voiceprint_info_tipe_desc">Please read the following passage aloud in a quiet environment</string>
+    <string name="voiceprint_read_tips">"Wow, I think the skirt you are wearing today is very bright and elegant, which sets off your temperament very well. It is really beautiful. Can you tell me which store you bought such a beautiful skirt from? I want to buy one too."</string>
+    <string name="voiceprint_push_to_record">Press to start recording, release to end</string>
+    <string name="voiceprint_push_to_recognizing">Voiceprint information is being input, please wait...</string>
+    <string name="voiceprint_put_failed">Voiceprint recording failed, please record again</string>
+    <string name="voiceprint_put_success">Voiceprint recording success</string>
+    <string name="voiceprint_info_title">Voiceprint feature information (already recorded)</string>
+    <string name="voiceprint_rerecord">Re-record</string>
+    <string name="voiceprint_already_record">Already record</string>
+    <string name="voiceprint_can_not_work">Voiceprint noise reduction is not turned on. This function is not available for the time being. Please go to the entry page-configuration item and use it after turning it on.</string>
+    <string name="voiceprint_can_not_work_know">Know</string>
+    <string name="voiceprint_not_work_toast_tips">Voiceprint features have not been entered, and the voiceprint recognition function is temporarily unavailable.</string>
+    <string name="voiceprint_toast_tips">Added voiceprint feature information entry</string>
+    <string name="voiceprint_record_time_desc">Recording duration: minimum 12S maximum 60S</string>
+    <string name="voiceprint_recording">Recording</string>
+    <string name="voiceprint_record_less_time">Recording time is shorter than 12 seconds</string>
+
 
     <string name="push_to_talk">Push to Speak</string>
     <string name="release_to_send">Release to Send</string>
@@ -187,4 +208,12 @@
     <string name="pstn_out_call_tips">The outgoing call is successful. Please pay attention to receiving the incoming call on your mobile phone.</string>
     <string name="pstn_out_call_failed_tips">The outgoing call is failed</string>
     <string name="pstn_out_call_instanceid_copied">Instance ID copied</string>
+
+    <string name="pstn_in_called_number">Seat number</string>
+    <string name="pstn_in_input_number">Please enter seat number</string>
+    <string name="pstn_in_called_tips">This number console configuration</string>
+    <string name="pstn_in_call_entrance_text">Call Now</string>
+    <string name="pstn_in_call_number_copied">The seat number has been copied</string>
+    <string name="pstn_in_call_get_number_failed">Unable to obtain number, please refresh and try again</string>
+    <string name="pstn_in_call_number_vaild">The seat number is empty, and incoming calls are not supported yet</string>
 </resources>

@@ -39,6 +39,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.aliyun.auikits.aiagent.ARTCAICallBase;
 import com.aliyun.auikits.aiagent.util.Logger;
 import com.aliyun.auikits.aicall.controller.ARTCAICallController;
 import com.aliyun.auikits.aicall.controller.ARTCAICustomController;
@@ -46,6 +47,7 @@ import com.aliyun.auikits.aicall.controller.ARTCAICallDepositController;
 import com.aliyun.auikits.aicall.service.ForegroundAliveService;
 import com.aliyun.auikits.aicall.util.AUIAICallAgentDebug;
 import com.aliyun.auikits.aicall.util.AUIAICallAgentIdConfig;
+import com.aliyun.auikits.aicall.util.AUIAICallClipboardUtils;
 import com.aliyun.auikits.aicall.util.AUIAIConstStrKey;
 import com.aliyun.auikits.aicall.util.DisplayUtil;
 import com.aliyun.auikits.aicall.util.SettingStorage;
@@ -413,7 +415,7 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                                     R.string.copy, new AICallNoticeDialog.IActionHandle() {
                                         @Override
                                         public void handleAction() {
-                                            copyToClipboard(AUIAICallInCallActivity.this, requestId);
+                                            AUIAICallClipboardUtils.copyToClipboard(AUIAICallInCallActivity.this, requestId);
                                             ToastHelper.showToast(AUIAICallInCallActivity.this, R.string.copied, Toast.LENGTH_SHORT);
                                         }
                                     }
@@ -527,7 +529,7 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                     String titleClickTips = "userId: " + mARTCAICallController.getUserId() +
                             "\nchannelId: " + mARTCAICallController.getChannelId();
                     Toast.makeText(AUIAICallInCallActivity.this, titleClickTips, Toast.LENGTH_SHORT).show();
-                    copyToClipboard(AUIAICallInCallActivity.this, titleClickTips);
+                    AUIAICallClipboardUtils.copyToClipboard(AUIAICallInCallActivity.this, titleClickTips);
 
                     if (SettingStorage.getInstance().getBoolean(SettingStorage.KEY_AUDIO_TIPS_SWITCH)) {
                         AICallAudioTipsDialog.show(AUIAICallInCallActivity.this, mARTCAICallController);
@@ -543,7 +545,8 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         ARTCAICallEngineDebuger.enableDumpData = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_AUDIO_DUMP_SWITCH);
         ARTCAICallEngineDebuger.enableUserSpecifiedAudioTips = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_AUDIO_TIPS_SWITCH);
         ARTCAICallEngineDebuger.enableLabEnvironment = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_USE_RTC_PRE_ENV_SWITCH);
-        ARTCAICallEngineDebuger.enableAecPlugin = true;
+        ARTCAICallEngineDebuger.enableAecPlugin = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_AUDIO_AEC, false);
+        ARTCAICallBase.isEnableBurst = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_BRUST_SEND_RECV, true);
 
         boolean useDeposit = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_DEPOSIT_SWITCH, SettingStorage.DEFAULT_DEPOSIT_SWITCH);
         ARTCAICallEngine.ARTCAICallConfig artcaiCallConfig = new ARTCAICallEngine.ARTCAICallConfig();
@@ -606,9 +609,22 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             artcaiCallConfig.chatSyncConfig.receiverId = loginUserId;
         }
 
-        if(TextUtils.isEmpty(artcaiCallConfig.agentConfig.voiceprintConfig.voiceprintId)) {
-            artcaiCallConfig.agentConfig.voiceprintConfig.voiceprintId = loginUserId;
+        boolean useVoicePrint = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_VOICE_PRINT_RECORD_ALRAEDY, false) && SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_VOICE_PRINT, SettingStorage.DEFAULT_ENABLE_VOICE_PRINT);
+        if(mIsSharedAgent) {
+            if(!TextUtils.isEmpty(aiAgentRegion) && !aiAgentRegion.equals("cn-shanghai")) {
+                useVoicePrint = false;
+                artcaiCallConfig.agentConfig.voiceprintConfig.useVoicePrint = false;
+            }
         }
+        if(useVoicePrint) {
+            if(TextUtils.isEmpty(artcaiCallConfig.agentConfig.voiceprintConfig.voiceprintId)) {
+                artcaiCallConfig.agentConfig.voiceprintConfig.voiceprintId = loginUserId;
+            }
+        } else {
+            artcaiCallConfig.agentConfig.voiceprintConfig.voiceprintId = "";
+            artcaiCallConfig.agentConfig.voiceprintConfig.useVoicePrint = false;
+        }
+
         artcaiCallConfig.agentType = mAiAgentType;
         mARTCAICallController = useDeposit ? new ARTCAICallDepositController(this, loginUserId) :
                 new ARTCAICustomController(this, loginUserId);
@@ -1033,25 +1049,34 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                 agentConfig.interruptConfig.enableVoiceInterrupt = false;
             }
             agentConfig.ttsConfig.agentVoiceId = SettingStorage.getInstance().get(SettingStorage.KEY_VOICE_ID);
-            agentConfig.userOfflineTimeout = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_USER_OFFLINE_TIMEOUT));
-            agentConfig.agentMaxIdleTime = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_MAX_IDLE_TIME));
+            agentConfig.ttsConfig.speechRate = Double.parseDouble(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_TTS_SPEECH_RATE, "1.0"));
+            agentConfig.ttsConfig.languageId = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_TTS_LANGUAGE_ID, "");
+            agentConfig.ttsConfig.emotion = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_TTS_EMOTION, "");
+            agentConfig.ttsConfig.modelId = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_TTS_MODEL_ID, "");
+
+            agentConfig.userOfflineTimeout = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_USER_OFFLINE_TIMEOUT, "5"));
+            agentConfig.agentMaxIdleTime = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_MAX_IDLE_TIME, "600"));
             agentConfig.workflowOverrideParams = SettingStorage.getInstance().get(SettingStorage.KEY_WORK_FLOW_OVERRIDE_PARAMS);
             agentConfig.llmConfig.bailianAppParams = SettingStorage.getInstance().get(SettingStorage.KEY_BAILIAN_APP_PARAMS);
             agentConfig.llmConfig.llmSystemPrompt = SettingStorage.getInstance().get(SettingStorage.KEY_LLM_SYSTEM_PROMPT);
-            agentConfig.volume = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_VOLUME));
+            agentConfig.llmConfig.llmHistoryLimit = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_LLM_HISTORY_LIMIT, "10"));
+            agentConfig.llmConfig.llmCompleteReply = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_LLM_COMPLETE_REPLY, false);
+            agentConfig.llmConfig.openAIExtraQuery = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_OPENAI_EXTRA_QUERY);
+            agentConfig.volume = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_VOLUME, "100"));
             agentConfig.agentGreeting = SettingStorage.getInstance().get(SettingStorage.KEY_GREETING);
             agentConfig.voiceprintConfig.voiceprintId = SettingStorage.getInstance().get(SettingStorage.KEY_VOICE_PRINT_ID);
             agentConfig.enableIntelligentSegment = SettingStorage.getInstance().get(SettingStorage.KEY_ENABLE_INTELLIGENT_SEGMENT).equals("1") ? true:false;
             agentConfig.avatarConfig.agentAvatarId = SettingStorage.getInstance().get(SettingStorage.KEY_AVATAR_ID);
-            agentConfig.asrConfig.asrMaxSilence = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_ASR_MAX_SILENCE));
-            agentConfig.userOnlineTimeout = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_USER_ONLINE_TIME_OUT));
+            agentConfig.asrConfig.asrMaxSilence = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_ASR_MAX_SILENCE, "400"));
+            agentConfig.userOnlineTimeout = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_USER_ONLINE_TIME_OUT, "60"));
             agentConfig.asrConfig.asrLanguageId = SettingStorage.getInstance().get(SettingStorage.KEY_USER_ASR_LANGUAGE);
             String interruptWorks = SettingStorage.getInstance().get(SettingStorage.KEY_INTERRUPT_WORDS);
-            agentConfig.asrConfig.vadLevel = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_VAD_LEVEL));
+            agentConfig.asrConfig.vadLevel = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_VAD_LEVEL, "11"));
+            agentConfig.asrConfig.vadDuration = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_VAD_DURATION, "0"));
             agentConfig.asrConfig.customParams = SettingStorage.getInstance().get(SettingStorage.KEY_ASR_CUSTOM_PARAMS);
             String asrHotWords = SettingStorage.getInstance().get(SettingStorage.KEY_ASR_HOT_WORDS);
             String turnEndWords = SettingStorage.getInstance().get(SettingStorage.KEY_TURN_END_WORDS);
-            String sematnicDuration = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_SEMATNIC_DURATION);
+            String sematnicDuration = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_SEMATNIC_DURATION, "-1");
 
 
             if(!TextUtils.isEmpty(interruptWorks)) {
@@ -1094,7 +1119,7 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                     agentConfig.turnDetectionConfig.turnEndWords.add(turnEndWords);
                 }
             }
-            agentConfig.turnDetectionConfig.mode = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_SEMATNIC, false) ? ARTCAICallTurnDetectionSemanticMode : ARTCAICallTurnDetectionNormalMode;
+            agentConfig.turnDetectionConfig.mode = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_SEMATNIC, true) ? ARTCAICallTurnDetectionSemanticMode : ARTCAICallTurnDetectionNormalMode;
             if(!TextUtils.isEmpty(sematnicDuration)) {
                 agentConfig.turnDetectionConfig.semanticWaitDuration = Integer.parseInt(sematnicDuration);
             }
@@ -1577,12 +1602,4 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         }
     }
 
-    public void copyToClipboard(Context context, String text) {
-        // 获取剪贴板管理器
-        ClipboardManager clipboard = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
-        // 创建剪贴板数据
-        ClipData clip = ClipData.newPlainText("AUIAICall", text); // "label" 可以自定义
-        // 将数据放入剪贴板
-        clipboard.setPrimaryClip(clip);
-    }
 }

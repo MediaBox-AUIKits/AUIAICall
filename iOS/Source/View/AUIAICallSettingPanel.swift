@@ -29,7 +29,7 @@ public typealias AUIAICallSettingDefaultBlock = (_ sender: AUIAICallSettingPanel
         // 添加延迟率按钮
         self.collectionHeaderView.addSubview(self.latencyRateView)
         self.collectionHeaderView.addSubview(self.interruptSwitch)
-        self.collectionHeaderView.addSubview(self.voiceprintSettingView)
+        self.collectionHeaderView.addSubview(self.voiceprintSwitch)
         self.collectionHeaderView.addSubview(self.voiceIdSwitch)
     }
     
@@ -64,12 +64,12 @@ public typealias AUIAICallSettingDefaultBlock = (_ sender: AUIAICallSettingPanel
         }
     }
     
-    
-    public var enableVoiceprintSwitch: Bool = true {
+    public var canShowVoiceprintSwitch: Bool = true {
         didSet {
-            self.voiceprintSettingView.isHidden = !self.enableVoiceprintSwitch
+            self.voiceprintSwitch.isHidden = !self.canShowVoiceprintSwitch
         }
     }
+
     
     public var isVoiceprintRegisted: Bool = true {
         didSet {
@@ -171,16 +171,12 @@ public typealias AUIAICallSettingDefaultBlock = (_ sender: AUIAICallSettingPanel
     }()
     
     
-    open lazy var voiceprintSettingView: AUIAICallVoiceprintSettingView = {
-        let view = AUIAICallVoiceprintSettingView()
-        view.voiceprintSwitch.onSwitchValueChanged = { [weak self] bar in
+    open lazy var voiceprintSwitch: AUIAICallVoiceprintSwitchBtn = {
+        let view = AUIAICallVoiceprintSwitchBtn()
+        view.onSwitchValueChanged = { [weak self] bar in
             self?.voiceprintBlock?(bar.switchBtn.isOn)
         }
-        view.removeBtn.clickBlock = { [weak self] btn in
-            if let self = self {
-                self.clearVoiceprintBlock?(self)
-            }
-        }
+        view.lineView.isHidden = true
         return view
     }()
     
@@ -224,7 +220,7 @@ public typealias AUIAICallSettingDefaultBlock = (_ sender: AUIAICallSettingPanel
         self.onPushToTalkSwitchChanged(ptt: self.config?.agentConfig.enablePushToTalk == true)
 
         self.interruptSwitch.switchBtn.isOn = self.config?.agentConfig.interruptConfig.enableVoiceInterrupt ?? true
-        self.voiceprintSettingView.voiceprintSwitch.switchBtn.isOn = self.config?.agentConfig.voiceprintConfig.useVoiceprint ?? true
+        self.voiceprintSwitch.switchBtn.isOn = self.config?.agentConfig.voiceprintConfig.useVoiceprint ?? true
         self.selectItem = self.voiceItemList.first { item in
             return item.voiceId == self.config?.agentConfig.ttsConfig.agentVoiceId
         }
@@ -257,9 +253,9 @@ public typealias AUIAICallSettingDefaultBlock = (_ sender: AUIAICallSettingPanel
         self.interruptSwitch.frame = CGRect(x: 0, y: top, width: self.collectionView.av_width, height: 74)
         top = self.interruptSwitch.isHidden ? top : self.interruptSwitch.av_bottom
         
-        let vp = 74.0 + (self.isVoiceprintRegisted ? 48.0 : 0.0)
-        self.voiceprintSettingView.frame = CGRect(x: 0, y: top, width: self.collectionView.av_width, height: vp)
-        top = self.voiceprintSettingView.isHidden ? top : self.voiceprintSettingView.av_bottom + 6
+        self.voiceprintSwitch.frame = CGRect(x: 0, y: top, width: self.collectionView.av_width, height: 74)
+        top = self.voiceprintSwitch.isHidden ? top : self.voiceprintSwitch.av_bottom + 6
+
         
         self.voiceIdSwitch.frame = CGRect(x: 0, y: top, width: self.collectionView.av_width, height: 50)
         top = self.voiceIdSwitch.isHidden ? top : self.voiceIdSwitch.av_bottom
@@ -306,17 +302,14 @@ extension AUIAICallSettingPanel {
     }
 }
 
-
-@objcMembers open class AUIAICallVoiceprintSettingView: UIView {
+@objcMembers open class AUIAICallVoiceprintSwitchBtn: AVSwitchBar {
     
     public override init(frame: CGRect) {
         super.init(frame: frame)
         
-        self.clipsToBounds = true
-        self.addSubview(voiceprintSwitch)
-        self.addSubview(self.stateView)
-        self.stateView.addSubview(self.titleLabel)
-        self.stateView.addSubview(self.removeBtn)
+        self.titleLabel.text = AUIAICallBundle.getString("Voiceprint")
+        self.infoLabel.text = AUIAICallBundle.getString("The AI only uses your voice as input.")
+        self.addSubview(self.registerBtn)
     }
     
     required public init?(coder: NSCoder) {
@@ -326,57 +319,25 @@ extension AUIAICallSettingPanel {
     open override func layoutSubviews() {
         super.layoutSubviews()
         
-        self.voiceprintSwitch.frame = CGRect(x: 0, y: 0, width: self.av_width, height: 74)
-        self.stateView.frame = CGRect(x: 20, y: self.voiceprintSwitch.av_bottom, width: self.av_width - 20 - 20, height: 48)
         self.titleLabel.sizeToFit()
-        self.titleLabel.center = CGPoint(x: self.titleLabel.av_width / 2.0 + 16, y: self.stateView.av_height / 2.0)
-        
-        self.removeBtn.sizeToFit()
-        let width = self.removeBtn.av_width + 24
-        self.removeBtn.frame = CGRect(x: self.stateView.av_width - width - 16, y: (self.stateView.av_height - 22) / 2, width: width, height: 22)
+        self.registerBtn.sizeToFit()
+        let width = self.registerBtn.av_width + 24
+        self.registerBtn.frame = CGRect(x: self.titleLabel.av_right + 10, y: self.titleLabel.av_top + (self.titleLabel.av_height - 22) / 2, width: width, height: 22)
     }
     
-    open var voiceprintIsApply: Bool = false {
-        didSet {
-            self.stateView.isHidden = !self.voiceprintIsApply
-        }
-    }
-    
-    open lazy var voiceprintSwitch: AVSwitchBar = {
-        let view = AVSwitchBar()
-        view.titleLabel.text = AUIAICallBundle.getString("Voiceprint(Invitation for Testing)")
-        view.infoLabel.text = AUIAICallBundle.getString("The AI only uses your voice as input.")
-        view.lineView.isHidden = true
-        return view
-    }()
-    
-    open lazy var stateView: UIView = {
-        let view = UIView()
-        view.backgroundColor = AVTheme.fill_weak
-        view.layer.cornerRadius = 4
-        view.layer.masksToBounds = true
-        return view
-    }()
-    
-    open lazy var titleLabel: UILabel = {
-        let label = UILabel()
-        label.font = AVTheme.regularFont(12)
-        label.textColor = AVTheme.text_weak
-        label.text = AUIAICallBundle.getString("Detected speaking")
-        return label
-    }()
-    
-    open lazy var removeBtn: AVBlockButton = {
+    open lazy var registerBtn: AVBlockButton = {
         let btn = AVBlockButton()
         btn.layer.cornerRadius = 11
         btn.layer.masksToBounds = true
         btn.layer.borderWidth = 1.0
         btn.titleLabel?.font = AVTheme.regularFont(12)
         btn.setImage(nil, for: .normal)
-        btn.setBorderColor(AVTheme.border_strong, for: .normal)
-        btn.setTitleColor(AVTheme.text_strong, for: .normal)
-        btn.setTitle(AUIAICallBundle.getString("Remove Voiceprint"), for: .normal)
+        btn.setBorderColor(AVTheme.border_weak, for: .normal)
+        btn.setTitleColor(AVTheme.text_weak, for: .normal)
+        btn.setTitle(AUIAICallBundle.getString("Registered"), for: .normal)
         btn.isHidden = false
+        btn.isUserInteractionEnabled = false
         return btn
     }()
+    
 }

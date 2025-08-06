@@ -34,12 +34,86 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/ll_voiceprint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingLeft="20dp"
+                android:paddingRight="20dp"
+                android:visibility="visible"
+                >
+                <LinearLayout
+                    android:id="@+id/ll_voiceprint_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    android:paddingTop="16dp"
+                    android:paddingBottom="16dp"
+                    android:orientation="vertical">
+                    <TextView
+                        android:id="@+id/tv_voiceprint_title"
+                        style="@style/layout_base_text_style_14"
+                        android:text="@string/voiceprint_recognition_test_title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="4dp"
+                        />
+                    <TextView
+                        android:id="@+id/tv_voiceprint_tips"
+                        style="@style/layout_base_text_style_10_light_white"
+                        android:text="@string/voiceprint_recognition_test_desc"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+                </LinearLayout>
+                <Switch
+                    android:id="@+id/sv_voiceprint_switch"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toTopOf="@id/ll_voiceprint_title"
+                    app:layout_constraintBottom_toTopOf="@id/ll_voiceprint_status"
+                    />
+                <LinearLayout
+                    android:id="@+id/ll_voiceprint_status"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/ll_voiceprint_title"
+                    android:background="@drawable/bg_voice_print_status"
+                    android:paddingVertical="14dp"
+                    android:paddingHorizontal="16dp"
+                    android:orientation="horizontal">
+                    <TextView
+                        android:id="@+id/tv_voiceprint_record_status"
+                        style="@style/layout_base_text_style_12_light_white"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/voiceprint_info_tipe_cannot_use"
+                        />
+                    <TextView
+                        android:id="@+id/btn_record_voiceprint"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        style="@style/layout_base_text_style_12_light_white"
+                        android:layout_gravity="center_vertical"
+                        android:layout_marginBottom="1dp"
+                        android:text="@string/voiceprint_info_record"
+                        />
+                    <ImageView
+                        android:id="@+id/iv_record_voice_select"
+                        android:layout_width="21dp"
+                        android:layout_height="21dp"
+                        android:src="@drawable/ic_pstn_out_select_voice"
+                        />
+                </LinearLayout>
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"

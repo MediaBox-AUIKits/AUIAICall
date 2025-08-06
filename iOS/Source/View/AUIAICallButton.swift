@@ -103,6 +103,7 @@ import AUIFoundation
     private var longPressGesture: UILongPressGestureRecognizer? = nil
     private var longPressTimer: Timer? = nil
     private var startLongPressTime: TimeInterval = 0
+    open var maxPressTime: TimeInterval = 60.0
     
     // state: 0(按下) 1(松开) 2(取消)
     open var longPressAction: ((_ btn: AUIAICallButton, _ state: Int32, _ elapsed: TimeInterval)->Void)? = nil {
@@ -118,6 +119,8 @@ import AUIFoundation
             self.addGestureRecognizer(self.longPressGesture!)
         }
     }
+    
+    open var pressTimeUpdate: ((_ time: TimeInterval) -> Void)? = nil
     
     @objc open func onLongPress(gesture: UILongPressGestureRecognizer) {
         if gesture.state == .began {
@@ -138,7 +141,7 @@ import AUIFoundation
             self.checkLongPressRelease(cancel: true)
         }
         else {
-            debugPrint("ptt: \(gesture.state)")
+            // debugPrint("ptt: \(gesture.state)")
         }
     }
     
@@ -158,7 +161,8 @@ import AUIFoundation
 
     @objc func updateCounter() {
         let t = Date().timeIntervalSince1970 - self.startLongPressTime
-        if t >= 60 {
+        self.pressTimeUpdate?(t)
+        if t >= self.maxPressTime - 0.5 {
             self.stopTimer()
             self.checkLongPressRelease(cancel: false)
             self.longPressGesture?.isEnabled = false // 临时禁用手势
