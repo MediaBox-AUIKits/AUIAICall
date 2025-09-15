@@ -39,6 +39,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.alivc.rtc.AliRtcEngine;
 import com.aliyun.auikits.aiagent.ARTCAICallBase;
 import com.aliyun.auikits.aiagent.util.Logger;
 import com.aliyun.auikits.aicall.controller.ARTCAICallController;
@@ -245,6 +246,12 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                 Logger.i( "Call started duration " + (current - mLastCallMillis));
                 ToastHelper.showToast(AUIAICallInCallActivity.this, "Call started duration " + (current - mLastCallMillis), Toast.LENGTH_SHORT);
             }
+
+            if(mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VisionAgent) {
+                if(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_SCREEN_TRACK_SENG, false)) {
+                    mARTCAICallEngine.getRtcEngine().startScreenShare(null, AliRtcEngine.AliRtcScreenShareMode.AliRtcScreenShareOnlyVideoMode);
+                }
+            }
         }
 
         @Override
@@ -369,6 +376,21 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             Log.i("AUIAICall", "onReceivedAgentVcrResult: " + result);
             if(BuildConfig.TEST_ENV_MODE) {
                 ToastHelper.showToast(AUIAICallInCallActivity.this, "VCR result " + result, Toast.LENGTH_SHORT);
+            }
+        }
+        @Override
+        public void onConnectionStatusChange(ARTCAICallEngine.ARTCAICallConnectionStatus status, ARTCAICallEngine.ARTCAICallConnectionStatusChangeReason reason) {
+            Log.i("AUIAICall", "onConnectionStatusChange: [status: " + status + ", reason: " + reason + "]");
+            if(status == ARTCAICallEngine.ARTCAICallConnectionStatus.ARTCAICallConnectionStatusConnected) {
+                new Handler(getMainLooper()).postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        if(mARTCAICallEngine != null) {
+                            mARTCAICallEngine.queryCurrentAgentState();
+                        }
+                    }
+                }, 1000);
+
             }
         }
     };
@@ -545,7 +567,7 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         ARTCAICallEngineDebuger.enableDumpData = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_AUDIO_DUMP_SWITCH);
         ARTCAICallEngineDebuger.enableUserSpecifiedAudioTips = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_AUDIO_TIPS_SWITCH);
         ARTCAICallEngineDebuger.enableLabEnvironment = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_USE_RTC_PRE_ENV_SWITCH);
-        ARTCAICallEngineDebuger.enableAecPlugin = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_AUDIO_AEC, false);
+        ARTCAICallEngineDebuger.enableAecPlugin = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_AUDIO_AEC, true);
         ARTCAICallBase.isEnableBurst = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_BRUST_SEND_RECV, true);
 
         boolean useDeposit = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_DEPOSIT_SWITCH, SettingStorage.DEFAULT_DEPOSIT_SWITCH);
@@ -569,6 +591,12 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         artcaiCallConfig.videoConfig.videoEncoderBitRate = 340;
         if(mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VideoAgent) {
             artcaiCallConfig.videoConfig.useFrontCameraDefault = true;
+        }
+
+        if(mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VisionAgent) {
+            if(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_SCREEN_TRACK_SENG, false)) {
+                artcaiCallConfig.videoConfig.videoSourceType = ARTCAICallEngine.ARTCAICallVideoSourceType.ARTCAICallVideoSourceTypeScreen;
+            }
         }
 
         if(BuildConfig.TEST_ENV_MODE) {
@@ -621,8 +649,15 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                 artcaiCallConfig.agentConfig.voiceprintConfig.voiceprintId = loginUserId;
             }
         } else {
-            artcaiCallConfig.agentConfig.voiceprintConfig.voiceprintId = "";
-            artcaiCallConfig.agentConfig.voiceprintConfig.useVoicePrint = false;
+
+            if(BuildConfig.TEST_ENV_MODE) {
+                if(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_VOICE_PRINT, SettingStorage.DEFAULT_ENABLE_VOICE_PRINT) && !TextUtils.isEmpty(artcaiCallConfig.agentConfig.voiceprintConfig.voiceprintId)) {
+                    artcaiCallConfig.agentConfig.voiceprintConfig.useVoicePrint = true;
+                }
+            } else {
+                artcaiCallConfig.agentConfig.voiceprintConfig.voiceprintId = "";
+                artcaiCallConfig.agentConfig.voiceprintConfig.useVoicePrint = false;
+            }
         }
 
         artcaiCallConfig.agentType = mAiAgentType;
@@ -640,9 +675,12 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                     new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
             );
         } else if (mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VisionAgent) {
-            mARTCAICallEngine.setLocalView(findViewById(R.id.avatar_layer),
-                    new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-            );
+
+            if(!SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_SCREEN_TRACK_SENG, false)) {
+                mARTCAICallEngine.setLocalView(findViewById(R.id.avatar_layer),
+                        new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+                );
+            }
         } else if(mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VideoAgent) {
             ARTCAICallEngine.ARTCAICallVideoCanvas remoteCanvas = new ARTCAICallEngine.ARTCAICallVideoCanvas();
             remoteCanvas.zOrderOnTop = false;
@@ -686,6 +724,13 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
      */
     private boolean handUp(boolean keepActivity) {
         if (!keepActivity) {
+            if(mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VisionAgent) {
+                if(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_SCREEN_TRACK_SENG, false)) {
+                    if(mARTCAICallEngine != null && mARTCAICallEngine.getRtcEngine() != null) {
+                        mARTCAICallEngine.getRtcEngine().stopScreenShare();
+                    }
+                }
+            }
             mARTCAICallEngine.handup();
             finish();
             /*
@@ -1078,7 +1123,6 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             String turnEndWords = SettingStorage.getInstance().get(SettingStorage.KEY_TURN_END_WORDS);
             String sematnicDuration = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_SEMATNIC_DURATION, "-1");
 
-
             if(!TextUtils.isEmpty(interruptWorks)) {
                 agentConfig.interruptConfig.interruptWords = new ArrayList<String>();
                 if(interruptWorks.contains(",")) {
@@ -1124,6 +1168,19 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                 agentConfig.turnDetectionConfig.semanticWaitDuration = Integer.parseInt(sematnicDuration);
             }
 
+            String ambientConfigStr = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_AMBIENT_CONFIG);
+            if(!TextUtils.isEmpty(ambientConfigStr)) {
+                try {
+                    JSONObject jsonObject = new JSONObject(ambientConfigStr);
+                    agentConfig.ambientConfig = new ARTCAICallEngine.ARTCAICallAgentAmbientConfig(jsonObject);
+                }catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            agentConfig.preConnectAudioUrl = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_PRE_CONNECT_AUDIO_URL, "");
+            agentConfig.llmConfig.outputMinLength = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_OUTPUT_MIN_LENGTH, "-1"));
+            agentConfig.llmConfig.outputMaxDelay = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_OUTPUT_MAX_DELAY, "-1"));
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -1296,7 +1353,6 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                 mLlFullScreenSubtitle.setVisibility(visible ? View.VISIBLE : View.GONE);
                 findViewById(R.id.ll_full_screen_subtitle_top_container).setVisibility(visible ? View.VISIBLE : View.GONE);
                 findViewById(R.id.ll_full_screen_subtitle_bottom_container).setVisibility(visible ? View.VISIBLE : View.GONE);
-
                 mIsFullScreenSubtitleOpen = visible;
                 setTobBarBtnVisibility(!visible);
                 setEngineTipVisibility(!visible);
@@ -1319,6 +1375,7 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
 
         private void setEngineTipVisibility(boolean visible) {
             findViewById(R.id.tv_call_tips).setVisibility(visible ? View.VISIBLE : View.GONE);
+            findViewById(R.id.generate_by_ai_text).setVisibility(visible ? View.VISIBLE : View.GONE);
         }
 
         private boolean containsChinese(String str) {

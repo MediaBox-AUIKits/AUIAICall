@@ -1,7 +1,7 @@
 {
   "name": "amaui-web-aicall",
   "private": true,
-  "version": "2.7.0",
+  "version": "2.8.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -22,7 +22,7 @@
     "react-dom": "^18.3.1",
     "uuid": "^11.1.0",
     "zustand": "^4.5.5",
-    "aliyun-auikit-aicall": "2.7.1"
+    "aliyun-auikit-aicall": "2.8.0"
   },
   "devDependencies": {
     "@arms/rum-browser": "^0.0.37",

@@ -10,6 +10,8 @@ public class AUIAICallAgentIdConfig {
     private static String VISION_AGENT_ID = "";
     private static String ChatBot_AGENT_ID = "";
     private static String VIDEO_AGENT_ID = "";
+    private static String OUT_BOUND_AGENT_ID = "";
+
 
     private static String VOICE_AGENT_EMOTION_ID = "";
     private static String Avatar_AGENT_EMOTION_ID = "";
@@ -38,6 +40,10 @@ public class AUIAICallAgentIdConfig {
                 break;
         }
         return agentId;
+    }
+
+    public static String getOutBoundAgentId() {
+        return OUT_BOUND_AGENT_ID;
     }
 
 

@@ -1596,10 +1596,12 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
                 findViewById(R.id.bottom_down_vision_chat_action).setVisibility(View.GONE);
                 findViewById(R.id.bottom_down_avator_chat_action).setVisibility(View.GONE);
                 findViewById(R.id.bottom_down_voice_chat_action).setVisibility(View.GONE);
+                findViewById(R.id.bottom_down_video_chat_action).setVisibility(View.GONE);
             } else {
                 findViewById(R.id.bottom_down_vision_chat_action).setVisibility(View.VISIBLE);
                 findViewById(R.id.bottom_down_avator_chat_action).setVisibility(View.VISIBLE);
                 findViewById(R.id.bottom_down_voice_chat_action).setVisibility(View.VISIBLE);
+                findViewById(R.id.bottom_down_video_chat_action).setVisibility(View.VISIBLE);
             }
 
             initSelectedImagesList();

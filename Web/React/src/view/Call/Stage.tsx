@@ -339,6 +339,7 @@ function Stage({ onStateChange, onExit, onAuthFail, limitSecond, autoCall = fals
       <div className='stage'>
         <Header onExit={onExit} />
         <div className={`stage-bd  ${hasVideo ? 'has-video' : ''}`} onClick={onBodyClick}>
+          <div className='stage-statement'>{t('system.statement')}</div>
           {/* <Subtitle /> */}
           {callState === AICallState.Connected ? <CharacterComponent /> : <Connecting />}
           {callState === AICallState.Connected && <Tip />}

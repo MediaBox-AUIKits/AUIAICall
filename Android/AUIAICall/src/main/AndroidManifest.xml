@@ -4,6 +4,17 @@
 
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
+
+    <!-- Android 13 (API级别33）以上 -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+
+    <application>
+        <service android:name="com.alivc.rtc.share.ForegroundService"
+            android:enabled="true" />
+
+    </application>
+
     <application>
         <activity
             android:name=".AUIAICallInCallActivity"

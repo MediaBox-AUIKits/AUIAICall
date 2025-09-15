@@ -1,12 +1,13 @@
+import logger from '@/common/logger';
 import standardService from '@/service/standard.ts';
-import EventEmitter from 'eventemitter3';
-import {
+import ARTCAICallEngine, {
   AICallAgentError,
   AICallAgentInfo,
   AICallAgentShareConfig,
   AICallAgentState,
   AICallAgentType,
   AICallConfig,
+  AICallConnectionStatus,
   AICallEngineConfig,
   AICallErrorCode,
   AICallSendTextToAgentRequest,
@@ -17,9 +18,8 @@ import {
   AICallVoiceprintResult,
   JSONObject,
 } from 'aliyun-auikit-aicall';
-import ARTCAICallEngine from 'aliyun-auikit-aicall';
+import EventEmitter from 'eventemitter3';
 import AUIAICallControllerEvents from './AUIAICallControllerEvents';
-import logger from '@/common/logger';
 
 export default abstract class AUIAICallController extends EventEmitter<AUIAICallControllerEvents> {
   protected _userId: string;
@@ -229,6 +229,14 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
     });
     this._currentEngine.on('receivedAgentVcrResult', (result) => {
       this.emit('AICallReceivedAgentVcrResult', result);
+    });
+    this._currentEngine.on('connectionStatusChange', (status) => {
+      if (this.state === AICallState.Connected && status === AICallConnectionStatus.Connected) {
+        // 重连成功，请求当前智能体状态
+        setTimeout(() => {
+          this._currentEngine?.queryCurrentAgentState();
+        }, 500);
+      }
     });
   }
 

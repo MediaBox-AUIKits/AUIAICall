@@ -240,7 +240,17 @@ public class AUIAICallInPhoneCallActivity extends AppCompatActivity {
                     agentConfig.turnDetectionConfig.semanticWaitDuration = Integer.parseInt(sematnicDuration);
                 }
 
+                String ambientConfigStr = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_AMBIENT_CONFIG);
+                if(!TextUtils.isEmpty(ambientConfigStr)) {
+                    JSONObject ambientConfigObject = new JSONObject(ambientConfigStr);
+                    agentConfig.ambientConfig = new ARTCAICallEngine.ARTCAICallAgentAmbientConfig(ambientConfigObject);
+                }
+
+
                 agentConfig.enableIntelligentSegment = SettingStorage.getInstance().get(SettingStorage.KEY_ENABLE_INTELLIGENT_SEGMENT).equals("1") ? true:false;
+                agentConfig.preConnectAudioUrl = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_PRE_CONNECT_AUDIO_URL, "");
+                agentConfig.llmConfig.outputMinLength = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_OUTPUT_MIN_LENGTH, "-1"));
+                agentConfig.llmConfig.outputMaxDelay = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_OUTPUT_MAX_DELAY, "-1"));
 
                 JSONObject outboundCallObject = new JSONObject();
                 jsonObject.put("config",agentConfig.toData().toString());

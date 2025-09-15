@@ -3,14 +3,15 @@ import { ExclamationCircleFill } from 'antd-mobile-icons';
 
 import { AICallAgentConfig, AICallAgentError, AICallAgentType, AICallConfig } from 'aliyun-auikit-aicall';
 
-import './index.less';
+import { useTranslation } from '@/common/i18nContext';
+import { copyText, getRootElement } from '@/common/utils';
+import standard from '@/service/standard';
 import { useEffect, useState } from 'react';
 import { VoiceOneSVG, VoiceThreeSVG, VoiceTwoSVG } from '../../Call/Icons';
-import { copyText, getRootElement } from '@/common/utils';
-import { useTranslation } from '@/common/i18nContext';
-import standard from '@/service/standard';
-import { CallFailSVG, CallSuccessSVG } from '../Icons';
 import Header from '../Header';
+import { CallFailSVG, CallSuccessSVG } from '../Icons';
+import './index.less';
+
 
 const agentVoiceIdList = [
   'longcheng_v2',
@@ -117,6 +118,7 @@ function PSTNOutbound({
       userJoinToken: '',
       agentConfig: new AICallAgentConfig(),
     };
+
 
     if (!values.interrupt) {
       if (config.agentConfig) {
@@ -245,6 +247,7 @@ function PSTNOutbound({
               <div className='_holder' />
 
               <div className='pstn-btn-box'>
+                <div className='pstn-statement'>{t('system.statement')}</div>
                 <Button color='primary' block onClick={onSubmit} disabled={!submittable}>
                   {t('pstn.outbound.start')}
                 </Button>

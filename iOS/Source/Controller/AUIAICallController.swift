@@ -302,6 +302,16 @@ extension AUIAICallController: ARTCAICallEngineDelegate {
         self.state = .Error
     }
     
+    public func onConnectionStatusChange(status: ARTCAICallConnectionStatus, reason: Int32) {
+        debugPrint("AUIAICallController onConnectionStatusChange:\(status) reason:\(reason)")
+        if self.engine.isOnCall && status == .Connected {
+            DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 0.5) {
+                // 重连成功，请求当前智能体状态
+                _ = self.engine.queryCurrentAgentState()
+            }
+        }
+    }
+    
     public func onCallBegin() {
         debugPrint("AUIAICallController onCallBegin")
         if self.state != .Connecting {

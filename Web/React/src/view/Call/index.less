@@ -125,6 +125,21 @@
   }
 }
 
+.stage-statement {
+  position: absolute;
+  z-index: 1;
+  left: 0;
+  right: 0;
+  top: 0;
+  padding: 9px 20px;
+  font-size: 12px;
+  line-height: 18px;
+  text-align: center;
+  color: #878aab;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
 @media screen and (min-width: 768px) {
   .stage-wrapper {
     padding: 24px 24px 40px;
@@ -181,6 +196,12 @@
       background-size: cover;
       filter: blur(10px);
     }
+  }
+
+  .stage-statement {
+    top: 20px;
+    font-size: 14px;
+    line-height: 22px;
   }
 }
 

@@ -119,3 +119,8 @@
 * Android&iOS&Web：新增AI电话呼入
 * Android&iOS&Web：新增声纹识别2.0
 * Android&iOS&Web：代码优化及bug修复
+
+## v2.8.0
+发布时间：2025-09-06
+* Android&iOS&Web：AI生成提示语
+* Android&iOS&Web：代码优化及bug修复

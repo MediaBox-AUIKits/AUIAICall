@@ -15,6 +15,7 @@ let AvatarAgentId = ""
 let VisionAgentId = ""
 let VideoAgentId = ""
 let ChatAgentId = ""
+let OutboundAgentId = ""
 
 let VoiceAgentEmotionalId = ""
 let AvatarAgentEmotionalId = ""

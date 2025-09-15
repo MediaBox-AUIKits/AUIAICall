@@ -159,7 +159,7 @@ extension AUIAICallManager {
         
         let model = AUIAICallOutboundCallReqModel()
         model.phoneNumber = phoneNumber
-        model.agentId = agentId ?? VoiceAgentId
+        model.agentId = agentId ?? OutboundAgentId
         model.region = region ?? AUIAICallAgentConfig.shared.getRegion()
         model.userId = self.userId!
         model.config = config

@@ -31,11 +31,13 @@ public class AICallDebugDialog {
         EditText editTextCustomCapture = view.findViewById(R.id.et_debug_update_custom_capture);
         EditText editTextVcrConfig = view.findViewById(R.id.et_debug_vcr_update);
         EditText editTextBailianParams = view.findViewById(R.id.et_debug_bailian_params_update);
+        EditText editTTSSpeed = view.findViewById(R.id.et_debug_tts_speed);
+        EditText editAsrMaxSilence = view.findViewById(R.id.et_debug_asr_max_silence);
 
         DialogPlus dialog = DialogPlus.newDialog(context)
                 .setContentHolder(viewHolder)
                 .setGravity(Gravity.BOTTOM)
-                .setExpanded(true, DisplayUtil.dip2px(650))
+                .setExpanded(true, DisplayUtil.dip2px(850))
                 .setOverlayBackgroundResource(android.R.color.transparent)
                 .setContentBackgroundResource(R.color.layout_base_dialog_background)
                 .setOnClickListener((dialog1, v) -> {
@@ -73,7 +75,18 @@ public class AICallDebugDialog {
                         if(!TextUtils.isEmpty(bailianParams)) {
                             engine.updateBailianAppParams(bailianParams);
                         }
+                    } else if (v.getId() == R.id.debug_update_tts_speed) {
+                        String ttsSpeed = editTTSSpeed.getText().toString();
+                        if(!TextUtils.isEmpty(ttsSpeed)) {
+                            engine.updateTtsSpeechRate(Double.parseDouble(ttsSpeed));
+                        }
+                    } else if (v.getId() == R.id.debug_update_asr_max_silence) {
+                        String asrMaxSilence = editAsrMaxSilence.getText().toString();
+                        if(!TextUtils.isEmpty(asrMaxSilence)) {
+                            engine.updateAsrMaxSilence(Integer.parseInt(asrMaxSilence));
+                        }
                     }
+
                     dialog1.dismiss();
                 })
                 .create();

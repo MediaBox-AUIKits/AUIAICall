@@ -77,6 +77,8 @@ export default {
     notSupported: '当前浏览器不支持WebRTC，建议您使用钉钉或微信打开',
     generateByAI: '内容由 AI 生成，仅供参考',
     connecting: '接通中，请稍后',
+
+    statement: '内容由AI生成，仅供参考',
   },
 
   agent: {

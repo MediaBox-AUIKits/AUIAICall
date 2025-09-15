@@ -226,6 +226,58 @@
         android:paddingVertical="6dp"
         android:background="@drawable/bg_reporting_type_selector"/>
 
+    <EditText
+        android:layout_marginTop="5dp"
+        android:id="@+id/et_debug_tts_speed"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/debug_update_update_bailian_params"
+        android:hint="更新智能体播报语速"
+        android:textColor="@color/layout_base_red"
+        android:textColorHint="@color/layout_base_red"
+        android:textSize="14sp"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="6dp"
+        />
+    <TextView
+        android:id="@+id/debug_update_tts_speed"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="@style/layout_base_text_style_14"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/et_debug_tts_speed"
+        android:text="更新智能体播报语速"
+        android:layout_marginTop="5dp"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="6dp"
+        android:background="@drawable/bg_reporting_type_selector"/>
+
+    <EditText
+        android:layout_marginTop="5dp"
+        android:id="@+id/et_debug_asr_max_silence"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/debug_update_tts_speed"
+        android:hint="更新ASR最大静默时长"
+        android:textColor="@color/layout_base_red"
+        android:textColorHint="@color/layout_base_red"
+        android:textSize="14sp"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="6dp"
+        />
+    <TextView
+        android:id="@+id/debug_update_asr_max_silence"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="@style/layout_base_text_style_14"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/et_debug_asr_max_silence"
+        android:text="更新ASR最大静默时长"
+        android:layout_marginTop="5dp"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="6dp"
+        android:background="@drawable/bg_reporting_type_selector"/>
+
         </LinearLayout>
     </ScrollView>
 

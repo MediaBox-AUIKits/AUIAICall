@@ -1,13 +1,13 @@
 import { Button, Form, Input, Toast } from 'antd-mobile';
 
-import './index.less';
-import { useEffect, useState } from 'react';
 import { useTranslation } from '@/common/i18nContext';
-import Header from '../Header';
+import { copyText, getRootElement, isMobile } from '@/common/utils';
 import standard from '@/service/standard';
 import { AICallAgentError } from 'aliyun-auikit-aicall';
-import { copyText, getRootElement, isMobile } from '@/common/utils';
+import { useEffect, useState } from 'react';
+import Header from '../Header';
 import { CopySVG } from '../Icons';
+import './index.less';
 
 function PSTNInbound({
   userId,
@@ -81,9 +81,12 @@ function PSTNInbound({
 
             <div className='pstn-btn-box'>
               {isMobile() && (
-                <Button color='primary' block onClick={onStart} disabled={!agentNumber}>
-                  {t('pstn.inbound.start')}
-                </Button>
+                <>
+                  <div className='pstn-statement'>{t('system.statement')}</div>
+                  <Button color='primary' block onClick={onStart} disabled={!agentNumber}>
+                    {t('pstn.inbound.start')}
+                  </Button>
+                </>
               )}
             </div>
           </>

@@ -1,5 +1,4 @@
 import { AICallRunConfig } from '@/interface.ts';
-import { SafeArea, Toast } from 'antd-mobile';
 import {
   AICallAgentError,
   AICallErrorCode,
@@ -12,20 +11,21 @@ import {
   AIChatTemplateConfig,
   AIChatUserInfo,
 } from 'aliyun-auikit-aicall';
+import { SafeArea, Toast } from 'antd-mobile';
+import { useEffect, useState } from 'react';
+import standardService from '../../service/standard';
+import ChatEngineContext from './ChatEngineContext';
+import ChatFooter from './Footer';
 import ChatHeader from './Header';
 import ChatMessages from './Messages';
-import ChatFooter from './Footer';
-import { useEffect, useState } from 'react';
-import ChatEngineContext from './ChatEngineContext';
 import useChatStore, { ChatMessageItem, messageCachePrefix } from './store';
-import standardService from '../../service/standard';
 
+import { useTranslation } from '@/common/i18nContext';
+import { getRootElement } from '@/common/utils';
+import { JSONObject } from '@/service/interface.ts';
+import { AIChatEngineState, AIChatMessageState } from 'aliyun-auikit-aicall';
 import './index.less';
 import ChatState from './State';
-import { getRootElement } from '@/common/utils';
-import { AIChatEngineState, AIChatMessageState } from 'aliyun-auikit-aicall';
-import { JSONObject } from '@/service/interface.ts';
-import { useTranslation } from '@/common/i18nContext';
 
 export interface ChatProps {
   rc: AICallRunConfig;
@@ -239,6 +239,7 @@ function Chat({
           <SafeArea position='top' />
           <ChatHeader onBack={onExit} />
           <ChatMessages />
+          <div className='chat-statement'>{t('system.statement')}</div>
           <ChatFooter userId={userId} userToken={userToken} rc={rc} />
           <SafeArea position='bottom' />
           <ChatState onExit={onExit} />

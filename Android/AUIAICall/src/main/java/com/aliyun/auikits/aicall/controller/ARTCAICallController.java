@@ -315,9 +315,44 @@ public abstract class ARTCAICallController {
         }
 
         @Override
-        public void onAgentAudioStats(AliRtcEngine.AliRtcRemoteAudioStats aliRtcStats){
-            if(null != mBizCallEngineCallback) {
+        public void onAgentAudioStats(AliRtcEngine.AliRtcRemoteAudioStats aliRtcStats) {
+            if (null != mBizCallEngineCallback) {
                 mBizCallEngineCallback.onAgentAudioStats(aliRtcStats);
+            }
+        }
+        @Override
+        public void onAudioAccompanyStateChanged(ARTCAICallEngine.ARTCAICallAudioAccompanyStateCode
+                                                         playState, ARTCAICallEngine.ARTCAICallAudioAccompanyErrorCode
+                                                         errorCode) {
+            if (null != mBizCallEngineCallback) {
+                mBizCallEngineCallback.onAudioAccompanyStateChanged(playState, errorCode);
+            }
+        }
+        @Override
+        public void OnAICallProfileStats(int type, String result) {
+            Logger.i("OnAICallProfileStats type:" + type + " result:" + result);
+            if(null != mBizCallEngineCallback) {
+                mBizCallEngineCallback.OnAICallProfileStats(type, result);
+            }
+        }
+        @Override
+        public void onLocalVideoStats(AliRtcEngine.AliRtcLocalVideoStats aliRtcStats) {
+            if (null != mBizCallEngineCallback) {
+                mBizCallEngineCallback.onLocalVideoStats(aliRtcStats);
+            }
+        }
+
+        @Override
+        public void onLocalAudioStats(AliRtcEngine.AliRtcLocalAudioStats aliRtcStats) {
+            if (null != mBizCallEngineCallback) {
+                mBizCallEngineCallback.onLocalAudioStats(aliRtcStats);
+            }
+        }
+
+        @Override
+        public void onConnectionStatusChange(ARTCAICallEngine.ARTCAICallConnectionStatus status, ARTCAICallEngine.ARTCAICallConnectionStatusChangeReason reason) {
+            if (null != mBizCallEngineCallback) {
+                mBizCallEngineCallback.onConnectionStatusChange(status, reason);
             }
         }
     };

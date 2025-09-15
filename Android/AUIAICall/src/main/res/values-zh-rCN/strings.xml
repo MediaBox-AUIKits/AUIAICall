@@ -217,4 +217,6 @@
     <string name="pstn_in_call_number_copied">坐席号码已复制</string>
     <string name="pstn_in_call_get_number_failed">无法获取号码，请刷新重试</string>
     <string name="pstn_in_call_number_vaild">坐席号码为空，暂不支持呼入</string>
+
+    <string name="content_generate_by_ai">内容由AI生成，仅供参考</string>
 </resources>

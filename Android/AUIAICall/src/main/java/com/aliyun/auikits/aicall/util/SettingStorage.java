@@ -32,6 +32,7 @@ public class SettingStorage {
     public static final String KEY_BOOT_ENABLE_AUDIO_AEC = "KEY_BOOT_ENABLE_AUDIO_AEC";
     public static final String KEY_BOOT_ENABLE_LLM_COMPLETE_REPLY = "KEY_BOOT_ENABLE_LLM_COMPLETE_REPLY";
     public static final String KEY_BOOT_ENABLE_BRUST_SEND_RECV = "KEY_BOOT_ENABLE_BRUST_SEND_RECV";
+    public static final String KEY_BOOT_ENABLE_SCREEN_TRACK_SENG = "KEY_BOOT_ENABLE_SCREEN_TRACK_SENG";
 
     public static final String KEY_ENABLE_VOICE_INTERRUPT = "KEY_ENABLE_VOICE_INTERRUPT";
     public static final String KEY_VOICE_ID = "KEY_VOICE_ID";
@@ -67,6 +68,10 @@ public class SettingStorage {
     public static final String KEY_BOOT_TTS_EMOTION = "KEY_BOOT_TTS_EMOTION";
     public static final String KEY_BOOT_TTS_MODEL_ID = "KEY_BOOT_TTS_MODEL_ID";
     public static final String KEY_BOOT_OPENAI_EXTRA_QUERY = "KEY_BOOT_OPENAI_EXTRA_QUERY";
+    public static final String KEY_BOOT_AMBIENT_CONFIG = "KEY_BOOT_AMBIENT_CONFIG";
+    public static final String KEY_BOOT_PRE_CONNECT_AUDIO_URL = "KEY_BOOT_PRE_CONNECT_AUDIO_URL";
+    public static final String KEY_BOOT_OUTPUT_MIN_LENGTH = "KEY_BOOT_OUTPUT_MIN_LENGTH";
+    public static final String KEY_BOOT_OUTPUT_MAX_DELAY = "KEY_BOOT_OUTPUT_MAX_DELAY";
 
 
     public static final boolean DEFAULT_DEPOSIT_SWITCH = BuildConfig.TEST_ENV_MODE ?
