@@ -22,7 +22,7 @@
     "react-dom": "^18.3.1",
     "uuid": "^11.1.0",
     "zustand": "^4.5.5",
-    "aliyun-auikit-aicall": "2.8.2"
+    "aliyun-auikit-aicall": "2.8.3"
   },
   "devDependencies": {
     "@arms/rum-browser": "^0.0.37",
