@@ -19,9 +19,18 @@
 
 @implementation AVToastView
 
-- (instancetype)init {
-    self = [super init];
+- (instancetype)initWithFrame:(CGRect)frame {
+    self = [super initWithFrame:frame];
     if (self) {
+        self.layer.cornerRadius = 8.0;
+        self.layer.masksToBounds = YES;
+        self.backgroundColor = [UIColor av_colorWithHexString:@"#1C1D22" alpha:0.8];
+        
+        self.toastLabel = [[UILabel alloc] init];
+        self.toastLabel.font = AVGetRegularFont(14.0);
+        self.toastLabel.textColor = [UIColor av_colorWithHexString:@"#FCFCFD"];
+        self.toastLabel.numberOfLines = 0;
+        [self addSubview:self.toastLabel];
     }
     return self;
 }
@@ -31,16 +40,7 @@
         return;
     }
     
-    self.layer.cornerRadius = 8.0;
-    self.layer.masksToBounds = YES;
-    self.backgroundColor = [UIColor av_colorWithHexString:@"#1C1D22" alpha:0.8];
-    
-    self.toastLabel = [[UILabel alloc] init];
-    self.toastLabel.font = AVGetRegularFont(14.0);
-    self.toastLabel.textColor = [UIColor av_colorWithHexString:@"#FCFCFD"];
-    self.toastLabel.numberOfLines = 0;
     self.toastLabel.text = toast;
-    [self addSubview:self.toastLabel];
     
     CGSize best = [self.toastLabel sizeThatFits:CGSizeMake(view.av_width - 20 * 2 - 14 * 2, 0)];
     self.toastLabel.frame = CGRectMake(14, 12, best.width, best.height);

@@ -40,10 +40,10 @@ typedef void (^AVTraitCollectionDidChangedHandler)(void);
 @property (nonatomic, assign) CGFloat av_centerY;
 
 
-- (void)av_setLayerBorderColor:(UIColor *)color;
-- (void)av_setLayerBorderColor:(UIColor *)color borderWidth:(CGFloat)width;
-- (void)av_setLayerShadowColor:(UIColor *)color;
-- (void)av_setLayerBackgroundColor:(UIColor *)color;
+- (void)av_setLayerBorderColor:(nullable UIColor *)color;
+- (void)av_setLayerBorderColor:(nullable UIColor *)color borderWidth:(CGFloat)width;
+- (void)av_setLayerShadowColor:(nullable UIColor *)color;
+- (void)av_setLayerBackgroundColor:(nullable UIColor *)color;
 
 + (CGSize)av_aspectSizeWithOriginalSize:(CGSize)oriSize withResolution:(CGSize)resolution;
 

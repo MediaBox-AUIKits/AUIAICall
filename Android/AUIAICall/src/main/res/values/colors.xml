@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="layout_base_background">#1C1D22</color>
+    <color name="layout_base_white_default">#FCFCFD</color>
+    <color name="layout_base_gray">#747A8C</color>
+    <color name="layout_base_light_gray">#80868686</color>
+    <color name="layout_base_dialog_background">#23262F</color>
+    <color name="layout_base_iv_border">#3A3D48</color>
+    <color name="layout_base_iv_border_half">#2E313B</color>
+    <color name="layout_base_divider">#23262F</color>
+    <color name="layout_base_default_background">#661C1D22</color>
+    <color name="layout_base_msg_author_color">#80DEEA</color>
+    <color name="layout_base_black_alpha_50">#80000000</color>
+    <color name="layout_base_white_alpha30">#4DFFFFFF</color>
+    <color name="layout_base_toast_background">#141416</color>
+    <color name="layout_base_light_blue">#4DCFE1</color>
+    <color name="layout_base_light_white">#B2B7C4</color>
+    <color name="layout_base_red">#F53F3F</color>
+    <color name="layout_base_chat_inut_background">#19191E</color>
+    <color name="layout_blank_color">#000000</color>
+    <color name="layout_base_white_alpha70">#B2FFFFFF</color>
+    <color name="layout_base_blue">#3295FB</color>
+    <color name="layout_chatbot_red">#F95353</color>
+    <color name="layout_voiceprint_record_time_color">#E6E7EC</color>
+    <color name="layout_base_white_alpha40">#66FFFFFF</color>
+
+    <!-- Primary -->
+    <color name="color_primary_bg">#1B58F4</color>
+    <color name="color_primary_bg_hover">#1752E4</color>
+    <color name="color_primary_border">#1B58F4</color>
+    <color name="color_primary_border_hover">#1752E4</color>
+    <color name="color_primary_hover">#1752E4</color>
+    <color name="color_primary">#1B58F4</color>
+    <color name="color_primary_active">#1549CC</color>
+    <color name="color_primary_text_hover">#1752E4</color>
+    <color name="color_primary_text">#1B58F4</color>
+    <color name="color_primary_text_active">#1549CC</color>
+
+    <!-- Text & icons -->
+    <color name="color_text">#111111</color>
+    <color name="color_text_secondary">#555555</color>
+    <color name="color_text_tertiary">#808080</color>
+    <color name="color_text_disabled">#AAAAAA</color>
+    <color name="color_text_inverse">#FFFFFF</color>
+    <color name="color_text_identical">#FFFFFF</color>
+    <color name="color_text_selection">#111111</color>
+
+    <color name="color_link">#1B58F4</color>
+    <color name="color_link_hover">#1752E4</color>
+<!--    <color name="color_link_selection">-</color>-->
+    <color name="color_link_active">#1549CC</color>
+
+    <color name="color_icon">#111111</color>
+    <color name="color_icon_secondary">#555555</color>
+    <color name="color_icon_tertiary">#808080</color>
+    <color name="color_icon_disabled">#AAAAAA</color>
+    <color name="color_icon_inverse">#FFFFFF</color>
+    <color name="color_icon_identical">#FFFFFF</color>
+<!--    <color name="color_icon_hover"></color>-->
+    <color name="color_icon_selection">#111111</color>
+
+    <!-- Borders & dividers -->
+    <color name="color_border">#D8D8D8</color>
+    <color name="color_border_secondary">#E5E5E5</color>
+    <color name="color_border_tertiary">#EEEEEE</color>
+    <color name="color_border_identical">#b3333333</color>
+    <color name="color_border_selection">#000000</color>
+
+    <!-- Backgrounds -->
+    <color name="color_bg">#F7F8F9</color>
+    <color name="color_bg_elevated">#FFFFFF</color>
+    <color name="color_bg_mask">#202020</color>
+    <color name="color_bg_mask_transparent_70">#B3202020</color>
+    
+    <!-- Fill -->
+    <color name="color_fill">#111111</color>
+    <color name="color_fill_secondary">#EDEEF0</color>
+    <color name="color_fill_tertiary">#EDEEF0</color>
+    <color name="color_fill_quaternary">#D8D8D8</color>
+    <color name="color_fill_disabled">#E5E5E5</color>
+    <color name="color_fill_primary">#1B58F4</color>
+    <color name="color_fill_toast_identical">#b3202020</color>
+    <color name="color_fill_switch_identical">#FFFFFF</color>
+    <color name="color_fill_selection">#111111</color>
+
+    <!-- Success -->
+    <color name="color_success">#29A64E</color>
+    <color name="color_success_bg">#29A64E</color>
+    <color name="color_success_bg_hover">#219644</color>
+    <color name="color_success_border">#29A64E</color>
+    <color name="color_success_border_hover">#219644</color>
+    <color name="color_success_hover">#219644</color>
+    <color name="color_success_base">#29A64E</color>
+    <color name="color_success_active">#0A6E27</color>
+    <color name="color_success_text_hover">#219644</color>
+    <color name="color_success_text">#29A64E</color>
+    <color name="color_success_text_active">#0A6E27</color>
+
+    <!-- Warning -->
+    <color name="color_warning">#FFAB00</color>
+    <color name="color_warning_bg">#FFAB00</color>
+    <color name="color_warning_bg_hover">#F2A200</color>
+    <color name="color_warning_border">#FFAB00</color>
+    <color name="color_warning_border_hover">#F2A200</color>
+    <color name="color_warning_hover">#F2A200</color>
+    <color name="color_warning_base">#FFAB00</color>
+    <color name="color_warning_active">#D68F00</color>
+    <color name="color_warning_text_hover">#F2A200</color>
+    <color name="color_warning_text">#FFAB00</color>
+    <color name="color_warning_text_active">#D68F00</color>
+
+    <!-- Info -->
+    <color name="color_info_bg">#1B58F4</color>
+    <color name="color_info_bg_hover">#1752E4</color>
+    <color name="color_info_border">#1B58F4</color>
+    <color name="color_info_border_hover">#1752E4</color>
+    <color name="color_info_hover">#1752E4</color>
+    <color name="color_info_base">#1B58F4</color>
+    <color name="color_info_active">#1549CC</color>
+    <color name="color_info_text_hover">#1752E4</color>
+    <color name="color_info_text">#1B58F4</color>
+    <color name="color_info_text_active">#1549CC</color>
+    <!-- Error -->
+    <color name="color_error">#C82727</color>
+    <color name="color_error_bg">#C82727</color>
+    <color name="color_error_bg_hover">#BD2424</color>
+    <color name="color_error_border">#C82727</color>
+    <color name="color_error_border_hover">#BD2424</color>
+    <color name="color_error_hover">#BD2424</color>
+    <color name="color_error_base">#C82727</color>
+    <color name="color_error_active">#A31E1E</color>
+    <color name="color_error_text_hover">#BD2424</color>
+    <color name="color_error_text">#C82727</color>
+    <color name="color_error_text_active">#A31E1E</color>
+    
+    
+    <color name="color_bg_mask_push_to_talk">#000000</color>
+
+    <color name="color_border_tertiary_transparent">#00EEEEEE</color>
+    <color name="color_bg_elevated_transparent">#00FFFFFF</color>
+</resources>

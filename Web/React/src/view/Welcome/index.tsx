@@ -1,262 +1,197 @@
-import { useTranslation } from '@/common/i18nContext';
-import { WorkflowType } from '@/service/interface';
-import { getDeviceStream } from '@/view/Welcome/deviceHelper.ts';
 import { AICallAgentType, AIChatAgentType } from 'aliyun-auikit-aicall';
-import { Button, SafeArea, Swiper, SwiperRef, Tabs } from 'antd-mobile';
-import { useEffect, useRef, useState } from 'react';
-import { WelcomeArrowLeftSVG, WelcomeArrowRightSVG } from '../Call/Icons';
+import { Button, SafeArea, SwiperRef, Tabs } from 'antd-mobile';
+import { useEffect, useMemo, useRef, useState } from 'react';
+
+import { useTranslation } from '@/common/i18nContext';
+
+import ImageWithTheme from '../components/ImageWithTheme';
+import Layout from '../components/Layout';
+import { useResponsiveBreakpoint } from '../hooks/useResponsiveBreakpoint';
+import { AIPSTNType } from '../PSTN';
+import CarouselSlider from './CarouselSlider';
 import WelcomeConfig from './Config';
+import { getDeviceStream } from './deviceHelper.ts';
+import avatarImg from './images/avatar_agent.png';
+import chatbotImg from './images/chatbot_agent.png';
+import pstnInImg from './images/pstn_in.png';
+import pstnOutImg from './images/pstn_out.png';
+import videoImg from './images/video_agent.png';
+import visionImg from './images/vision_agent.png';
+import voiceImg from './images/voice_agent.png';
+import { SlideData, WelcomeProps, WelcomeTypeValue } from './type';
 
 import './index.less';
 
-interface WelcomeProps {
-  userId: string;
-  region?: string;
-  onAuthFail?: () => void;
-  initialType: string;
-  showPstn: boolean;
-  onTypeSelected: (type: string) => void;
-  onAgentTypeSelected: (type: AICallAgentType | AIChatAgentType) => void;
-  onPSTNTypeSelected: (type: string) => void;
-}
-
 const LAST_CALL_SELECT_INDEX_CACHE_KEY = 'aicall-welcome-last-select-index';
-const LAST_PSTN_SELECT_INDEX_CACHE_KEY = 'aicall-welcome-last-pstn-select-index';
 
-function hasAudio(typeIndex: number, agentType: AICallAgentType | AIChatAgentType) {
-  return typeIndex === 0 && agentType !== AIChatAgentType.MessageChat;
+function hasAudio(agentType: WelcomeTypeValue) {
+  return agentType >= AICallAgentType.VoiceAgent && agentType <= AICallAgentType.VideoAgent;
 }
 
-function hasVideo(typeIndex: number, agentType: AICallAgentType | AIChatAgentType) {
-  return typeIndex === 0 && (agentType === AICallAgentType.VisionAgent || agentType === AICallAgentType.VideoAgent);
+function hasVideo(agentType: WelcomeTypeValue) {
+  return agentType === AICallAgentType.VisionAgent || agentType === AICallAgentType.VideoAgent;
 }
 
-function Welcome({
-  userId,
-  region,
-  onAuthFail,
-  initialType,
-  showPstn,
-  onTypeSelected,
-  onAgentTypeSelected,
-  onPSTNTypeSelected,
-}: WelcomeProps) {
-  const { t } = useTranslation();
-  const typeTabItems = [
-    {
-      key: 'call',
-      title: t('welcome.call'),
-    },
-    {
-      key: 'pstn',
-      title: t('welcome.pstn.title'),
-    },
-  ];
+function Welcome({ userId, region, onAuthFail, showPstn, onSelected }: WelcomeProps) {
+  const { t, lang } = useTranslation();
+  // const { enableDarkMode, toggleTheme } = useTheme();
+  const isMobileUI = useResponsiveBreakpoint();
 
-  const [activeTypeIndex, setActiveTypeIndex] = useState(
-    typeTabItems.findIndex((item) => item.key === initialType) || 0
-  );
-  const [activeCallIndex, setActiveCallIndex] = useState(
-    Number(localStorage.getItem(LAST_CALL_SELECT_INDEX_CACHE_KEY)) || 0
-  );
-  const [activePSTNIndex, setActivePSTNIndex] = useState(
-    Number(localStorage.getItem(LAST_PSTN_SELECT_INDEX_CACHE_KEY)) || 0
-  );
+  const [activeIndex, setActiveIndex] = useState(Number(localStorage.getItem(LAST_CALL_SELECT_INDEX_CACHE_KEY)) || 0);
 
   const swiperRef = useRef<SwiperRef>(null);
 
-  const onClick = () => {
-    localStorage.setItem(LAST_CALL_SELECT_INDEX_CACHE_KEY, activeCallIndex.toString());
-    onTypeSelected(typeTabItems[activeTypeIndex].key);
-    if (activeTypeIndex === 0) {
-      onAgentTypeSelected(callTabItems[activeCallIndex].value);
-    } else {
-      onPSTNTypeSelected(pstnTabItems[activePSTNIndex].value);
-    }
-  };
-
-  const callTabItems = [
+  const AISlides: SlideData[] = [
     {
-      key: WorkflowType.VoiceChat,
-      value: AICallAgentType.VoiceAgent,
+      key: 'voice_agent',
       title: t('agent.voice'),
-      imgUrl: 'https://gw.alicdn.com/imgextra/i2/O1CN01ZLoopi1t0JfazWfy8_!!6000000005839-2-tps-426-852.png',
-      desktopImgUrl: 'https://gw.alicdn.com/imgextra/i4/O1CN01rXBEYm1oKOyekwSs3_!!6000000005206-2-tps-560-104.png',
-      width: 280,
-      height: 52,
+      description: t('agent.descriptions.voice'),
+      image: voiceImg,
+      value: AICallAgentType.VoiceAgent,
     },
     {
-      key: WorkflowType.AvatarChat3D,
-      value: AICallAgentType.AvatarAgent,
+      key: 'avatar_agent',
       title: t('agent.avatar'),
-      imgUrl: 'https://gw.alicdn.com/imgextra/i4/O1CN01SfZ6SI1eo2QpmMjMt_!!6000000003917-2-tps-426-852.png',
-      desktopImgUrl: 'https://gw.alicdn.com/imgextra/i3/O1CN01styzUV1INXzcDbMSl_!!6000000000881-2-tps-296-349.png',
-      width: 148,
-      height: 175,
+      description: t('agent.descriptions.avatar'),
+      image: avatarImg,
+      value: AICallAgentType.AvatarAgent,
     },
     {
-      key: WorkflowType.VisionChat,
-      value: AICallAgentType.VisionAgent,
+      key: 'vision_agent',
       title: t('agent.vision'),
-      imgUrl: 'https://gw.alicdn.com/imgextra/i1/O1CN01BZPzdO1pnXmFPq3WN_!!6000000005405-2-tps-426-852.png',
-      desktopImgUrl: 'https://gw.alicdn.com/imgextra/i4/O1CN01zUUZCf1VALaBVqAVe_!!6000000002612-2-tps-604-604.png',
-      width: 302,
-      height: 302,
+      description: t('agent.descriptions.vision'),
+      image: visionImg,
+      value: AICallAgentType.VisionAgent,
     },
     {
-      key: 'Chatbot',
-      value: AIChatAgentType.MessageChat,
-      title: t('agent.chatbot'),
-      imgUrl: 'https://gw.alicdn.com/imgextra/i3/O1CN01e6vxYV1pJm28uCaRD_!!6000000005340-2-tps-426-852.png',
-      desktopImgUrl: 'https://gw.alicdn.com/imgextra/i3/O1CN01WcQcZK1s9Bk9aaeu0_!!6000000005723-2-tps-604-604.png',
-      width: 302,
-      height: 302,
-    },
-    {
-      key: WorkflowType.VideoChat,
-      value: AICallAgentType.VideoAgent,
+      key: 'video_agent',
       title: t('agent.video'),
-      imgUrl: 'https://gw.alicdn.com/imgextra/i3/O1CN01Skv0lc20EF2WOjkS9_!!6000000006817-2-tps-426-852.png',
-      desktopImgUrl: 'https://gw.alicdn.com/imgextra/i3/O1CN01mo1mdZ1jpwAZlMhYO_!!6000000004598-2-tps-604-604.png',
-      width: 302,
-      height: 302,
+      description: t('agent.descriptions.video'),
+      image: videoImg,
+      value: AICallAgentType.VideoAgent,
+    },
+    {
+      key: 'chatbot_agent',
+      title: t('agent.chatbot'),
+      description: t('agent.descriptions.chatbot'),
+      image: chatbotImg,
+      value: AIChatAgentType.MessageChat,
+    },
+    {
+      key: 'pstn_out',
+      title: t('agent.pstnOut'),
+      description: t('agent.descriptions.pstnOut'),
+      image: pstnOutImg,
+      value: AIPSTNType.Outbound,
+    },
+    {
+      key: 'pstn_in',
+      title: t('agent.pstnIn'),
+      description: t('agent.descriptions.pstnIn'),
+      image: pstnInImg,
+      value: AIPSTNType.Inbound,
     },
   ];
 
-  const currentAgentType = callTabItems[activeCallIndex].value;
-  const needAudio = hasAudio(activeTypeIndex, currentAgentType);
-  const needVideo = hasVideo(activeTypeIndex, currentAgentType);
+  const onClick = () => {
+    localStorage.setItem(LAST_CALL_SELECT_INDEX_CACHE_KEY, activeIndex.toString());
+    onSelected(AISlides[activeIndex].value);
+  };
+
+  const activeValue = AISlides[activeIndex].value;
+  const needAudio = hasAudio(activeValue);
+  const needVideo = hasVideo(activeValue);
+
   useEffect(() => {
     getDeviceStream(needAudio, needVideo);
   }, [needAudio, needVideo]);
 
-  const pstnTabItems = [
-    {
-      key: 'Outbound',
-      value: 'Outbound',
-      title: t('welcome.pstn.outbound'),
-      imgUrl: 'https://img.alicdn.com/imgextra/i3/O1CN01ELAkfg1QErPqPaQxV_!!6000000001945-2-tps-426-852.png',
-      desktopImgUrl: 'https://img.alicdn.com/imgextra/i2/O1CN01RnDzyV1ZDn1wnziwW_!!6000000003161-2-tps-604-604.png',
-      width: 302,
-      height: 302,
-    },
-    {
-      key: 'Inbound',
-      value: 'Inbound',
-      title: t('welcome.pstn.inbound'),
-      imgUrl: 'https://img.alicdn.com/imgextra/i2/O1CN01DMhFSN1J4bEzB1cV3_!!6000000000975-2-tps-426-852.png',
-      desktopImgUrl: 'https://img.alicdn.com/imgextra/i2/O1CN01S2fG6J20m8Ml5uRzV_!!6000000006891-2-tps-604-604.png',
-      width: 302,
-      height: 302,
-    },
-  ];
+  const slides = useMemo(() => {
+    return showPstn ? AISlides : AISlides.filter((item) => item.value < AIPSTNType.Outbound);
+  }, [showPstn]);
 
   return (
-    <div className='welcome'>
-      <div className='welcome-header'>{t('welcome.title')}</div>
-      <div className='welcome-body'>
-        {showPstn && (
-          <Tabs
-            activeKey={typeTabItems[activeTypeIndex].key}
-            activeLineMode='full'
-            onChange={(key) => {
-              const index = typeTabItems.findIndex((item) => item.key === key);
-              setActiveTypeIndex(index);
-            }}
-            className='welcome-type-tab'
-          >
-            {typeTabItems.map((item) => (
-              <Tabs.Tab title={item.title} key={item.key} />
-            ))}
-          </Tabs>
-        )}
+    <Layout
+      themeBtn={false}
+      settingBtn={
+        activeIndex >= 0 &&
+        activeIndex <= 3 && <WelcomeConfig userId={userId} region={region} onAuthFail={onAuthFail} />
+      }
+    >
+      <div className='ai-content ai-bg'>
+        <div className='welcome-wrapper'>
+          <div className='welcome-header'>
+            {/* <Button fill='none' className='_theme-btn' onClick={toggleTheme}>
+              {enableDarkMode ? themeDarkSVG : themeLightSVG}
+            </Button> */}
+            <div className='ai-flex-1'></div>
+            {activeIndex >= 0 && activeIndex <= 3 && (
+              <div className='welcome-header-btns'>
+                <WelcomeConfig userId={userId} region={region} onAuthFail={onAuthFail} />
+              </div>
+            )}
+          </div>
+          <div className='welcome-img'>
+            {lang === 'en' ? (
+              <ImageWithTheme
+                src='https://gw.alicdn.com/imgextra/i3/O1CN01cJANzi1GB40bqBAcL_!!6000000000583-2-tps-332-40.png'
+                dark-src='https://gw.alicdn.com/imgextra/i2/O1CN01UeYlKx1JJFwNimSW6_!!6000000001007-2-tps-332-40.png'
+                alt='logo'
+                width={166}
+                height={20}
+              />
+            ) : (
+              <ImageWithTheme
+                src='https://gw.alicdn.com/imgextra/i3/O1CN01rmMKVm1J6tEeIqPq6_!!6000000000980-2-tps-272-44.png'
+                dark-src='https://gw.alicdn.com/imgextra/i1/O1CN010ikCyQ1qr2SomxqAk_!!6000000005548-2-tps-272-44.png'
+                alt='logo'
+                width={136}
+                height={22}
+              />
+            )}
+          </div>
+          <div className='welcome-tabs'>
+            <Tabs
+              key='call-tab'
+              className='welcome-call-tab'
+              activeKey={slides[activeIndex].key}
+              activeLineMode={isMobileUI ? 'fixed' : 'auto'}
+              style={{
+                '--fixed-active-line-width': '30px',
+              }}
+              onChange={(key) => {
+                const index = slides.findIndex((item) => item.key === key);
+                setActiveIndex(index);
+                swiperRef.current?.swipeTo(index);
+              }}
+            >
+              {slides.map((item) => (
+                <Tabs.Tab title={item.title} key={item.key} />
+              ))}
+            </Tabs>
+          </div>
 
-        {activeTypeIndex === 0 ? (
-          <Tabs
-            key='call-tab'
-            className='welcome-call-tab'
-            activeKey={callTabItems[activeCallIndex].key}
-            onChange={(key) => {
-              const index = callTabItems.findIndex((item) => item.key === key);
-              setActiveCallIndex(index);
-              swiperRef.current?.swipeTo(index);
+          <CarouselSlider
+            slides={slides}
+            activeIndex={activeIndex}
+            onSlideChange={(index: number) => {
+              setActiveIndex(index);
             }}
-          >
-            {callTabItems.map((item) => (
-              <Tabs.Tab title={item.title} key={item.key} />
-            ))}
-          </Tabs>
-        ) : (
-          <Tabs
-            key='pstn-tab'
-            className='welcome-call-tab'
-            stretch={false}
-            activeKey={pstnTabItems[activePSTNIndex].key}
-            onChange={(key) => {
-              const index = pstnTabItems.findIndex((item) => item.key === key);
-              setActivePSTNIndex(index);
-              swiperRef.current?.swipeTo(index);
-            }}
-          >
-            {pstnTabItems.map((item) => (
-              <Tabs.Tab title={item.title} key={item.key} />
-            ))}
-          </Tabs>
-        )}
-
-        <div className='welcome-swiper'>
-          <Button className='_left' disabled={activeCallIndex === 0} onClick={() => swiperRef.current?.swipePrev()}>
-            {WelcomeArrowLeftSVG}
-          </Button>
-          <Button
-            className='_right'
-            disabled={activeCallIndex === callTabItems.length - 1}
-            onClick={() => swiperRef.current?.swipeNext()}
-          >
-            {WelcomeArrowRightSVG}
-          </Button>
-          <Swiper
-            direction='horizontal'
-            key={`${activeTypeIndex}`}
-            indicator={() => null}
-            ref={swiperRef}
-            defaultIndex={activeTypeIndex === 0 ? activeCallIndex : activePSTNIndex}
-            onIndexChange={(index) => {
-              if (activeTypeIndex === 0) {
-                setActiveCallIndex(index);
-              } else {
-                setActivePSTNIndex(index);
-              }
-            }}
-          >
-            {(activeTypeIndex === 0 ? callTabItems : pstnTabItems).map((item) => (
-              <Swiper.Item key={item.key}>
-                <div className='welcome-img-box'>
-                  <img className='_for-mobile' src={item.imgUrl} alt={item.title} />
-                  <img
-                    className='_for-desktop'
-                    src={item.desktopImgUrl}
-                    alt={item.title}
-                    width={item.width || 260}
-                    height={item.height || 260}
-                  />
-                </div>
-              </Swiper.Item>
-            ))}
-          </Swiper>
-        </div>
-        <div className='welcome-btn'>
-          <Button color='primary' block onClick={onClick}>
-            {t('welcome.btn')}
-          </Button>
-          {activeTypeIndex === 0 && activeCallIndex !== 3 && (
-            <WelcomeConfig userId={userId} region={region} onAuthFail={onAuthFail} />
-          )}
+          />
+          <div className='welcome-description'>
+            <div className='_inner'>{slides[activeIndex].description}</div>
+          </div>
+          <div className='welcome-footer'>
+            <Button className='_btn' block onClick={onClick}>
+              {t('welcome.btn')}
+            </Button>
+          </div>
+          <SafeArea position='bottom' />
         </div>
       </div>
-      <SafeArea position='bottom' />
-    </div>
+    </Layout>
   );
 }
 
+export * from './type';
 export default Welcome;

@@ -1,5 +1,3 @@
-import { create } from 'zustand';
-
 import {
   AICallAgentState,
   AICallAgentType,
@@ -8,6 +6,7 @@ import {
   AICallVoiceprintResult,
   LatencyStat,
 } from 'aliyun-auikit-aicall';
+import { create } from 'zustand';
 
 type SubtitleItem = {
   data: AICallSubtitleData;

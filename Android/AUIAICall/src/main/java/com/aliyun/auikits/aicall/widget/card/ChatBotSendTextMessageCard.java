@@ -49,9 +49,6 @@ public class ChatBotSendTextMessageCard extends BaseCard {
 
     private Button mSendTextMessageStatusImage;
     private TextView mSendTextMessageContentTextView;
-    private ConstraintLayout mSendTextMessageActionButtonLayout;
-    private ImageView  mSendTextMessageCopyImageView;
-    private PlayMessageAnimationView mSendTextMessagePlayImageView;
     private Context mContext = null;
     private LinearLayout mSendTextLayout;
     public RecyclerView mSendImagesListView;
@@ -77,9 +74,6 @@ public class ChatBotSendTextMessageCard extends BaseCard {
         View  root = LayoutInflater.from(context).inflate(R.layout.layout_auiaichat_send_text_message_card, this, true);
         mSendTextMessageStatusImage = root.findViewById(R.id.chatbot_send_message_status);
         mSendTextMessageContentTextView = root.findViewById(R.id.chat_message_text);
-        mSendTextMessageActionButtonLayout = root.findViewById(R.id.chat_msg_message_item_user_button_layout);
-        mSendTextMessageCopyImageView = root.findViewById(R.id.chatbot_message_item_copy_user);
-        mSendTextMessagePlayImageView = root.findViewById(R.id.ic_chatbot_message_play_user);
         mSendTextLayout = root.findViewById(R.id.chatbot_send_message_item_text_layout);
         mSendImagesListView = root.findViewById(R.id.chatbot_send_image_list);
         mSendMessageLayout = root.findViewById(R.id.chatbot_send_message_item);
@@ -192,16 +186,13 @@ public class ChatBotSendTextMessageCard extends BaseCard {
 
                 if(chatMessage.getMessage().messageState == ARTCAIChatEngine.ARTCAIChatMessageState.Failed) {
                     mSendTextMessageStatusImage.setBackgroundResource(R.drawable.ic_chatbot_message_send_retry);
-                    mSendTextMessageActionButtonLayout.setVisibility(View.GONE);
                     mSendTextMessageStatusImage.setVisibility(View.VISIBLE);
                 }
                 else if(chatMessage.getMessage().messageState == ARTCAIChatEngine.ARTCAIChatMessageState.Finished) {
                     mSendTextMessageStatusImage.setVisibility(View.GONE);
-                    mSendTextMessageActionButtonLayout.setVisibility(View.VISIBLE);
                 }
                 else {
                     mSendTextMessageStatusImage.setBackgroundResource(R.drawable.ic_chatbot_msg_send_loading);
-                    mSendTextMessageActionButtonLayout.setVisibility(View.GONE);
                     mSendTextMessageStatusImage.setVisibility(View.VISIBLE);
                 }
             }

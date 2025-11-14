@@ -1,11 +1,13 @@
 import { AIChatEngineState } from 'aliyun-auikit-aicall';
-import useChatStore from './store';
 import { Dialog, SpinLoading } from 'antd-mobile';
+import { Action } from 'antd-mobile/es/components/dialog';
+
+import { useTranslation } from '@/common/i18nContext';
 import { getRootElement } from '@/common/utils';
 
+import useChatStore from './store';
+
 import './state.less';
-import { Action } from 'antd-mobile/es/components/dialog';
-import { useTranslation } from '@/common/i18nContext';
 
 function ChatState({ onExit }: { onExit: () => void }) {
   const { t } = useTranslation();

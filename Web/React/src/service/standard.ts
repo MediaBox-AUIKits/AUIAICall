@@ -7,7 +7,7 @@ import {
   JSONObject,
 } from 'aliyun-auikit-aicall';
 
-import { getWorkflowType, TemplateConfig, WorkflowType } from './interface';
+import { getWorkflowType, WorkflowType } from './interface';
 
 class StandardAppService {
   private appServer = '';
@@ -160,7 +160,7 @@ class StandardAppService {
     token: string,
     region: string,
     instanceId: string
-  ): Promise<TemplateConfig> => {
+  ): Promise<JSONObject> => {
     if (!userId || !instanceId) {
       throw new AICallAgentError('userId or instanceId is empty');
     }
@@ -194,8 +194,9 @@ class StandardAppService {
         return res.json();
       })
       .then((data) => {
+        console.log(data);
         if (data.code === 200) {
-          return JSON.parse(data.template_config);
+          return JSON.parse(data.agent_config);
         }
         throw new AICallAgentError(`describeAIAgentInstance error, message: ${data.message || 'request error'}`);
       });

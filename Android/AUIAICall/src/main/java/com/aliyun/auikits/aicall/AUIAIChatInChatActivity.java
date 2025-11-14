@@ -13,8 +13,6 @@ import static com.aliyun.auikits.aicall.util.AUIAIConstStrKey.BUNDLE_KEY_LOGIN_A
 import static com.aliyun.auikits.aicall.util.AUIAIConstStrKey.BUNDLE_KEY_LOGIN_USER_ID;
 import static com.aliyun.auikits.aicall.util.AUIAIConstStrKey.BUNDLE_KEY_TOKEN_EXPIRE_TIMESTAMP;
 import android.Manifest;
-import android.content.ClipData;
-import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -37,6 +35,7 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.MimeTypeMap;
 import android.widget.EditText;
@@ -279,55 +278,19 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
             }
         });
 
-        findViewById(R.id.btn_reporting).setVisibility(
-                AICallReportingDialog.AI_CALL_REPORTING_ENABLE ? View.VISIBLE : View.GONE);
-        findViewById(R.id.btn_reporting).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                AICallReportingDialog.showDialog(AUIAIChatInChatActivity.this, new AICallReportingDialog.IReportingDialogDismissListener() {
-                    @Override
-                    public void onReportingSubmit(List<Integer> reportTypeStatIdList, String reportIssueDesc) {
-                        commitReporting(reportTypeStatIdList, reportIssueDesc);
-                    }
-
-                    @Override
-                    public void onDismiss(boolean hasSubmit) {
-                        if (hasSubmit) {
-                            String requestId = mAgentId;
-                            String content = getResources().getString(R.string.reporting_id_display, requestId);
-                            AICallNoticeDialog.showFunctionalDialog(AUIAIChatInChatActivity.this,
-                                    null, false, content, true,
-                                    R.string.copy, new AICallNoticeDialog.IActionHandle() {
-                                        @Override
-                                        public void handleAction() {
-                                            AUIAICallClipboardUtils.copyToClipboard(AUIAIChatInChatActivity.this, requestId);
-                                            ToastHelper.showToast(AUIAIChatInChatActivity.this, R.string.chat_bot_copy_text_tips, Toast.LENGTH_SHORT);
-                                        }
-                                    }
-                            );
-                        }
-                    }
-                });
-            }
-        });
-
         findViewById(R.id.btn_setting).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 getVoiceIdList();
-                AIChatBotSettingDialog.show(AUIAIChatInChatActivity.this, mAgentVoiceIdList);
+                AIChatBotSettingDialog.show(AUIAIChatInChatActivity.this, mChatEngine, mCurrentRequestId, mAgentId, mUserId, mSessionId, mAgentVoiceIdList);
             }
         });
-
-
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-
-
 
         mSessionId = mUserId + "_" +mAgentId;
 
@@ -427,50 +390,6 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
         finish();
     }
 
-    private void commitReporting(List<Integer> reportTypeIdList, String otherTypeDesc) {
-
-        if (null == reportTypeIdList || reportTypeIdList.isEmpty()) {
-            return;
-        }
-        try {
-            {
-                JSONObject args = new JSONObject();
-                args.put("req_id", mCurrentRequestId);
-                args.put("aid", mAgentId);
-                args.put("uid", mUserId);
-                args.put("atype", "MessageChat");
-                args.put("sid", mSessionId);
-                String round = mChatEngine.currentChatRound();
-                if(!TextUtils.isEmpty(round)) {
-                    args.put("round_type", round);
-                }
-                args.put("round_req_id", mCurrentRequestId);
-
-                StringBuilder idBuilder = new StringBuilder();
-                for (int reportTypeId : reportTypeIdList) {
-                    if (idBuilder.length() > 0) {
-                        idBuilder.append(",");
-                    }
-                    idBuilder.append(reportTypeId);
-                }
-                args.put("rep_type", idBuilder.toString());
-                if (!otherTypeDesc.isEmpty()) {
-                    args.put("rep_desc", otherTypeDesc);
-                }
-                BizStatHelper.stat("2001", args.toString());
-            }
-            {
-                JSONObject args = new JSONObject();
-
-                String allLog = Logger.getAllLogRecordStr();
-                args.put("log_str", allLog);
-                BizStatHelper.stat("2002", args.toString());
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
-
     private String generateUUId() {
        return UUID.randomUUID().toString();
     }
@@ -481,13 +400,10 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
             for(int i = 0; i < voiceIdList.size(); i++) {
                 String voiceId = voiceIdList.get(i);
                 AudioToneData audioTone = new AudioToneData(voiceId, voiceId);
-                if(i % 3 == 0)
-                {
-                    audioTone.setIconResId(R.drawable.ic_audio_tone_0);
-                } else if(i % 3 == 1) {
-                    audioTone.setIconResId(R.drawable.ic_audio_tone_1);
-                } else if(i % 3 == 2) {
-                    audioTone.setIconResId(R.drawable.ic_audio_tone_2);
+                if(i % 2 == 0) {
+                    audioTone.setIconResId(R.drawable.ic_audio_tone_3);
+                } else if(i % 2 == 1) {
+                    audioTone.setIconResId(R.drawable.ic_audio_tone_4);
                 }
                 audioTone.setUsing(mChatEngine.getCurrentVoice().equals(audioTone.getAudioToneId()));
                 mAgentVoiceIdList.add(audioTone);
@@ -568,6 +484,7 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
         private RecyclerView mChatMessageListView;
         private TextView mConnectStatusTextView;
         private LinearLayout mChatInputLayout;
+        private ViewGroup mPressVoiceToTalkLayout;
         private TextView mPressVoiceToTalkingTime;
         private TextView mPressVoiceToTalkingTitle;
         private SmartRefreshLayout mMessageListRefreshLayout;
@@ -582,6 +499,9 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
 
         private ImageView mSpeechAnimationView;
 
+        private LinearLayout mBottomSheetLayout;
+        private View mBottonSheetLine = null;
+
         private void init(Context context) {
 
             this.mContextRef = new WeakReference<>(context);
@@ -590,7 +510,6 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
             mConnectStatusTextView = findViewById(R.id.chatbot_connect_status);
             mPresseToPushAction = findViewById(R.id.press_to_push);
             mChatInputLayout = findViewById(R.id.bottom_input_text_bar);
-            mPressVoiceToTalkingTime = findViewById(R.id.bottom_press_voice_timer);
             mPressVoiceToTalkingTitle = findViewById(R.id.bottom_press_voice_title);
             mMessageListRefreshLayout = findViewById(R.id.srl_chat_message_list);
             mMessageListRefreshLayout.setEnableLoadMore(false);
@@ -599,7 +518,12 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
             mChangeToVoicePushAction = findViewById(R.id.ic_bottom_voice_press);
             mChatBotEditText.setVerticalScrollBarEnabled(true);
             mChatBotEditText.setMovementMethod(new ScrollingMovementMethod());
+            mPressVoiceToTalkLayout = findViewById(R.id.bottom_press_voice_layout);
+            mPressVoiceToTalkingTime = findViewById(R.id.bottom_press_voice_timer);
             mSpeechAnimationView = findViewById(R.id.chatbot_speech_animation_view);
+
+            mBottonSheetLine = findViewById(R.id.bottom_sheet_handle);
+            mBottomSheetLayout = findViewById(R.id.bottom_sheet);
 
             mChatBotEditText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
                 @Override
@@ -622,6 +546,12 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
                 @Override
                 public void onTextChanged(CharSequence s, int start, int before, int count) {
                     changeChatActionButtonState();
+
+                    if(s.length() > 0) {
+                        mAddMoreButton.setVisibility(View.GONE);
+                    } else {
+                        mAddMoreButton.setVisibility(View.VISIBLE);
+                    }
                 }
                 @Override
                 public void afterTextChanged(Editable s) {
@@ -681,6 +611,8 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
                 @Override
                 public void onLongPressStart() {
                     startPushingVoiceMessage();
+                    mBottonSheetLine.setVisibility(View.GONE);
+                    mBottomSheetLayout.setSelected(true);
                     updatePushVoiceUI(AUIAIChatPushVoiceAction.Start);
                     scrollToBottomMessage();
                 }
@@ -693,9 +625,11 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
                         stopPushingVoiceMessage();
                     }
                     updatePushVoiceUI(AUIAIChatPushVoiceAction.Stop);
-                    if(mMultiMediaHolder.mSelectedImages.size() == 0) {
+                    if(mMultiMediaHolder.mSelectedImages.isEmpty()) {
                         resetAddMoreLayoutToDefault();
                     }
+                    mBottonSheetLine.setVisibility(View.VISIBLE);
+                    mBottomSheetLayout.setSelected(false);
                 }
                 @Override
                 public void onUpperSlip() {
@@ -714,11 +648,8 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
                 public void onClick(View v) {
                     mCurrentChatType = AUIAIChatType.Voice;
                     changeChatActionButtonState();
-
                 }
             });
-
-
 
             mMessageListRefreshLayout.setOnRefreshListener(new OnRefreshListener() {
                 @Override
@@ -727,40 +658,38 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
                 }
             });
 
-            mAddMoreButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if(mCurrentAgentState == Listening) {
-                        if(mMoreActionLayout.getVisibility() == View.GONE) {
-                            mMoreActionLayout.setVisibility(View.VISIBLE);
-                            mAddMoreButton.setImageResource(R.drawable.ic_bottom_add_more_hidden);
+            mAddMoreButton.setOnClickListener(v -> {
+                if(mCurrentAgentState == Listening) {
+                    if(mMoreActionLayout.getVisibility() == View.GONE) {
+                        mMoreActionLayout.setVisibility(View.VISIBLE);
 
-                            AUIAICallAuthTokenHelper.getAICallAuthToken(mUserId, mUserLoginAuthorization, new AUIAICallAuthTokenHelper.IAUIAICallAuthTokenCallback() {
-                                @Override
-                                public void onSuccess(JSONObject jsonObject) {
-                                    try {
-                                        if (jsonObject.has("rtc_auth_token")) {
-                                            String rtcAuthToken = jsonObject.getString("rtc_auth_token");
-                                            if (!TextUtils.isEmpty(rtcAuthToken)) {
-                                                mMultiMediaHolder.mAICallAuthToken = rtcAuthToken;
-                                            }
+                        mAddMoreButton.setImageResource(R.drawable.ic_misuse_filled);
+
+                        AUIAICallAuthTokenHelper.getAICallAuthToken(mUserId, mUserLoginAuthorization, new AUIAICallAuthTokenHelper.IAUIAICallAuthTokenCallback() {
+                            @Override
+                            public void onSuccess(JSONObject jsonObject) {
+                                try {
+                                    if (jsonObject.has("rtc_auth_token")) {
+                                        String rtcAuthToken = jsonObject.getString("rtc_auth_token");
+                                        if (!TextUtils.isEmpty(rtcAuthToken)) {
+                                            mMultiMediaHolder.mAICallAuthToken = rtcAuthToken;
                                         }
-                                    } catch (Exception e) {
-                                        e.printStackTrace();
                                     }
+                                } catch (Exception e) {
+                                    e.printStackTrace();
                                 }
-                                @Override
-                                public void onFail(int errorCode, String errorMsg) {
-                                }
-                            });
+                            }
+                            @Override
+                            public void onFail(int errorCode, String errorMsg) {
+                            }
+                        });
 
-                        } else {
-                            mMoreActionLayout.setVisibility(View.GONE);
-                            mAddMoreButton.setImageResource(R.drawable.ic_bottom_add_more);
-                        }
+                    } else {
+                        mAddMoreButton.setImageResource(R.drawable.ic_base_add_alt);
+                        mMoreActionLayout.setVisibility(View.GONE);
                     }
-                    scrollToBottomMessage();
                 }
+                scrollToBottomMessage();
             });
 
             initChatMessageList();
@@ -769,7 +698,7 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
         private void resetAddMoreLayoutToDefault() {
             mLayoutHolder.mAddMoreButton.setVisibility(View.VISIBLE);
             mLayoutHolder.mMoreActionLayout.setVisibility(View.GONE);
-            mAddMoreButton.setImageResource(R.drawable.ic_bottom_add_more);
+            mAddMoreButton.setImageResource(R.drawable.ic_base_add_alt);
         }
 
         private void scrollToBottomMessage() {
@@ -805,14 +734,14 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
         private void updatePushVoiceUI(AUIAIChatPushVoiceAction action) {
 
             if(action == AUIAIChatPushVoiceAction.UpperSlip) {
-                mPressVoiceToTalkingTitle.setTextColor(mContextRef.get().getResources().getColor(R.color.layout_chatbot_red));
+                mPressVoiceToTalkingTitle.setTextColor(mContextRef.get().getResources().getColor(R.color.color_error_text));
                 mPressVoiceToTalkingTitle.setText(R.string.chat_bot_press_to_talk_title_cancel);
                 mChatInputLayout.setBackgroundResource(R.drawable.layout_chat_voice_push_cancel_bg);
-                mSpeechAnimationView.setImageResource(R.drawable.ic_chatbot_voice_push_cancel);
+                mSpeechAnimationView.setImageResource(R.drawable.ic_chatbot_voice_push);
             } else {
                 mChatInputLayout.setBackgroundResource(R.drawable.layout_chat_voice_push_bg);
-                mPressVoiceToTalkingTitle.setTextColor(Color.parseColor("#FCFCFD"));
                 mPressVoiceToTalkingTitle.setText(R.string.chat_bot_press_to_talk_title);
+                mPressVoiceToTalkingTitle.setTextColor(mContextRef.get().getResources().getColor(R.color.color_text_tertiary));
                 mSpeechAnimationView.setImageResource(R.drawable.ic_chatbot_voice_push);
             }
 
@@ -821,17 +750,17 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
                     mAddMoreButton.setVisibility(View.GONE);
                     mPresseToPushAction.setText("");
                     mChatBotAction.setVisibility(View.GONE);
-                    mPressVoiceToTalkingTime.setVisibility(View.VISIBLE);
+                    mPressVoiceToTalkLayout.setVisibility(View.VISIBLE);
                     mSpeechAnimationView.setVisibility(View.VISIBLE);
                     mPressVoiceToTalkingTitle.setVisibility(View.VISIBLE);
                     break;
                 case Stop:
-                    mChatInputLayout.setBackgroundResource(R.drawable.layout_chat_msg_input_bg);
+                    mChatInputLayout.setBackgroundColor(mContextRef.get().getResources().getColor(R.color.color_fill_secondary));
                     mSpeechAnimationView.setVisibility(View.GONE);
                     mAddMoreButton.setVisibility(View.VISIBLE);
                     mPresseToPushAction.setText(R.string.chat_bot_press_to_talk);
-                    mPressVoiceToTalkingTime.setText("00:00");
-                    mPressVoiceToTalkingTime.setVisibility(View.GONE);
+                    mPressVoiceToTalkingTime.setText("0\"");
+                    mPressVoiceToTalkLayout.setVisibility(View.GONE);
                     mPressVoiceToTalkingTitle.setVisibility(View.GONE);
                     mChatBotAction.setVisibility(View.VISIBLE);
                     break;
@@ -890,31 +819,25 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
                 mChatBotAction.setImageResource(R.drawable.ic_chatbot_interrupt_response);
                 mChatBotAction.setVisibility(View.VISIBLE);
                 if(mCurrentChatType == AUIAIChatType.Voice) {
-                    mPresseToPushAction.setTextColor(Color.parseColor("#9E9E9E"));
                     mPresseToPushAction.setEnabled(false);
                 } else if(mCurrentChatType == AUIAIChatType.Text) {
-                    mChangeToVoicePushAction.setImageResource(R.drawable.ic_chatbot_push_voice_disable);
+                    mChangeToVoicePushAction.setImageResource(R.drawable.ic_microphone_open);
                     mChangeToVoicePushAction.setEnabled(false);
+                    mChangeToVoicePushAction.setVisibility(View.GONE);
                 }
-
-                mAddMoreButton.setImageResource(R.drawable.ic_bottom_add_more_disable);
 
             } else {
                 //机器人不再回复
 
-                boolean hasMultiMedia = mMultiMediaHolder.mSelectedImages.size() > 0 ;
+                boolean hasMultiMedia = !mMultiMediaHolder.mSelectedImages.isEmpty();
                 boolean hasText = !TextUtils.isEmpty(mChatBotEditText.getText().toString().trim());
 
-                mAddMoreButton.setImageResource(R.drawable.ic_bottom_add_more);
-                mChangeToVoicePushAction.setImageResource(R.drawable.ic_chatbot_push_voice);
+                mChangeToVoicePushAction.setImageResource(R.drawable.ic_microphone_open);
                 mChangeToVoicePushAction.setEnabled(true);
                 if(mCurrentChatType == AUIAIChatType.Voice) {
                     if(hasMultiMedia && !mMultiMediaHolder.allImagesHasUploaded()) {
-                        mPresseToPushAction.setTextColor(Color.parseColor("#9E9E9E"));
                         mPresseToPushAction.setEnabled(false);
-
                     } else {
-                        mPresseToPushAction.setTextColor(Color.parseColor("#FCFCFD"));
                         mPresseToPushAction.setEnabled(true);
                     }
 
@@ -1023,6 +946,21 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
 
                 if(!insertToHeader) {
                     mChatBotChatMsgContentModel.AddChatMsg(message, mChatMessageListAdapter.getItemCount());
+
+                    if(mChatMessageListAdapter.getItemCount() > 1) {
+                        CardEntity prevLastEntity = mChatMessageListAdapter.getItem(mChatMessageListAdapter.getItemCount() - 2);
+                        if(prevLastEntity != null) {
+                            prevLastEntity.isLastItem = false;
+                            int prevPos = mChatBotChatMsgContentModel.getPositionByChatMessage(((ChatBotChatMessage)prevLastEntity.bizData).getMessage());
+                            if(prevPos >= 0) {
+                                mChatMessageListAdapter.notifyItemChanged(prevPos);
+                            }
+                        }
+                    }
+                    CardEntity lastEntity = (CardEntity) mChatMessageListAdapter.getItem(mChatMessageListAdapter.getItemCount() - 1);
+                    if(lastEntity != null) {
+                        lastEntity.isLastItem = true;
+                    }
                 } else {
                     mChatBotChatMsgContentModel.AddChatMsgFromHeader(message);
                 }
@@ -1163,6 +1101,12 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
 
             if(notifyChangedInstead) {
                 mChatMessageListAdapter.notifyItemChanged(pos);
+                if (isAgentResponse && !mScrollListByUser) {
+                    mChatMessageListView.post(() -> {
+                        // 延迟执行以确保布局完成
+                        mChatMessageListAdapter.smoothScrollToBottom(mChatMessageListView, true);
+                    });
+                }
             }else {
                 mChatMessageListAdapter.notifyItemInserted(mChatMessageListAdapter.getItemCount());
             }
@@ -1304,6 +1248,11 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
                 @Override
                 public boolean onTouch(View v, MotionEvent event) {
                     resetEditTextFocusIfNeed();
+
+                    if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                        // 清除任何TextView的文本选择
+                        clearTextViewSelections();
+                    }
                     return false;
                 }
             });
@@ -1329,8 +1278,6 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
                 }
             });
 
-            mChatMessageListAdapter.addChildClickViewIds(R.id.ic_chatbot_message_play_user);
-            mChatMessageListAdapter.addChildClickViewIds(R.id.chatbot_message_item_copy_user);
             mChatMessageListAdapter.addChildClickViewIds(R.id.ic_chatbot_message_play_ai);
             mChatMessageListAdapter.addChildClickViewIds(R.id.chatbot_message_item_copy_ai);
             mChatMessageListAdapter.addChildClickViewIds(R.id.chatbot_send_message_status);
@@ -1341,7 +1288,7 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
                 @Override
                 public void onItemChildClick(BaseQuickAdapter adapter, View view, int position){
                     resetEditTextFocusIfNeed();
-                    if(view.getId() == R.id.chatbot_message_item_copy_user || view.getId() == R.id.chatbot_message_item_copy_ai)
+                    if(view.getId() == R.id.chatbot_message_item_copy_ai)
                     {
                         ImageView copyIcon = (ImageView) view;
                         CardEntity cardEntity = (CardEntity) mChatMessageListAdapter.getItem(position);
@@ -1350,15 +1297,15 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
                             if(uiMessage.getMessage() != null) {
                                 if(!TextUtils.isEmpty(uiMessage.getMessage().text)) {
                                     AUIAICallClipboardUtils.copyToClipboard(mContextRef.get(), uiMessage.getMessage().text);
-                                    ToastHelper.showToast(mContextRef.get(), "Text has copyed", Toast.LENGTH_SHORT);
-                                    copyIcon.setImageResource(R.drawable.ic_chatbot_message_copyed);
+                                    ToastHelper.showToast(mContextRef.get(), R.string.chat_bot_copy_text_tips, Toast.LENGTH_SHORT);
+                                    copyIcon.setImageResource(R.drawable.ic_chatbot_message_copy);
                                     new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
                                         @Override
                                         public void run() {
                                             if(uiMessage.getMessage().senderId.equals(mAgentId)) {
                                                 copyIcon.setImageResource(R.drawable.ic_chatbot_message_copy);
                                             } else {
-                                                copyIcon.setImageResource(R.drawable.ic_chatbot_message_copy_highlight);
+                                                copyIcon.setImageResource(R.drawable.ic_chatbot_message_copy);
                                             }
                                         }
                                     }, 2000);
@@ -1368,7 +1315,7 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
                             }
                         }
                     }
-                    else if(view.getId() == R.id.ic_chatbot_message_play_user || view.getId() == R.id.ic_chatbot_message_play_ai)
+                    else if(view.getId() == R.id.ic_chatbot_message_play_ai)
                     {
                         PlayMessageAnimationView animationView= (PlayMessageAnimationView)view;
                         CardEntity cardEntity = (CardEntity) mChatMessageListAdapter.getItem(position);
@@ -1402,10 +1349,32 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
             mChatMessageListAdapter.setOnItemChildLongClickListener(new OnItemChildLongClickListener() {
                 @Override
                 public boolean onItemChildLongClick(BaseQuickAdapter adapter, View view, int position) {
+                    if(view.getId() == R.id.chat_message_text) {
+                        return false;
+                    }
                     showDeleteDialog(view, position, false);
                     return true;
                 }
             });
+        }
+
+        private void clearTextViewSelections() {
+            // 遍历所有可见的消息项，清除文本选择
+            for (int i = 0; i < mChatMessageListAdapter.getItemCount(); i++) {
+                CardEntity cardEntity = (CardEntity) mChatMessageListAdapter.getItem(i);
+                if (cardEntity != null) {
+                    RecyclerView.ViewHolder holder = mChatMessageListView.findViewHolderForAdapterPosition(i);
+                    if (holder != null && holder.itemView != null) {
+                        TextView textView = holder.itemView.findViewById(R.id.chat_message_text);
+                        if (textView != null) {
+                            textView.clearFocus();
+                            // 清除选择
+                            textView.setTextIsSelectable(false);
+                            textView.setTextIsSelectable(true);
+                        }
+                    }
+                }
+            }
         }
 
 
@@ -1442,19 +1411,22 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
             //popupWindow.setAnimationStyle(R.style.PopupAnimation);
 
             // 显示PopupWindow
-            int yOff = 0;
-            int xOff = itemView.getWidth()/2 -50;
+            int yOff = -itemView.getHeight() - popupView.getMeasuredHeight();
+            int xOff = itemView.getWidth()/2 - 50;
             if(isMixtMessage) {
-                yOff = -itemView.getHeight()/2;
+                yOff = -itemView.getHeight()/2 - popupView.getMeasuredHeight();
             }
             if(isImageLongPress && message != null) {
                 if(message.attachmentList.size() > 0) {
                     if(message.attachmentList.size() == 1) {
-                        xOff = itemView.getWidth() -200;
+                        xOff = itemView.getWidth() - 200;
                     }
                 }
             }
-            popupWindow.showAsDropDown(itemView, xOff, yOff);  // 调整位置以适应尖角
+            popupView.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+            yOff = -itemView.getHeight() - popupView.getMeasuredHeight();
+
+            popupWindow.showAsDropDown(itemView, xOff, yOff);  // 调整位置显示在上方
 
             popupView.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -1527,7 +1499,6 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
     private class MultiMediaHolder {
 
         private WeakReference<Context> mContextRef;
-        private ImageView mAddPhotoBtn;
         private ArrayList<ChatBotSelectedFileAttachment> mSelectedImages = new ArrayList<ChatBotSelectedFileAttachment>();
         private RecyclerView mSelectedImagesListView;
         private CardListAdapter mSelectedImagesListAdapter;
@@ -1541,12 +1512,11 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
 
         private void init(Context context) {
             this.mContextRef = new WeakReference<>(context);
-            mAddPhotoBtn = findViewById(R.id.bottom_down_layout_left_img);
             mAddMorePhotoLayout = findViewById(R.id.bottom_down_layout_add_more_img);
             mSelectedImageLayout = findViewById(R.id.chatbot_image_list_layout);
             mAddButtonLayout = findViewById(R.id.bottom_down_action_layout);
 
-            mAddPhotoBtn.setOnClickListener(new View.OnClickListener() {
+            findViewById(R.id.bottom_down_photo_action).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     addImage();

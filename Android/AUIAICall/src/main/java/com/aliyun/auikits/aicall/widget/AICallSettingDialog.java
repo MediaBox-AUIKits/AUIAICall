@@ -1,9 +1,8 @@
 package com.aliyun.auikits.aicall.widget;
 
 import android.content.Context;
-import android.os.Handler;
-import android.os.Looper;
 import android.text.TextUtils;
+import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,14 +12,11 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelStoreOwner;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.aliyun.auikits.aicall.AUIAICallInCallActivity;
-import com.aliyun.auikits.aicall.AUIAICallVoicePrintRecordActivity;
 import com.aliyun.auikits.aicall.R;
 import com.aliyun.auikits.aicall.base.card.CardEntity;
 import com.aliyun.auikits.aicall.base.card.CardListAdapter;
@@ -28,7 +24,9 @@ import com.aliyun.auikits.aicall.base.card.DefaultCardViewFactory;
 import com.aliyun.auikits.aicall.base.feed.BizParameter;
 import com.aliyun.auikits.aicall.base.feed.ContentViewModel;
 import com.aliyun.auikits.aicall.bean.AudioToneData;
+import com.aliyun.auikits.aicall.controller.ARTCAICallController;
 import com.aliyun.auikits.aicall.model.AudioToneContentModel;
+import com.aliyun.auikits.aicall.util.AUIAICallClipboardUtils;
 import com.aliyun.auikits.aicall.util.DisplayUtil;
 import com.aliyun.auikits.aicall.util.SettingStorage;
 import com.aliyun.auikits.aicall.util.ToastHelper;
@@ -52,7 +50,7 @@ public class AICallSettingDialog {
     ContentViewModel mContentViewModel;
     BizParameter mBizParameter;
     ARTCAICallEngine mARTCAICallEngine;
-    boolean mIsAvatarAgent;
+    ARTCAICallController mARTCAICallController;
     boolean mIsVoicePrintRecognized;
     TextView mTvNaturalConversion = null;
     TextView mTvPushToTalk = null;
@@ -60,10 +58,11 @@ public class AICallSettingDialog {
     ViewGroup mVgVoicePrintStatus = null;
     TextView mVgVoicePrintStatusAlreadyRecord = null;
     private static boolean isShouldShowLatencyRateDialog = false;
+    private static boolean isShouleShowReportingDialog = false;
 
-    public static void show(Context context, ARTCAICallEngine aRTCAICallEngine, boolean isAvatarAgent, boolean isVoicePrintRecognized, boolean isSharedAgent, List<AudioToneData> audioToneList) {
+    public static void show(Context context, ARTCAICallEngine aRTCAICallEngine,ARTCAICallController artcaiCallController, boolean isAvatarAgent, boolean isVoicePrintRecognized, boolean isSharedAgent, List<AudioToneData> audioToneList) {
         View view = LayoutInflater.from(context).inflate(R.layout.dialog_aicall_setting, null, false);
-        AICallSettingDialog aiCallSettingDialog = new AICallSettingDialog(view, aRTCAICallEngine, isAvatarAgent, isVoicePrintRecognized, isSharedAgent, audioToneList);
+        AICallSettingDialog aiCallSettingDialog = new AICallSettingDialog(view, aRTCAICallEngine, artcaiCallController, isAvatarAgent, isVoicePrintRecognized, isSharedAgent, audioToneList);
         view.setTag(aiCallSettingDialog);
 
         // 设置仅在语音通话时显示
@@ -81,11 +80,18 @@ public class AICallSettingDialog {
                 .setContentHolder(viewHolder)
                 .setGravity(Gravity.BOTTOM)
                 .setExpanded(true, DisplayUtil.dip2px(420))
-                .setOverlayBackgroundResource(android.R.color.transparent)
-                .setContentBackgroundResource(R.color.layout_base_dialog_background)
+                .setOverlayBackgroundResource(R.color.color_bg_mask_transparent_70)
+                .setContentBackgroundResource(R.drawable.bg_rounded_setting_dialog)
                 .setOnClickListener((dialog1, v) -> {
-                    if(v.getId() == R.id.btn_latency_rate) { // 延时率查看按钮被点击
+                    if(v.getId() == R.id.iv_latency_rate) { // 延时率查看按钮被点击
                         isShouldShowLatencyRateDialog = true;
+                        dialog1.dismiss();
+                        return;
+                    } else if(v.getId() == R.id.iv_close_setting) {
+                        dialog1.dismiss();
+                        return;
+                    } else if(v.getId() == R.id.iv_reporting_issue) {
+                        isShouleShowReportingDialog = true;
                         dialog1.dismiss();
                         return;
                     }
@@ -97,8 +103,42 @@ public class AICallSettingDialog {
                         if(isShouldShowLatencyRateDialog) {
                             // 退出设置界面时检查是否需要开启延迟率页面
                             isShouldShowLatencyRateDialog = false;
-                            AICallLatencyRateDialog.showDialog(context, new ViewModelProvider((ViewModelStoreOwner) context), ()->{
+                            AICallLatencyRateDialog.showDialog(context, new ViewModelProvider((ViewModelStoreOwner) context), () -> {
 
+                            });
+                        }
+                        if(isShouleShowReportingDialog) {
+                            isShouleShowReportingDialog = false;
+
+                            AICallReportingDialog.showDialog(context, new AICallReportingDialog.IReportingDialogDismissListener() {
+                                @Override
+                                public void onReportingSubmit(List<Integer> reportTypeStatIdList, String reportIssueDesc) {
+                                    if (artcaiCallController != null) {
+                                        artcaiCallController.commitReporting(reportTypeStatIdList, reportIssueDesc);
+                                    }
+                                }
+
+                                @Override
+                                public void onDismiss(boolean hasSubmit) {
+                                    if (hasSubmit && artcaiCallController != null) {
+                                        String requestId = artcaiCallController.getAiAgentRequestId();
+                                        if (!TextUtils.isEmpty(requestId)) {
+                                            String content = context.getString(R.string.reporting_id_display, requestId);
+                                            AICallNoticeDialog.showFunctionalDialog(
+                                                    context,
+                                                    null,
+                                                    false,
+                                                    content,
+                                                    true,
+                                                    R.string.copy,
+                                                    () -> {
+                                                        AUIAICallClipboardUtils.copyToClipboard(context, requestId);
+                                                        ToastHelper.showToast(context, R.string.copied, Toast.LENGTH_SHORT);
+                                                    }
+                                            );
+                                        }
+                                    }
+                                }
                             });
                         }
                     }
@@ -107,23 +147,25 @@ public class AICallSettingDialog {
         dialog.show();
     }
 
-    private AICallSettingDialog(View root, ARTCAICallEngine aRTCAICallEngine, boolean isAvatarAgent,
+    private AICallSettingDialog(View root, ARTCAICallEngine aRTCAICallEngine, ARTCAICallController artcaiCallController, boolean isAvatarAgent,
                                 boolean isVoicePrintRecognized, boolean isSharedAgent, List<AudioToneData> voiceToneList) {
         mARTCAICallEngine = aRTCAICallEngine;
-        mIsAvatarAgent = isAvatarAgent;
+        mARTCAICallController = artcaiCallController;
         mIsVoicePrintRecognized = isVoicePrintRecognized;
 
         initInterruptButton(root);
         initVoicePrintButton(root);
         initConversionModeButton(root);
+        // 问题反馈
+        initReportingButton(root);
 
-        if (mIsAvatarAgent || isSharedAgent || voiceToneList.isEmpty()) {
+        if (isSharedAgent || voiceToneList.isEmpty()) {
             root.findViewById(R.id.ll_audio_tone_config).setVisibility(View.GONE);
             root.findViewById(R.id.ll_audio_tone_list).setVisibility(View.GONE);
         } else {
             root.findViewById(R.id.ll_audio_tone_config).setVisibility(View.VISIBLE);
             root.findViewById(R.id.ll_audio_tone_list).setVisibility(View.VISIBLE);
-            root.findViewById(R.id.ll_audio_tone_list).getLayoutParams().height = DisplayUtil.dip2px((voiceToneList.size() * 48  + 24));
+            root.findViewById(R.id.ll_audio_tone_list).getLayoutParams().height = DisplayUtil.dip2px((voiceToneList.size() * 56  + 24 ));
 
 
             SmartRefreshLayout srlAudioToneList = root.findViewById(R.id.srl_audio_tone_list);
@@ -261,6 +303,12 @@ public class AICallSettingDialog {
         }
     }
 
+    private void initReportingButton(View root) {
+        View container = root.findViewById(R.id.cl_reporting_container);
+        container.setVisibility(AICallReportingDialog.AI_CALL_REPORTING_ENABLE ? View.VISIBLE : View.GONE);
+    }
+
+
     private void onClick(View v) {
         if (v.getId() == R.id.tv_mode_natural_conversation) {
             mARTCAICallEngine.enablePushToTalk(false);
@@ -281,7 +329,6 @@ public class AICallSettingDialog {
 
             mVgVoicePrintStatus.setVisibility(View.GONE);
         }
-
     }
 
 }

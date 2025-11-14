@@ -1,10 +1,10 @@
 {
   "name": "amaui-web-aicall",
   "private": true,
-  "version": "2.8.0",
+  "version": "2.9.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
@@ -20,9 +20,10 @@
     "markdown-it": "^14.1.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "swiper": "^12.0.2",
     "uuid": "^11.1.0",
     "zustand": "^4.5.5",
-    "aliyun-auikit-aicall": "2.8.3"
+    "aliyun-auikit-aicall": "2.9.0"
   },
   "devDependencies": {
     "@arms/rum-browser": "^0.0.37",

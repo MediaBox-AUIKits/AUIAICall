@@ -1,7 +1,10 @@
 package com.aliyun.auikits.aicall.widget;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.util.AttributeSet;
+
+import com.aliyun.auikits.aicall.R;
 
 public class AUIAICallAgentSimpleAnimator extends AUIAICallAgentAnimator {
 

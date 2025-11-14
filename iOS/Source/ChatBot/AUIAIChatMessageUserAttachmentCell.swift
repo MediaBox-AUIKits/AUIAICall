@@ -30,41 +30,41 @@ import SDWebImage
         
         if self.stateBtn.isHidden == true || self.bgView.isHidden == false {
             let itemCount: CGFloat = CGFloat(self.item?.message.attachmentList?.count ?? 0)
-            var width = itemCount * 72.0 + (itemCount - 1) * 8.0 + 40
-            width = min(width, self.av_width + 40)
-            self.attachmentsView.frame = CGRect(x: self.av_width + 20 - width, y: 0, width: width, height: 72)
+            var width = itemCount * 70.0 + (itemCount - 1) * 8.0 + 48
+            width = min(width, self.av_width + 48)
+            self.attachmentsView.frame = CGRect(x: self.av_width + 24 - width, y: 0, width: width, height: 70)
         }
         else {
             
             var minX: CGFloat = 0.0
-            minX = 20 + self.stateBtn.av_width
+            minX = 24 + self.stateBtn.av_width
             
             let itemCount: CGFloat = CGFloat(self.item?.message.attachmentList?.count ?? 0)
-            var width = itemCount * 72.0 + (itemCount - 1) * 8.0 + 20
-            width = min(width, self.av_width - minX + 20)
-            self.attachmentsView.frame = CGRect(x: self.av_width - width, y: 0, width: width, height: 72)
+            var width = itemCount * 70.0 + (itemCount - 1) * 8.0 + 24
+            width = min(width, self.av_width - minX + 24)
+            self.attachmentsView.frame = CGRect(x: self.av_width - width, y: 0, width: width, height: 70)
             
             self.stateBtn.center = CGPoint(x: self.attachmentsView.av_left - 16, y: self.attachmentsView.av_centerY)
         }
     }
     
-    open override func getBgViewFrame() -> CGRect {
-        var rect = super.getBgViewFrame()
+    open override func getContentViewFrame() -> CGRect {
+        var rect = super.getContentViewFrame()
         if AUIAIChatMessageUserAttachmentCell.canShowBgView(self.item) == false {
             return rect
         }
-        rect.origin.y = 72 + 8
+        rect.origin.y = 70 + 16
         rect.size.height = rect.size.height - rect.origin.y
         return rect
     }
     
     open lazy var attachmentsView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
-        layout.itemSize = CGSize(width: 72, height: 72)
+        layout.itemSize = CGSize(width: 70, height: 70)
         layout.minimumLineSpacing = 8
         layout.scrollDirection = .horizontal
         let view = UICollectionView(frame: self.bounds, collectionViewLayout: layout)
-        view.contentInset = UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20)
+        view.contentInset = UIEdgeInsets(top: 0, left: 24, bottom: 0, right: 24)
         view.backgroundColor = .clear
         view.dataSource = self
         view.delegate = self
@@ -130,14 +130,14 @@ extension AUIAIChatMessageUserAttachmentCell {
     
     // 计算item的占位大小
     public static func computeAttachmentSize(item: AUIAIChatMessageItem, maxWidth: CGFloat) {
-        let attaHeight = 72.0
+        let attaHeight = 70.0
         if self.canShowBgView(item) == false {
             item.displaySize = CGSize(width: maxWidth, height: attaHeight)
             return
         }
         self.computeSize(item: item, maxWidth: maxWidth)
         var size = item.displaySize!
-        size.height += attaHeight + 8
+        size.height += attaHeight + 16
         item.displaySize = size
     }
 }
@@ -164,7 +164,7 @@ extension AUIAIChatMessageUserAttachmentCell {
         let view = UIImageView()
         view.layer.cornerRadius = 2
         view.layer.masksToBounds = true
-        view.backgroundColor = AVTheme.fg_strong
+        view.backgroundColor = AUIAIChatBundle.color_fill_secondary
         view.contentMode = .scaleAspectFill
         return view
     }()

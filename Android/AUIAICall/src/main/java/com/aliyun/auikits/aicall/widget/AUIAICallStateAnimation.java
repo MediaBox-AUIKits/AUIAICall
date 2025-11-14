@@ -3,6 +3,7 @@ package com.aliyun.auikits.aicall.widget;
 import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.AttributeSet;
 import android.view.ViewGroup;

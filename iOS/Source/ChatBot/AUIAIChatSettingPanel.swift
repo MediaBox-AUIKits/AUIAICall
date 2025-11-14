@@ -16,12 +16,31 @@ public typealias AUIAIChatSettingSelectedBlock = (_ item: AUIAICallVoiceItem) ->
     public override init(frame: CGRect) {
         super.init(frame: frame)
         
-        self.titleView.text = AUIAIChatBundle.getString("Settings")
+        self.backgroundColor = AUIAIChatBundle.color_bg_elevated
+        self.layer.cornerRadius = 8
+        self.layer.masksToBounds = true
         
-        self.collectionView.frame = CGRect(x: 0, y: 0, width: self.contentView.av_width, height: self.contentView.av_height)
+        self.headerView.isHidden = true
+        self.titleView.text = AUIAIChatBundle.getString("Settings")
+        self.titleView.textAlignment = .left
+        self.titleView.font = AVTheme.mediumFont(16)
+        self.titleView.frame = CGRect(x: 24, y: 20, width: self.av_width - 54, height: 24)
+        self.titleView.removeFromSuperview()
+        self.addSubview(self.titleView)
+        
+        let exitBtn = AVBlockButton(frame: CGRect(x: self.av_width - 44 - 10, y: 10, width: 44, height: 44))
+        exitBtn.setImage(AUIAIChatBundle.getTemplateImage("ic_exit"), for: .normal)
+        exitBtn.tintColor = AUIAIChatBundle.color_icon
+        exitBtn.clickBlock = {[weak self] sender in
+            self?.hide()
+        }
+        self.addSubview(exitBtn)
+        
+        self.collectionView.frame = CGRect(x: 0, y: 20, width: self.contentView.av_width, height: self.contentView.av_height - 20)
         self.collectionView.register(AUIAICallVoiceCell.self, forCellWithReuseIdentifier: "cell")
         
         self.collectionView.addSubview(self.collectionHeaderView)
+        self.collectionHeaderView.addSubview(self.issueReportView)
         self.collectionHeaderView.addSubview(self.voiceIdSwitch)
     }
     
@@ -39,17 +58,34 @@ public typealias AUIAIChatSettingSelectedBlock = (_ item: AUIAICallVoiceItem) ->
         return 370
     }
     
+    open override class func present(_ cp: AVBaseControllPanel, on onView: UIView, backgroundType bgType: AVControllPanelBackgroundType) {
+        super.present(cp, on: onView, backgroundType: bgType)
+        cp.bgViewOnShowing?.backgroundColor = AUIAIChatBundle.color_bg_mask
+    }
+    
     open lazy var collectionHeaderView: UIView = {
         let view = UIView()
         return view
     }()
     
-    open lazy var voiceIdSwitch: AVSwitchBar = {
-        let view = AVSwitchBar()
+    open var clickIssueReportBlock: ((_ sender: AUIAIChatSettingPanel) -> Void)? = nil
+
+    // 问题反馈
+    open lazy var issueReportView: AUIAICallRightClickBar = {
+        let view = AUIAICallRightClickBar()
+        view.titleLabel.text = AUIAIChatBundle.getString("Report Issues")
+        view.tappedAction = { [weak self] bar in
+            guard let self = self else {return}
+            self.clickIssueReportBlock?(self)
+        }
+        return view
+    }()
+    
+    open lazy var voiceIdSwitch: AUIAICallSwitchBar = {
+        let view = AUIAICallSwitchBar()
         view.titleLabel.text = AUIAIChatBundle.getString("Choose Voice Tone")
         view.infoLabel.text = AUIAIChatBundle.getString("New Voice Tone Will Take Effect in Next Play")
         view.switchBtn.isHidden = true
-        view.lineView.isHidden = true
         return view
     }()
     
@@ -59,7 +95,7 @@ public typealias AUIAIChatSettingSelectedBlock = (_ item: AUIAICallVoiceItem) ->
         let item = AUIAICallVoiceItem()
         item.voiceId = ""
         item.voiceName = AUIAIChatBundle.getString("Default")
-        item.icon = "ic_sound_2"
+        item.icon = "ic_sound_1"
         return item
     }()
     
@@ -71,12 +107,19 @@ public typealias AUIAIChatSettingSelectedBlock = (_ item: AUIAICallVoiceItem) ->
         for i in 0 ..< voiceIdList.count {
             let vid = voiceIdList[i]
             let item = AUIAICallVoiceItem()
-            item.voiceId = vid
-            item.voiceName = vid
-            item.icon = "ic_sound_\(i % 3)"
+            let ret = vid.components(separatedBy: ":")
+            if ret.count == 2 {
+                item.voiceId = ret[0]
+                item.voiceName = ret[1]
+            }
+            else {
+                item.voiceId = vid
+                item.voiceName = vid
+            }
+            item.icon = "ic_sound_\(i % 2)"
             self.voiceItemList.append(item)
             
-            if vid == selectItemId {
+            if item.voiceId == selectItemId {
                 selectItem = item
             }
         }
@@ -94,8 +137,13 @@ public typealias AUIAIChatSettingSelectedBlock = (_ item: AUIAICallVoiceItem) ->
     
     private func updateLayout() {
         
-        self.voiceIdSwitch.frame = CGRect(x: 0, y: 0, width: self.collectionView.av_width, height: 64)
-        let top = self.voiceIdSwitch.isHidden ? 0 : self.voiceIdSwitch.av_bottom
+        var top: CGFloat = 0
+        self.issueReportView.frame =  CGRect(x: 24, y: top, width: self.collectionView.av_width - 48, height: 48)
+        top = self.issueReportView.isHidden ? top : self.issueReportView.av_bottom
+        
+        self.voiceIdSwitch.frame = CGRect(x: 24, y: top, width: self.collectionView.av_width - 48, height: 76)
+        top = self.voiceIdSwitch.isHidden ? 0 : self.voiceIdSwitch.av_bottom
+        
         self.collectionHeaderView.frame = CGRect(x: 0, y: -top, width: self.collectionView.av_width, height: top)
         self.collectionView.contentInset = UIEdgeInsets(top: top, left: 0, bottom: 0, right: 0)
         self.collectionView.setContentOffset(CGPoint(x: 0, y: -top), animated: false)
@@ -109,11 +157,11 @@ extension AUIAIChatSettingPanel {
     }
     
     open override func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        return CGSize(width: self.contentView.av_width, height: 48)
+        return CGSize(width: self.contentView.av_width - 24 - 24, height: 52)
     }
     
     open override func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
-        return 0
+        return 8
     }
     
     open override func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {

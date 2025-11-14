@@ -251,6 +251,15 @@ public class AUIAICallInPhoneCallActivity extends AppCompatActivity {
                 agentConfig.preConnectAudioUrl = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_PRE_CONNECT_AUDIO_URL, "");
                 agentConfig.llmConfig.outputMinLength = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_OUTPUT_MIN_LENGTH, "-1"));
                 agentConfig.llmConfig.outputMaxDelay = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_OUTPUT_MAX_DELAY, "-1"));
+                String experimentalConfigStr = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_EXPERIMENTAL_CONFIG);
+                if(!TextUtils.isEmpty(experimentalConfigStr)) {
+                    try {
+                        JSONObject experimentalConfigObject = new JSONObject(experimentalConfigStr);
+                        agentConfig.experimentalConfig = new ARTCAICallEngine.ARTCAICallExperimentalConfig(experimentalConfigObject);
+                    }catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
 
                 JSONObject outboundCallObject = new JSONObject();
                 jsonObject.put("config",agentConfig.toData().toString());

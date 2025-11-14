@@ -5,14 +5,14 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="@color/layout_base_dialog_background">
+    android:background="@color/color_bg">
 
     <TextView
         android:id="@+id/tv_dialog_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/dialog_robot_title"
-        style="@style/layout_base_text_style_16"
+        style="@style/text_style_16"
         android:paddingTop="24dp"
         android:paddingLeft="24dp"
         android:paddingRight="24dp"
@@ -52,7 +52,7 @@
             android:id="@+id/tv_robot_id"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            style="@style/layout_base_text_style_12"
+            style="@style/text_style_12"
             android:text="机器人ID"
             />
 
@@ -92,7 +92,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            style="@style/layout_base_text_style_12"
+            style="@style/text_style_12"
             android:text="全托管开关"
             />
         <Switch
@@ -120,7 +120,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            style="@style/layout_base_text_style_12"
+            style="@style/text_style_12"
             android:text="通过AppServer呼叫智能体"
             />
         <Switch
@@ -148,7 +148,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            style="@style/layout_base_text_style_12"
+            style="@style/text_style_12"
             android:text="音频Dump开关"
             />
         <Switch
@@ -177,7 +177,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            style="@style/layout_base_text_style_12"
+            style="@style/text_style_12"
             android:text="音频Tips开关"
             />
         <Switch
@@ -205,7 +205,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            style="@style/layout_base_text_style_12"
+            style="@style/text_style_12"
             android:text="是否使用智能体预发环境"
             />
         <Switch
@@ -233,7 +233,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            style="@style/layout_base_text_style_12"
+            style="@style/text_style_12"
             android:text="是否使用 RTC 预发环境"
             />
         <Switch
@@ -261,11 +261,39 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            style="@style/layout_base_text_style_12"
+            style="@style/text_style_12"
             android:text="自定义智能体使用Demo AppServer通话"
             />
         <Switch
             android:id="@+id/sv_share_boot_use_demo_app_server"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/ll_custom_agent_text_input_mode"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="12dp"
+        android:layout_marginLeft="12dp"
+        android:layout_marginRight="12dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        app:layout_constraintTop_toBottomOf="@id/ll_use_rtc_pre_env"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent">
+        <TextView
+            android:id="@+id/tv_custom_agent_text_input_mode"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            style="@style/text_style_12"
+            android:text="自定义智能体文本框输入模式（用于自动化）"
+            />
+        <Switch
+            android:id="@+id/sv_custom_agent_text_input_mode"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             />
@@ -289,7 +317,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            style="@style/layout_base_text_style_12"
+            style="@style/text_style_12"
             android:text="使用对讲机模式启动"
             />
         <Switch
@@ -319,7 +347,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            style="@style/layout_base_text_style_12"
+            style="@style/text_style_12"
             android:text="启动启用声纹降噪"
             />
         <Switch
@@ -348,7 +376,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            style="@style/layout_base_text_style_12"
+            style="@style/text_style_12"
             android:text="启用对话回环延迟"
             />
         <Switch
@@ -376,7 +404,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            style="@style/layout_base_text_style_12"
+            style="@style/text_style_12"
             android:text="是否启用智能体的自动退出功能"
             />
         <Switch
@@ -403,7 +431,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                style="@style/layout_base_text_style_12"
+                style="@style/text_style_12"
                 android:text="是否启用智能体语义断句"
                 />
             <Switch
@@ -429,7 +457,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            style="@style/layout_base_text_style_12"
+            style="@style/text_style_12"
             android:text="是否开启智能AEC"
             />
         <Switch
@@ -455,7 +483,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            style="@style/layout_base_text_style_12"
+            style="@style/text_style_12"
             android:text="llmCompleteReply"
             />
         <Switch
@@ -482,8 +510,8 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            style="@style/layout_base_text_style_12"
-            android:text="非流失"
+            style="@style/text_style_12"
+            android:text="非流式"
             />
         <Switch
             android:id="@+id/sv_boot_enable_brust_send_recv"
@@ -509,7 +537,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            style="@style/layout_base_text_style_12"
+            style="@style/text_style_12"
             android:text="视觉理解使用屏幕共享track"
             />
         <Switch
@@ -537,7 +565,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            style="@style/layout_base_text_style_12"
+            style="@style/text_style_12"
             android:text=""
             android:hint="用户自定义扩展字段(user_data)，默认为空"
             android:textColorHint="@color/layout_base_gray"
@@ -563,7 +591,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="EnableVoiceInterrupt"
                     />
                 <EditText
@@ -571,7 +599,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="1"
                     android:hint="1"
                     android:textColorHint="@color/layout_base_gray"
@@ -597,7 +625,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="VoiceId"
                     />
                 <EditText
@@ -605,7 +633,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text=""
                     android:hint=""
                     android:textColorHint="@color/layout_base_gray"
@@ -630,7 +658,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="UserOfflineTimeout"
                     />
                 <EditText
@@ -638,7 +666,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="5"
                     android:hint="5"
                     android:textColorHint="@color/layout_base_gray"
@@ -662,7 +690,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="MaxIdleTime"
                     />
                 <EditText
@@ -670,7 +698,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="600"
                     android:hint="600"
                     android:textColorHint="@color/layout_base_gray"
@@ -695,7 +723,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="WorkflowOverrideParams"
                     />
                 <EditText
@@ -703,7 +731,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text=""
                     android:hint=""
                     android:textColorHint="@color/layout_base_gray"
@@ -728,7 +756,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="BailianAppParams"
                     />
                 <EditText
@@ -736,7 +764,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text=""
                     android:hint=""
                     android:textColorHint="@color/layout_base_gray"
@@ -761,7 +789,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="LLMSystemPrompt"
                     />
                 <EditText
@@ -769,7 +797,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text=""
                     android:textColorHint="@color/layout_base_gray"
                     android:backgroundTint="@color/layout_base_iv_border"
@@ -793,7 +821,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="LLMHistoryLimit"
                     />
                 <EditText
@@ -801,7 +829,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="10"
                     android:textColorHint="@color/layout_base_gray"
                     android:backgroundTint="@color/layout_base_iv_border"
@@ -825,7 +853,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="Volume"
                     />
                 <EditText
@@ -833,7 +861,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="100"
                     android:hint="100"
                     android:textColorHint="@color/layout_base_gray"
@@ -858,7 +886,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="Greeting"
                     />
                 <EditText
@@ -866,7 +894,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text=""
                     android:hint=""
                     android:textColorHint="@color/layout_base_gray"
@@ -890,7 +918,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="VoiceprintId"
                     />
                 <EditText
@@ -898,7 +926,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text=""
                     android:hint=""
                     android:textColorHint="@color/layout_base_gray"
@@ -923,7 +951,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="EnableIntelligentSegment"
                     />
                 <EditText
@@ -931,7 +959,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="1"
                     android:hint="1"
                     android:textColorHint="@color/layout_base_gray"
@@ -956,7 +984,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="AvatarId"
                     />
                 <EditText
@@ -964,7 +992,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text=""
                     android:hint=""
                     android:textColorHint="@color/layout_base_gray"
@@ -989,7 +1017,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="AsrMaxSilence"
                     />
                 <EditText
@@ -997,7 +1025,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="400"
                     android:hint="400"
                     android:textColorHint="@color/layout_base_gray"
@@ -1022,7 +1050,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="UserOnlineTimeout"
                     />
                 <EditText
@@ -1030,7 +1058,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="60"
                     android:hint="60"
                     android:textColorHint="@color/layout_base_gray"
@@ -1054,7 +1082,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="asrLanguage"
                     />
                 <EditText
@@ -1062,7 +1090,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text=""
                     android:textColorHint="@color/layout_base_gray"
                     android:backgroundTint="@color/layout_base_iv_border"
@@ -1085,7 +1113,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="interruptWords"
                     />
                 <EditText
@@ -1093,7 +1121,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text=""
                     android:textColorHint="@color/layout_base_gray"
                     android:backgroundTint="@color/layout_base_iv_border"
@@ -1116,7 +1144,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="VadLevel"
                     />
                 <EditText
@@ -1124,7 +1152,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="11"
                     android:textColorHint="@color/layout_base_gray"
                     android:backgroundTint="@color/layout_base_iv_border"
@@ -1147,7 +1175,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="AsrHotWords"
                     />
                 <EditText
@@ -1155,7 +1183,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text=""
                     android:textColorHint="@color/layout_base_gray"
                     android:backgroundTint="@color/layout_base_iv_border"
@@ -1178,7 +1206,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="TurnEndWorkd"
                     />
                 <EditText
@@ -1186,7 +1214,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text=""
                     android:textColorHint="@color/layout_base_gray"
                     android:backgroundTint="@color/layout_base_iv_border"
@@ -1209,7 +1237,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="自接入ASR运行参数"
                     />
                 <EditText
@@ -1217,7 +1245,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text=""
                     android:textColorHint="@color/layout_base_gray"
                     android:backgroundTint="@color/layout_base_iv_border"
@@ -1240,7 +1268,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="TTS发音规则(数组Json字符串)"
                     />
                 <EditText
@@ -1248,7 +1276,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text=""
                     android:textColorHint="@color/layout_base_gray"
                     android:backgroundTint="@color/layout_base_iv_border"
@@ -1271,7 +1299,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="VCR 配置"
                     />
                 <EditText
@@ -1279,7 +1307,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text=""
                     android:textColorHint="@color/layout_base_gray"
                     android:backgroundTint="@color/layout_base_iv_border"
@@ -1302,7 +1330,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="语义断句自定义等待时间"
                     />
                 <EditText
@@ -1310,7 +1338,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="5000"
                     android:textColorHint="@color/layout_base_gray"
                     android:backgroundTint="@color/layout_base_iv_border"
@@ -1333,7 +1361,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="VadDuration"
                     />
                 <EditText
@@ -1341,7 +1369,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="0"
                     android:textColorHint="@color/layout_base_gray"
                     android:backgroundTint="@color/layout_base_iv_border"
@@ -1364,7 +1392,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="SpeeckRate"
                     />
                 <EditText
@@ -1372,7 +1400,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="1.0"
                     android:textColorHint="@color/layout_base_gray"
                     android:backgroundTint="@color/layout_base_iv_border"
@@ -1395,7 +1423,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="TTSLanguage"
                     />
                 <EditText
@@ -1403,7 +1431,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:textColorHint="@color/layout_base_gray"
                     android:backgroundTint="@color/layout_base_iv_border"
                     />
@@ -1425,7 +1453,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="TTSEmotion"
                     />
                 <EditText
@@ -1433,7 +1461,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:textColorHint="@color/layout_base_gray"
                     android:backgroundTint="@color/layout_base_iv_border"
                     />
@@ -1455,7 +1483,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="OpenAIExtraQuery"
                     />
                 <EditText
@@ -1463,7 +1491,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:textColorHint="@color/layout_base_gray"
                     android:backgroundTint="@color/layout_base_iv_border"
                     />
@@ -1485,7 +1513,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="TTSModelID"
                     />
                 <EditText
@@ -1493,7 +1521,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:textColorHint="@color/layout_base_gray"
                     android:backgroundTint="@color/layout_base_iv_border"
                     />
@@ -1515,7 +1543,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="通话环境配置:"
                     />
                 <EditText
@@ -1523,7 +1551,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:textColorHint="@color/layout_base_gray"
                     android:backgroundTint="@color/layout_base_iv_border"
                     />
@@ -1545,7 +1573,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="播放欢迎语前的音效:"
                     />
                 <EditText
@@ -1553,7 +1581,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:textColorHint="@color/layout_base_gray"
                     android:backgroundTint="@color/layout_base_iv_border"
                     />
@@ -1575,7 +1603,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="OutputMinLength:"
                     />
                 <EditText
@@ -1583,7 +1611,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:textColorHint="@color/layout_base_gray"
                     android:backgroundTint="@color/layout_base_iv_border"
                     />
@@ -1605,7 +1633,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
                     android:text="OutputMaxDelay:"
                     />
                 <EditText
@@ -1613,7 +1641,97 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_12"
+                    android:textColorHint="@color/layout_base_gray"
+                    android:backgroundTint="@color/layout_base_iv_border"
+                    />
+            </LinearLayout>
+<!--            <LinearLayout-->
+<!--                android:id="@+id/ll_auto_test_agent_id"-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:orientation="horizontal"-->
+<!--                android:layout_marginTop="12dp"-->
+<!--                android:layout_marginLeft="12dp"-->
+<!--                android:layout_marginRight="12dp"-->
+<!--                android:paddingStart="16dp"-->
+<!--                android:paddingEnd="16dp"-->
+<!--                app:layout_constraintLeft_toLeftOf="parent"-->
+<!--                app:layout_constraintRight_toRightOf="parent"-->
+<!--                android:visibility="visible">-->
+<!--                <TextView-->
+<!--                    android:layout_width="0dp"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:layout_weight="1"-->
+<!--                    style="@style/layout_base_text_style_12"-->
+<!--                    android:text="AutoTestAgent:"-->
+<!--                    />-->
+<!--                <EditText-->
+<!--                    android:id="@+id/auto_test_agent_id_input"-->
+<!--                    android:layout_width="0dp"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:layout_weight="1"-->
+<!--                    style="@style/layout_base_text_style_12"-->
+<!--                    android:textColorHint="@color/layout_base_gray"-->
+<!--                    android:backgroundTint="@color/layout_base_iv_border"-->
+<!--                    />-->
+<!--            </LinearLayout>-->
+            <LinearLayout
+                android:id="@+id/ll_auto_test_agent_id"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp"
+                android:layout_marginLeft="12dp"
+                android:layout_marginRight="12dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                android:visibility="visible">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    style="@style/text_style_12"
+                    android:text="AutoTestAgent:"
+                    />
+                <EditText
+                    android:id="@+id/auto_test_agent_id_input"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    style="@style/text_style_12"
+                    android:textColorHint="@color/layout_base_gray"
+                    android:backgroundTint="@color/layout_base_iv_border"
+                    />
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/ll_experimental_config"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp"
+                android:layout_marginLeft="12dp"
+                android:layout_marginRight="12dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                android:visibility="visible">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    style="@style/text_style_12"
+                    android:text="ExperimentConfig:"
+                    />
+                <EditText
+                    android:id="@+id/experimental_config_input"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    style="@style/text_style_12"
                     android:textColorHint="@color/layout_base_gray"
                     android:backgroundTint="@color/layout_base_iv_border"
                     />
@@ -1648,7 +1766,7 @@
             android:layout_marginStart="20dp"
             android:layout_marginEnd="20dp"
             android:gravity="center"
-            style="@style/layout_base_text_style_16"
+            style="@style/text_style_16"
             />
 
         <View
@@ -1668,7 +1786,7 @@
             android:layout_marginEnd="20dp"
             android:gravity="center"
             android:textColor="#00BCD4"
-            style="@style/layout_base_text_style_16"
+            style="@style/text_style_16"
             />
     </LinearLayout>
 

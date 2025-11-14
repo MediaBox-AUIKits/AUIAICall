@@ -1,4 +1,3 @@
-import { AICallRunConfig } from '@/interface.ts';
 import {
   AICallAgentError,
   AICallErrorCode,
@@ -6,26 +5,32 @@ import {
   AIChatAgentShareConfig,
   AIChatAuthToken,
   AIChatEngine,
+  AIChatEngineState,
   AIChatError,
   AIChatMessagePlayState,
+  AIChatMessageState,
   AIChatTemplateConfig,
   AIChatUserInfo,
 } from 'aliyun-auikit-aicall';
 import { SafeArea, Toast } from 'antd-mobile';
 import { useEffect, useState } from 'react';
-import standardService from '../../service/standard';
-import ChatEngineContext from './ChatEngineContext';
-import ChatFooter from './Footer';
-import ChatHeader from './Header';
-import ChatMessages from './Messages';
-import useChatStore, { ChatMessageItem, messageCachePrefix } from './store';
 
 import { useTranslation } from '@/common/i18nContext';
 import { getRootElement } from '@/common/utils';
+import { AICallRunConfig } from '@/interface.ts';
 import { JSONObject } from '@/service/interface.ts';
-import { AIChatEngineState, AIChatMessageState } from 'aliyun-auikit-aicall';
-import './index.less';
+import standardService from '@/service/standard';
+import Header from 'components/Header';
+import Layout, { StageWrapper } from 'components/Layout';
+
+import ChatEngineContext from './ChatEngineContext';
+import ChatFooter from './components/Footer';
+import ChatMessages from './components/Messages';
+import Setting from './components/Setting';
 import ChatState from './State';
+import useChatStore, { ChatMessageItem, messageCachePrefix } from './store';
+
+import './index.less';
 
 export interface ChatProps {
   rc: AICallRunConfig;
@@ -234,17 +239,17 @@ function Chat({
 
   return (
     <ChatEngineContext.Provider value={chatEngine}>
-      <div className='chat-wrapper'>
-        <div className='chat'>
+      <Layout showText themeBtn={false} settingBtn={false} onExit={onExit}>
+        <StageWrapper className='chat'>
           <SafeArea position='top' />
-          <ChatHeader onBack={onExit} />
+          <Header onExit={onExit} title={t('agent.chatbot')} actions={<Setting />} />
           <ChatMessages />
-          <div className='chat-statement'>{t('system.statement')}</div>
           <ChatFooter userId={userId} userToken={userToken} rc={rc} />
+          <div className='chat-statement'>{t('system.statement')}</div>
           <SafeArea position='bottom' />
           <ChatState onExit={onExit} />
-        </div>
-      </div>
+        </StageWrapper>
+      </Layout>
     </ChatEngineContext.Provider>
   );
 }

@@ -21,7 +21,11 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": "./",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "call/*": ["src/view/Call/*"],
+      "chat/*": ["src/view/Chat/*"],
+      "components/*": ["src/view/components/*"],
+      "hooks/*": ["src/view/hooks/*"]
     }
   },
   "include": ["src"]

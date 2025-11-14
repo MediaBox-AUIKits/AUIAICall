@@ -1,6 +1,7 @@
 <resources>
     <string name="entry_title">AI智能体</string>
     <string name="room_entrance_text">开始体验</string>
+    <string name="custom_agent_room_entrance_text">扫码体验</string>
 
     <string name="in_call_text">AI语音通话</string>
     <string name="pause_call">暂停通话</string>
@@ -43,7 +44,7 @@
     <string name="config_interrupt_title_open_toast">智能打断已打开</string>
     <string name="config_interrupt_title_close_toast">智能打断已关闭</string>
 
-    <string name="config_audio_tone_title">选择音色</string>
+    <string name="config_audio_tone_title">音色选择</string>
     <string name="config_audio_tone_tips">切换音色后，AI将在下一次回答中使用新的音色</string>
 
     <string name="layout_base_loading">加载中…</string>
@@ -71,13 +72,25 @@
 
     <string name="official_agent">官方智能体</string>
     <string name="custom_agent">自定义智能体</string>
-    <string name="ai_audio_call">AI音频通话</string>
+    <string name="ai_audio_call">音频通话</string>
     <string name="digital_human_call">数字人通话</string>
     <string name="vision_agent_call">视觉理解通话</string>
     <string name="chat_bot">消息对话</string>
     <string name="video_agent_call">视频通话</string>
-    <string name="phone_agent_call">AI电话通话</string>
+    <string name="phone_agent_call">AI电话呼出</string>
     <string name="phone_agent_in_call">AI电话呼入</string>
+
+    <string name="description_human_call">数字人类实验室是阿里云设计的一款尖端人工智能驱动平台，为用户提供全方位的智能客服解决方案</string>
+    <string name="description_custom_agent">请前往控制台，去扫码获得临时体验Token</string>
+
+    <string name="description_voice_call">用户通过语音与智能助手交流对话。</string>
+    <string name="description_avatar_call">通过视频与数字人互动，提升用户体验真实性。</string>
+    <string name="description_vision_call">通过视频互动，智能体结合语音和画面提供反馈。</string>
+    <string name="description_video_call">数字人结合视觉理解，与用户双向视频通话。</string>
+    <string name="description_chatbot">通过语音或文本以聊天对话框的形式直接与智能体进行交流。</string>
+    <string name="description_pstn_in_bound">用户主动拨打智能体进行呼入。</string>
+    <string name="description_pstn_out_bound">智能体通过运营商线路直接向用户手机号发起电话呼出。</string>
+
     <string name="temporary_experience_token">授权AI智能体</string>
     <string name="et_token_hints">请扫描二维码获取授权的AI智能体</string>
     <string name="token_expired_tips">AI智能体授权已经过期</string>
@@ -110,6 +123,7 @@
     <string name="reporting_type_media_quality">音质/画面有问题</string>
     <string name="reporting_type_others">其他问题</string>
     <string name="reporting_desc_hint">请描述您遇到的其他问题</string>
+    <string name="reporting_request_id_copy">Request ID 已复制</string>
 
     <string name="reporting_id_display">反馈ID: %s</string>
     <string name="copy">复制</string>
@@ -133,7 +147,7 @@
     <string name="aival_main_speaker_not_recognized">(AIVad）识别到不是常用对话人，暂未响应您的问题</string>
     <string name="reset_voiceprint">恢复</string>
     <string name="voiceprint_info_tipe">声纹特征信息</string>
-    <string name="voiceprint_info_tipe_cannot_use">声纹特征信息(未录入无法在通话中启用)</string>
+    <string name="voiceprint_info_tipe_cannot_use">声纹特征信息（未录入）</string>
     <string name="voiceprint_info_record">录入</string>
     <string name="voiceprint_info_tipe_desc">请在安静的环境下朗读下面这段话</string>
     <string name="voiceprint_read_tips">“哇，我觉得你今天穿的这件裙子特别鲜艳，款式很优雅，特别衬托你的气质，真的太漂亮了。你能告诉我是在哪家店买的这么好看的裙子嘛，我也去淘一件。”</string>
@@ -155,6 +169,7 @@
 
     <string name="push_to_talk">按住说话</string>
     <string name="release_to_send">松开发送</string>
+    <string name="push_to_talk_gesture_hint">松开发送 上滑取消</string>
 
     <string name="ai_agent_leave_notify_long_time_idle">由于你长时间未进行通话，该通话已经结束</string>
     <string name="ai_agent_leave_notify_default">通话已经结束</string>

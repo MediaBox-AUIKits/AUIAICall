@@ -9,9 +9,13 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.aliyun.auikits.aicall.AUIAICallPhoneCallInputActivity;
 import com.aliyun.auikits.aicall.R;
+import com.aliyun.auikits.aicall.util.AUIAICallClipboardUtils;
 import com.aliyun.auikits.aicall.util.DisplayUtil;
+import com.aliyun.auikits.aicall.util.ToastHelper;
 import com.orhanobut.dialogplus.DialogPlus;
 import com.orhanobut.dialogplus.OnDismissListener;
 import com.orhanobut.dialogplus.ViewHolder;
@@ -41,8 +45,8 @@ public class AICallReportingDialog {
         DialogPlus dialog = DialogPlus.newDialog(context)
                 .setContentHolder(viewHolder)
                 .setGravity(Gravity.BOTTOM)
-                .setOverlayBackgroundResource(android.R.color.transparent)
-                .setContentBackgroundResource(R.color.layout_base_dialog_background)
+                .setOverlayBackgroundResource(R.color.color_bg_mask_transparent_70)
+                .setContentBackgroundResource(R.color.color_bg)
                 .setOnClickListener((dialog1, v) -> {
                     if (v.getId() == R.id.btn_back) {
                         dialog1.dismiss();
@@ -51,6 +55,8 @@ public class AICallReportingDialog {
                             onDismissListener.onReportingSubmit(aiCallReportingDialog.getReportTypeStatIdList(), aiCallReportingDialog.getReportOtherDesc());
                             aiCallReportingDialog.mHasSubmit = true;
                         }
+                        dialog1.dismiss();
+                    } else if (v.getId() == R.id.btn_close) {
                         dialog1.dismiss();
                     }
                     aiCallReportingDialog.onClick(v);
@@ -98,6 +104,7 @@ public class AICallReportingDialog {
         mReportTypeOthers = root.findViewById(R.id.tv_reporting_type_others);
 
         mEtDesc = root.findViewById(R.id.et_reporting_desc);
+        mEtDesc.setVisibility(View.GONE);
         mEtDesc.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -136,7 +143,16 @@ public class AICallReportingDialog {
                 v.setSelected(isSelected);
 
                 reportTypeRecord.isSelected = isSelected;
+
+                if (v.getId() == R.id.tv_reporting_type_others) {
+                    mEtDesc.setVisibility(isSelected ? View.VISIBLE : View.GONE);
+                }
             }
+        }
+
+        if(v.getId() == R.id.iv_reporting_request_id_copy) {
+            AUIAICallClipboardUtils.copyToClipboard(mEtDesc.getContext(), mEtDesc.getText().toString());
+            ToastHelper.showToast(mEtDesc.getContext(), R.string.reporting_request_id_copy, Toast.LENGTH_SHORT);
         }
 
         updateSubmitButtonUI();
@@ -147,6 +163,12 @@ public class AICallReportingDialog {
         for (int i = 0; i < mReportTypeRecordList.size(); i++) {
             ReportTypeRecord reportTypeRecord = mReportTypeRecordList.get(i);
             canSubmit |= reportTypeRecord.isSelected;
+        }
+
+        if(canSubmit) {
+            mTvSubmit.setTextColor(mTvSubmit.getContext().getResources().getColor(R.color.color_text_inverse));
+        } else {
+            mTvSubmit.setTextColor(mTvSubmit.getContext().getResources().getColor(R.color.color_text_disabled));
         }
 
         mTvSubmit.setEnabled(canSubmit);

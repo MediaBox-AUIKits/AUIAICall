@@ -15,10 +15,13 @@ import ARTCAICallKit
     public init() {
         super.init(frame: CGRect.zero)
         
-        self.backgroundColor = AVTheme.bg_weak
-
+        self.backgroundColor = AUIAIChatBundle.color_bg_elevated
+        self.addSubview(self.topLineView)
+        self.addSubview(self.dragLineView)
+        
         self.addSubview(self.sendingBar)
         self.addSubview(self.inputAudioView)
+        self.addSubview(self.placeholderView)
         self.addSubview(self.inputTextView)
         self.addSubview(self.sendBtn)
         self.addSubview(self.rightBtn)
@@ -39,38 +42,80 @@ import ARTCAICallKit
     open override func layoutSubviews() {
         super.layoutSubviews()
         
+        self.topLineView.frame = CGRect(x: 0, y: 0, width: self.av_width, height: 1)
+        self.dragLineView.frame = CGRect(x: 0, y: 8, width: 26, height: 3)
+        self.dragLineView.av_centerX = self.av_width / 2.0
+        
         let sendAttachmentsViewTop = self.av_height - self.getBottomEdge() - self.getAttachmentHeight()
         self.sendAttachmentsView?.frame = CGRect(x: 0, y: sendAttachmentsViewTop, width: self.av_width, height: self.getAttachmentHeight())
         
-        self.rightBtn.frame = CGRect(x: self.av_right - 40 - 14, y: sendAttachmentsViewTop - 14 - 40, width: 40, height: 40)
-
-        let sendingBarHeight = sendAttachmentsViewTop - 24
-        let sendingBarWidth = self.rightBtn.isHidden ? self.av_width - 20 - 20 : self.rightBtn.av_left - 6 - 20
-        self.sendingBar.frame = CGRect(x: 20, y: 14, width: sendingBarWidth, height: sendingBarHeight)
-        self.sendBtn.frame = CGRect(x: self.sendingBar.av_right - 40 - 6, y: self.sendingBar.av_bottom - 40, width: 40, height: 40)
+        let y = 20.0 + 8.0
+        let sendingBarHeight = sendAttachmentsViewTop - y - 8
+        let sendingBarWidth = self.av_width - 24 - 24
+        self.sendingBar.frame = CGRect(x: 24, y: y, width: sendingBarWidth, height: sendingBarHeight)
         
-        let inputTextViewX = self.sendingBar.av_left + 12
+        self.rightBtn.frame = CGRect(x: self.sendingBar.av_right - 40 - 8, y: self.sendingBar.av_bottom - 40 - 5, width: 40, height: 40)
+        self.sendBtn.frame = self.rightBtn.frame
+
+        let inputTextViewX = self.sendingBar.av_left + 16
         let inputTextViewWidth = self.sendBtn.av_left - 6 - inputTextViewX
-        self.inputTextView.frame = CGRect(x: inputTextViewX, y: self.sendingBar.av_top, width: inputTextViewWidth, height: self.sendingBar.av_height)
-        self.inputAudioView.frame = self.sendingBar.frame
+        let inputTextViewHeight = self.sendingBar.av_height
+        let inputTextViewY = self.sendingBar.av_top
+        self.inputTextView.frame = CGRect(x: inputTextViewX, y: inputTextViewY, width: inputTextViewWidth, height: inputTextViewHeight)
+        self.placeholderView.frame = self.inputTextView.frame
+        self.inputAudioView.frame = CGRect(x: self.sendingBar.av_left, y: self.sendingBar.av_top, width: self.sendingBar.av_width, height: self.sendingBar.av_height)
     }
     
     public private(set) var viewOnShow: Bool = false
     
+    open lazy var topLineView: UIView = {
+        let view = UIView()
+        view.backgroundColor = AUIAIChatBundle.color_border_tertiary
+        return view
+    }()
+    
+    open lazy var dragLineView: UIView = {
+        let view = UIView()
+        view.layer.cornerRadius = 2
+        view.layer.masksToBounds = true
+        view.backgroundColor = AUIAIChatBundle.color_fill_tertiary
+        return view
+    }()
+    
     open lazy var sendingBar: UIView = {
         let view = UIView()
-        view.backgroundColor = AVTheme.fg_strong
-        view.layer.cornerRadius = 20
+        view.backgroundColor = AUIAIChatBundle.color_fill_secondary
+        view.av_setLayerBorderColor(AUIAIChatBundle.color_border_secondary)
+        view.layer.borderWidth = 1.0
+        view.layer.cornerRadius = 4
+        view.layer.masksToBounds = true
+        return view
+    }()
+    
+    open lazy var placeholderView: AVBlockButton = {
+        let view = AVBlockButton()
+        view.contentHorizontalAlignment = .left
+        view.setTitle(AUIAIChatBundle.getString("Please enter content"), for: .normal)
+        view.setTitleColor(AUIAIChatBundle.color_text_tertiary, for: .normal)
+        view.titleLabel?.font = AVTheme.regularFont(16)
+        view.clickBlock = { [weak self] btn in
+            guard let self = self else {
+                return
+            }
+            self.inputTextView.becomeFirstResponder()
+        }
         return view
     }()
     
     open lazy var inputTextView: UITextView = {
         let view = UITextView()
+        view.textContainerInset = UIEdgeInsets(top: 13, left: 0, bottom: 13, right: 0)
         view.backgroundColor = UIColor.clear
-        view.textColor = AVTheme.text_strong
-        view.font = AVTheme.regularFont(14)
+        view.textColor = AUIAIChatBundle.color_text
+        view.font = AVTheme.regularFont(16)
         view.returnKeyType = .default
         view.delegate = self
+        view.isHidden = true
         return view
     }()
     
@@ -78,9 +123,9 @@ import ARTCAICallKit
         let view = AUIAICallDragButton()
         view.contentHorizontalAlignment = .center
         view.setTitle(AUIAIChatBundle.getString("Press and hold to speak"), for: .normal)
-        view.setTitleColor(AVTheme.text_strong, for: .normal)
-        view.setTitleColor(AVTheme.text_ultraweak, for: .disabled)
-        view.titleLabel?.font = AVTheme.regularFont(14)
+        view.setTitleColor(AUIAIChatBundle.color_text, for: .normal)
+        view.setTitleColor(AUIAIChatBundle.color_text_disabled, for: .disabled)
+        view.titleLabel?.font = AVTheme.mediumFont(16)
         view.isHidden = true
 //        view.isEnabled = false
         return view
@@ -88,8 +133,9 @@ import ARTCAICallKit
     
     fileprivate lazy var rightBtn: AVBlockButton = {
         let btn = AVBlockButton()
-        btn.setImage(AUIAIChatBundle.getImage("ic_audio"), for: .normal)
-        btn.setImage(AUIAIChatBundle.getImage("ic_text"), for: .selected)
+        btn.setImage(AUIAIChatBundle.getTemplateImage("ic_audio"), for: .normal)
+        btn.setImage(AUIAIChatBundle.getTemplateImage("ic_text"), for: .selected)
+        btn.tintColor = AUIAIChatBundle.color_icon
         btn.clickBlock = { [weak self] btn in
             guard let self = self else {
                 return
@@ -110,7 +156,7 @@ import ARTCAICallKit
         }
         didSet {
             if let sendAttachmentsView = self.sendAttachmentsView {
-                sendAttachmentsView.frame = CGRect(x: 0, y: 68, width: 0, height: self.getAttachmentHeight())
+                sendAttachmentsView.frame = CGRect(x: 0, y: self.getSendingBarHeight(), width: 0, height: self.getAttachmentHeight())
                 self.addSubview(sendAttachmentsView)
                 
                 self.enableSendBtn = sendAttachmentsView.allUploadSuccess
@@ -136,22 +182,8 @@ import ARTCAICallKit
     open var isAudioMode: Bool = false {
         didSet {
             self.rightBtn.isSelected = self.isAudioMode
-            self.inputAudioView.isHidden = !self.rightBtn.isSelected
-            self.inputTextView.isHidden = self.rightBtn.isSelected
-            self.sendBtn.isHidden = self.rightBtn.isSelected
-            
-            if self.isAudioMode {
-                let height = self.getDefaultHeight()
-                let bottom = self.av_bottom
-                self.frame = CGRect(x: self.av_left, y: bottom - height, width: self.av_width, height: height)
-                self.onPositionYChangedBlock?(self.translateY - self.av_height)
-            }
-            else {
-                let height = self.getCurrentHeight()
-                let bottom = self.av_bottom
-                self.frame = CGRect(x: self.av_left, y: bottom - height, width: self.av_width, height: height)
-                self.onPositionYChangedBlock?(self.translateY - self.av_height)
-            }
+            self.inputAudioView.isHidden = !self.isAudioMode
+            self.placeholderView.isHidden = self.isAudioMode
         }
     }
 
@@ -159,7 +191,7 @@ import ARTCAICallKit
         let btn = AVBlockButton()
         btn.setImage(AUIAIChatBundle.getCommonImage("ic_send"), for: .normal)
         btn.setImage(AUIAIChatBundle.getCommonImage("ic_send_disabled"), for: .disabled)
-        btn.setImage(AUIAIChatBundle.getImage("ic_stop"), for: .selected)
+        btn.setImage(AUIAIChatBundle.getCommonImage("ic_stop"), for: .selected)
         btn.clickBlock = { [weak self] btn in
             if btn.isSelected {
                 self?.onClickedStop?()
@@ -169,7 +201,9 @@ import ARTCAICallKit
             self?.onSendBlock?(text)
             self?.inputTextView.text = ""
             self?.inputTextView.resignFirstResponder()
+            self?.updatePlaceholderText(text: "")
         }
+        btn.isHidden = true
         return btn
     }()
     
@@ -206,30 +240,28 @@ extension AUIAIChatEditingTextView {
     
     open func getAttachmentHeight() -> CGFloat {
         if self.sendAttachmentsView != nil {
-            return 90.0
+            return 94.0
         }
         return 0.0
     }
     
     open func getSendingBarHeight() -> CGFloat {
-        return 68.0
+        return 86.0
     }
     
     open func getDefaultHeight() -> CGFloat {
         return self.getSendingBarHeight() + self.getAttachmentHeight() + self.getBottomEdge()
     }
     
-    open func getCurrentHeight() -> CGFloat {
+    open func getActiveHeight() -> CGFloat {
         var inputHeight = self.inputTextView.sizeThatFits(CGSize(width: self.inputTextView.av_width, height: 0)).height
-        inputHeight = max(inputHeight, 40)
-        inputHeight = min(inputHeight, 5 * 22)
-        let sendingBarHeight = inputHeight + 28.0
+        inputHeight = min(inputHeight, 5 * 24)
+        let sendingBarHeight = max(20 + 8 + inputHeight + 8, self.getSendingBarHeight())
         return sendingBarHeight + self.getAttachmentHeight() + self.getBottomEdge()
     }
     
     open func presentOnView(parent: UIView, isAudioMode: Bool, isEditing: Bool) {
         self.isAudioMode = isAudioMode
-        self.rightBtn.isHidden = self.sendAttachmentsView == nil
         self.inputTextView.text = self.inputTextView.text.trimmingCharacters(in: .whitespacesAndNewlines)
         let height = self.getDefaultHeight()
         self.frame = CGRect(x: 0, y: parent.av_height - height, width: parent.av_width, height: height)
@@ -267,10 +299,16 @@ extension AUIAIChatEditingTextView {
             self.superview?.insertSubview(self.clickedBgView, belowSubview: self)
             self.clickedBgView.isHidden = false
             
-            self.backgroundColor = .clear
-            self.sendAttachmentsView?.backgroundColor = AVTheme.bg_weak
+            self.sendBtn.isHidden = false
             self.rightBtn.isHidden = true
-            self.setNeedsLayout()
+            self.inputTextView.isHidden = false
+            self.placeholderView.isHidden = true
+            
+            self.transform = .identity
+            let height = self.getDefaultHeight()
+            let bottom = self.av_bottom
+            self.frame = CGRect(x: self.av_left, y: bottom - height, width: self.av_width, height: height)
+            
             let translateY = -keyboardFrame.cgRectValue.height + self.getBottomEdge()
             self.transform = CGAffineTransform(translationX: 0, y: translateY)
             self.translateY = translateY
@@ -283,24 +321,39 @@ extension AUIAIChatEditingTextView {
         
         self.clickedBgView.isHidden = true
         
-        self.backgroundColor = AVTheme.bg_weak
-        self.sendAttachmentsView?.backgroundColor = AVTheme.bg_weak
-        self.rightBtn.isHidden = self.sendAttachmentsView == nil
-        self.setNeedsLayout()
+        self.sendBtn.isHidden = true
+        self.rightBtn.isHidden = false
+        self.inputTextView.isHidden = true
+        self.placeholderView.isHidden = false
+        
         self.transform = .identity
+        let height = self.getDefaultHeight()
+        let bottom = self.av_bottom
+        self.frame = CGRect(x: self.av_left, y: bottom - height, width: self.av_width, height: height)
+        
         self.tryToDismiss()
         self.translateY = 0
         debugPrint("AUIAIChatEditingTextView translateY: \(self.translateY)")
         self.onPositionYChangedBlock?(self.viewOnShow ? self.translateY - self.av_height : self.translateY)
+    }
+    
+    public func updatePlaceholderText(text: String?) {
+        if let text = text, text.isEmpty == false {
+            self.placeholderView.setTitle(text, for: .normal)
+        }
+        else {
+            self.placeholderView.setTitle(AUIAIChatBundle.getString("Please enter content"), for: .normal)
+        }
     }
 }
 
 extension AUIAIChatEditingTextView: UITextViewDelegate {
     
     public func textViewDidChange(_ textView: UITextView) {
-        let height = self.getCurrentHeight()
+        let height = self.getActiveHeight()
         let bottom = self.av_bottom
         self.frame = CGRect(x: self.av_left, y: bottom - height, width: self.av_width, height: height)
+        self.updatePlaceholderText(text: self.inputTextView.text)
         self.onPositionYChangedBlock?(self.translateY - self.av_height)
         self.onInputTextChangedBlock?(self.inputTextView.text)
     }

@@ -1,0 +1,26 @@
+.chat-messages {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  width: 824px;
+  margin: 0 auto;
+
+  .adm-pull-to-refresh {
+    height: 100%;
+  }
+}
+
+.chat-messages-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 24px;
+  box-sizing: border-box;
+}
+
+@media screen and (max-width: 768px) {
+  .chat-messages {
+    width: 100%;
+  }
+}

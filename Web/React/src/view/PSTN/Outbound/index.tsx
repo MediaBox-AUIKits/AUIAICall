@@ -1,28 +1,23 @@
-import { Button, Dialog, Form, Input, Radio, Space, Switch } from 'antd-mobile';
-import { ExclamationCircleFill } from 'antd-mobile-icons';
-
 import { AICallAgentConfig, AICallAgentError, AICallAgentType, AICallConfig } from 'aliyun-auikit-aicall';
+import { Button, Form, Input, Selector, Switch } from 'antd-mobile';
+import { ExclamationCircleFill } from 'antd-mobile-icons';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from '@/common/i18nContext';
-import { copyText, getRootElement } from '@/common/utils';
+import { copyText } from '@/common/utils';
 import standard from '@/service/standard';
-import { useEffect, useState } from 'react';
-import { VoiceOneSVG, VoiceThreeSVG, VoiceTwoSVG } from '../../Call/Icons';
-import Header from '../Header';
-import { CallFailSVG, CallSuccessSVG } from '../Icons';
+import settingVoiceImg1 from '@/view/images/setting_voice_1.png';
+import settingVoiceImg2 from '@/view/images/setting_voice_2.png';
+import { settingSelectedSVG } from 'call/components/Icons';
+import Header from 'components/Header';
+import ResponsivePopup from 'components/ResponsivePopup';
+
+import { callFailSVG, callSuccessSVG } from '../Icons';
+
 import './index.less';
 
 
-const agentVoiceIdList = [
-  'longcheng_v2',
-  'longhua_v2',
-  'longshu_v2',
-  'loongbella_v2',
-  'longwan_v2',
-  'longxiaochun_v2',
-  'longxiaoxia_v2',
-  'loongstella',
-];
+const agentVoiceIdList = ['1185:云峰', '11:云穹', '1397:云薇', '1151:云玲'];
 
 function VoiceIdPicker({
   value,
@@ -37,50 +32,54 @@ function VoiceIdPicker({
 }) {
   const { t } = useTranslation();
 
+  const displayName = useMemo(() => {
+    const matchItem = agentVoiceIdList.find((voiceId) => voiceId.split(':')[0] === String(value || ''));
+    if (matchItem) {
+      const [id, value] = matchItem.split(':');
+      return value || id;
+    }
+    return '';
+  }, [value]);
+
   return (
     <>
-      {value}
-      <Dialog
+      {displayName}
+      <ResponsivePopup
         className='responsive-dialog'
         visible={visible}
-        closeOnAction
         closeOnMaskClick
         onClose={() => setVoiceIdVisible(false)}
-        getContainer={getRootElement}
-        title='音色选择'
-        actions={[
-          [
-            {
-              key: 'close',
-              text: t('common.close'),
-            },
-          ],
-        ]}
-        bodyClassName='pstn-voice-id-picker'
-        content={
-          <Radio.Group value={value} onChange={(v) => onChange?.(v as string)}>
-            <Space direction='vertical' block>
-              {agentVoiceIdList.map((voiceId, index) => {
-                const iconIndex = index % 3;
-                const VoiceSVG = [VoiceOneSVG, VoiceTwoSVG, VoiceThreeSVG][iconIndex];
-                return (
-                  <Radio
-                    key={voiceId}
-                    value={voiceId}
-                    style={{
-                      // @ts-expect-error custom style
-                      '--btn-text': JSON.stringify(t('common.use')),
-                    }}
-                  >
-                    <span className='_voiceIcon'>{VoiceSVG}</span>
-                    <span className='_voiceName'>{voiceId}</span>
-                  </Radio>
-                );
-              })}
-            </Space>
-          </Radio.Group>
-        }
-      />
+        title={t('pstn.outbound.voiceId.title')}
+      >
+        <Selector
+          className='ai-voice-selector'
+          columns={1}
+          options={agentVoiceIdList.map((voiceId, index) => {
+            const [id, value] = voiceId.split(':');
+            return {
+              label: (
+                <div className='_voice-id-item'>
+                  <img src={index % 2 === 0 ? settingVoiceImg1 : settingVoiceImg2} alt='' />
+                  <span className='_title'>{value || id}</span>
+                  <div className='ai-flex-1'></div>
+                  <div className='_tip'>
+                    <span className='_tip-text'>{t('pstn.outbound.voiceId.use')}</span>
+                    {settingSelectedSVG}
+                  </div>
+                </div>
+              ),
+              value: id,
+            };
+          })}
+          value={value ? [value] : []}
+          onChange={(v) => {
+            if (v.length) {
+              onChange?.(v[0] as string);
+              setVoiceIdVisible(false);
+            }
+          }}
+        />
+      </ResponsivePopup>
     </>
   );
 }
@@ -164,99 +163,91 @@ function PSTNOutbound({
   };
 
   return (
-    <div className='stage-wrapper'>
-      <div className='stage'>
-        <Header
-          title={t('pstn.outbound.title')}
-          onExit={onExit}
-          instanceId={result?.instanceId}
-          // @ts-expect-error reqId
-          reqId={result?.reqId || error?.reqId}
-        />
-        <div className='stage-bd pstn-bd'>
-          {result || error ? (
-            <>
-              <div className='pstn-call-result'>
-                <div className='_icon'>{error ? CallFailSVG : CallSuccessSVG}</div>
-                <div className='_text'>
-                  {error
-                    ? t('pstn.outbound.result.fail', {
-                        code: `${(error as AICallAgentError).code}`,
-                      })
-                    : t('pstn.outbound.result.success')}
-                </div>
-                <div className='_req-id'>
-                  {/* @ts-expect-error reqId */}
-                  ID:{result?.reqId || error?.reqId || '-'}
-                  <Button
-                    onClick={() => {
-                      // @ts-expect-error reqId
-                      copyText(result?.reqId || error?.reqId || '-');
-                    }}
-                  >
-                    {t('pstn.outbound.result.copy')}
-                  </Button>
-                </div>
+    <>
+      <Header title={t('pstn.outbound.title')} onExit={onExit} actions={null} />
+      <div className='stage-bd pstn-bd'>
+        {result || error ? (
+          <>
+            <div className='pstn-call-result'>
+              <div className='_icon'>{error ? callFailSVG : callSuccessSVG}</div>
+              <div className='_text'>
+                {error
+                  ? t('pstn.outbound.result.fail', {
+                      code: `${(error as AICallAgentError).code}`,
+                    })
+                  : t('pstn.outbound.result.success')}
               </div>
-            </>
-          ) : (
-            <>
-              <Form
-                layout='horizontal'
-                className='pstn-form'
-                form={form}
-                initialValues={{
-                  phone: '',
-                  interrupt: true,
-                  voiceId: 'longwan_v2',
-                }}
-              >
-                <Form.Item
-                  name='phone'
-                  className='_phone'
-                  label={t('pstn.outbound.phone.label')}
-                  childElementPosition='right'
-                  rules={[{ validator: checkMobile }]}
+              <div className='_req-id'>
+                {/* @ts-expect-error reqId */}
+                ID:{result?.reqId || error?.reqId || '-'}
+                <Button
+                  onClick={() => {
+                    // @ts-expect-error reqId
+                    copyText(result?.reqId || error?.reqId || '-');
+                  }}
                 >
-                  <Input type='number' placeholder={t('pstn.outbound.phone.placeholder')} />
-                </Form.Item>
-                <div className='_tip'>{t('pstn.outbound.phone.tip')}</div>
-                <Form.Item
-                  label={t('pstn.outbound.interrupt.label')}
-                  name='interrupt'
-                  childElementPosition='right'
-                  valuePropName='checked'
-                >
-                  <Switch style={{ '--height': '18px', '--width': '36px' }} />
-                </Form.Item>
-                <Form.Item
-                  label={t('pstn.outbound.voiceId.label')}
-                  name='voiceId'
-                  childElementPosition='right'
-                  arrowIcon
-                  onClick={() => setVoiceIdVisible(true)}
-                >
-                  <VoiceIdPicker visible={voiceIdVisible} setVoiceIdVisible={setVoiceIdVisible} />
-                </Form.Item>
-                <Form.Item className='_help'>
-                  <ExclamationCircleFill color='var(--adm-color-primary)' />
-                  {t('pstn.outbound.help')}
-                </Form.Item>
-              </Form>
-
-              <div className='_holder' />
-
-              <div className='pstn-btn-box'>
-                <div className='pstn-statement'>{t('system.statement')}</div>
-                <Button color='primary' block onClick={onSubmit} disabled={!submittable}>
-                  {t('pstn.outbound.start')}
+                  {t('pstn.outbound.result.copy')}
                 </Button>
               </div>
-            </>
-          )}
-        </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <Form
+              layout='horizontal'
+              className='ai-form pstn-form'
+              form={form}
+              initialValues={{
+                phone: '',
+                interrupt: true,
+                voiceId: '1185',
+              }}
+            >
+              <Form.Item
+                layout='vertical'
+                name='phone'
+                className='_phone no-border'
+                label={t('pstn.outbound.phone.label')}
+                rules={[{ validator: checkMobile }]}
+              >
+                <Input type='number' placeholder={t('pstn.outbound.phone.placeholder')} />
+              </Form.Item>
+              <Form.Item className='is-follow' layout='vertical' description={t('pstn.outbound.phone.tip')}></Form.Item>
+              <Form.Item
+                label={t('pstn.outbound.interrupt.label')}
+                name='interrupt'
+                childElementPosition='right'
+                valuePropName='checked'
+              >
+                <Switch style={{ '--height': '24px', '--width': '44px' }} />
+              </Form.Item>
+              <Form.Item
+                label={t('pstn.outbound.voiceId.label')}
+                name='voiceId'
+                childElementPosition='right'
+                arrowIcon
+                onClick={() => setVoiceIdVisible(true)}
+              >
+                <VoiceIdPicker visible={voiceIdVisible} setVoiceIdVisible={setVoiceIdVisible} />
+              </Form.Item>
+              <Form.Item className='_help no-border'>
+                <ExclamationCircleFill color='var(--adm-color-primary)' />
+                {t('pstn.outbound.help')}
+              </Form.Item>
+            </Form>
+
+            <div className='_holder' />
+
+            <div className='pstn-btn-box'>
+              <Button fill='none' color='primary' block onClick={onSubmit} disabled={!submittable}>
+                {t('pstn.outbound.start')}
+              </Button>
+              <div className='ai-statement'>{t('system.statement')}</div>
+            </div>
+          </>
+        )}
       </div>
-    </div>
+    </>
   );
 }
 

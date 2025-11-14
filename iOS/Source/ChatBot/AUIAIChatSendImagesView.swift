@@ -159,19 +159,19 @@ extension AUIAIChatSendAttachmentView: UICollectionViewDelegate, UICollectionVie
     }
     
     open func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        return CGSize(width: 58, height: 58)
+        return CGSize(width: 70, height: 70)
     }
     
     open func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
-        return 8
+        return 16
     }
     
     open func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
-        return 8
+        return 16
     }
     
     open func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
-        return UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20)
+        return UIEdgeInsets(top: 0, left: 24, bottom: 0, right: 24)
     }
     
     public func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
@@ -229,34 +229,38 @@ extension AUIAIChatSendAttachmentView: UICollectionViewDelegate, UICollectionVie
     open override func layoutSubviews() {
         super.layoutSubviews()
         
-        self.imageView.frame = CGRect(x: 0, y: self.contentView.av_height - 52, width: 52, height: 52)
-        self.removeBtn.frame = CGRect(x: self.contentView.av_width - 16, y: 0, width: 16, height: 16)
+        self.imageView.frame = self.bounds
+        self.removeBtn.frame = CGRect(x: self.contentView.av_width - 24, y: 0, width: 24, height: 24)
         self.addBtn.frame = self.imageView.frame
         self.imageMaskView.frame = self.imageView.bounds
         
-        self.progressView.frame = CGRect(x: (self.imageMaskView.av_width - 20) / 2.0, y: (self.imageMaskView.av_height - 20) / 2.0, width: 20, height: 20)
-        self.imageFailedView.frame = CGRect(x: (self.imageMaskView.av_width - 24) / 2.0, y: (self.imageMaskView.av_height - 24) / 2.0, width: 24, height: 24)
+        self.progressView.frame = CGRect(x: (self.imageMaskView.av_width - 30) / 2.0, y: (self.imageMaskView.av_height - 30) / 2.0, width: 30, height: 30)
+        self.imageFailedView.frame = CGRect(x: (self.imageMaskView.av_width - 26) / 2.0, y: (self.imageMaskView.av_height - 26) / 2.0, width: 26, height: 26)
     }
     
     open lazy var imageView: UIImageView = {
         let view = UIImageView()
         view.layer.cornerRadius = 4
         view.layer.masksToBounds = true
-        view.backgroundColor = AVTheme.fg_strong
+        view.backgroundColor = AUIAIChatBundle.color_fill_secondary
+        view.layer.borderWidth = 0.5
+        view.av_setLayerBorderColor(AUIAIChatBundle.color_border_secondary)
+        view.layer.masksToBounds = true
         view.contentMode = .scaleAspectFill
         return view
     }()
     
     open lazy var removeBtn: AVBlockButton = {
         let btn = AVBlockButton()
-        btn.setImage(AUIAIChatBundle.getImage("ic_sending_delete"), for: .normal)
+        btn.setImage(AUIAIChatBundle.getCommonImage("ic_sending_delete"), for: .normal)
         btn.isHidden = true
         return btn
     }()
     
     open lazy var addBtn: AVBlockButton = {
         let btn = AVBlockButton()
-        btn.setImage(AUIAIChatBundle.getImage("ic_sending_add"), for: .normal)
+        btn.setImage(AUIAIChatBundle.getTemplateImage("ic_sending_add"), for: .normal)
+        btn.tintColor = AUIAIChatBundle.color_icon
         btn.isHidden = false
         return btn
     }()
@@ -271,7 +275,7 @@ extension AUIAIChatSendAttachmentView: UICollectionViewDelegate, UICollectionVie
     open lazy var progressView: AVCircularProgressView = {
         let view = AVCircularProgressView()
         view.backgroundColor = .clear
-        view.lineWidth = 2
+        view.lineWidth = 3
         view.trackTintColor = .white.withAlphaComponent(0.3)
         view.progressTintColor = .white
         view.isHidden = false
@@ -280,13 +284,14 @@ extension AUIAIChatSendAttachmentView: UICollectionViewDelegate, UICollectionVie
     
     open lazy var imageFailedView: UIView = {
         let view = UIImageView()
-        view.image = AUIAIChatBundle.getImage("ic_sending_failed")
+        view.image = AUIAIChatBundle.getCommonImage("ic_sending_failed")
         view.isHidden = true
         return view
     }()
     
     private func update(image: UIImage, progress: Float, state: ARTCAIChatAttachmentState) {
         self.imageView.image = image
+        self.imageView.layer.borderWidth = 0
         self.addBtn.isHidden = true
         self.removeBtn.isHidden = false
         self.imageMaskView.isHidden = state == .Success
@@ -297,6 +302,7 @@ extension AUIAIChatSendAttachmentView: UICollectionViewDelegate, UICollectionVie
     
     private func reset() {
         self.imageView.image = nil
+        self.imageView.layer.borderWidth = 0.5
         self.addBtn.isHidden = false
         self.removeBtn.isHidden = true
         self.imageMaskView.isHidden = true

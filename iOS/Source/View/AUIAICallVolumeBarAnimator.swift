@@ -13,7 +13,8 @@ import AUIFoundation
     
     public struct Params {
         var count: Int = 10
-        var width: CGFloat = 4
+        var width: CGFloat = 6
+        var cornerRadius: CGFloat = 3
         var margin: CGFloat = 6
         var minHeight: CGFloat = 6
         var maxHeight: CGFloat = 12
@@ -47,7 +48,7 @@ import AUIFoundation
         for i in 0..<count {
             let view = UIView()
             view.backgroundColor = self.param.barColor
-            view.layer.cornerRadius = self.param.width / 2.0
+            view.layer.cornerRadius = self.param.cornerRadius
             view.layer.masksToBounds = true
             list.append(view)
         }
@@ -57,15 +58,15 @@ import AUIFoundation
     private func updateLayout() {
         
         let bar = Double(self.barViews.count)
+        let bar_width = self.param.width
         let bar_height = self.param.minHeight
         let bar_margin = self.param.margin
         let bar_midY = self.av_height / 2.0
-        let bar_startX = (self.av_width - bar_height * bar - bar_margin * (bar - 1.0)) / 2.0
+        let bar_startX = (self.av_width - bar_width * bar - bar_margin * (bar - 1.0)) / 2.0
         
         for i in 0..<self.barViews.count {
             let view = self.barViews[i]
-            view.layer.cornerRadius = bar_height / 2.0
-            view.frame = CGRect(x: bar_startX + Double(i) * (bar_height + bar_margin), y: bar_midY - bar_height / 2.0, width: bar_height, height: bar_height)
+            view.frame = CGRect(x: bar_startX + Double(i) * (bar_width + bar_margin), y: bar_midY - bar_height / 2.0, width: bar_width, height: bar_height)
         }
     }
     

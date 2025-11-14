@@ -1,15 +1,16 @@
-import { useEffect, useMemo } from 'react';
-import { Toast } from 'antd-mobile';
-import { AICallRunConfig } from '@/interface.ts';
 import { AICallAgentConfig, AICallAgentType, AICallChatSyncConfig, AICallTemplateConfig } from 'aliyun-auikit-aicall';
-import AUIAICallStandardController from '@/controller/call/AUIAICallStandardController';
-import AUIAICallProxyController from '@/controller/call/AUIAICallProxyController.ts';
-import useCallStore from './store';
-import ControllerContext from './ControlerContext';
-import { useTranslation } from '@/common/i18nContext';
+import { Toast } from 'antd-mobile';
+import { useEffect, useMemo } from 'react';
 
+import { useTranslation } from '@/common/i18nContext';
+import AUIAICallProxyController from '@/controller/call/AUIAICallProxyController.ts';
+import AUIAICallStandardController from '@/controller/call/AUIAICallStandardController';
+import { AICallRunConfig } from '@/interface.ts';
+
+import Layout from '../components/Layout';
+import ControllerContext from './ControlerContext';
 import Stage from './Stage';
-import './index.less';
+import useCallStore from './store';
 
 export interface CallProps {
   mode?: string;
@@ -136,16 +137,18 @@ function Call({
 
   return (
     <ControllerContext.Provider value={controller}>
-      <Stage
-        autoCall={autoCall}
-        onAuthFail={() => {
-          onAuthFail?.();
-        }}
-        onExit={() => {
-          onExit?.();
-        }}
-      />
-      {children}
+      <Layout showText themeBtn={false} settingBtn={false} onExit={onExit}>
+        <Stage
+          autoCall={autoCall}
+          onAuthFail={() => {
+            onAuthFail?.();
+          }}
+          onExit={() => {
+            onExit?.();
+          }}
+        />
+        {children}
+      </Layout>
     </ControllerContext.Provider>
   );
 }

@@ -18,7 +18,7 @@
                 android:thickness="2dp"
                 android:thicknessRatio="8"
                 android:useLevel="true">
-                <solid android:color="#FFFFFF" />  <!-- 设置进度圆环的颜色 -->
+                <solid android:color="@color/color_bg_elevated" />  <!-- 设置进度圆环的颜色 -->
             </shape>
         </clip>
     </item>

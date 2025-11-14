@@ -1,10 +1,24 @@
 .pstn-form {
+  ._phone {
+    position: relative;
+  }
   ._copy {
-    color: #333;
+    position: absolute;
+    right: 0;
+    bottom: 14px;
+    width: 40px;
+    height: 40px;
+  }
+  ._tip {
+    color: var(--ai-color-text-disabled);
+    .adm-button {
+      margin-left: 6px;
+      color: var(--ai-color-text-disabled);
+    }
   }
 }
 
-@media screen and (min-width: 768px) {
+@media screen and (min-width: 769px) {
   .pstn-form {
     ._copy {
       border: none;

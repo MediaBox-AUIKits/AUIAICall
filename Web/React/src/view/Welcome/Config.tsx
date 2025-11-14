@@ -1,19 +1,17 @@
-import { useTranslation } from '@/common/i18nContext';
-import { getRootElement } from '@/common/utils';
-import {
-  Button,
-  Dialog,
-  SafeArea,
-  Switch,
-  Toast,
-} from 'antd-mobile';
+import { Button, Dialog, Form, SafeArea, Selector, Switch, Toast } from 'antd-mobile';
+import { ToastHandler } from 'antd-mobile/es/components/toast';
 import { useEffect, useRef, useState } from 'react';
 
+import { useTranslation } from '@/common/i18nContext';
+import { getRootElement } from '@/common/utils';
 import standard from '@/service/standard';
-import { ConfigSVG } from '@/view/Call/Icons';
-import ResponsiveDialog from '@/view/components/ReponsiveDialog';
-import { ToastHandler } from 'antd-mobile/es/components/toast';
-import { moreSVG, recordSVG } from './Icons';
+import ResponsiveDialog from 'components/ReponsiveDialog';
+
+import { headerSettingSvg } from '../components/Icons';
+import ResponsivePopup from '../components/ResponsivePopup';
+import { useResponsiveBreakpoint } from '../hooks/useResponsiveBreakpoint';
+import { settingSVG, voiceprintRecordingSVG, voiceprintRecordSVG } from './Icons';
+import voicePrintHeroImg from './images/voice_print.png';
 import AudioRecorder, { encodeWAV, RecordingController, uploadBlobToOSSDirect } from './recorder';
 
 import './config.less';
@@ -37,7 +35,6 @@ function VoicePrintDialog({
   onAuthFail?: () => void;
 }) {
   const { t } = useTranslation();
-  const [isIntro, setIsIntro] = useState(true);
   const [isRecording, setIsRecording] = useState(false);
 
   const recorderControllerRef = useRef<RecordingController>();
@@ -159,56 +156,37 @@ function VoicePrintDialog({
     <ResponsiveDialog
       visible={visible}
       onClose={onClose}
-      closeOnMaskClick
       title={t('voiceprint.title')}
       className='voice-print-dialog'
       content={
         <>
-          <img
-            className='_hero'
-            src='https://img.alicdn.com/imgextra/i2/O1CN01H1olll1c8hUDELAcD_!!6000000003556-2-tps-339-338.png'
-            alt='voiceprint'
-          />
+          <img className='_hero' src={voicePrintHeroImg} alt='voiceprint' />
           <div className='_gap'></div>
           <div className='_info'>
-            {isIntro ? (
-              <div>{t('voiceprint.intro')}</div>
-            ) : (
-              <>
-                <div>{t('voiceprint.instruction')}</div>
-                <div className='_duration'>
-                  {isRecording ? (
-                    <span>
-                      {t('voiceprint.recording')} <span ref={countdownRef}>0</span> {t('voiceprint.recordingSecond')}
-                    </span>
-                  ) : (
-                    <span>{t('voiceprint.duration')}</span>
-                  )}
-                </div>
-                <div className='_text'>{t('voiceprint.instructionText')}</div>
-              </>
-            )}
+            <div>{t('voiceprint.intro')}</div>
+            <div className='_duration'>
+              {isRecording ? (
+                <span>
+                  {t('voiceprint.recording')} <span ref={countdownRef}>0</span> {t('voiceprint.recordingSecond')}
+                </span>
+              ) : (
+                <span>{t('voiceprint.duration')}</span>
+              )}
+            </div>
+            <div className='_text'>{t('voiceprint.instructionText')}</div>
           </div>
           <div className='_gap'></div>
           <div className='_action'>
-            {isIntro ? (
-              <Button className='_btn' color='primary' onClick={() => setIsIntro(false)}>
-                {t('voiceprint.enroll')}
-              </Button>
-            ) : (
-              <>
-                <Button
-                  className={`_record-btn ${isRecording ? 'is-recording' : ''}`}
-                  onTouchStart={startRecord}
-                  onTouchEnd={stopRecord}
-                  onMouseDown={startRecord}
-                  onMouseUp={stopRecord}
-                >
-                  {recordSVG}
-                </Button>
-                <div className='_text'>{t('pushToTalk.tip')}</div>
-              </>
-            )}
+            <Button
+              className={`_record-btn ${isRecording ? 'is-recording' : ''}`}
+              onTouchStart={startRecord}
+              onTouchEnd={stopRecord}
+              onMouseDown={startRecord}
+              onMouseUp={stopRecord}
+            >
+              {isRecording ? voiceprintRecordingSVG : voiceprintRecordSVG}
+            </Button>
+            <div className='_text'>{t('pushToTalk.tip')}</div>
           </div>
           <SafeArea position='bottom' />
         </>
@@ -216,7 +194,6 @@ function VoicePrintDialog({
     ></ResponsiveDialog>
   );
 }
-
 
 function WelcomeConfig({ userId, region, onAuthFail }: { userId: string; region?: string; onAuthFail?: () => void }) {
   const { t } = useTranslation();
@@ -227,63 +204,49 @@ function WelcomeConfig({ userId, region, onAuthFail }: { userId: string; region?
   const [voicePrintDialogVisible, setVoicePrintDialogVisible] = useState(false);
   const [hasVoicePrint, setHasVoicePrint] = useState(!!localStorage?.getItem(`${VOICE_PRINT_CACHE_PREFIX}${userId}`));
 
+  const isMobileUI = useResponsiveBreakpoint();
+
   return (
     <>
-        <Button
-          className='welcome-config'
-          onClick={() => {
-            setConfigVisible(true);
-          }}
-        >
-          {ConfigSVG}
-          <div>{t('welcome.optionsTitle')}</div>
-        </Button>
-      <Dialog
-        className='welcome-config-dialog'
+      <Button
+        fill='none'
+        onClick={() => {
+          setConfigVisible(true);
+        }}
+      >
+        {isMobileUI ? settingSVG : headerSettingSvg}
+      </Button>
+
+      <ResponsivePopup
         visible={configVisible}
-        getContainer={() => getRootElement()}
-        closeOnMaskClick
-        title={t('welcome.optionsTitle')}
         onClose={() => {
           setConfigVisible(false);
         }}
-        content={
-          <div>
-            <ul>
-              <li className='_mode'>
-                <div className='_itemBox'>
-                  <div className='_itemInfo'>
-                    <div className='_itemTitle'>{t('voiceprint.noiseReduction')}</div>
-                    <div className='_itemDesc'>{t('voiceprint.help')}</div>
-                  </div>
-                  <Switch
-                    onChange={(checked: boolean) => {
-                      localStorage?.setItem(VOICE_PRINT_CACHE_ENABLE, checked ? 'true' : 'false');
-                    }}
-                    defaultChecked={
-                      !!localStorage?.getItem(`${VOICE_PRINT_CACHE_PREFIX}${userId}`) &&
-                      localStorage?.getItem(VOICE_PRINT_CACHE_ENABLE) !== 'false'
-                    }
-                    style={{
-                      '--height': '18px',
-                      '--width': '36px',
-                    }}
-                  />
-                </div>
-                <div className='welcome-voice-print-config'>
-                  {t('voiceprint.title')}
-                  {hasVoicePrint ? t('voiceprint.enrolled') : ''}
-                  <span className='_holder'></span>
-                  <Button fill='none' onClick={() => setVoicePrintDialogVisible(true)}>
-                    {t('voiceprint.enroll')}
-                    {moreSVG}
-                  </Button>
-                </div>
-              </li>
-            </ul>
-          </div>
-        }
-      />
+        className='welcome-config-dialog'
+        title={t('welcome.optionsTitle')}
+      >
+        <Form layout='horizontal' className='ai-form ai-welcome-config-form'>
+          <Form.Item label={t('voiceprint.noiseReduction')}>
+            <Switch
+              onChange={(checked: boolean) => {
+                localStorage?.setItem(VOICE_PRINT_CACHE_ENABLE, checked ? 'true' : 'false');
+              }}
+              defaultChecked={
+                !!localStorage?.getItem(`${VOICE_PRINT_CACHE_PREFIX}${userId}`) &&
+                localStorage?.getItem(VOICE_PRINT_CACHE_ENABLE) !== 'false'
+              }
+            />
+          </Form.Item>
+          <Form.Item className='is-follow' description={t('voiceprint.help')} />
+          <Form.Item
+            className='_voiceprint'
+            label={t('voiceprint.title')}
+            onClick={() => setVoicePrintDialogVisible(true)}
+          >
+            <span className='ai-link-text'>{hasVoicePrint ? t('voiceprint.enrolled') : t('voiceprint.enroll')}</span>
+          </Form.Item>
+        </Form>
+      </ResponsivePopup>
       <VoicePrintDialog
         visible={voicePrintDialogVisible}
         onClose={() => setVoicePrintDialogVisible(false)}

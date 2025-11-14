@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <!-- 设置填充颜色 -->
+    <solid android:color="@color/color_fill_toast_identical" />
+
+    <stroke android:width="0.4dp" android:color="@color/color_border_identical"/>
+
+</shape>

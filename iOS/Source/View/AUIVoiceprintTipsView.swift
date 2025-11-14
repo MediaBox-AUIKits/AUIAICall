@@ -13,8 +13,13 @@ import AUIFoundation
     public override init(frame: CGRect) {
         super.init(frame: frame)
         
+        self.backgroundColor = AUIAICallBundle.color_fill_toast_identical
+        self.layer.cornerRadius = 4
+        self.layer.borderWidth = 1
+        self.av_setLayerBorderColor(AUIAICallBundle.color_border_identical)
+        self.layer.masksToBounds = true
+
         self.addSubview(self.textLabel)
-        self.addSubview(self.clearBtn)
         self.isHidden = true
     }
     
@@ -39,52 +44,24 @@ import AUIFoundation
     
     open func layoutAt(frame: CGRect) {
         self.textLabel.sizeToFit()
-        self.clearBtn.sizeToFit()
-        self.clearBtn.av_size = CGSize(width: self.clearBtn.av_width + 18, height: 18)
 
-        var width = self.textLabel.av_width + self.clearBtn.av_width + 24
+        var width = self.textLabel.av_width + 24
         if width > frame.width {
             width = frame.width
         }
-        self.textLabel.av_left = 8
+        self.textLabel.av_left = 12
         self.textLabel.av_height = 40
-        self.clearBtn.av_left = self.textLabel.av_right + 8
-        self.clearBtn.av_centerY = 20
-        self.av_size = CGSize(width: self.clearBtn.av_right + 8, height: 40)
+        self.av_size = CGSize(width: width, height: 40)
         self.center = CGPoint(x: frame.midX, y: frame.midY)
-        self.layer.cornerRadius = 20
-        self.layer.masksToBounds = true
-    }
-    
-    open var isSelected = false {
-        didSet {
-            if self.isSelected {
-                self.backgroundColor = UIColor.av_color(withHexString: "#868686")
-            }
-            else {
-                self.backgroundColor = UIColor.clear
-            }
-        }
     }
     
     open lazy var textLabel: UILabel = {
         let label = UILabel()
-        label.textColor = AVTheme.text_strong
+        label.textColor = AUIAICallBundle.color_text
         label.font = AVTheme.regularFont(12)
         label.text = AUIAICallBundle.getString("Detected other speaking, stop responded this question.")
         label.numberOfLines = 0
         return label
     }()
     
-    
-    open lazy var clearBtn: AVBlockButton = {
-        let btn = AVBlockButton()
-        btn.setTitle(AUIAICallBundle.getString("Restore"), for: .normal)
-        btn.setTitleColor(AVTheme.text_strong, for: .normal)
-        btn.setBorderColor(AVTheme.colourful_border_strong, for: .normal)
-        btn.titleLabel?.font = AVTheme.regularFont(10)
-        btn.layer.borderWidth = 1
-        btn.layer.cornerRadius = 9
-        return btn
-    }()
 }

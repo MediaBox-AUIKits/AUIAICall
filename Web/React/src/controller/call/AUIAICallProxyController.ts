@@ -1,6 +1,8 @@
+import { AICallAgentError, AICallErrorCode, AICallState } from 'aliyun-auikit-aicall';
+
 import logger from '@/common/logger.ts';
 import AUIAICallAuthTokenHelper from '@/controller/call/AUIAICallAuthTokenHelper.ts';
-import { AICallAgentError, AICallErrorCode, AICallState } from 'aliyun-auikit-aicall';
+
 import AUIAICallController from './AUIAICallController.ts';
 
 class AUIAICallProxyController extends AUIAICallController {

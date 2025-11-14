@@ -16,26 +16,26 @@ import SDWebImage
     public static let shared = AUIAIChatMarkdownManager()
     
     
-    open func toAttributedString(markdownString: String) -> NSAttributedString {
+    open func toAttributedString(markdownString: String, isLeft: Bool) -> NSAttributedString {
         let md = SwiftyMarkdown(string: markdownString)
-        md.setFontNameForAllStyles(with: AVTheme.regularFont(14.0).fontName)
-        md.setFontColorForAllStyles(with: AVTheme.text_strong)
-        md.setFontSizeForAllStyles(with: 14.0)
-        md.italic.fontName = UIFont.italicSystemFont(ofSize: 14.0).fontName
-        md.h6.fontSize = 14
+        md.setFontNameForAllStyles(with: AVTheme.regularFont(16.0).fontName)
+        md.setFontColorForAllStyles(with: isLeft ? AUIAIChatBundle.color_text : AUIAIChatBundle.color_text_identical)
+        md.setFontSizeForAllStyles(with: 16.0)
+        md.italic.fontName = UIFont.italicSystemFont(ofSize: 16.0).fontName
+        md.h6.fontSize = 16
         md.h6.fontStyle = .bold
-        md.h5.fontSize = 16
+        md.h5.fontSize = 18
         md.h5.fontStyle = .bold
-        md.h4.fontSize = 18
+        md.h4.fontSize = 20
         md.h4.fontStyle = .bold
-        md.h3.fontSize = 20
+        md.h3.fontSize = 22
         md.h3.fontStyle = .bold
-        md.h2.fontSize = 22
+        md.h2.fontSize = 24
         md.h2.fontStyle = .bold
-        md.h1.fontSize = 24
+        md.h1.fontSize = 26
         md.h1.fontStyle = .bold
 //        md.body.lineSpacing = 4.0
-        md.link.color = UIColor.av_color(withHexString: "3295FBFF")
+        md.link.color = AUIAIChatBundle.color_link
 
         let attributedText = md.attributedString()
         return attributedText
@@ -187,8 +187,8 @@ import SDWebImage
         super.init(frame: frame, textContainer: textContainer)
         
         self.backgroundColor = .clear
-        self.font = AVTheme.regularFont(14)
-        self.textColor = AVTheme.text_strong
+        self.font = AVTheme.regularFont(16)
+        self.textColor = AUIAIChatBundle.color_text
         
         self.isEditable = false
         self.bounces = false
@@ -238,7 +238,7 @@ import SDWebImage
         super.init(frame: frame)
         
         self.font = AVTheme.regularFont(14)
-        self.textColor = AVTheme.text_strong
+        self.textColor = AUIAIChatBundle.color_text
         self.numberOfLines = 0
         self.lineBreakMode = .byWordWrapping
         self.backgroundColor = .clear

@@ -3,22 +3,22 @@
     <!-- 正常状态 -->
     <item android:state_enabled="false">
         <shape android:shape="rectangle" >
-            <corners android:radius="22dp"/>
-            <solid android:color="#3A3D48" /> <!-- 禁止点击 -->
+            <corners android:radius="2dp"/>
+            <solid android:color="@color/color_fill_disabled" /> <!-- 禁止点击 -->
         </shape>
     </item>
     <!-- 按下状态 -->
     <item android:state_pressed="true">
         <shape android:shape="rectangle" >
-            <corners android:radius="22dp"/>
-            <solid android:color="#8000BCD4" /> <!-- 按下时的颜色 -->
+            <corners android:radius="2dp"/>
+            <solid android:color="@color/color_fill_secondary" /> <!-- 按下时的颜色 -->
         </shape>
     </item>
     <!-- 正常状态 -->
     <item>
         <shape android:shape="rectangle" >
-            <corners android:radius="22dp"/>
-            <solid android:color="#00BCD4" /> <!-- 正常状态的颜色 -->
+            <corners android:radius="2dp"/>
+            <solid android:color="@color/color_fill" /> <!-- 正常状态的颜色 -->
         </shape>
     </item>
 </selector>

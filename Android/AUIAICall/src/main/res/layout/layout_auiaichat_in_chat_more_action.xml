@@ -5,303 +5,199 @@
     android:layout_height="wrap_content"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_marginTop="4dp"
-    android:background="@color/layout_base_background"
-    >
+    android:background="@color/color_bg_elevated" >
 
     <HorizontalScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:scrollbars="horizontal"
-        tools:ignore="MissingConstraints">
+        android:layout_marginHorizontal="20dp"
+        tools:ignore="MissingConstraints"
+        android:visibility="visible">
 
         <LinearLayout
             android:id="@+id/bottom_down_action_layout"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            android:layout_marginLeft="20dp"
-            android:layout_marginRight="20dp"
-            android:layout_marginTop="4dp"
-            android:layout_marginBottom="4dp"
-            android:paddingRight="20dp"
-            >
+            android:layout_marginTop="15dp"
+            android:layout_marginBottom="6dp">
 
-            <LinearLayout
+            <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/bottom_down_photo_action"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_weight="1"
+                android:layout_width="86dp"
+                android:layout_height="86dp"
                 android:gravity="center"
-                android:layout_marginBottom="10dp"
-                app:layout_constraintLeft_toLeftOf="parent"
-                app:layout_constraintRight_toLeftOf="@id/bottom_down_voice_chat_action"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                >
+                android:background="@drawable/bg_chatbot_add_more_shape">
 
-                <!-- 图标 -->
-
-                <LinearLayout
-                    android:layout_width="70dp"
-                    android:layout_height="70dp"
-                    android:orientation="vertical"
-                    android:background="@drawable/bg_chatbot_add_more_shape"
+                <ImageView
+                    android:id="@+id/bottom_down_layout_left_img"
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:layout_marginTop="19dp"
+                    android:layout_marginBottom="19dp"
+                    android:src="@drawable/ic_bottom_image_add"
+                    app:layout_constraintLeft_toLeftOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintRight_toRightOf="parent"
-                    app:layout_constraintLeft_toLeftOf="parent"
-                    app:layout_constraintBottom_toTopOf="@id/textView_photo"
-                    >
 
-                    <ImageView
-                        android:id="@+id/bottom_down_layout_left_img"
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:layout_marginLeft="19dp"
-                        android:layout_marginTop="19dp"
-                        android:layout_marginRight="19dp"
-                        android:layout_marginBottom="19dp"
-                        android:src="@drawable/ic_bottom_image_add"
-                        app:layout_constraintLeft_toLeftOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintRight_toRightOf="parent"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        android:visibility="visible"/>
-
-                </LinearLayout>
+                    android:visibility="visible"/>
 
                 <!-- 文字 -->
                 <TextView
                     android:id="@+id/textView_photo"
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/chat_bot_photo"
-                    app:layout_constraintLeft_toLeftOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/bottom_down_photo_action"
-                    app:layout_constraintRight_toRightOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    android:textColor="#F4F4F6"
+                    android:textColor="@color/color_text_secondary"
                     android:textSize="12sp"
                     android:textAlignment="center"
                     android:layout_gravity="center"
                     android:layout_marginTop="8dp"
-                    android:layout_marginBottom="10dp"/>
-            </LinearLayout>
+                    android:layout_marginBottom="10dp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/bottom_down_layout_left_img"
+                    app:layout_constraintBottom_toBottomOf="parent"/>
 
-            <LinearLayout
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+            <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/bottom_down_voice_chat_action"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_weight="1"
+                android:layout_width="86dp"
+                android:layout_height="86dp"
                 android:gravity="center"
-                app:layout_constraintLeft_toRightOf="@id/bottom_down_action_layout"
-                app:layout_constraintRight_toLeftOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                android:layout_marginLeft="12dp"
-                >
+                android:layout_marginStart="12dp"
+                android:background="@drawable/bg_chatbot_add_more_shape">
 
-                <!-- 图标 -->
+                <ImageView
+                    android:id="@+id/bottom_down_layout_voice_chat"
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:src="@drawable/ic_bottom_voice_chat_add"
+                    android:visibility="visible"
+                    android:layout_marginTop="19dp"
+                    android:layout_marginBottom="19dp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"/>
 
-                <LinearLayout
-                    android:id="@+id/bottom_down_layout_voice_chat_layout"
-                    android:layout_width="70dp"
-                    android:layout_height="70dp"
-                    android:gravity="center"
-                    android:orientation="vertical"
-                    android:background="@drawable/bg_chatbot_add_more_shape"
-                    app:layout_constraintBottom_toTopOf="@id/textView_voice_chat"
-                    >
-
-                    <ImageView
-                        android:id="@+id/bottom_down_layout_voice_chat"
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:src="@drawable/ic_bottom_voice_chat_add"
-                        app:layout_constraintLeft_toLeftOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintRight_toRightOf="parent"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        android:visibility="visible"/>
-
-                </LinearLayout>
-
-                <!-- 文字 -->
                 <TextView
                     android:id="@+id/textView_voice_chat"
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/ai_audio_call"
-                    app:layout_constraintLeft_toLeftOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/bottom_down_layout_voice_chat_layout"
-                    app:layout_constraintRight_toRightOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    android:textColor="#F4F4F6"
+                    android:textColor="@color/color_text_secondary"
                     android:textSize="12sp"
                     android:textAlignment="center"
                     android:layout_gravity="center"
                     android:layout_marginTop="8dp"
-                    android:layout_marginBottom="10dp"/>
-            </LinearLayout>
+                    android:layout_marginBottom="10dp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/bottom_down_layout_voice_chat"
+                    app:layout_constraintBottom_toBottomOf="parent"/>
 
-            <LinearLayout
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+            <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/bottom_down_avator_chat_action"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_weight="1"
+                android:layout_width="86dp"
+                android:layout_height="86dp"
                 android:gravity="center"
-                app:layout_constraintLeft_toRightOf="@id/bottom_down_voice_chat_action"
-                app:layout_constraintRight_toLeftOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                android:layout_marginLeft="12dp"
-                >
-
+                android:layout_marginStart="12dp"
+                android:background="@drawable/bg_chatbot_add_more_shape">
                 <!-- 图标 -->
-
-                <LinearLayout
-                    android:id="@+id/bottom_down_layout_avator_chat_layout"
-                    android:layout_width="70dp"
-                    android:layout_height="70dp"
-                    android:gravity="center"
-                    android:orientation="vertical"
-                    android:background="@drawable/bg_chatbot_add_more_shape"
-                    app:layout_constraintBottom_toTopOf="@id/textView_avator_chat"
-                    >
-
-                    <ImageView
-                        android:id="@+id/bottom_down_layout_avator_chat"
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:src="@drawable/ic_bottom_avator_chat_add"
-                        app:layout_constraintLeft_toLeftOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintRight_toRightOf="parent"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        android:visibility="visible"/>
-
-                </LinearLayout>
+                <ImageView
+                    android:id="@+id/bottom_down_layout_avator_chat"
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:layout_marginTop="19dp"
+                    android:layout_marginBottom="19dp"
+                    android:src="@drawable/ic_bottom_avator_chat_add"
+                    android:visibility="visible"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
 
                 <!-- 文字 -->
                 <TextView
                     android:id="@+id/textView_avator_chat"
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/digital_human_call"
-                    app:layout_constraintLeft_toLeftOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/bottom_down_layout_avator_chat_layout"
-                    app:layout_constraintRight_toRightOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    android:textColor="#F4F4F6"
+                    android:textColor="@color/color_text_secondary"
                     android:textSize="12sp"
                     android:textAlignment="center"
                     android:layout_gravity="center"
                     android:layout_marginTop="8dp"
-                    android:layout_marginBottom="10dp"/>
-            </LinearLayout>
+                    android:layout_marginBottom="10dp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/bottom_down_layout_avator_chat"/>
 
-            <LinearLayout
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/bottom_down_vision_chat_action"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_weight="1"
+                android:layout_width="86dp"
+                android:layout_height="86dp"
                 android:gravity="center"
-                app:layout_constraintLeft_toRightOf="@id/bottom_down_avator_chat_action"
-                app:layout_constraintRight_toLeftOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                android:layout_marginLeft="12dp"
-                >
-
+                android:layout_marginStart="12dp"
+                android:background="@drawable/bg_chatbot_add_more_shape">
                 <!-- 图标 -->
-
-                <LinearLayout
-                    android:id="@+id/bottom_down_layout_vision_chat_layout"
-                    android:layout_width="70dp"
-                    android:layout_height="70dp"
-                    android:gravity="center"
-                    android:orientation="vertical"
-                    android:background="@drawable/bg_chatbot_add_more_shape"
-                    app:layout_constraintBottom_toTopOf="@id/textView_vision_chat"
-                    >
-
-                    <ImageView
-                        android:id="@+id/bottom_down_layout_vision_chat"
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:src="@drawable/ic_bottom_vision_chat_add"
-                        app:layout_constraintLeft_toLeftOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintRight_toRightOf="parent"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        android:visibility="visible"/>
-
-                </LinearLayout>
-
+                <ImageView
+                    android:id="@+id/bottom_down_layout_vision_chat"
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:layout_marginTop="19dp"
+                    android:layout_marginBottom="19dp"
+                    android:src="@drawable/ic_bottom_vision_chat_add"
+                    android:visibility="visible"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
                 <!-- 文字 -->
                 <TextView
                     android:id="@+id/textView_vision_chat"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/vision_agent_call"
-                    app:layout_constraintLeft_toLeftOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/bottom_down_layout_vision_chat_layout"
-                    app:layout_constraintRight_toRightOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    android:textColor="#F4F4F6"
+                    android:textColor="@color/color_text_secondary"
                     android:textSize="12sp"
                     android:textAlignment="center"
                     android:layout_gravity="center"
                     android:layout_marginTop="8dp"
-                    android:layout_marginBottom="10dp"/>
-            </LinearLayout>
+                    android:layout_marginBottom="10dp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/bottom_down_layout_vision_chat"/>
 
-            <LinearLayout
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/bottom_down_video_chat_action"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_weight="1"
+                android:layout_width="86dp"
+                android:layout_height="86dp"
                 android:gravity="center"
-                app:layout_constraintLeft_toRightOf="@id/bottom_down_vision_chat_action"
-                app:layout_constraintRight_toLeftOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                android:layout_marginLeft="12dp"
-                android:layout_marginRight="12dp"
-                >
-
+                android:layout_marginStart="12dp"
+                android:background="@drawable/bg_chatbot_add_more_shape">
                 <!-- 图标 -->
-
-                <LinearLayout
-                    android:id="@+id/bottom_down_layout_video_chat_layout"
-                    android:layout_width="70dp"
-                    android:layout_height="70dp"
-                    android:gravity="center"
-                    android:orientation="vertical"
-                    android:background="@drawable/bg_chatbot_add_more_shape"
-                    app:layout_constraintBottom_toTopOf="@id/textView_vision_chat"
-                    >
-
-                    <ImageView
-                        android:id="@+id/bottom_down_layout_video_chat"
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:src="@drawable/ic_bottom_video_chat_add"
-                        app:layout_constraintLeft_toLeftOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintRight_toRightOf="parent"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        android:visibility="visible"/>
-
-                </LinearLayout>
+                <ImageView
+                    android:id="@+id/bottom_down_layout_video_chat"
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:layout_marginTop="19dp"
+                    android:layout_marginBottom="19dp"
+                    android:src="@drawable/ic_bottom_video_chat_add"
+                    android:visibility="visible"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
 
                 <!-- 文字 -->
                 <TextView
@@ -309,25 +205,21 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/video_agent_call"
-                    app:layout_constraintLeft_toLeftOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/bottom_down_layout_vision_chat_layout"
-                    app:layout_constraintRight_toRightOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    android:textColor="#F4F4F6"
+                    android:textColor="@color/color_text_secondary"
                     android:textSize="12sp"
                     android:textAlignment="center"
                     android:layout_gravity="center"
                     android:layout_marginTop="8dp"
-                    android:layout_marginBottom="10dp"/>
-            </LinearLayout>
+                    android:layout_marginBottom="10dp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/bottom_down_layout_video_chat"/>
 
-            <!-- 顶部 -->
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
         </LinearLayout>
     </HorizontalScrollView>
-
-
-
-
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/chatbot_image_list_layout"
@@ -337,9 +229,9 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        android:layout_marginTop="4dp"
-        android:layout_marginBottom="30dp"
-        android:background="@color/layout_base_background"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginTop="14dp"
+        android:layout_marginBottom="6dp"
         android:visibility="gone"
         >
 
@@ -353,8 +245,6 @@
             app:layout_constraintRight_toLeftOf="@id/bottom_down_layout_add_more_img"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
-            android:layout_marginLeft="20dp"
-            android:layout_marginRight="8dp"
             android:overScrollMode="never" />
 
         <!-- LinearLayout -->
@@ -369,18 +259,15 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             android:layout_marginTop="4dp"
-            android:layout_marginLeft="4dp"
-            android:layout_marginRight="20dp">
+            android:layout_marginEnd="20dp">
 
             <ImageView
-                android:layout_width="15dp"
-                android:layout_height="15dp"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
                 android:src="@drawable/ic_bottom_add_more_image"
                 android:visibility="visible" />
         </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
-
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape
+            android:layout_width="wrap_content"
+            android:shape="oval">
+            <solid android:color="@color/color_error" />
+
+            <size
+                android:width="60dp"
+                android:height="60dp" />
+        </shape>
+    </item>
+    <item android:drawable="@drawable/ic_hang_up" android:width="28dp" android:height="28dp"
+        android:gravity="center" />
+</layer-list>

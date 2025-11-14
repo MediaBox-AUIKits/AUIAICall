@@ -1,18 +1,19 @@
 import { AICallAgentConfig, AICallAgentType, AIChatAgentType, AIChatTemplateConfig } from 'aliyun-auikit-aicall';
+import { Toast } from 'antd-mobile';
 import { useEffect, useState } from 'react';
-import Welcome from './Welcome';
 
-import { useTranslation } from '@/common/i18nContext';
 import { getCallAgentId, getRuntimeConfig } from '@/interface.ts';
 import runUserConfig from '@/runConfig.ts';
 import { JSONObject } from '@/service/interface.ts';
 import service from '@/service/standard';
-import { Toast } from 'antd-mobile';
-import './App.css';
+
 import Call from './Call';
 import Chat from './Chat';
-import PSTN from './PSTN';
+import PSTN, { AIPSTNType } from './PSTN';
+import Welcome, { WelcomeTypeValue } from './Welcome';
 import { VOICE_PRINT_CACHE_ENABLE, VOICE_PRINT_CACHE_PREFIX } from './Welcome/Config';
+
+import './App.less';
 
 Toast.config({
   position: 'bottom',
@@ -53,9 +54,7 @@ function App(props: AppProps) {
     agentConfig = runConfig.callAgentConfig,
     chatTemplateConfig,
   } = props;
-  const [callType, setCallType] = useState('call');
-  const [stateAgentType, setStateAgentType] = useState<AICallAgentType | AIChatAgentType | undefined>(agentType);
-  const [pstnType, setPstnType] = useState<string>('Outbound');
+  const [stateAgentType, setStateAgentType] = useState<WelcomeTypeValue | undefined>(agentType);
 
   useEffect(() => {
     if (appServer) {
@@ -73,15 +72,32 @@ function App(props: AppProps) {
     };
   }, [appServer]);
 
-  if (callType === 'pstn' && pstnType) {
+  // 未选择智能体类型
+  if (stateAgentType === undefined) {
+    return (
+      <Welcome
+        userId={userId}
+        region={region}
+        showPstn={!!runConfig.pstnAgentId}
+        onSelected={(type) => {
+          setStateAgentType(type);
+        }}
+        onAuthFail={() => {
+          onAuthFail?.();
+        }}
+      />
+    );
+  }
+
+  // PSTN
+  if (stateAgentType >= AIPSTNType.Outbound && stateAgentType <= AIPSTNType.Inbound) {
     return (
       <PSTN
-        type={pstnType}
+        type={stateAgentType === AIPSTNType.Outbound ? 'Outbound' : 'Inbound'}
         userId={userId}
         agentId={agentId!}
         region={region!}
         onExit={() => {
-          setPstnType('');
           setStateAgentType(undefined);
         }}
         onAuthFail={() => {
@@ -91,27 +107,25 @@ function App(props: AppProps) {
     );
   }
 
-  if (stateAgentType === undefined)
+  // ChatBot
+  if (stateAgentType === AIChatAgentType.MessageChat) {
     return (
-      <Welcome
+      <Chat
+        rc={runConfig}
         userId={userId}
+        userToken={userToken}
+        shareToken={shareToken}
+        agentId={agentId || runConfig.chatAgentId}
+        appServer={appServer}
         region={region}
-        initialType={callType}
-        showPstn={!!runConfig.pstnAgentId}
-        onTypeSelected={(type) => {
-          setCallType(type);
-        }}
-        onAgentTypeSelected={(type) => {
-          setStateAgentType(type);
-        }}
-        onPSTNTypeSelected={(type) => {
-          setPstnType(type);
-        }}
-        onAuthFail={() => {
-          onAuthFail?.();
+        templateConfig={chatTemplateConfig}
+        userData={(userData as JSONObject) || runConfig.chatUserData}
+        onExit={() => {
+          setStateAgentType(undefined);
         }}
       />
     );
+  }
 
   const voiceprintId = localStorage?.getItem(`${VOICE_PRINT_CACHE_PREFIX}${props.userId}`);
   if (voiceprintId && agentConfig) {
@@ -122,58 +136,29 @@ function App(props: AppProps) {
   }
 
   return (
-    <>
-      {stateAgentType === AIChatAgentType.MessageChat ? (
-        <Chat
-          rc={runConfig}
-          userId={userId}
-          userToken={userToken}
-          agentId={agentId || runConfig.chatAgentId}
-          appServer={appServer}
-          region={region}
-          templateConfig={chatTemplateConfig}
-          userData={(userData as JSONObject) || runConfig.chatUserData}
-          onExit={() => {
-            setStateAgentType(undefined);
-          }}
-        />
-      ) : (
-        <Call
-          mode={mode}
-          rc={runConfig}
-          autoCall
-          userId={userId}
-          userToken={userToken}
-          agentType={stateAgentType}
-          shareToken={shareToken}
-          agentId={agentId || getCallAgentId(runConfig, stateAgentType)}
-          appServer={appServer}
-          region={region}
-          userData={typeof userData === 'object' ? JSON.stringify(userData) : userData || runConfig.callUserData}
-          agentConfig={agentConfig}
-          onExit={() => {
-            if (!shareToken) {
-              setStateAgentType(undefined);
-            }
-          }}
-          onAuthFail={() => {
-            onAuthFail?.();
-          }}
-        />
-      )}
-    </>
+    <Call
+      mode={mode}
+      rc={runConfig}
+      autoCall
+      userId={userId}
+      userToken={userToken}
+      agentType={stateAgentType as AICallAgentType}
+      shareToken={shareToken}
+      agentId={agentId || getCallAgentId(runConfig, stateAgentType as AICallAgentType)}
+      appServer={appServer}
+      region={region}
+      userData={typeof userData === 'object' ? JSON.stringify(userData) : userData || runConfig.callUserData}
+      agentConfig={agentConfig}
+      onExit={() => {
+        if (!shareToken) {
+          setStateAgentType(undefined);
+        }
+      }}
+      onAuthFail={() => {
+        onAuthFail?.();
+      }}
+    />
   );
 }
 
-function AppWithHeader(props: AppProps) {
-  const { t } = useTranslation();
-
-  return (
-    <>
-      <div className='layout-header'>{t('welcome.title')}</div>
-      <App {...props} />
-    </>
-  );
-}
-
-export default AppWithHeader;
+export default App;

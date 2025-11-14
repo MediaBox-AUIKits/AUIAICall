@@ -1,10 +1,10 @@
 import { JSONObject } from '@/service/interface.ts';
 import {
-  AICallAgentType,
-  AIChatAgentType,
-  AICallTemplateConfig,
-  AIChatTemplateConfig,
   AICallAgentConfig,
+  AICallAgentType,
+  AICallTemplateConfig,
+  AIChatAgentType,
+  AIChatTemplateConfig,
 } from 'aliyun-auikit-aicall';
 
 export interface AICallRunConfig {

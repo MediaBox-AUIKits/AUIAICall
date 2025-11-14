@@ -116,11 +116,11 @@ platform :ios, '10.0'
 
 target '你的App target' do
     # 根据自己的业务场景，集成合适的音视频终端SDK，支持：AliVCSDK_ARTC、AliVCSDK_Standard、AliVCSDK_InteractiveLive
-    pod 'AliVCSDK_ARTC', '~> 7.5.0'
+    pod 'AliVCSDK_ARTC', '~> 7.8.0'
 
     # AI实时互动通话场景SDK
-    # 如果你的业务还需要支持消息对话，则使用“ARTCAICallKit/Chatbot”进行集成，把下面一行改为：pod 'ARTCAICallKit/Chatbot', '~> 2.8.0'
-    pod 'ARTCAICallKit', '~> 2.8.0'
+    # 如果你的业务还需要支持消息对话，则使用“ARTCAICallKit/Chatbot”进行集成，把下面一行改为：pod 'ARTCAICallKit/Chatbot', '~> 2.9.0'
+    pod 'ARTCAICallKit', '~> 2.9.0'
 
     # 基础UI组件源码
     pod 'AUIFoundation', :path => "./AUIAICall/AUIBaseKits/AUIFoundation/", :modular_headers => true
@@ -243,4 +243,4 @@ AUIAICallManager.defaultManager.checkDeviceAuth(agentType: .VisionAgent) {
 
 
 ## 常见问题
-更多AUIKits问题咨询及使用说明，请搜索钉钉群（35685013712）加入AUI客户支持群联系我们。
+更多问题咨询及使用说明，请搜索钉钉群（106730016696）加入AI实时互动项目咨询群联系我们。

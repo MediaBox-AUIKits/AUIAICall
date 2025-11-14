@@ -48,6 +48,7 @@ import AUIFoundation
         self.imageBgView.frame = CGRect(x: (self.av_width - iconWidth) / 2.0, y: 0, width: iconWidth, height: iconHeight)
         self.imageBgView.layer.cornerRadius = iconCorner
         self.imageBgView.layer.masksToBounds = true
+        self.imageBgView.layer.borderWidth = iconBorderWidth
         self.imageView.av_size = CGSize(width: iconHeight - self.iconMargin * 2, height: iconHeight - self.iconMargin * 2)
         self.imageView.center = CGPoint(x: iconWidth / 2.0, y: iconHeight / 2.0)
         
@@ -59,17 +60,29 @@ import AUIFoundation
     open var iconLength: CGFloat = CGFloat.leastNormalMagnitude
     open var iconCorner: CGFloat = CGFloat.leastNormalMagnitude
     open var iconMargin: CGFloat = 12.0
+    open var iconBorderWidth: CGFloat = 0
+    
     open var normalBgColor: UIColor? = nil
     open var selectedBgColor: UIColor? = nil
     
     open var selectedTitle: String? = nil
     open var normalTitle: String? = nil
+    
     open var selectedImage: UIImage? = nil
     open var normalImage: UIImage? = nil
+    
+    open var selectedTintColor: UIColor? = nil
+    open var normalTintColor: UIColor? = nil
+    
+    open var selectedBorderColor: UIColor? = nil
+    open var normalBorderColor: UIColor? = nil
+    
     open var isSelected: Bool {
         didSet {
             self.imageBgView.backgroundColor = self.isSelected ? self.selectedBgColor : self.normalBgColor
+            self.imageBgView.av_setLayerBorderColor(self.isSelected ? self.selectedBorderColor : self.normalBorderColor)
             self.imageView.image = self.isSelected ? self.selectedImage : self.normalImage
+            self.imageView.tintColor = self.isSelected ? self.selectedTintColor : self.normalTintColor
             self.titleLabel.text = self.isSelected ? self.selectedTitle : self.normalTitle
             self.setNeedsLayout()
         }
@@ -88,7 +101,7 @@ import AUIFoundation
     open lazy var titleLabel: UILabel = {
         let label = UILabel()
         label.font = AVTheme.regularFont(12.0)
-        label.textColor = AVTheme.text_strong
+        label.textColor = AUIAICallBundle.color_text
         label.textAlignment = .center
         return label
     }()

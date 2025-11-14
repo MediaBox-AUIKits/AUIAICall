@@ -1,51 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingVertical="8dp"
-    android:paddingHorizontal="20dp"
-    android:background="@color/layout_base_dialog_background">
+    app:cardUseCompatPadding="true">
 
-    <ImageView
-        android:id="@+id/iv_audio_tone"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
-        android:src="@drawable/ic_audio_tone_0" />
-
-    <TextView
-        android:id="@+id/tv_audio_tone_title"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:id="@+id/ll_audio_tone"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:text="sdfdasfadsfasdfas"
-        android:paddingLeft="12dp"
-        style="@style/layout_base_text_style_12"
-        android:layout_gravity="center_vertical"
-        />
+        android:paddingVertical="8dp"
+        android:paddingHorizontal="20dp"
+        android:background="@drawable/bg_card_audio_tone_selector">
 
-    <ImageView
-        android:id="@+id/iv_audio_tone_tag"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical"
-        android:src="@drawable/ic_audio_tone_using"
-        android:paddingHorizontal="15dp"
-        android:visibility="gone"
-        />
+        <ImageView
+            android:id="@+id/iv_audio_tone"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@drawable/ic_audio_tone_3" />
 
-    <TextView
-        android:id="@+id/tv_audio_tone_selector"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/audio_tone_selector"
-        style="@style/layout_base_text_style_12"
-        android:layout_gravity="center_vertical"
-        android:paddingHorizontal="12dp"
-        android:paddingVertical="2dp"
-        android:background="@drawable/btn_selector"
-        android:visibility="visible"
-        />
+        <TextView
+            android:id="@+id/tv_audio_tone_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="test"
+            android:paddingStart="12dp"
+            style="@style/text_style_secondary_14"
+            android:layout_gravity="center_vertical"
+            />
 
-</LinearLayout>
+        <ImageView
+            android:id="@+id/iv_audio_tone_tag"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:src="@drawable/ic_checkmark_filled"
+            android:paddingHorizontal="15dp"
+            android:visibility="gone"
+            />
+
+        <TextView
+            android:id="@+id/tv_audio_tone_selector"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/audio_tone_selector"
+            style="@style/text_style_14"
+            android:layout_gravity="center_vertical"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="2dp"
+            android:visibility="visible"
+            />
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

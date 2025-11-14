@@ -5,30 +5,35 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/layout_base_dialog_background">
+    android:background="@drawable/bg_rounded_setting_dialog">
 
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/top_bar"
         android:layout_width="match_parent"
-        android:layout_height="46dp">
+        android:layout_height="46dp"
+        android:layout_marginHorizontal="20dp">
         <TextView
             android:id="@+id/title"
             app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
-            style="@style/layout_base_text_style_14"
+            style="@style/text_style_16"
             android:text="@string/setting_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
+
+        <ImageView
+            android:id="@+id/iv_close_setting"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:src="@drawable/ic_aicall_close"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@color/layout_base_iv_border"
-        />
 
     <ScrollView
         android:layout_width="match_parent"
@@ -49,33 +54,58 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:background="@drawable/btn_conversation_mode_selector"
+                    android:background="@drawable/bg_setting_type_selector"
                     android:text="@string/mode_natural_conversation"
                     android:paddingVertical="16dp"
                     android:gravity="center_horizontal"
-                    style="@style/layout_base_text_style_12"
-                    app:layout_constraintLeft_toLeftOf="parent"
-                    app:layout_constraintRight_toLeftOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent" />
+                    style="@style/text_style_selection_14" />
 
                 <TextView
                     android:id="@+id/tv_mode_push_to_talk"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:background="@drawable/btn_conversation_mode_selector"
+                    android:background="@drawable/bg_setting_type_selector"
                     android:gravity="center_horizontal"
                     android:text="@string/mode_push_to_talk"
                     android:paddingVertical="16dp"
-                    android:layout_marginLeft="16dp"
-                    style="@style/layout_base_text_style_12"
-                    app:layout_constraintLeft_toRightOf="parent"
-                    app:layout_constraintRight_toLeftOf="parent"
+                    android:layout_marginStart="16dp"
+                    style="@style/text_style_secondary_14" />
+
+            </LinearLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/cl_reporting_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingLeft="20dp"
+                android:paddingRight="20dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp"
+                android:visibility="visible">
+
+                <TextView
+                    android:id="@+id/tv_reporting_title"
+                    style="@style/text_style_16"
+                    android:text="@string/reporting_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintLeft_toLeftOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"/>
 
-            </LinearLayout>
+                <ImageView
+                    android:id="@+id/iv_reporting_issue"
+                    android:src="@drawable/ic_chevron_right_line"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintVertical_chainStyle="packed"
+                    app:layout_constraintVertical_bias="0.5"/>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/cl_latency_rate"
@@ -83,13 +113,13 @@
                 android:layout_height="wrap_content"
                 android:paddingLeft="20dp"
                 android:paddingRight="20dp"
-                android:paddingTop="8dp"
-                android:paddingBottom="8dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp"
                 android:visibility="visible">
 
                 <TextView
                     android:id="@+id/tv_latency_rate_title"
-                    style="@style/layout_base_text_style_14"
+                    style="@style/text_style_16"
                     android:text="@string/latency_rate_title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -97,14 +127,11 @@
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"/>
 
-
-                <Button
-                    android:id="@+id/btn_latency_rate"
-                    style="@style/layout_base_text_style_14"
+                <ImageView
+                    android:id="@+id/iv_latency_rate"
+                    android:src="@drawable/ic_chevron_right_line"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/btn_text_click_to_view_latency_rate"
-                    android:background="@color/layout_base_dialog_background"
                     app:layout_constraintRight_toRightOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"
@@ -138,7 +165,7 @@
                         >
                         <TextView
                             android:id="@+id/tv_voiceprint_title"
-                            style="@style/layout_base_text_style_14"
+                            style="@style/text_style_16"
                             android:text="@string/voiceprint_recognition_test_title"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -160,18 +187,22 @@
 
                     <TextView
                         android:id="@+id/tv_voiceprint_tips"
-                        style="@style/layout_base_text_style_10_gray"
+                        style="@style/text_style_tertiary_12"
                         android:text="@string/voiceprint_recognition_test_desc"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"/>
                 </LinearLayout>
                 <Switch
                     android:id="@+id/sv_voiceprint"
+                    android:shadowColor="@color/color_fill"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:thumb="@drawable/bg_switch_thumb"
+                    android:track="@drawable/bg_switch_track"
                     app:layout_constraintRight_toRightOf="parent"
                     app:layout_constraintTop_toTopOf="@id/ll_voiceprint_title"
                     app:layout_constraintBottom_toTopOf="@id/ll_voiceprint_status"
+                    android:checked="true"
                     />
                 <LinearLayout
                     android:id="@+id/ll_voiceprint_status"
@@ -224,7 +255,7 @@
                     android:orientation="vertical">
                     <TextView
                         android:id="@+id/tv_interrupt_config_title"
-                        style="@style/layout_base_text_style_14"
+                        style="@style/text_style_16"
                         android:text="@string/config_interrupt_title"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -232,7 +263,7 @@
                         />
                     <TextView
                         android:id="@+id/tv_interrupt_config_tips"
-                        style="@style/layout_base_text_style_10_gray"
+                        style="@style/text_style_tertiary_12"
                         android:text="@string/config_interrupt_tips"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"/>
@@ -241,6 +272,8 @@
                     android:id="@+id/sv_interrupt_config"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:thumb="@drawable/bg_switch_thumb"
+                    android:track="@drawable/bg_switch_track"
                     app:layout_constraintRight_toRightOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"

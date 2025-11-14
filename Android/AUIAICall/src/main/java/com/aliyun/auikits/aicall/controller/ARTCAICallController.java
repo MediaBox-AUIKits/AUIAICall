@@ -10,6 +10,8 @@ import android.util.Base64;
 import android.util.Log;
 import android.view.ViewGroup;
 
+import androidx.annotation.NonNull;
+
 import com.alivc.rtc.AliRtcEngine;
 import com.aliyun.auikits.aiagent.ARTCAICallEngine;
 import com.aliyun.auikits.aiagent.service.IARTCAICallService;
@@ -545,17 +547,8 @@ public abstract class ARTCAICallController {
                         JSONArray voiceIdList = ttsConfig.getJSONArray("VoiceIdList");
                         mAgentVoiceIdList.clear();
                         for(int i = 0; i < voiceIdList.length(); i++) {
-                            String voiceId = (String) voiceIdList.get(i);
-                            AudioToneData audioTone = new AudioToneData(voiceId, voiceId);
-                            if(i % 3 == 0)
-                            {
-                                audioTone.setIconResId(R.drawable.ic_audio_tone_0);
-                            } else if(i % 3 == 1) {
-                                audioTone.setIconResId(R.drawable.ic_audio_tone_1);
-                            } else if(i % 3 == 2) {
-                                audioTone.setIconResId(R.drawable.ic_audio_tone_2);
-                            }
-                            audioTone.setUsing(mARTCAiCallConfig.mAiCallAgentTemplateConfig.aiAgentVoiceId.equals(audioTone.getAudioToneId()));
+                            String voiceEntry = (String) voiceIdList.get(i);
+                            AudioToneData audioTone = getAudioToneData(voiceEntry, i);
                             mAgentVoiceIdList.add(audioTone);
                         }
                     }
@@ -564,6 +557,22 @@ public abstract class ARTCAICallController {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+    }
+
+    @NonNull
+    private AudioToneData getAudioToneData(String voiceEntry, int i) {
+        String[] parts = voiceEntry.split(":", 2);
+        String voiceId = parts.length > 0 ? parts[0] : voiceEntry;
+        String voiceTitle = parts.length > 1 ? parts[1] : voiceId;
+
+        AudioToneData audioTone = new AudioToneData(voiceId, voiceTitle);
+        if(i % 2 == 0) {
+            audioTone.setIconResId(R.drawable.ic_audio_tone_3);
+        } else {
+            audioTone.setIconResId(R.drawable.ic_audio_tone_4);
+        }
+        audioTone.setUsing(mARTCAiCallConfig.mAiCallAgentTemplateConfig.aiAgentVoiceId.equals(audioTone.getAudioToneId()));
+        return audioTone;
     }
 
     private String getAgentStrByType(ARTCAICallEngine.ARTCAICallAgentType type) {

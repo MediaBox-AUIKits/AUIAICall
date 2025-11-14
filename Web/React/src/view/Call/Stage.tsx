@@ -1,26 +1,31 @@
-import ControllerContext from '@/view/Call/ControlerContext';
-import { useContext, useEffect, useRef } from 'react';
-import Footer from './Footer';
-import Header from './Header';
-// import Subtitle from './Subtitle';
-import Tip from './Tip';
-
-import Avatar from './Avatar';
-import Vision from './Vision';
-import Voice from './Voice';
-
-import { useTranslation } from '@/common/i18nContext';
-import { debounce, getRootElement, isMobile } from '@/common/utils';
-import useCallStore from '@/view/Call/store';
 import ARTCAICallEngine, {
   AICallAgentError,
   AICallAgentType,
   AICallState,
   AICallVoiceprintResult,
+  JSONObject,
 } from 'aliyun-auikit-aicall';
 import { Dialog, Toast } from 'antd-mobile';
-import Connecting from './Connecting';
-import Video from './Video';
+import { useContext, useEffect, useRef } from 'react';
+
+import { useTranslation } from '@/common/i18nContext';
+import { debounce, getRootElement, isMobile } from '@/common/utils';
+import ControllerContext from 'call/ControlerContext';
+import useCallStore from 'call/store';
+
+import Header from '../components/Header';
+import { StageWrapper } from '../components/Layout';
+import Avatar from './Avatar';
+import Connecting from './components/Connecting';
+import Footer from './components/Footer';
+import Setting from './components/Setting';
+import SubtitleList from './components/SubtitleList';
+import Tip from './components/Tip';
+import VideoActor from './Video';
+import Vision from './Vision';
+import Voice from './Voice';
+
+import './stage.less';
 
 interface StageProps {
   autoCall?: boolean;
@@ -34,7 +39,6 @@ function Stage({ onStateChange, onExit, onAuthFail, limitSecond, autoCall = fals
   const controller = useContext(ControllerContext);
   const { t, e } = useTranslation();
   const callState = useCallStore((state) => state.callState);
-  const cameraMuted = useCallStore((state) => state.cameraMuted);
 
   const resumeDialogVisibleRef = useRef(false);
 
@@ -257,14 +261,14 @@ function Stage({ onStateChange, onExit, onAuthFail, limitSecond, autoCall = fals
           voiceAvatarUrl: config.AvatarUrl as string,
         });
       }
-      if (config.VoiceId) {
+      if ((config?.TtsConfig as JSONObject)?.VoiceId) {
         useCallStore.setState({
-          voiceId: config.VoiceId as string,
+          voiceId: (config.TtsConfig as JSONObject).VoiceId as string,
         });
       }
-      if (config.VoiceIdList) {
+      if ((config?.TtsConfig as JSONObject)?.VoiceIdList) {
         useCallStore.setState({
-          agentVoiceIdList: config.VoiceIdList as string[],
+          agentVoiceIdList: (config.TtsConfig as JSONObject).VoiceIdList as string[],
         });
       }
     });
@@ -317,66 +321,68 @@ function Stage({ onStateChange, onExit, onAuthFail, limitSecond, autoCall = fals
     onExit();
   };
 
-  // 已连接且是数字人或者有摄像头
-  // is avatar or vision agent or camera not muted
-  const hasVideo =
-    callState === AICallState.Connected &&
-    (controller?.agentType === AICallAgentType.AvatarAgent ||
-      controller?.agentType === AICallAgentType.VideoAgent ||
-      (controller?.agentType === AICallAgentType.VisionAgent && !cameraMuted));
-
-  let CharacterComponent = Voice;
+  let ActorComponent = Voice;
+  let title = t('agent.voice');
   if (controller?.agentType === AICallAgentType.AvatarAgent) {
-    CharacterComponent = Avatar;
+    ActorComponent = Avatar;
+    title = t('agent.avatar');
   } else if (controller?.agentType === AICallAgentType.VisionAgent) {
-    CharacterComponent = Vision;
+    ActorComponent = Vision;
+    title = t('agent.vision');
   } else if (controller?.agentType === AICallAgentType.VideoAgent) {
-    CharacterComponent = Video;
+    ActorComponent = VideoActor;
+    title = t('agent.video');
   }
 
   return (
-    <div className='stage-wrapper'>
-      <div className='stage'>
-        <Header onExit={onExit} />
-        <div className={`stage-bd  ${hasVideo ? 'has-video' : ''}`} onClick={onBodyClick}>
-          <div className='stage-statement'>{t('system.statement')}</div>
-          {/* <Subtitle /> */}
-          {callState === AICallState.Connected ? <CharacterComponent /> : <Connecting />}
-          {callState === AICallState.Connected && <Tip />}
-          <Footer onStop={stopCall} onCall={startCall} />
-        </div>
-        {callState === AICallState.Error && (
-          <Dialog
-            visible
-            getContainer={() => getRootElement()}
-            onClose={() => {
-              useCallStore.setState({
-                callState: AICallState.None,
-              });
-            }}
-            content={<div className='stage-error-message'>{useCallStore.getState().callErrorMessage}</div>}
-            actions={[
-              [
-                {
-                  key: 'close',
-                  text: t('common.close'),
-                  onClick: () => {
-                    useCallStore.setState({
-                      callState: AICallState.None,
-                    });
-                  },
-                },
-                {
-                  key: 'exit',
-                  text: t('common.exit'),
-                  onClick: stopCall,
-                },
-              ],
-            ]}
-          />
-        )}
+    <StageWrapper>
+      <Header
+        title={title}
+        onExit={onExit}
+        actions={
+          <>
+            <SubtitleList />
+            <Setting />
+          </>
+        }
+      />
+      <div className={`stage-bd`} onClick={onBodyClick}>
+        {/* <Subtitle /> */}
+        {callState === AICallState.Connected ? <ActorComponent /> : <Connecting />}
+        {callState === AICallState.Connected && <Tip />}
+        <Footer onStop={stopCall} onCall={startCall} />
       </div>
-    </div>
+      {callState === AICallState.Error && (
+        <Dialog
+          visible
+          getContainer={() => getRootElement()}
+          onClose={() => {
+            useCallStore.setState({
+              callState: AICallState.None,
+            });
+          }}
+          content={<div className='stage-error-message'>{useCallStore.getState().callErrorMessage}</div>}
+          actions={[
+            [
+              {
+                key: 'close',
+                text: t('common.close'),
+                onClick: () => {
+                  useCallStore.setState({
+                    callState: AICallState.None,
+                  });
+                },
+              },
+              {
+                key: 'exit',
+                text: t('common.exit'),
+                onClick: stopCall,
+              },
+            ],
+          ]}
+        />
+      )}
+    </StageWrapper>
   );
 }
 

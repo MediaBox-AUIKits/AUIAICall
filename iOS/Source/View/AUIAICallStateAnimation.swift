@@ -38,7 +38,8 @@ import AUIFoundation
     
     open lazy var errorView: UIImageView = {
         let view = UIImageView(frame: CGRect(x: 0, y: 0, width: 250, height: 200))
-        view.image = AUIAICallBundle.getCommonImage("ic_error")
+        view.image = AUIAICallBundle.getTemplateImage("ic_error")
+        view.tintColor = AUIAICallBundle.color_icon
         view.contentMode = .center
         view.isHidden = true
         return view

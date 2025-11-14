@@ -5,9 +5,11 @@ import {
   AICallErrorCode,
   AICallState,
 } from 'aliyun-auikit-aicall';
-import AUIAICallController from './AUIAICallController';
-import standardService from '../../service/standard';
+
 import logger from '@/common/logger';
+
+import standardService from '../../service/standard';
+import AUIAICallController from './AUIAICallController';
 
 class AUIAICallStandardController extends AUIAICallController {
   constructor(userId: string, token: string, config?: AICallEngineConfig) {

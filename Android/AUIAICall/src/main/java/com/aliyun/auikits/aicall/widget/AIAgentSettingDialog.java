@@ -41,14 +41,16 @@ public class AIAgentSettingDialog {
                 .setContentHolder(viewHolder)
                 .setGravity(Gravity.BOTTOM)
                 .setExpanded(true, DisplayUtil.dip2px(330))
-                .setOverlayBackgroundResource(android.R.color.transparent)
-                .setContentBackgroundResource(R.color.layout_base_dialog_background)
+                .setOverlayBackgroundResource(R.color.color_bg_mask_transparent_70)
+                .setContentBackgroundResource(R.drawable.bg_rounded_setting_dialog)
                 .setOnClickListener((dialog1, v) -> {
                     if(v.getId() == R.id.iv_record_voice_select) {
                         if(listener != null) {
                             listener.onClick();
                         }
-                    } else {
+                    } else if(v.getId() == R.id.iv_close_setting){
+                        dialog1.dismiss();
+                    }else {
                         aiAgentSettingDialog.onClick(v);
                     }
                 })

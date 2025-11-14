@@ -10,7 +10,7 @@ export function debounce<F extends (...args: Parameters<F>) => ReturnType<F>>(
   };
 }
 
-export const ROOT_CLASS_NAME = 'aicall-root';
+export const ROOT_CLASS_NAME = 'ai-root';
 export const getRootElement = (): HTMLElement => {
   const root = document.querySelector(`.${ROOT_CLASS_NAME}`) as HTMLElement;
   if (!root) {

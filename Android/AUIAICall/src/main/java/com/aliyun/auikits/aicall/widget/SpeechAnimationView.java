@@ -9,10 +9,10 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.PointF;
+import android.graphics.PorterDuff;
 import android.graphics.RectF;
 import android.os.SystemClock;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
@@ -77,7 +77,7 @@ public class SpeechAnimationView extends SurfaceView implements SurfaceHolder.Ca
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
         // 设置SurfaceView为透明
-        holder.setFormat(PixelFormat.TRANSPARENT);
+        holder.setFormat(PixelFormat.TRANSLUCENT);
 
         if (null == mDrawThread) {
             mDrawThread = new DrawThread(getContext(), holder);
@@ -120,7 +120,7 @@ public class SpeechAnimationView extends SurfaceView implements SurfaceHolder.Ca
         public DrawThread(Context context, SurfaceHolder surfaceHolder) {
             mContext = context;
             this.mSurfaceHolder = surfaceHolder;
-            mBackgroundColor = context.getResources().getColor(R.color.layout_base_background);
+            mBackgroundColor = Color.TRANSPARENT;
             mAssistLinePaint = new Paint();
             mAssistLinePaint.setColor(0xFF00FF00);
             mAssistLinePaint.setStyle(Paint.Style.FILL);
@@ -153,9 +153,13 @@ public class SpeechAnimationView extends SurfaceView implements SurfaceHolder.Ca
         public void setAnimationType(AnimationType mAnimationType) {
             this.mAnimationType.set(mAnimationType);
             if(mAnimationType == AnimationType.CHATBOT_THINKING) {
-                mBackgroundColor = mContext.getResources().getColor(R.color.layout_base_dialog_background);
+                mBackgroundColor = mContext.getResources().getColor(R.color.color_fill_tertiary);
             } else if(mAnimationType == AnimationType.CHATBOT_SPEAKING) {
                 mBackgroundColor = mContext.getResources().getColor(R.color.layout_base_blue);
+            } else if(mAnimationType == AnimationType.Connecting){
+                mBackgroundColor = mContext.getResources().getColor(R.color.color_bg);
+            } else {
+                mBackgroundColor = Color.TRANSPARENT;
             }
         }
 
@@ -180,8 +184,7 @@ public class SpeechAnimationView extends SurfaceView implements SurfaceHolder.Ca
                     canvas = mSurfaceHolder.lockCanvas();
                     if (canvas != null) {
                         synchronized (mSurfaceHolder) {
-                            // Clear canvas
-                            canvas.drawColor(mBackgroundColor);
+                            canvas.drawColor(mBackgroundColor, PorterDuff.Mode.SRC);
 
                             AnimationDrawer animationDrawer = mAnimationDrawers.get(runningAnimationType);
                             animationDrawer.updateProgress(animationProgress);
@@ -217,7 +220,7 @@ public class SpeechAnimationView extends SurfaceView implements SurfaceHolder.Ca
         private List<AnimationDrawer> mChainDrawerList = new ArrayList<>();
         public AnimationDrawer() {
             mPaint = new Paint();
-            mPaint.setColor(Color.WHITE);
+            mPaint.setColor(getContext().getResources().getColor(R.color.color_fill));
             mPaint.setStyle(Paint.Style.FILL);
             mPaint.setAntiAlias(true);
         }
@@ -267,7 +270,6 @@ public class SpeechAnimationView extends SurfaceView implements SurfaceHolder.Ca
 
         public WaitingAnimationDrawer(Bitmap waitingBmp) {
             super();
-            mWaitingBmp = waitingBmp;
         }
 
         @Override

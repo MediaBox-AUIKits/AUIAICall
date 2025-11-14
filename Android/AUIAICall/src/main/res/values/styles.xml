@@ -104,5 +104,162 @@
         <item name="android:backgroundDimEnabled">false</item>
     </style>
 
+    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight">
+        <item name="colorPrimary">@color/color_primary</item>
+    </style>
+
+    <style name="text_style_disabled_11">
+        <item name="android:textSize">11sp</item>
+        <item name="android:textColor">@color/color_text_disabled</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="text_style_12">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/color_text</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="text_style_selection_12">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/color_text_selection</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="text_style_secondary_12">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/color_text_secondary</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="text_style_tertiary_12">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/color_text_tertiary</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="text_style_identical_12">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/color_text_identical</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="text_style_identical_14">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/color_text_identical</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="text_style_identical_16">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/color_text_identical</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="text_style_14">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/color_text</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="text_style_selection_14">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/color_text_selection</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="text_style_secondary_14">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/color_text_secondary</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="text_style_secondary_16">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/color_text_secondary</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="text_style_tertiary_14">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/color_text_tertiary</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="text_style_tertiary_16">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/color_text_tertiary</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="text_style_14_bold">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/color_text</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+
+    <style name="text_style_16">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/color_text</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="text_style_error_12">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/color_error</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="text_style_error_14">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/color_error</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="text_style_error_16">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/color_error</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="text_style_inverse_12">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/color_text_inverse</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="text_style_inverse_14">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/color_text_inverse</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+    <style name="text_style_inverse_16">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/color_text_inverse</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="rounded_corner_style">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">10dp</item>
+    </style>
+
+
+    <style name="TopSemiCircleShape">
+        <item name="cornerSizeTopRight">50%</item>
+        <item name="cornerSizeTopLeft">50%</item>
+        <item name="cornerSizeBottomRight">0dp</item>
+        <item name="cornerSizeBottomLeft">0dp</item>
+    </style>
+
+    <style name="LeftRoundedCornerStyle" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeTopLeft">8dp</item>
+        <item name="cornerSizeBottomLeft">8dp</item>
+        <item name="cornerSizeTopRight">0dp</item>
+        <item name="cornerSizeBottomRight">0dp</item>
+    </style>
+
     adapter
 </resources>

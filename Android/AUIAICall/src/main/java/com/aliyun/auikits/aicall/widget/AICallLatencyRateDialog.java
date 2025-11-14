@@ -43,10 +43,10 @@ public class AICallLatencyRateDialog {
                 .setContentHolder(viewHolder)
                 .setGravity(Gravity.BOTTOM)
                 .setOverlayBackgroundResource(android.R.color.transparent)
-                .setContentBackgroundResource(R.color.layout_base_dialog_background)
+                .setContentBackgroundResource(R.color.color_bg)
                 .setExpanded(true, ViewGroup.LayoutParams.MATCH_PARENT)
                 .setOnClickListener((dialog1, v) -> { // 处理按钮点击事件
-                    if (v.getId() == R.id.btn_back) {
+                    if (v.getId() == R.id.btn_back || v.getId() == R.id.btn_close) {
                         dialog1.dismiss(); // 关闭对话框
                     }
                     latencyDialog.onClick(v); // 调用内部的点击逻辑

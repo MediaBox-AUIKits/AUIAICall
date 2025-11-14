@@ -1,0 +1,235 @@
+.footer {
+  position: relative;
+  z-index: 4;
+  min-height: 126px;
+  padding: 0 24px;
+  box-sizing: border-box;
+  text-align: center;
+  user-select: none;
+  display: flex;
+  flex-direction: column;
+  margin-top: 16px;
+
+  ._actions {
+    display: flex;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+
+    li {
+      position: relative;
+      margin: 0 20px;
+      width: 60px;
+    }
+    .adm-button {
+      background-color: var(--ai-color-fill-secondary);
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      &::before {
+        border-radius: 50%;
+      }
+      border: 0.5px solid var(--ai-color-border-secondary);
+
+      &.is-muted {
+        color: var(--ai-color-text-inverse);
+        background-color: var(--ai-color-border-selection);
+      }
+    }
+
+    ._call {
+      .adm-button {
+        color: var(--ai-color-icon-identical);
+        background-color: var(--ai-color-red);
+        border: 0.5px solid var(--ai-color-red);
+      }
+      &.is-none .adm-button {
+        color: var(--ai-color-icon);
+        background-color: var(--ai-color-border-secondary);
+        border: 0.5px solid var(--ai-color-border-secondary);
+      }
+    }
+  }
+
+  ._pushtotalk {
+    ._push-btn {
+      position: relative;
+      z-index: 5;
+      max-width: 300px;
+      margin: 16px auto;
+      font-size: 16px;
+      font-weight: 500;
+      line-height: 24px;
+      padding: 8px 16px;
+      border: 1px solid var(--ai-color-border-secondary);
+      background-color: var(--ai-color-fill-secondary);
+    }
+
+    ._icon {
+      display: none;
+      height: 24px;
+      vertical-align: bottom;
+      svg {
+        margin-top: -2px;
+      }
+    }
+
+    &.is-pushing {
+      ._text {
+        display: none;
+      }
+      ._icon {
+        display: inline-block;
+      }
+      ._push-btn {
+        color: var(--ai-color-text-inverse);
+        background-color: var(--ai-color-fill-selection);
+      }
+    }
+
+    &.is-will-cancel {
+      ._pushtotalk-pushing {
+        ._tip-btn {
+          color: var(--ai-color-icon-identical);
+          background-color: var(--ai-color-error);
+        }
+      }
+    }
+  }
+
+  ._pushtotalk-mask {
+    display: none;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: 0;
+    z-index: 4;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+  }
+
+  ._pushtotalk-pushing {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 4;
+
+    ._tip-btn {
+      width: 60px;
+      height: 60px;
+      color: var(--ai-color-icon);
+      background-color: var(--ai-color-fill-secondary);
+      border-radius: 50%;
+    }
+
+    ._tip {
+      margin: 24px 0 12px;
+      color: var(--ai-color-text-identical);
+    }
+
+    ._bg {
+      width: 100%;
+      position: relative;
+      padding-top: 160px;
+      overflow: hidden;
+    }
+
+    ._arc {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      width: 716px;
+      height: 716px;
+      background: var(--ai-color-bg-elevated);
+      border: 3px solid var(--ai-color-boder-tertiary);
+      border-radius: 50%;
+      margin-left: -358px;
+    }
+  }
+
+  ._statement {
+    margin: 8px 0;
+    color: var(--ai-color-text-disabled);
+    font-size: 11px;
+    line-height: 16px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .footer {
+    margin-top: 0;
+    ._actions {
+      &.is-multi {
+        li {
+          margin: 0 5px;
+        }
+      }
+    }
+    ._pushtotalk {
+      .adm-button {
+        max-width: none;
+      }
+
+      &.is-pushing {
+        ._pushtotalk-mask {
+          display: block;
+        }
+        ._pushtotalk-pushing {
+          display: flex;
+        }
+        ._push-btn {
+          color: var(--ai-color-text);
+          background-color: transparent;
+          border-color: transparent;
+          &::before {
+            display: none;
+          }
+        }
+      }
+    }
+  }
+}
+
+@media screen and (min-width: 769px) {
+  .footer {
+    margin-top: 50px;
+    ._actions {
+      li {
+        margin: 0 40px;
+      }
+      .adm-button {
+        width: 72px;
+        height: 72px;
+        svg {
+          width: 28px;
+          height: 28px;
+        }
+      }
+    }
+  }
+}
+
+@media screen and (min-width: 1537px) {
+  .footer {
+    margin-top: 60px;
+    min-height: 156px;
+    ._actions {
+      li {
+        margin: 0 50px;
+      }
+      .adm-button {
+        width: 90px;
+        height: 90px;
+        svg {
+          width: 36px;
+          height: 36px;
+        }
+      }
+    }
+  }
+}

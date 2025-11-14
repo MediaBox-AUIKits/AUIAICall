@@ -27,6 +27,10 @@ typedef NS_ENUM(NSUInteger, AVProgressHUDShowPos) {
 @property (nonatomic, copy) NSString *labelText;
 @property (nonatomic, assign) AVProgressHUDShowPos position;
 
+@property (nonatomic, strong, readonly) UILabel *label;
+@property (nonatomic, strong, readonly) UIImageView *iconView;
+@property (nonatomic, strong, readonly) UIActivityIndicatorView *activityView;
+
 + (AVProgressHUD *)ShowHUDAddedTo:(UIView *)view animated:(BOOL)animated;
 + (AVProgressHUD *)ShowMessage:(NSString *)message inView:(UIView *)view;
 + (BOOL)HideHUDForView:(UIView *)view animated:(BOOL)animated;

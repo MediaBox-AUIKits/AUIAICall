@@ -5,16 +5,15 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/layout_base_background">
+    android:background="@android:color/transparent">
 
-    <ImageView
+    <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/iv_entrance_preview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:src="@drawable/bg_entrance_voice_agent"
-        android:layout_marginTop="76dp"
-        android:layout_marginBottom="44dp"
-        />
-
+        android:scaleType="centerCrop"
+        app:shapeAppearanceOverlay="@style/LeftRoundedCornerStyle"
+        android:adjustViewBounds="true"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

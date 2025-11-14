@@ -113,7 +113,6 @@
 * Android&iOS&Web：支持通话过程中更新百炼业务参数
 * Android&iOS&Web：支持语义断句
 
-
 ## v2.7.0
 发布时间：2025-08-06
 * Android&iOS&Web：新增AI电话呼入
@@ -124,3 +123,7 @@
 发布时间：2025-09-06
 * Android&iOS&Web：AI生成提示语
 * Android&iOS&Web：代码优化及bug修复
+
+## v2.9.0
+发布时间：2025-10-06
+* Android&iOS&Web：全新UI设计及交互

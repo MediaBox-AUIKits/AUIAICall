@@ -24,6 +24,7 @@ public class SettingStorage {
     public static final String KEY_BOOT_ENABLE_PUSH_TO_TALK = "KEY_BOOT_ENABLE_PUSH_TO_TALK";
     public static final String KEY_BOOT_ENABLE_VOICE_PRINT = "KEY_BOOT_ENABLE_VOICE_PRINT";
     public static final String KEY_SHARE_BOOT_USE_DEMO_APP_SERVER = "KEY_SHARE_BOOT_USE_DEMO_APP_SERVER";
+    public static final String KEY_CUSTOM_AGENT_TEXT_INPUT_MODE = "KEY_CUSTOM_AGENT_TEXT_INPUT_MODE";
     public static final String KEY_BOOT_USER_EXTEND_DATA = "KEY_BOOT_USER_EXTEND_DATA";
     public static final String KEY_BOOT_ENABLE_EMOTION = "KEY_BOOT_ENABLE_EMOTION";
     public static final String KEY_BOOT_ENABLE_AUDIO_DELAY_INFO = "KEY_BOOT_ENABLE_AUDIO_DELAY_INFO";
@@ -72,6 +73,9 @@ public class SettingStorage {
     public static final String KEY_BOOT_PRE_CONNECT_AUDIO_URL = "KEY_BOOT_PRE_CONNECT_AUDIO_URL";
     public static final String KEY_BOOT_OUTPUT_MIN_LENGTH = "KEY_BOOT_OUTPUT_MIN_LENGTH";
     public static final String KEY_BOOT_OUTPUT_MAX_DELAY = "KEY_BOOT_OUTPUT_MAX_DELAY";
+    public static final String KEY_BOOT_AUTO_TEST_AGENT = "KEY_BOOT_AUTO_TEST_AGENT";
+    public static final String KEY_BOOT_EXPERIMENTAL_CONFIG = "KEY_BOOT_EXPERIMENTAL_CONFIG";
+
 
 
     public static final boolean DEFAULT_DEPOSIT_SWITCH = BuildConfig.TEST_ENV_MODE ?

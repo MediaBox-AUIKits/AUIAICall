@@ -1,7 +1,7 @@
 import { Button, SafeArea } from 'antd-mobile';
-import { BackWithLineSVG } from '../Call/Icons';
+import { useState } from 'react';
 
-import './header.less';
+import { backWithLineSVG } from '../Call/components/Icons';
 
 
 function Header({
@@ -13,12 +13,13 @@ function Header({
   reqId?: string;
   onExit: () => void;
 }) {
+
   return (
     <>
       <SafeArea position='top' />
       <div className='header pstn-header'>
         <Button className='_back-btn' onClick={onExit}>
-          {BackWithLineSVG}
+          {backWithLineSVG}
         </Button>
         <span className='_title'>{title}</span>
         <div className='_gap'></div>

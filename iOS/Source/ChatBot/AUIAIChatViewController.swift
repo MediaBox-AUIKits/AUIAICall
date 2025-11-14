@@ -14,7 +14,7 @@ import MobileCoreServices
 import Photos
 import PhotosUI
 
-@objcMembers open class AUIAIChatViewController: AVBaseCollectionViewController {
+@objcMembers open class AUIAIChatViewController: UIViewController {
     
     // 初始化
     public init(userInfo: ARTCAIChatUserInfo, agentInfo: ARTCAIChatAgentInfo) {
@@ -83,39 +83,39 @@ import PhotosUI
     open override func viewDidLoad() {
         super.viewDidLoad()
         
-        self.view.backgroundColor = AVTheme.bg_medium
-        self.headerView.backgroundColor = AVTheme.bg_medium
-        self.titleView.font = AVTheme.mediumFont(14)
+        self.view.backgroundColor = AUIAIChatBundle.color_bg
+        self.view.addSubview(self.bgLineView)
+
+        self.stateLabel.frame = CGRect(x: 24, y: UIView.av_safeTop, width: self.view.av_width - 48, height: 48)
+        self.view.addSubview(self.stateLabel)
         
-        self.headerView.addSubview(self.agentBtn)
-        self.agentBtn.sizeToFit()
-        self.agentBtn.frame = CGRectMake(self.backButton.av_right + 12, UIView.av_safeTop,self.agentBtn.av_width, 44)
+        self.backBtn.sizeToFit()
+        self.backBtn.frame = CGRect(x: 24, y: UIView.av_safeTop, width: self.backBtn.av_width + 12, height: 48)
+        self.view.addSubview(self.backBtn)
         
-        self.menuButton.setImage(AUIAIChatBundle.getCommonImage("ic_setting"), for: .normal)
-        self.menuButton.addTarget(self, action: #selector(onSettingBtnClicked), for: .touchUpInside)
-        #if AICALL_ENABLE_FEEDBACK
-         self.reportBtn = self.setupReportBtn()
-        #endif
+        self.settingBtn.frame = CGRect(x: self.view.av_width - 6 - 44, y: UIView.av_safeTop, width: 44, height: 44)
+        
+        self.view.addSubview(self.contentView)
         
         self.contentView.addSubview(self.bottomView)
-        self.bottomView.frame = CGRect(x: 0, y: self.contentView.av_height - (68 + UIView.av_safeBottom), width: self.contentView.av_width, height: 68 + UIView.av_safeBottom)
+        self.bottomView.frame = CGRect(x: 0, y: self.contentView.av_height - self.bottomView.normalHeight, width: self.contentView.av_width, height: self.bottomView.normalHeight)
         
-        self.aiGenTipsLabel.sizeToFit()
-        self.aiGenTipsLabel.center = CGPoint(x: self.contentView.av_width / 2.0, y: self.bottomView.av_top - 9 - self.aiGenTipsLabel.av_height / 2.0)
-        self.contentView.insertSubview(self.aiGenTipsLabel, belowSubview: self.bottomView)
-        
-        self.collectionView.av_height = self.bottomView.av_top
+        self.contentView.addSubview(self.collectionView)
+        self.collectionView.frame = CGRect(x: 0, y: 0, width: self.contentView.av_width, height: self.bottomView.av_top)
         self.collectionView.register(AUIAIChatMessageTextCell.self, forCellWithReuseIdentifier: "TextCell")
         self.collectionView.register(AUIAIChatMessageUserAttachmentCell.self, forCellWithReuseIdentifier: "UserAttachmentCell")
         self.collectionView.register(AUIAIChatMessageAgentTextCell.self, forCellWithReuseIdentifier: "AgentTextCell")
+        self.contentView.sendSubviewToBack(self.collectionView)
         
         let mjHeader = MJRefreshNormalHeader(refreshingTarget: self, refreshingAction: #selector(onFetchHistoryMessage))
         mjHeader.lastUpdatedTimeLabel?.isHidden = true
         mjHeader.stateLabel?.isHidden = true
         mjHeader.loadingView?.style = .white
         self.collectionView.mj_header = mjHeader
-        
-        self.view.sendSubviewToBack(self.contentView)
+                
+        self.view.addSubview(self.aiGenTipsLabel)
+        self.aiGenTipsLabel.sizeToFit()
+        self.aiGenTipsLabel.center = CGPoint(x: self.view.av_width / 2.0, y: self.view.av_height - (UIView.av_safeBottom > 0 ? UIView.av_safeBottom - 16 : 0) - self.aiGenTipsLabel.av_height / 2.0)
         
         NotificationCenter.default.addObserver(self, selector: #selector(applicationWillResignActive), name: UIApplication.willResignActiveNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(applicationDidBecomeActive), name: UIApplication.didBecomeActiveNotification, object: nil)
@@ -137,6 +137,10 @@ import PhotosUI
                 self.collectionView.reloadData()
             }
         }
+        
+#if DEMO_FOR_DEBUG
+        self.setupDebug()
+#endif
     }
     
     open override func viewWillDisappear(_ animated: Bool) {
@@ -157,41 +161,71 @@ import PhotosUI
         return .portrait
     }
     
-    open override var preferredStatusBarStyle: UIStatusBarStyle {
-        return .lightContent
-    }
-    
-    open override func disableInteractivePopGesture() -> Bool {
-        // 有附件上传时，禁止右滑关闭
-        return self.editingTextView.sendAttachmentsView != nil
-    }
-    
-    open override func goBack() {
-        self.hideEditingTextView(destroy: true)
-        super.goBack()
-    }
-    
-    open lazy var agentBtn: UIButton = {
-        let btn = UIButton()
-        btn.imageEdgeInsets = UIEdgeInsets(top: 8, left: 0, bottom: 8, right: 0)
-        btn.titleEdgeInsets = UIEdgeInsets(top: 0, left: 8, bottom: 0, right: -8)
-        btn.titleLabel?.font = AVTheme.mediumFont(14)
-        btn.setTitle(AUIAIChatBundle.getString("XiaoYun"), for: .normal)
-        btn.setTitleColor(AVTheme.text_strong, for: .normal)
-        btn.setImage(AUIAIChatBundle.getCommonImage("ic_avatar"), for: .normal)
-        btn.imageView?.contentMode = .scaleAspectFit
-        btn.contentHorizontalAlignment = .left
-        btn.addTarget(self, action: #selector(onAgentBtnClicked), for: .touchUpInside)
+    open lazy var backBtn: AVBlockButton = {
+        let btn = AVBlockButton(frame: CGRect.zero)
+        btn.setImage(AUIAIChatBundle.getTemplateImage("ic_back"), for: .normal)
+        btn.tintColor = AUIAIChatBundle.color_text
+        btn.setTitle(AUIAIChatBundle.getString("Chat"), for: .normal)
+        btn.setTitleColor(AUIAIChatBundle.color_text, for: .normal)
+        btn.titleLabel?.font = AVTheme.mediumFont(16)
+        btn.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 12)
+        btn.clickBlock = { [weak self] sender in
+            self?.goBack()
+        }
         return btn
+    }()
+    
+    open lazy var bgLineView: AUIAICallBgLineView = {
+        let view = AUIAICallBgLineView(frame: self.view.bounds, gradient: true)
+        return view
+    }()
+    
+    open lazy var stateLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = AUIAIChatBundle.color_text
+        label.textAlignment = .center
+        label.font = AVTheme.regularFont(12)
+        label.isUserInteractionEnabled = false
+        return label
+    }()
+    
+    open lazy var settingBtn: UIButton = {
+        let btn = UIButton()
+        btn.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
+        btn.setImage(AUIAIChatBundle.getTemplateImage("ic_setting"), for: .normal)
+        btn.tintColor = AUIAIChatBundle.color_icon
+        btn.addTarget(self, action: #selector(onSettingBtnClicked), for: .touchUpInside)
+        self.view.addSubview(btn)
+        return btn
+    }()
+    
+    open lazy var contentView: UIView = {
+        let top = UIView.av_safeTop + 48
+        let height = self.view.av_height - top
+        let view = UIView(frame: CGRect(x: 0, y: top, width: self.view.av_width, height:height))
+        return view
+    }()
+    
+    open lazy var collectionView: UICollectionView = {
+        let layout = UICollectionViewFlowLayout()
+        layout.scrollDirection = .vertical
+        let view = UICollectionView(frame: CGRect.zero, collectionViewLayout: layout)
+        view.backgroundColor = .clear
+        view.dataSource = self
+        view.delegate = self
+        view.register(AUIAICallSubtitleCell.self, forCellWithReuseIdentifier: "cell")
+        view.showsHorizontalScrollIndicator = false
+        return view
     }()
     
     open lazy var aiGenTipsLabel: UILabel = {
         let label = UILabel()
-        label.textColor = AVTheme.text_ultraweak
+        label.textColor = AUIAIChatBundle.color_text_tertiary
         label.textAlignment = .center
-        label.font = AVTheme.regularFont(12)
+        label.font = AVTheme.regularFont(11)
         label.text = AUIAIChatBundle.getString("Content generated by AI, for reference only.")
         label.isUserInteractionEnabled = false
+        self.view.addSubview(label)
         return label
     }()
     
@@ -299,14 +333,12 @@ import PhotosUI
         }
         return view
     }()
-    
-    open var reportBtn: UIButton? = nil
-    
+        
     open var menuView: AUIAIChatMessageCellMenu? = nil
     private func showMenuView(position: CGPoint, item: AUIAIChatMessageItem) {
         if self.menuView == nil {
             let menuView = AUIAIChatMessageCellMenu(frame: self.view.bounds)
-            menuView.deleteBtn.action = { [weak self] btn in
+            menuView.deleteBtn.clickBlock = { [weak self] btn in
                 guard let self = self else { return }
                 if let item = self.menuView?.item {
                     self.deleteMessage(item: item)
@@ -324,6 +356,16 @@ import PhotosUI
     }
     
     open var playMessageLoadingView: UIView? = nil
+    
+    open func goBack() {
+        self.hideEditingTextView(destroy: true)
+        if let nv = self.navigationController {
+            nv.popViewController(animated: true)
+        }
+        else {
+            self.dismiss(animated: true)
+        }
+    }
     
     private func tryStartCall(agentType: ARTCAICallAgentType) {
         if self.engine.state != .Connected {
@@ -495,9 +537,7 @@ import PhotosUI
     private func setPlayMessageLoadingViewVisible(visible: Bool) {
         if visible {
             self.setPlayMessageLoadingViewVisible(visible: false)
-            let toast = AVToastView.show(AUIAIChatBundle.getString("Generating speech reading..."), view: self.view, position: .mid)
-            toast.backgroundColor = AVTheme.bg_weak
-            self.playMessageLoadingView = toast
+            self.playMessageLoadingView = self.view.aicall_showToast(AUIAIChatBundle.getString("Generating speech reading..."))
         }
         else {
             self.playMessageLoadingView?.removeFromSuperview()
@@ -506,17 +546,19 @@ import PhotosUI
     }
     
     private func refreshEngineState() {
+        self.stateLabel.textColor = AUIAIChatBundle.color_text
         if self.engine.state == .Init {
-            self.titleView.text = AUIAIChatBundle.getString("Not Connected")
+            self.stateLabel.text = AUIAIChatBundle.getString("Not Connected")
         }
         else if self.engine.state == .Connecting {
-            self.titleView.text = AUIAIChatBundle.getString("Connecting")
+            self.stateLabel.text = AUIAIChatBundle.getString("Connecting")
         }
         else if self.engine.state == .Disconnect {
-            self.titleView.text = AUIAIChatBundle.getString("Disconnected")
+            self.stateLabel.text = AUIAIChatBundle.getString("Disconnected")
+            self.stateLabel.textColor = AUIAIChatBundle.danger_strong
         }
         else {
-            self.titleView.text = nil
+            self.stateLabel.text = nil
         }
     }
     
@@ -541,8 +583,7 @@ import PhotosUI
     }
     
     private func showToast(_ text: String) {
-        let toast = AVToastView.show(text, view: self.view, position: .mid)
-        toast.backgroundColor = AVTheme.bg_weak
+        self.view.aicall_showToast(text)
     }
     
     private func asyncScrollLastMessage(ani: Bool) {
@@ -558,7 +599,7 @@ import PhotosUI
     }
     
     private func getAgentCellMaxWidth() -> CGFloat {
-        return self.collectionView.av_width - 40.0
+        return self.collectionView.av_width - 48.0
     }
 
     private var listMessage: [AUIAIChatMessageItem] = []
@@ -580,6 +621,15 @@ import PhotosUI
     }()
 }
 
+extension AUIAIChatViewController: AVUIViewControllerInteractivePopGesture {
+    
+    open func disableInteractivePopGesture() -> Bool {
+        // 有附件上传时，禁止右滑关闭
+        return self.editingTextView.sendAttachmentsView != nil
+    }
+    
+}
+
 // 处理附件
 extension AUIAIChatViewController: UIImagePickerControllerDelegate, UINavigationControllerDelegate, PHPickerViewControllerDelegate {
     
@@ -593,6 +643,7 @@ extension AUIAIChatViewController: UIImagePickerControllerDelegate, UINavigation
             }
         }
         self.editingTextView.presentOnView(parent: self.view, isAudioMode: self.bottomView.isAudioMode, isEditing: item == nil)
+        self.view.bringSubviewToFront(self.aiGenTipsLabel)
     }
     
     private func hideEditingTextView(destroy: Bool) {
@@ -626,7 +677,7 @@ extension AUIAIChatViewController: UIImagePickerControllerDelegate, UINavigation
             }
             sendAttachmentsView.uploadFailureBlock = { [weak self] item in
                 guard let self = self else { return }
-                AVToastView.show(AUIAIChatBundle.getString("Failed to upload image") , view: self.view, position: .mid)
+                self.showToast(AUIAIChatBundle.getString("Failed to upload image"))
             }
             self.editingTextView.sendAttachmentsView = sendAttachmentsView
             self.showEditingTextView(item: item)
@@ -741,18 +792,24 @@ extension AUIAIChatViewController: UIImagePickerControllerDelegate, UINavigation
     }
 }
 
-extension AUIAIChatViewController {
+extension AUIAIChatViewController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     
-    open override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+    open func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return self.listMessage.count
     }
     
-    override open func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
-        return UIEdgeInsets(top: 20, left: 20, bottom: 20, right: 20)
+    open func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
+        return UIEdgeInsets(top: 24, left: 24, bottom: 24, right: 24)
     }
     
-    open override func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+    public func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
+        return 16.0
+    }
+    
+    open func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         let item = self.listMessage[indexPath.row]
+        item.isShowAction = self.canShowActionView(item: item)
+
         if item.displaySize == nil {
             if item.isLeft {
                 AUIAIChatMessageAgentTextCell.computeAgentSize(item: item, maxWidth: self.getAgentCellMaxWidth())
@@ -773,10 +830,10 @@ extension AUIAIChatViewController {
             self.scrollToLast = 0
         }
         
-        return CGSize(width: self.getAgentCellMaxWidth(), height: item.displaySize?.height ?? 0)
+        return CGSize(width: self.getAgentCellMaxWidth(), height: (item.displaySize?.height ?? 0) + (item.isShowAction == true ? 36.0 : 0.0))
     }
         
-    open override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+    open func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let item = self.listMessage[indexPath.row]
         if item.message.messageType == .Text {
             var textCell: AUIAIChatMessageTextCell? = nil
@@ -836,31 +893,41 @@ extension AUIAIChatViewController {
         return UICollectionViewCell()
     }
     
-    open override func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
+    open func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
         debugPrint("scrollViewWillBeginDragging")
         self.canScrollToLast = false
         NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(enableScrollToLast), object: nil)
     }
     
-    open override func scrollViewDidScroll(_ scrollView: UIScrollView) {
+    open func scrollViewDidScroll(_ scrollView: UIScrollView) {
 
     }
     
-    open override func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
+    open func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
         debugPrint("scrollViewDidEndDragging decelerate: \(decelerate)")
         self.perform(#selector(enableScrollToLast), with: nil, afterDelay: 3.0)
     }
     
-    open override func scrollViewWillBeginDecelerating(_ scrollView: UIScrollView) {
+    open func scrollViewWillBeginDecelerating(_ scrollView: UIScrollView) {
         debugPrint("scrollViewWillBeginDecelerating")
     }
     
-    open override func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+    open func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
         debugPrint("scrollViewDidEndDecelerating")
     }
     
     @objc func enableScrollToLast() {
         self.canScrollToLast = true
+    }
+    
+    func canShowActionView(item: AUIAIChatMessageItem) -> Bool {
+        var showActionView = false
+        if item == self.listMessage.last && item.isLeft == true {
+            showActionView = item.message.messageState == .Interrupted
+            || item.message.messageState == .Failed
+            || item.message.messageState == .Finished
+        }
+        return showActionView
     }
 }
 
@@ -885,13 +952,13 @@ extension AUIAIChatViewController {
         panel.applyPlayBlock = { [weak self] item in
             self?.currentVoiceId = item.voiceId
         }
-        panel.show(on: self.view, with: .clickToClose)
-    }
-    
-    @objc open func onAgentBtnClicked() {
-#if DEMO_FOR_DEBUG
-        self.showDebugInfo()
+        panel.clickIssueReportBlock = { [weak self] panel in
+#if AICALL_ENABLE_FEEDBACK
+            panel.hide()
+            self?.av_presentFullScreenViewController(AUIAICallReportViewController(), animated: true)
 #endif
+        }
+        panel.show(on: self.view, with: .clickToClose)
     }
     
     @objc private func onFetchHistoryMessage() {
@@ -970,6 +1037,9 @@ extension AUIAIChatViewController: ARTCAIChatEngineDelegate {
             return
         }
         
+        self.stateLabel.text = AUIAIChatBundle.getString("Disconnected")
+        self.stateLabel.textColor = AUIAIChatBundle.danger_strong
+        
         var msg = AUIAIChatBundle.getString("An error occurred, connection has been disconnected")
         if let code = error.aicall_code {
             if code == .TokenExpired {
@@ -985,12 +1055,12 @@ extension AUIAIChatViewController: ARTCAIChatEngineDelegate {
                 msg = AUIAIChatBundle.getString("The current user may be logged in on another device, connection has been disconnected")
             }
         }
-        self.titleView.text = AUIAIChatBundle.getString("Disconnected")
-        self.titleView.textColor = AUIAIChatBundle.danger_strong
         
         if let navController = self.navigationController {
             if navController.visibleViewController == self {
-                AVAlertController.show(msg, vc: self)
+                AVAlertController.show(withTitle: nil, message: msg, needCancel: false) { cancel in
+                    self.goBack()
+                }
                 return
             }
         }
@@ -1073,7 +1143,7 @@ extension AUIAIChatViewController: ARTCAIChatEngineDelegate {
     
     public func onReceivedCustomMessage(text: String) {
         // 在这里处理自定义消息
-        AVToastView.show(String(format: AUIAICallBundle.getString("Received Custom Message: %@"), text) , view: self.view, position: .mid)
+        self.showToast(String(format: AUIAIChatBundle.getString("Received Custom Message: %@"), text))
     }
 }
 
@@ -1161,26 +1231,22 @@ extension AUIAIChatViewController {
     }
 }
 
-#if AICALL_ENABLE_FEEDBACK
-extension AUIAIChatViewController {
-    func setupReportBtn() -> UIButton? {
-        let btn = AVBlockButton()
-        btn.titleLabel?.font = AVTheme.regularFont(12)
-        btn.setTitle(AUIAIChatBundle.getString("Report Issues"), for: .normal)
-        btn.setTitleColor(AVTheme.text_weak, for: .normal)
-        btn.clickBlock = { [weak self] btn in
-            self?.navigationController?.pushViewController(AUIAICallReportViewController(), animated: true)
-        }
-        self.headerView.addSubview(btn)
-        btn.sizeToFit()
-        btn.center = CGPoint(x: self.menuButton.av_left - 24 - btn.av_width / 2, y: self.menuButton.av_centerY)
-        return btn
-    }
-}
-#endif
 
 #if DEMO_FOR_DEBUG
 extension AUIAIChatViewController {
+    
+    func setupDebug() {
+        let debugBtn = AVBlockButton(frame: CGRect.zero)
+        debugBtn.setTitle("Debug", for: .normal)
+        debugBtn.setTitleColor(AUIAIMainBundle.color_text, for: .normal)
+        debugBtn.backgroundColor = AUIAIMainBundle.color_bg_elevated
+        debugBtn.clickBlock = {[weak self] sender in
+            self?.showDebugInfo()
+        }
+        debugBtn.sizeToFit()
+        debugBtn.center = CGPoint(x: self.settingBtn.av_left - 16 - debugBtn.av_width / 2.0, y: UIView.av_safeTop + 22 )
+        self.view.addSubview(debugBtn)
+    }
     
     func showDebugInfo() {
         

@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary -->
+    <color name="color_primary_bg">#457AFF</color>
+    <color name="color_primary_bg_hover">#1B58F4</color>
+    <color name="color_primary_border">#457AFF</color>
+    <color name="color_primary_border_hover">#1B58F4</color>
+    <color name="color_primary_hover">#1B58F4</color>
+    <color name="color_primary">#457AFF</color>
+    <color name="color_primary_active">#1752E4</color>
+    <color name="color_primary_text_hover">#1B58F4</color>
+    <color name="color_primary_text">#457AFF</color>
+    <color name="color_primary_text_active">#1752E4</color>
+
+    <!-- Text & icons -->
+    <color name="color_text">#FFFFFF</color>
+    <color name="color_text_secondary">#D8D8D8</color>
+    <color name="color_text_tertiary">#AAAAAA</color>
+    <color name="color_text_disabled">#808080</color>
+    <color name="color_text_inverse">#111111</color>
+    <color name="color_text_identical">#FFFFFF</color>
+    <color name="color_text_selection">#FFFFFF</color>
+
+    <color name="color_link">#457AFF</color>
+    <color name="color_link_hover">#1B58F4</color>
+<!--    <color name="color_link_selection">-</color>-->
+    <color name="color_link_active">#1752E4</color>
+
+    <color name="color_icon">#FFFFFF</color>
+    <color name="color_icon_secondary">#D8D8D8</color>
+    <color name="color_icon_tertiary">#AAAAAA</color>
+    <color name="color_icon_disabled">#808080</color>
+    <color name="color_icon_inverse">#111111</color>
+    <color name="color_icon_identical">#FFFFFF</color>
+<!--    <color name="color_icon_hover"></color>-->
+    <color name="color_icon_selection">#FFFFFF</color>
+
+    <!-- Borders & dividers -->
+    <color name="color_border">#434343</color>
+    <color name="color_border_secondary">#333333</color>
+    <color name="color_border_tertiary">#202020</color>
+    <color name="color_border_identical">#b3333333</color>
+    <color name="color_border_selection">#FFFFFF</color>
+
+    <!-- Backgrounds -->
+    <color name="color_bg">#000000</color>
+    <color name="color_bg_elevated">#111111</color>
+    <color name="color_bg_mask">#202020</color>
+
+    <!-- Fill -->
+    <color name="color_fill">#FFFFFF</color>
+    <color name="color_fill_secondary">#202020</color>
+    <color name="color_fill_tertiary">#202020</color>
+    <color name="color_fill_quaternary">#333333</color>
+    <color name="color_fill_disabled">#434343</color>
+    <color name="color_fill_primary">#457AFF</color>
+    <color name="color_fill_toast_identical">#b3202020</color>
+    <color name="color_fill_switch_identical">#FFFFFF</color>
+    <color name="color_fill_selection">#F6F6F6</color>
+
+    <!-- Success -->
+    <color name="color_success">#56BB74</color>
+    <color name="color_success_bg">#56BB74</color>
+    <color name="color_success_bg_hover">#29A64E</color>
+    <color name="color_success_border">#56BB74</color>
+    <color name="color_success_border_hover">#29A64E</color>
+    <color name="color_success_hover">#29A64E</color>
+    <color name="color_success_base">#56BB74</color>
+    <color name="color_success_active">#219644</color>
+    <color name="color_success_text_hover">#29A64E</color>
+    <color name="color_success_text">#56BB74</color>
+    <color name="color_success_text_active">#219644</color>
+
+    <!-- Warning -->
+    <color name="color_warning">#FFBF3D</color>
+    <color name="color_warning_bg">#FFBF3D</color>
+    <color name="color_warning_bg_hover">#FFAB00</color>
+    <color name="color_warning_border">#FFBF3D</color>
+    <color name="color_warning_border_hover">#FFAB00</color>
+    <color name="color_warning_hover">#FFAB00</color>
+    <color name="color_warning_base">#FFBF3D</color>
+    <color name="color_warning_active">#F2A200</color>
+    <color name="color_warning_text_hover">#FFAB00</color>
+    <color name="color_warning_text">#FFBF3D</color>
+    <color name="color_warning_text_active">#F2A200</color>
+
+    <!-- Info -->
+    <color name="color_info_bg">#457AFF</color>
+    <color name="color_info_bg_hover">#1B58F4</color>
+    <color name="color_info_border">#457AFF</color>
+    <color name="color_info_border_hover">#1B58F4</color>
+    <color name="color_info_hover">#1B58F4</color>
+    <color name="color_info_base">#457AFF</color>
+    <color name="color_info_active">#1752E4</color>
+    <color name="color_info_text_hover">#1B58F4</color>
+    <color name="color_info_text">#457AFF</color>
+    <color name="color_info_text_active">#1752E4</color>
+    <!-- Error -->
+    <color name="color_error">#EC4344</color>
+    <color name="color_error_bg">#EC4344</color>
+    <color name="color_error_bg_hover">#C82727</color>
+    <color name="color_error_border">#EC4344</color>
+    <color name="color_error_border_hover">#C82727</color>
+    <color name="color_error_hover">#C82727</color>
+    <color name="color_error_base">#EC4344</color>
+    <color name="color_error_active">#BD2424</color>
+    <color name="color_error_text_hover">#C82727</color>
+    <color name="color_error_text">#EC4344</color>
+    <color name="color_error_text_active">#BD2424</color>
+
+
+    <color name="color_border_tertiary_transparent">#00202020</color>
+    <color name="color_bg_elevated_transparent">#00111111</color>
+
+</resources>

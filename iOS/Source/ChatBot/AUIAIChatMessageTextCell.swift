@@ -16,7 +16,7 @@ import ARTCAICallKit
         
         self.contentView.addSubview(self.bgView)
         self.bgView.addSubview(self.textLabel)
-        self.bgView.addSubview(self.actionView)
+        self.contentView.addSubview(self.actionView)
         self.contentView.addSubview(self.stateBtn)
         
         self.bgView.isUserInteractionEnabled = true
@@ -35,32 +35,51 @@ import ARTCAICallKit
     open override func layoutSubviews() {
         super.layoutSubviews()
         
-        self.bgView.frame = self.getBgViewFrame()
-        self.textLabel.frame = CGRect(x: 12, y: self.getTextLabelPositionY(), width: self.bgView.av_width - 24, height: self.getTextLabelHeight())
-        self.actionView.frame = CGRect(x: 0, y: self.bgView.av_height - 36.0, width: self.bgView.av_width, height: 36.0)
+        let contentFrame = self.getContentViewFrame()
+        let bgViewHeight = self.getBgViewHeight(contentHeight: contentFrame.height)
+        let textLabelHeight = self.getTextLabelHeight(contentHeight: contentFrame.height)
+        let actionViewHeight = self.getActionViewHeight()
+        self.bgView.frame = CGRect(x: contentFrame.minX, y: contentFrame.minY, width: contentFrame.width, height: bgViewHeight)
+        self.textLabel.frame = CGRect(x: 16, y: self.getTextLabelPositionY(), width: self.bgView.av_width - 32, height: textLabelHeight)
+        self.actionView.frame = CGRect(x: 0, y: self.bgView.av_bottom, width: self.contentView.av_width, height: actionViewHeight)
         
         let x = self.item?.isLeft == true ? self.bgView.av_right : self.bgView.av_left - 32
         self.stateBtn.center = CGPoint(x: x + 16, y: self.bgView.av_bottom - 16)
     }
     
     internal func getTextLabelPositionY() -> CGFloat {
-        return 12
+        return 8
     }
     
-    internal func getBgViewFrame() -> CGRect {
+    internal func getContentViewFrame() -> CGRect {
         var displaySize = AUIAIChatMessageTextCell.minSize
         if self.item?.displaySize != nil {
             displaySize = (self.item?.displaySize)!
         }
+        var height = displaySize.height
+        if item?.isShowAction == true {
+            height = height + 36.0
+        }
         let x = self.item?.isLeft == true ? 0 : self.av_width - displaySize.width
-        return  CGRect(x: x, y: 0, width: displaySize.width, height: displaySize.height)
+        return  CGRect(x: x, y: 0, width: displaySize.width, height: height)
     }
     
-    internal func getTextLabelHeight() -> CGFloat {
+    internal func getActionViewHeight() -> CGFloat {
         let actionViewHeight = self.actionView.isHidden ? 0.0 : 36.0
-        let bottomMargin = self.actionView.isHidden ? 12.0 : 0
-        // bg高度 - 顶部边距 - 操作栏高度 - 底部边距高度
-        return self.bgView.av_height - 12 - actionViewHeight - bottomMargin
+        return actionViewHeight
+    }
+    
+    internal func getBgViewHeight(contentHeight: CGFloat) -> CGFloat {
+        if self.actionView.isHidden == false {
+            
+        }
+        // 总高度 - 操作栏高度
+        return contentHeight - self.getActionViewHeight()
+    }
+    
+    internal func getTextLabelHeight(contentHeight: CGFloat) -> CGFloat {
+        // bg高度 - 顶部边距 - 底部边距高度
+        return self.getBgViewHeight(contentHeight: contentHeight) - self.getTextLabelPositionY() - 8.0
     }
 
     open lazy var bgView: AUIAIChatMessageBgView = {
@@ -72,7 +91,8 @@ import ARTCAICallKit
         let btn = AVBlockButton()
         btn.frame = CGRect(x: 0, y: 0, width: 32, height: 32)
         btn.setImage(AUIAIChatBundle.getCommonImage("ic_msg_resend"), for: .normal)
-        btn.setImage(AUIAIChatBundle.getImage("ic_msg_loading"), for: .disabled)
+        btn.setImage(AUIAIChatBundle.getTemplateImage("ic_msg_loading"), for: .disabled)
+        btn.tintColor = AUIAIChatBundle.color_icon
         btn.isHidden = true
         btn.clickBlock = { [weak self] btn in
             if let item = self?.item {
@@ -108,11 +128,13 @@ import ARTCAICallKit
                 self.textLabel.attributedText = item.contentAttributeText
                 self.bgView.isLeft = item.isLeft
                 self.actionView.isLeft = item.isLeft
+                self.actionView.isHidden = !item.isShowAction
             }
             else {
                 self.textLabel.attributedText = nil
                 self.bgView.isLeft = false
                 self.actionView.isLeft = false
+                self.actionView.isHidden = true
             }
             self.stopTransfering()
             self.refreshStateUI()
@@ -192,18 +214,18 @@ extension AUIAIChatMessageTextCell {
     
     public static var minSize: CGSize {
         get {
-            return CGSize(width: 80, height: 70)
+            return CGSize(width: 20, height: 40)
         }
     }
     
     public static func computContentSize(attributeText: NSAttributedString, maxWidth: CGFloat) -> CGSize {
         if attributeText.string.isEmpty {
-            return CGSize(width: self.minSize.width, height: 22.0)
+            return CGSize(width: self.minSize.width, height: 24.0)
         }
-        let maxSize = CGSize(width: maxWidth - 12 - 12, height: CGFloat.greatestFiniteMagnitude) // 限制宽度，允许无限制高度
+        let maxSize = CGSize(width: maxWidth - 16 - 16, height: CGFloat.greatestFiniteMagnitude) // 限制宽度，允许无限制高度
         let boundingBox = attributeText.boundingRect(with: maxSize, options: [.usesLineFragmentOrigin, .usesFontLeading], context: nil)
 
-        let width = max(boundingBox.width + 24, self.minSize.width)
+        let width = max(boundingBox.width + 32, self.minSize.width)
         let height = ceil(boundingBox.height)
         return CGSize(width: width, height: height)
     }
@@ -220,7 +242,7 @@ extension AUIAIChatMessageTextCell {
         }
         
         let width = item.contentSize!.width
-        let height = 12 + item.contentSize!.height + 8 + 20 + 8
+        let height = 8 + item.contentSize!.height + 8
         item.displaySize = CGSize(width: width, height: height)
     }
 }
@@ -232,14 +254,26 @@ extension AUIAIChatMessageTextCell {
         super.init(frame: frame)
         
         self.addSubview(self.containerView)
+
+        self.containerView.layer.addSublayer(self.rectLayer)
+        self.containerView.layer.addSublayer(self.triangleLayer)
+        
         self.containerView.addSubview(self.deleteBtn)
         self.deleteBtn.center = CGPoint(x: self.containerView.av_width / 2.0, y: self.containerView.av_height / 2.0)
-        
-        self.drawRoundedTriangle()
     }
     
     public required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+    
+    open override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        
+        self.rectLayer.backgroundColor = AUIAIChatBundle.color_bg_elevated.cgColor
+        self.rectLayer.borderColor = AUIAIChatBundle.color_border_secondary.cgColor
+
+        self.triangleLayer.strokeColor = AUIAIChatBundle.color_border_secondary.cgColor
+        self.triangleLayer.fillColor = AUIAIChatBundle.color_bg_elevated.cgColor
     }
     
     open var item: AUIAIChatMessageItem? = nil
@@ -268,43 +302,58 @@ extension AUIAIChatMessageTextCell {
     }
     
     private lazy var containerView: UIView = {
-        let view = UIView(frame: CGRect(x: 0, y: 0, width: 72, height: 62))
-        view.backgroundColor = AVTheme.fill_medium
-        view.layer.cornerRadius = 4
-        
+        let view = UIView(frame: CGRect(x: 0, y: 0, width: 72, height: 72))
         return view
     }()
     
-    open lazy var deleteBtn: AVBaseButton = {
-        let btn = AVBaseButton.imageText(with: .bottom)
-        btn.frame = CGRect(x: 0, y: 0, width: 38, height: 38)
-        btn.font = AVTheme.regularFont(12)
-        btn.title = AUIAIChatBundle.getString("Delete")
-        btn.color = AVTheme.text_medium
-        btn.image = AUIAIChatBundle.getImage("ic_msg_delete")
-        return btn
+    private lazy var rectLayer: CALayer = {
+        let layer = CALayer()
+        layer.frame = self.containerView.bounds
+        layer.backgroundColor = AUIAIChatBundle.color_bg_elevated.cgColor
+        layer.cornerRadius = 4
+        layer.borderWidth = 1.0
+        layer.borderColor = AUIAIChatBundle.color_border_secondary.cgColor
+        return layer
     }()
     
-    private func drawRoundedTriangle() {
+    private lazy var triangleLayer: CAShapeLayer = {
         let path = UIBezierPath()
         path.lineJoinStyle = .round
         path.lineCapStyle = .round
-        let bounds = CGRect(x: (self.containerView.av_width - 17) / 2.0, y: self.containerView.av_height, width: 17, height: 9)
+        let bounds = CGRect(x: (self.containerView.av_width - 17) / 2.0, y: self.containerView.av_height - 1, width: 17, height: 10)
         let topPoint = CGPoint(x: bounds.width / 2, y: bounds.height)
         let leftPoint = CGPoint(x: 0, y: 0)
         let rightPoint = CGPoint(x: bounds.width, y: 0)
-        path.move(to: CGPoint(x: topPoint.x, y: topPoint.y))
-        path.addLine(to: CGPoint(x: leftPoint.x, y: leftPoint.y))
-        path.addLine(to: CGPoint(x: rightPoint.x, y: rightPoint.y))
-        path.addLine(to: CGPoint(x: topPoint.x, y: topPoint.y))
-        path.close()
+        
+        path.move(to: leftPoint)
+        path.addLine(to: topPoint)
+        path.addLine(to: rightPoint)
 
         let shapeLayer = CAShapeLayer() // 创建图形层
         shapeLayer.frame = bounds
-        shapeLayer.fillColor = AVTheme.fill_medium.cgColor
-        self.containerView.layer.addSublayer(shapeLayer)
+        shapeLayer.lineWidth = 1.0
+        shapeLayer.strokeColor = AUIAIChatBundle.color_border_secondary.cgColor
+        shapeLayer.fillColor = AUIAIChatBundle.color_bg_elevated.cgColor
         shapeLayer.path = path.cgPath // 将路径设置到图形层
-    }
+        return shapeLayer
+    }()
+    
+    open lazy var deleteBtn: AVBlockButton = {
+        let btn = AVBlockButton(frame: CGRect(x: 0, y: 0, width: 72, height: 72))
+        
+        let iconView = UIImageView(frame: CGRect(x: 26, y: 12, width: 20, height: 20))
+        iconView.image = AUIAIChatBundle.getTemplateImage("ic_msg_delete")
+        iconView.tintColor = AUIAIChatBundle.color_icon
+        btn.addSubview(iconView)
+        
+        let titleLabel = UILabel(frame: CGRect(x: 0, y: 36, width: btn.av_width, height: 18))
+        titleLabel.text = AUIAIChatBundle.getString("Delete")
+        titleLabel.font = AVTheme.regularFont(14)
+        titleLabel.textAlignment = .center
+        titleLabel.textColor = AUIAIChatBundle.color_text
+        btn.addSubview(titleLabel)
+        return btn
+    }()
     
     open override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
         let view = super.hitTest(point, with: event)

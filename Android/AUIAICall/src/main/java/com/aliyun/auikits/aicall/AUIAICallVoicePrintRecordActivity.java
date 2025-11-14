@@ -1,12 +1,8 @@
 package com.aliyun.auikits.aicall;
 
-import static com.aliyun.auikits.aiagent.ARTCAIChatEngine.ARTCAIChatErrorCode.VoiceMessageRecordFailed;
 
 import android.content.Context;
-import android.media.AudioFormat;
-import android.media.MediaRecorder;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -87,7 +83,6 @@ public class AUIAICallVoicePrintRecordActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setTheme(com.chad.library.R.style.Theme_AppCompat_Light_NoActionBar);
         setContentView(R.layout.activity_auiaicall_voiceprint_record);
 
         mHandler = new Handler();
@@ -105,6 +100,13 @@ public class AUIAICallVoicePrintRecordActivity extends AppCompatActivity {
         mVoicePrintRecordTimeTips = findViewById(R.id.tv_voiceprint_record_time);
 
         findViewById(R.id.btn_back).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
+
+        findViewById(R.id.iv_close).setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
                 finish();

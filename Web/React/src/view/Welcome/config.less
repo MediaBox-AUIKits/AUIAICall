@@ -1,127 +1,17 @@
-.welcome-config {
-  svg {
-    vertical-align: bottom;
-  }
-  margin-left: 4px;
-  padding: 2px 12px;
-  background: transparent;
-  border: none;
-  font-size: 10px;
-  line-height: 14px;
-  color: #878aab;
-  white-space: nowrap;
-}
-
-.welcome-config-dialog {
-  --adm-color-primary: #624aff;
-  .adm-popup-body {
-    background: #f5f5fa;
-  }
-
-  ul {
-    margin: 0;
-    list-style: none;
-    padding: 4px 0 10px;
-  }
-  li {
-    padding: 0 5px;
-  }
-
-  ._itemBox {
-    padding: 16px 0;
-    display: flex;
-    align-items: center;
-  }
-  ._itemInfo {
-    flex: 1;
-  }
-  ._itemTitle {
-    font-size: 14px;
-    line-height: 22px;
-    color: #26244c;
-  }
-
-  ._itemDesc {
-    margin-top: 4px;
-    font-size: 10px;
-    line-height: 16px;
-    color: #747a8c;
-  }
-
-  .adm-selector {
-    .adm-space {
-      width: 100%;
-    }
-    .adm-selector-item {
-      width: 100%;
-      padding: 6px 16px;
-      box-sizing: border-box;
-      background: #f6f5ff;
-      border: 1px solid #d8d9e6;
-      border-radius: 15px;
-      font-size: 12px;
-      line-height: 18px;
-      color: #26244c;
-
-      &.adm-selector-item-active {
-        border: 1px solid var(--adm-color-primary);
-        .adm-selector-check-mark-wrapper {
-          display: none;
-        }
-      }
-    }
-  }
-
-  .adm-center-popup-wrap {
-    max-width: 85vw;
-  }
-}
-
-.welcome-voice-print-config {
-  border-radius: 4px;
-  background: #e7e8ee;
-  padding: 6px 16px;
-  display: flex;
-  align-items: center;
-
-  font-size: 12px;
-  font-weight: normal;
-  line-height: 20px;
-  color: #747a8c;
-
-  ._holder {
-    flex: 1;
-  }
-
-  .adm-button {
-    font-size: 12px;
-    font-weight: normal;
-    line-height: 20px;
-    color: #747a8c;
-    padding-right: 0;
-
-    svg {
-      vertical-align: -5px;
-    }
-  }
-}
-
 .voice-print-dialog {
   ._hero {
     margin: 36px 0 16px;
-    width: 169px;
-    height: 169px;
+    width: 190px;
+    height: 190px;
   }
-
   ._info {
     padding: 0 32px;
     text-align: center;
     font-size: 14px;
     font-weight: normal;
     line-height: 24px;
-    color: #3a3d48;
+    color: var(--adm-color-text);
   }
-
   ._duration {
     margin-top: 10px;
     margin-bottom: 24px;
@@ -129,14 +19,15 @@
     line-height: 22px;
     color: #747a8c;
   }
-
   ._action {
+    text-align: center;
     margin-top: 50px;
     .adm-button::before {
       border-radius: 26px;
     }
-
     ._btn {
+      width: auto;
+      height: auto;
       margin-bottom: 26px;
       font-size: 16px;
       line-height: 24px;
@@ -146,59 +37,42 @@
       padding: 13px 42px;
       border-radius: 26px;
     }
-
     ._record-btn {
-      padding: 10px 42px;
-      border-radius: 26px;
-
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      --border-radius: 50%;
+      border-color: var(--ai-color-border-secondary);
       & > span {
         display: inline-block;
         height: 30px;
         width: 30px;
         vertical-align: bottom;
       }
-
       &.is-recording {
-        color: #fff;
-        background-color: var(--adm-color-primary);
+        color: var(--ai-color-icon-inverse);
+        background-color: var(--ai-color-fill-selection);
+        border-color: var(--ai-color-fill-selection);
       }
     }
-
     ._text {
-      margin-top: 8px;
+      margin-top: 12px;
       font-size: 12px;
-      font-weight: normal;
       line-height: 18px;
       text-align: center;
-      color: #3a3d48;
+      color: var(--ai-color-text-disabled);
     }
   }
 }
 
-.voice-print-submitting {
-  &.adm-toast-mask .adm-toast-main-icon {
-    padding: 12px;
-    font-size: 14px;
-    line-height: 22px;
-    text-align: center;
-    color: #56597e;
-    border-radius: 8px;
-    background: #f5f5fa;
-    box-shadow: 0px 4px 10px 0px rgba(0, 0, 0, 0.15);
-
-    .adm-toast-icon {
-      svg {
-        --color: #56597e;
+@media screen and (max-width: 768px) {
+  .ai-welcome-config-form {
+    .adm-form-item._voiceprint {
+      padding: 0 16px;
+      background-color: var(--ai-color-fill-secondary);
+      .ai-link-text {
+        color: var(--adm-color-text);
       }
-    }
-  }
-}
-
-@media screen and (min-width: 768px) {
-  .ai-responsive-dialog.voice-print-dialog {
-    .adm-center-popup-wrap {
-      width: 640px;
-      height: 600px;
     }
   }
 }

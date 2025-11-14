@@ -1,5 +1,5 @@
-import React, { createContext, ReactNode, useContext } from 'react';
 import { AICallErrorCode } from 'aliyun-auikit-aicall';
+import React, { createContext, ReactNode, useContext } from 'react';
 
 import en from './locales/en';
 import zh from './locales/zh';
@@ -50,6 +50,7 @@ const messages = locales[LOCALE as keyof typeof locales];
 type I18nContextType = {
   t: (key: I18nPaths, params?: Record<string, string>) => string;
   e: (code: number | undefined) => string;
+  lang: keyof typeof locales;
 };
 
 const ErrorCodeMessageMap: { [key: number]: string } = {
@@ -70,6 +71,7 @@ const ErrorCodeMessageMap: { [key: number]: string } = {
 export const I18nContext = createContext<I18nContextType>({
   t: (key) => key,
   e: (code) => `${code}`,
+  lang: LOCALE,
 });
 
 // 获取嵌套对象属性的辅助函数
@@ -114,7 +116,7 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return t('error.unknown');
   };
 
-  return <I18nContext.Provider value={{ t, e }}>{children}</I18nContext.Provider>;
+  return <I18nContext.Provider value={{ t, e, lang: LOCALE }}>{children}</I18nContext.Provider>;
 };
 
 export const getText = (key: string) => {
@@ -124,6 +126,6 @@ export const getText = (key: string) => {
 };
 
 export const useTranslation = () => {
-  const { t, e } = useContext(I18nContext);
-  return { t, e };
+  const { t, e, lang } = useContext(I18nContext);
+  return { t, e, lang };
 };

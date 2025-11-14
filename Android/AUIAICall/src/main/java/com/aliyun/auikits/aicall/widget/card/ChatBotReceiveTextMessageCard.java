@@ -86,11 +86,12 @@ public class ChatBotReceiveTextMessageCard extends BaseCard {
                 if(chatMessage.getMessage().messageState == ARTCAIChatEngine.ARTCAIChatMessageState.Transfering) {
                     mThinkingView.setVisibility(View.VISIBLE);
                     mThinkingView.setAnimationType(SpeechAnimationView.AnimationType.CHATBOT_THINKING);
-                    mReceiveTextMessageActionButtonLayout.setVisibility(View.GONE);
-                    mReceiveTextContentView.setVisibility(View.GONE);
                     mReceiveThinkTextMessageLayout.setVisibility(View.GONE);
-                }
-                else  {
+                    mReceiveTextMessageLayout.setVisibility(View.GONE);
+                    mReceiveTextContentView.setVisibility(View.GONE);
+
+                    mReceiveTextMessageActionButtonLayout.setVisibility(View.GONE);
+                } else  {
                     mThinkingView.setVisibility(View.GONE);
                     if(!TextUtils.isEmpty(thinkText)) {
                         //has thinking text
@@ -102,7 +103,11 @@ public class ChatBotReceiveTextMessageCard extends BaseCard {
                             AUIAIMarkwonManager.getInstance(mContext).getMarkwon().setMarkdown(mReceiveTextContentView, chatMessage.getMessage().text);
                            // mReceiveTextContentView.setText(chatMessage.getMessage().text);
                             mReceiveTextMessageLayout.setVisibility(View.VISIBLE);
-                            mReceiveTextMessageActionButtonLayout.setVisibility(View.VISIBLE);
+                            if(chatMessage.getMessage().messageState == ARTCAIChatEngine.ARTCAIChatMessageState.Printing) {
+                                mReceiveTextMessageActionButtonLayout.setVisibility(View.GONE);
+                            } else {
+                                mReceiveTextMessageActionButtonLayout.setVisibility(entity.isLastItem ? View.VISIBLE : View.GONE);
+                            }
                             mReceiveTextContentView.setVisibility(View.VISIBLE);
                         } else {
                             mReceiveThinkFinishImage.setVisibility(View.GONE);
@@ -116,7 +121,12 @@ public class ChatBotReceiveTextMessageCard extends BaseCard {
                         mReceiveThinkTextMessageLayout.setVisibility(View.GONE);
                         AUIAIMarkwonManager.getInstance(mContext).getMarkwon().setMarkdown(mReceiveTextContentView, chatMessage.getMessage().text);
                         //mReceiveTextContentView.setText(chatMessage.getMessage().text);
-                        mReceiveTextMessageActionButtonLayout.setVisibility(View.VISIBLE);
+                        if(chatMessage.getMessage().messageState == ARTCAIChatEngine.ARTCAIChatMessageState.Printing) {
+                            mReceiveTextMessageActionButtonLayout.setVisibility(View.GONE);
+                        } else {
+                            mReceiveTextMessageActionButtonLayout.setVisibility(entity.isLastItem ? View.VISIBLE : View.GONE);
+                        }
+                        mReceiveTextMessageLayout.setVisibility(View.VISIBLE);
                         mReceiveTextContentView.setVisibility(View.VISIBLE);
                     }
                 }
@@ -124,7 +134,11 @@ public class ChatBotReceiveTextMessageCard extends BaseCard {
                 if(chatMessage.getMessage().messageState == ARTCAIChatEngine.ARTCAIChatMessageState.Interrupted) {
                     if(!TextUtils.isEmpty(thinkText) && !isThinkingEnd) {
                         mReceiveThinkTitle.setText(R.string.robot_thinking_stop_tips);
-                        mReceiveTextMessageActionButtonLayout.setVisibility(View.VISIBLE);
+                        if(entity.isLastItem) {
+                            mReceiveTextMessageActionButtonLayout.setVisibility(View.VISIBLE);
+                        } else {
+                            mReceiveTextMessageActionButtonLayout.setVisibility(View.GONE);
+                        }
                     } else {
                         mReceiveInterruptionView.setVisibility(View.VISIBLE);
                     }

@@ -15,7 +15,7 @@ android:layout_height="match_parent">
         android:id="@+id/btn_back_image"
         android:layout_width="24dp"
         android:layout_height="24dp"
-        android:src="@drawable/ic_back"
+        android:src="@drawable/ic_aicall_in_call_back"
          />
 
     <TextView

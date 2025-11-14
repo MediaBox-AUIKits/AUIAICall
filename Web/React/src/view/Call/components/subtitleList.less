@@ -1,0 +1,118 @@
+.subtitle-list-pop.adm-center-popup {
+  --z-index: 3;
+  .adm-dialog-body {
+    position: relative;
+    box-sizing: border-box;
+  }
+
+  ._custom-close {
+    display: none;
+  }
+}
+
+.subtitle-list {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  font-size: 16px;
+  line-height: 24px;
+
+  ._inner {
+    height: 100%;
+    overflow-y: auto;
+  }
+
+  &::before {
+    content: ' ';
+    position: absolute;
+    height: 20px;
+    left: 0;
+    right: 12px;
+    top: 0;
+    background: linear-gradient(180deg, var(--ai-color-bg) 0%, transparent 100%);
+  }
+  &::after {
+    content: ' ';
+    position: absolute;
+    height: 20px;
+    left: 0;
+    right: 12px;
+    bottom: 0;
+    background: linear-gradient(180deg, transparent 0%, var(--ai-color-bg) 100%);
+  }
+  ._close {
+    display: none;
+  }
+
+  ol {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+}
+.subtitle-list-item {
+  margin: 16px 0;
+  &.is-agent {
+    color: var(--ai-color-text-tertiary);
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .header {
+    ._subtitle-btn {
+      svg {
+        display: none;
+      }
+    }
+  }
+  .subtitle-list-pop.adm-center-popup {
+    ._close {
+      display: none;
+    }
+    .adm-mask {
+      background-color: transparent !important;
+    }
+    .adm-dialog-body {
+      padding-bottom: 180px;
+      background: linear-gradient(180deg, var(--ai-color-bg) calc(100vh - 180px), transparent 130%);
+      z-index: 6 !important;
+      max-height: none;
+      border-radius: 0;
+      &::before {
+        top: 64px;
+      }
+      &::after {
+        bottom: 200px;
+      }
+
+      ._custom-close {
+        position: absolute;
+        bottom: -3px;
+        right: 24px;
+        display: block;
+        color: var(--ai-color-text-inverse);
+        background-color: var(--ai-color-fill);
+        font-size: 14px;
+        line-height: 20px;
+        border-radius: 2px;
+        padding: 5px 16px;
+      }
+    }
+
+    .adm-dialog-header {
+      ._hd {
+        ._text {
+          opacity: 0;
+        }
+      }
+    }
+  }
+}
+
+@media screen and (min-width: 769px) {
+  .subtitle-list {
+    font-size: 12px;
+    line-height: 18px;
+  }
+}

@@ -1,6 +1,5 @@
-import { create } from 'zustand';
-
 import { AIChatAgentResponseState, AIChatAttachment, AIChatEngineState, AIChatMessage } from 'aliyun-auikit-aicall';
+import { create } from 'zustand';
 
 const MAX_CACHE_LENGTH = 20;
 

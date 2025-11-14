@@ -41,16 +41,15 @@ import ARTCAICallKit
     open override func viewDidLoad() {
         super.viewDidLoad()
         
-        self.view.backgroundColor = AVTheme.bg_medium
-        
+        self.view.backgroundColor = AUIAICallBundle.color_bg
+        self.view.addSubview(self.bgLineView)
+
         self.callContentView.frame = self.view.bounds
         self.callContentView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(onContentViewClicked(recognizer:))))
-
-        self.gradientlayer.frame = CGRect(x: 0, y: 0, width: self.view.av_width, height: UIView.av_safeTop + 44)
         
-#if AICALL_ENABLE_FEEDBACK
-        self.reportBtn = self.setupReportBtn()
-#endif
+        self.backBtn.sizeToFit()
+        self.backBtn.frame = CGRect(x: 24, y: UIView.av_safeTop, width: self.backBtn.av_width + 12, height: 48)
+        self.view.addSubview(self.backBtn)
         
         self.settingBtn.frame = CGRect(x: self.view.av_width - 6 - 44, y: UIView.av_safeTop, width: 44, height: 44)
         
@@ -58,13 +57,11 @@ import ARTCAICallKit
         self.subtitleBtn.center = CGPoint(x: self.settingBtn.av_left - self.subtitleBtn.av_width / 2.0  - 4, y: self.settingBtn.av_centerY)
         self.subtitleListView.frame = self.view.bounds
         
-        self.titleLabel.sizeToFit()
-        self.titleLabel.center = CGPoint(x: self.view.av_width / 2.0, y: self.settingBtn.av_centerY)
-        
         self.aiGenTipsLabel.sizeToFit()
-        self.aiGenTipsLabel.center = CGPoint(x: self.view.av_width / 2.0, y: self.titleLabel.av_centerY + 38)
+        self.aiGenTipsLabel.center = CGPoint(x: self.view.av_width / 2.0, y: self.view.av_height - (UIView.av_safeBottom > 0 ? UIView.av_safeBottom - 16 : 0) - self.aiGenTipsLabel.av_height / 2.0)
         
-        self.bottomView.frame = CGRect(x: 0, y: self.view.av_height - 308, width: self.view.av_width, height: 308)
+        
+        self.bottomView.frame = CGRect(x: 0, y: self.view.av_height - (AUIAICallContentBottomViewHeight + UIView.av_safeBottom), width: self.view.av_width, height: (AUIAICallContentBottomViewHeight + UIView.av_safeBottom))
         self.bottomView.isHidden = false
         self.bottomView.enablePushToTalk = self.controller.config.agentConfig.enablePushToTalk
                 
@@ -90,6 +87,10 @@ import ARTCAICallKit
         self.controller.start()
         
         self.callContentView.agentAni.updateState(newState: self.controller.state)
+        
+#if DEMO_FOR_DEBUG
+        self.setupDebug()
+#endif
     }
     
     public var onUserTokenExpiredBlcok: (()->Void)? = nil
@@ -106,10 +107,6 @@ import ARTCAICallKit
         return .portrait
     }
     
-    open override var preferredStatusBarStyle: UIStatusBarStyle {
-        return .lightContent
-    }
-    
     public let controller: AUIAICallControllerInterface
     
     private var isVoiceprintSupportted: Bool {
@@ -117,35 +114,41 @@ import ARTCAICallKit
         return self.controller.config.region == AUIAICallVoiceprintManager.shared.region
     }
     
-    open lazy var titleLabel: UILabel = {
-        let label = UILabel()
-        label.textColor = AVTheme.text_strong
-        label.textAlignment = .center
-        label.font = AVTheme.mediumFont(16)
-        label.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(onTitleLabelTap)))
-        label.isUserInteractionEnabled = true
+    open lazy var bgLineView: AUIAICallBgLineView = {
+        let view = AUIAICallBgLineView(frame: self.view.bounds, gradient: true)
+        return view
+    }()
+    
+    open lazy var backBtn: AVBlockButton = {
+        let btn = AVBlockButton(frame: CGRect.zero)
+        btn.setImage(AUIAICallBundle.getTemplateImage("ic_back"), for: .normal)
+        btn.tintColor = AUIAICallBundle.color_icon
         
-        var title = AUIAICallBundle.getString("AI Voice Call")
+        var title = AUIAICallBundle.getString("Voice Call")
         if self.controller.config.agentType == .AvatarAgent {
-            title = AUIAICallBundle.getString("AI Avatar Call")
+            title = AUIAICallBundle.getString("Avatar Call")
         }
         else if self.controller.config.agentType == .VisionAgent {
-            title = AUIAICallBundle.getString("AI Vision Call")
+            title = AUIAICallBundle.getString("Vision Call")
         }
         else if self.controller.config.agentType == .VideoAgent {
-            title = AUIAICallBundle.getString("AI Video Call")
+            title = AUIAICallBundle.getString("Video Call")
         }
-        label.text = title
-        
-        self.view.addSubview(label)
-        return label
+        btn.setTitle(title, for: .normal)
+        btn.setTitleColor(AUIAICallBundle.color_text, for: .normal)
+        btn.titleLabel?.font = AVTheme.mediumFont(16)
+        btn.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 12)
+        btn.clickBlock = { [weak self] sender in
+            self?.checkToHandup()
+        }
+        return btn
     }()
     
     open lazy var aiGenTipsLabel: UILabel = {
         let label = UILabel()
-        label.textColor = AVTheme.text_ultraweak
+        label.textColor = AUIAICallBundle.color_text_tertiary
         label.textAlignment = .center
-        label.font = AVTheme.regularFont(12)
+        label.font = AVTheme.regularFont(11)
         label.text = AUIAICallBundle.getString("Content generated by AI, for reference only.")
         label.isUserInteractionEnabled = false
         self.view.addSubview(label)
@@ -158,20 +161,11 @@ import ARTCAICallKit
         return view
     }()
     
-    open lazy var gradientlayer: CAGradientLayer = {
-        let layer = CAGradientLayer()
-        layer.startPoint = CGPoint(x: 0.5, y: 0.0)
-        layer.endPoint = CGPoint(x: 0.5, y: 1.0)
-        layer.colors = [UIColor.black.withAlphaComponent(1.0).cgColor, UIColor.black.withAlphaComponent(0).cgColor]
-        self.view.layer.addSublayer(layer)
-        return layer
-    }()
-    
     open lazy var settingBtn: UIButton = {
         let btn = UIButton()
         btn.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
-        btn.setImage(AUIAICallBundle.getCommonImage("ic_setting"), for: .normal)
-        btn.setImage(AUIAICallBundle.getCommonImage("ic_setting_selected"), for: .selected)
+        btn.setImage(AUIAICallBundle.getTemplateImage("ic_setting"), for: .normal)
+        btn.tintColor = AUIAICallBundle.color_icon
         btn.addTarget(self, action: #selector(onSettingBtnClicked), for: .touchUpInside)
         self.view.addSubview(btn)
         return btn
@@ -180,14 +174,9 @@ import ARTCAICallKit
     open lazy var subtitleBtn: UIButton = {
         let btn = AVBlockButton()
         btn.setTitle(AUIAICallBundle.getString("Subtitles"), for: .normal)
-        btn.titleLabel?.font = AVTheme.regularFont(12)
-        btn.setBackgroundColor(AVTheme.fill_medium, for: .normal)
-        btn.setBackgroundColor(AVTheme.fill_infrared, for: .selected)
-        btn.setTitleColor(AVTheme.text_strong, for: .normal)
-        btn.setTitleColor(AVTheme.text_infrared, for: .selected)
+        btn.titleLabel?.font = AVTheme.mediumFont(16)
+        btn.setTitleColor(AUIAICallBundle.color_text, for: .normal)
         btn.addTarget(self, action: #selector(onSubtitleBtnClicked), for: .touchUpInside)
-        btn.layer.cornerRadius = 4
-        btn.layer.masksToBounds = true
         btn.contentEdgeInsets = UIEdgeInsets(top: 4, left: 6, bottom: 4, right: 6)
         self.view.addSubview(btn)
         return btn
@@ -195,11 +184,9 @@ import ARTCAICallKit
     
     open lazy var subtitleListView: AUIAICallSubtitleListView = {
         let view = AUIAICallSubtitleListView(frame: self.view.bounds)
-        view.contentInset = UIEdgeInsets(top: UIView.av_safeTop + 65, left: 0, bottom: UIView.av_safeBottom + 221, right: 0)
         return view
     }()
     
-    open var reportBtn: UIButton? = nil
     private weak var settingPanel: AUIAICallSettingPanel? = nil
     
     open lazy var bottomView: AUIAICallBottomView = {
@@ -228,30 +215,28 @@ import ARTCAICallKit
             btn.isSelected = self?.controller.config.muteLocalCamera == true
             self?.callContentView.cameraView?.isMute = btn.isSelected
         }
-        view.switchCameraBtn.clickBlock = { [weak self] btn in
+        view.switchCameraBtn.tappedAction = { [weak self] btn in
             self?.controller.switchCamera()
         }
+        view.pushToTalkBtn.presentView = self.view
         view.pushToTalkBtn.longPressAction = { [weak self] btn, state, elapsed in
             if state == 1 {
                 if elapsed <= 0.5 {
                     _ = self?.controller.cancelPushToTalk()
-                    AVToastView.show(AUIAICallBundle.getString("The hold time is too short, sending has been canceled."), view: self!.view, position: .mid)
+                    self?.showToast(AUIAICallBundle.getString("The hold time is too short, sending has been canceled."))
                 }
                 else {
                     _ = self?.controller.finishPushToTalk()
                 }
-                btn.isSelected = false
                 debugPrint("ptt: finish elapsed \(elapsed)")
             }
             else if state == 2 {
                 _ = self?.controller.cancelPushToTalk()
-                AVToastView.show(AUIAICallBundle.getString("You have canceled to send you talk."), view: self!.view, position: .mid)
-                btn.isSelected = false
+                self?.showToast(AUIAICallBundle.getString("You have canceled to send you talk."))
                 debugPrint("ptt: cancel elapsed: \(elapsed)")
             }
             else {
                 _ = self?.controller.startPushToTalk()
-                btn.isSelected = true
                 debugPrint("ptt: start elapsed: \(elapsed)")
             }
         }
@@ -265,11 +250,7 @@ import ARTCAICallKit
         let timer = Timer(timeInterval: 0.10, repeats: true) {[weak self] timer in
             if let self = self {
                 self.callingSeconds = self.callingSeconds + 0.10
-                let time = AVStringFormat.format(withDuration: Float(self.callingSeconds))
-                self.bottomView.timeLabel.text = time
-                
                 self.printingAgentText()
-                
                 self.checkCallLimit()
             }
         }
@@ -312,47 +293,37 @@ import ARTCAICallKit
     private func showVoiceprintTips() {
         if self.voiceprintTipsLabel == nil {
             let voiceprintTipsLabel = AUIVoiceprintTipsView()
-            voiceprintTipsLabel.clearBtn.clickBlock = { [weak self] btn in
-                guard let self = self else { return }
-                if self.controller.clearVoiceprint() == true {
-                    self.voiceprintTipsLabel?.hideTips()
-                }
-                else {
-                    AVToastView.show(AUIAICallBundle.getString("Failed to clear voiceprint's data"), view: self.view, position: .mid)
-                }
-            }
-            voiceprintTipsLabel.isSelected = true
             voiceprintTipsLabel.layoutAt(frame: CGRect(x: 0, y: self.callContentView.tipsLabel.av_top - 40 - 10, width: self.view.av_width, height: 40))
             self.view.addSubview(voiceprintTipsLabel)
             self.voiceprintTipsLabel = voiceprintTipsLabel
         }
         self.voiceprintTipsLabel?.showTips()
     }
+    
+    private func checkToHandup() {
+        self.controller.handup()
+    }
+    
+    private func showToast(_ text: String) {
+        self.view.aicall_showToast(text)
+    }
 }
 
 extension AUIAICallViewController {
     
     @objc open func onSubtitleBtnClicked() {
-        self.subtitleBtn.isSelected = !self.subtitleBtn.isSelected
-        if self.subtitleBtn.isSelected {
-            self.view.insertSubview(self.subtitleListView, belowSubview: self.subtitleBtn)
-        }
-        else {
-            self.subtitleListView.removeFromSuperview()
-        }
+        self.subtitleListView.contentInset = UIEdgeInsets(top: UIView.av_safeTop + AUIAICallContentTopViewHeight, left: 0, bottom: self.callContentView.av_height -   self.callContentView.tipsLabel.av_bottom, right: 0)
+        self.view.insertSubview(self.subtitleListView, belowSubview: self.bottomView)
     }
     
     @objc open func onSettingBtnClicked() {
-        if self.controller.state != .Connected {
-            AVToastView.show(AUIAICallBundle.getString("Currently not connected"), view: self.view, position: .mid)
+        if self.controller.state == .None || self.controller.state == .Connecting {
+            self.showToast(AUIAICallBundle.getString("Currently not connected"))
             return
         }
         let panel = AUIAICallSettingPanel(frame: CGRect(x: 0, y: 0, width: self.view.av_width, height: 0))
         panel.voiceIdList = self.controller.agentVoiceIdList
         panel.config = self.controller.config
-//        panel.canShowVoiceprintSwitch = self.isVoiceprintSupportted
-        panel.canShowVoiceprintSwitch = false   // 暂不支持在通话中开闭声纹识别
-        panel.isVoiceprintRegisted = self.controller.isVoiceprintRegisted
         panel.applyPlayBlock = { [weak self] item in
             self?.controller.switchVoiceId(voiceId: item.voiceId, completed: { error in
                 
@@ -363,15 +334,15 @@ extension AUIAICallViewController {
                 if let self = self {
                     if error != nil {
                         panel?.interruptSwitch.switchBtn.isOn = self.controller.config.agentConfig.interruptConfig.enableVoiceInterrupt
-                        AVToastView.show(AUIAICallBundle.getString("Failed to switch smart interruption"), view: self.view, position: .mid)
+                        self.showToast(AUIAICallBundle.getString("Failed to switch smart interruption"))
                         return
                     }
                     
                     if self.controller.config.agentConfig.interruptConfig.enableVoiceInterrupt {
-                        AVToastView.show(AUIAICallBundle.getString("Smart interruption is turned on"), view: self.view, position: .mid)
+                        self.showToast(AUIAICallBundle.getString("Smart interruption is turned on"))
                     }
                     else {
-                        AVToastView.show(AUIAICallBundle.getString("Smart interruption is turned off"), view: self.view, position: .mid)
+                        self.showToast(AUIAICallBundle.getString("Smart interruption is turned off"))
                     }
                 }
             })
@@ -380,65 +351,28 @@ extension AUIAICallViewController {
             self?.controller.enablePushToTalk(enable: isOn, completed: { error in
                 if let self = self {
                     if error != nil {
-                        AVToastView.show(AUIAICallBundle.getString("Failed to enable/disable push to talk Mode"), view: self.view, position: .mid)
+                        self.showToast(AUIAICallBundle.getString("Failed to enable/disable push to talk Mode"))
                         return
                     }
                 }
             })
         }
-        panel.voiceprintSwitch.switchBtn.isOn = AUIAICallVoiceprintManager.shared.canUseVoiceprint()
-        panel.voiceprintSwitch.registerBtn.isHidden = !AUIAICallVoiceprintManager.shared.isRegistedVoiceprint()
-        panel.voiceprintBlock = { [weak self, weak panel] isOn in
-            guard let self = self else {
-                return
-            }
-            let isRegisted = AUIAICallVoiceprintManager.shared.isRegistedVoiceprint()
-            if isRegisted {
-                self.controller.useVoiceprint(isUse: isOn, completed: {[weak self] error in
-                    if let self = self {
-                        if error != nil {
-                            panel?.voiceprintSwitch.switchBtn.isOn = !isOn
-                            AVToastView.show(AUIAICallBundle.getString("Failed to switch voiceprint"), view: self.view, position: .mid)
-                            return
-                        }
-                        
-                        AUIAICallVoiceprintManager.shared.enableVoiceprint(isOn)
-                        if AUIAICallVoiceprintManager.shared.isEnable {
-                            AVToastView.show(AUIAICallBundle.getString("Voiceprint is turned on"), view: self.view, position: .mid)
-                        }
-                        else {
-                            AVToastView.show(AUIAICallBundle.getString("Voiceprint is turned off"), view: self.view, position: .mid)
-                        }
-                    }
-                })
-            }
-            else {
-                if isOn == true {
-                    panel?.voiceprintSwitch.switchBtn.isOn = false
-                    AVAlertController.show(AUIAICallBundle.getString("Voiceprint noise reduction is not enabled. This feature is temporarily unavailable. Please go to the Entry Page > Settings to enable it before use."), vc: self)
-                }
-            }
-        }
-        panel.clearVoiceprintBlock = { [weak self] sender in
-            if let self = self {
-                if self.controller.clearVoiceprint() == true {
-                    sender.isVoiceprintRegisted = self.controller.isVoiceprintRegisted
-                }
-                else {
-                    AVToastView.show(AUIAICallBundle.getString("Failed to clear voiceprint's data"), view: self.view, position: .mid)
-                }
-            }
+        panel.clickIssueReportBlock = { [weak self] sender in
+#if AICALL_ENABLE_FEEDBACK
+            self?.settingPanel?.hide()
+            self?.av_presentFullScreenViewController(AUIAICallReportViewController(), animated: true)
+#endif
         }
         // 暂时只有非数字人有延迟数据
         if self.controller.config.agentType != .VoiceAgent, self.controller.config.agentType != .VisionAgent {
             panel.hiddenLatencyView(true)
         }
         // 设置延迟率查看逻辑
-        panel.onLatencyRateViewTapped = { [weak self] in
+        panel.clickLatencyRateBlock = { [weak self] sender in
             guard let self = self else {
                 return
             }
-            
+            self.settingPanel?.hide()
             if self.latencyVC == nil {
                 let newLatencyVC = AUIAICallLatencyRateViewController()
                 newLatencyVC.latencyData = self.latencyData // 更新延迟率数据
@@ -453,12 +387,6 @@ extension AUIAICallViewController {
 
     @objc open func onContentViewClicked(recognizer: UIGestureRecognizer) {
         self.controller.interruptSpeaking()
-    }
-    
-    @objc func onTitleLabelTap() {
-#if DEMO_FOR_DEBUG
-        self.showAgentDebugInfo()
-#endif
     }
     
 }
@@ -583,20 +511,18 @@ extension AUIAICallViewController: AUIAICallControllerDelegate {
         
         // 挂断处理
         if self.controller.state == .Over {
-            #if AICALL_ENABLE_FEEDBACK
-            self.showFeedback()
-            #else
             self.dismiss(animated: true)
-            #endif
         }
     }
     
     public func onAICallAgentStateChanged() {
         if self.controller.agentState == .Listening {
             self.callContentView.tipsLabel.text = AUIAICallBundle.getString("You Talk, I'm Listening...")
+            self.callContentView.volumeAnimator.start()
         }
         else if self.controller.agentState == .Thinking {
             self.callContentView.tipsLabel.text = AUIAICallBundle.getString("Thinking...")
+            self.callContentView.volumeAnimator.stop()
         }
         else if self.controller.agentState == .Speaking {
             if self.controller.config.agentConfig.interruptConfig.enableVoiceInterrupt && !self.controller.config.agentConfig.enablePushToTalk {
@@ -605,6 +531,7 @@ extension AUIAICallViewController: AUIAICallControllerDelegate {
             else {
                 self.callContentView.tipsLabel.text = AUIAICallBundle.getString("I'm Replying, Tap Screen to Interrupt Me")
             }
+            self.callContentView.volumeAnimator.stop()
         }
         
         self.callContentView.agentAni.updateAgentAnimator(state: self.controller.agentState)
@@ -670,10 +597,10 @@ extension AUIAICallViewController: AUIAICallControllerDelegate {
         self.settingPanel?.config = self.controller.config
         self.bottomView.enablePushToTalk = self.controller.config.agentConfig.enablePushToTalk
         if self.controller.config.agentConfig.enablePushToTalk {
-            AVToastView.show(AUIAICallBundle.getString("Push to talk mode is turned on"), view: self.view, position: .mid)
+            self.showToast(AUIAICallBundle.getString("Push to talk mode is turned on"))
         }
         else {
-            AVToastView.show(AUIAICallBundle.getString("Push to talk mode is turned off"), view: self.view, position: .mid)
+            self.showToast(AUIAICallBundle.getString("Push to talk mode is turned off"))
         }
     }
     
@@ -684,16 +611,16 @@ extension AUIAICallViewController: AUIAICallControllerDelegate {
             if reason == 2001 {
                 toast = AUIAICallBundle.getString("Due to your prolonged inactivity, the call has ended.")
             }
-            AVToastView.show(toast, view: keyWindow, position: .mid)
+            keyWindow.aicall_showToast(toast)
         }
     }
     
     public func onAICallHumanTakeoverWillStart(takeoverUid: String, takeoverMode: Int) {
-        AVToastView.show(AUIAICallBundle.getString("The current call will soon be handled by a real person."), view: self.view, position: .mid)
+        self.showToast(AUIAICallBundle.getString("The current call will soon be handled by a real person."))
     }
     
     public func onAICallHumanTakeoverConnected(takeoverUid: String) {
-        AVToastView.show(AUIAICallBundle.getString("The current call is now being handled by a real person."), view: self.view, position: .mid)
+        self.showToast(AUIAICallBundle.getString("The current call is now being handled by a real person."))
     }
     
     public func onAICallAgentEmotionNotify(emotion: String, userAsrSentenceId: Int) {
@@ -709,7 +636,7 @@ extension AUIAICallViewController: AUIAICallControllerDelegate {
         if enable {
             text = AUIAICallBundle.getString("Custom frame capture inspection mode has been enabled.")
         }
-        AVToastView.show(text, view: self.view, position: .mid)
+        self.showToast(text)
     }
     
     public func onAICallSpeakingInterrupted(reason: ARTCAICallSpeakingInterruptedReason) {
@@ -722,7 +649,7 @@ extension AUIAICallViewController: AUIAICallControllerDelegate {
     public func onAICallReceivedAgentVcrResult(result: ARTCAICallAgentVcrResult) {
 #if DEMO_FOR_DEBUG
         if let resultData = result.resultData {
-            AVToastView.show("VCR Result: \(resultData.aicall_jsonString)", view: self.view, position: .mid)
+            self.showToast("VCR Result: \(resultData.aicall_jsonString)")
         }
 #endif
     }
@@ -733,48 +660,22 @@ extension AUIAICallViewController: AUIAICallControllerDelegate {
     }
 }
 
-#if AICALL_ENABLE_FEEDBACK
-extension AUIAICallViewController {
-    
-    func showFeedback() {
-        if self.controller.errorCode == .AvatarRoutesExhausted ||
-            self.controller.errorCode == .BeginCallFailed ||
-            self.controller.errorCode == .TokenExpired{
-            self.dismiss(animated: true)
-        }
-        else {
-            DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + DispatchTimeInterval.milliseconds(100)) {
-                self.dismiss(animated: true) {
-                    AUIAICallFeedback.shared.tryToShowFeedback(controller: self.controller, vc: UIViewController.av_top())
-                }
-            }
-        }
-    }
-    
-    func setupReportBtn() -> UIButton {
-        let btn = AVBlockButton()
-        /*
-        btn.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
-        btn.setImage(AUIAICallBundle.getCommonImage("ic_report"), for: .normal)
-        btn.setImage(AUIAICallBundle.getCommonImage("ic_report_select"), for: .selected)
-         */
-        btn.titleLabel?.font = AVTheme.regularFont(12)
-        btn.setTitle(AUIAICallBundle.getString("Report Issues"), for: .normal)
-        btn.setTitleColor(AVTheme.text_weak, for: .normal)
-        //btn.setTitleColor(UIColor.av_color(withHexString: "#3A3D48FF"), for: .selected)
-        btn.clickBlock = { [weak self] btn in
-            self?.av_presentFullScreenViewController(AUIAICallReportViewController(), animated: true)
-        }
-        self.view.addSubview(btn)
-        btn.sizeToFit()
-        btn.frame = CGRect(x: 24, y: UIView.av_safeTop, width: btn.av_width, height: 44)
-        return btn
-    }
-}
-#endif
 
 #if DEMO_FOR_DEBUG
 extension AUIAICallViewController {
+    
+    func setupDebug() {
+        let debugBtn = AVBlockButton(frame: CGRect.zero)
+        debugBtn.setTitle("Debug", for: .normal)
+        debugBtn.setTitleColor(AUIAIMainBundle.color_text, for: .normal)
+        debugBtn.backgroundColor = AUIAIMainBundle.color_bg_elevated
+        debugBtn.clickBlock = {[weak self] sender in
+            self?.showAgentDebugInfo()
+        }
+        debugBtn.sizeToFit()
+        debugBtn.center = CGPoint(x: self.view.av_width / 2.0, y: UIView.av_safeTop + 22 )
+        self.view.addSubview(debugBtn)
+    }
     
     func showAgentDebugInfo() {
         AUIAICallDebugManager.shared.showAgentDebugInfo(vc: self, controller: self.controller)
@@ -793,7 +694,7 @@ extension AUIAICallViewController {
     
     func printDebugInfo(_ text: String) {
         if AUIAICallDebugManager.shared.enableDebugInfo {
-            AVToastView.show(text, view: self.view, position: .mid)
+            self.showToast(text)
         }
     }
 }

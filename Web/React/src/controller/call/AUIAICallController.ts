@@ -1,5 +1,3 @@
-import logger from '@/common/logger';
-import standardService from '@/service/standard.ts';
 import ARTCAICallEngine, {
   AICallAgentError,
   AICallAgentInfo,
@@ -13,12 +11,14 @@ import ARTCAICallEngine, {
   AICallSendTextToAgentRequest,
   AICallState,
   AICallSubtitleData,
-  AICallTemplateConfig,
   AICallVisionCustomCaptureRequest,
   AICallVoiceprintResult,
-  JSONObject,
 } from 'aliyun-auikit-aicall';
 import EventEmitter from 'eventemitter3';
+
+import logger from '@/common/logger';
+import standardService from '@/service/standard.ts';
+
 import AUIAICallControllerEvents from './AUIAICallControllerEvents';
 
 export default abstract class AUIAICallController extends EventEmitter<AUIAICallControllerEvents> {
@@ -258,11 +258,9 @@ export default abstract class AUIAICallController extends EventEmitter<AUIAICall
         this.config.region,
         instanceId
       );
-      const configKey = AICallTemplateConfig.getTemplateConfigKey(this.config.agentType);
-      // @ts-expect-error type ignore
-      const configValue = agentConfig[configKey];
-      if (!configValue) return;
-      this.emit('AICallAgentConfigLoaded', configValue as JSONObject);
+
+      if (!agentConfig) return;
+      this.emit('AICallAgentConfigLoaded', agentConfig);
       logger.info('Controller', 'DescribeAIAgentInstance', { value: Date.now() - startTs });
     } catch (error) {
       logger.info('DescribeAIAgentInstanceFailed', (error as Error)?.name || (error as Error)?.message || '');

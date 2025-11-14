@@ -2,7 +2,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/layout_base_dialog_background"
+    android:background="@color/color_bg"
     android:paddingStart="20dp"
     android:paddingEnd="20dp"
     xmlns:app="http://schemas.android.com/apk/res-auto">
@@ -10,7 +10,7 @@
     <!-- sentence ID -->
     <TextView
         android:id="@+id/tv_latency_rate_sentence_id_title"
-        style="@style/layout_base_text_style_14"
+        style="@style/text_style_16"
         android:text="@string/aicall_sentence_latency_sentence_id"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -21,7 +21,8 @@
 
     <TextView
         android:id="@+id/tv_latency_rate_sentence_id"
-        style="@style/layout_base_text_style_14"
+        style="@style/text_style_secondary_16"
+        android:text="1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:paddingBottom="10dp"
@@ -31,10 +32,11 @@
 
     <TextView
         android:id="@+id/tv_latency_rate_sentence_latency_value"
-        style="@style/layout_base_text_style_14"
+        style="@style/text_style_secondary_16"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:paddingBottom="10dp"
+        android:text="100ms"
         app:layout_constraintHorizontal_bias="1"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tv_latency_rate_sentence_id_title"
@@ -45,7 +47,7 @@
         android:id="@+id/v_latency_rate_divider"
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="@color/layout_base_light_white"
+        android:background="@color/color_border"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>

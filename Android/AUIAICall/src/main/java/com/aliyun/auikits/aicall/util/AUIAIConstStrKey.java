@@ -15,4 +15,6 @@ public class AUIAIConstStrKey {
     public static final String BUNDLE_KEY_PSTN_OUT_NUMBER = "BUNDLE_KEY_PSTN_OUT_NUMBER";
     public static final String BUNDLE_KEY_PSTN_SMART_INTERRUPT = "BUNDLE_KEY_PSTN_SMART_INTERRUPT";
     public static final String BUNDLE_KEY_PSTN_OUT_VOICE = "BUNDLE_KEY_PSTN_OUT_VOICE";
+
+    public static final String BUNDLE_KEY_IS_PSTN_IN = "BUNDLE_KEY_PSTN_IS_PSTN_IN";
 }

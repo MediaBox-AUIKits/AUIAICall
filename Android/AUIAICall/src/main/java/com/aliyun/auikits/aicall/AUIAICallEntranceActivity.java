@@ -2,19 +2,19 @@ package com.aliyun.auikits.aicall;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentPagerAdapter;
-import androidx.viewpager.widget.ViewPager;
+import androidx.viewpager2.adapter.FragmentStateAdapter;
+import androidx.viewpager2.widget.ViewPager2;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
-import android.net.Uri;
+import android.graphics.Typeface;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.os.SystemClock;
 import android.text.TextUtils;
 import android.util.Log;
@@ -22,8 +22,8 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.PopupWindow;
 import android.widget.Switch;
@@ -34,19 +34,15 @@ import com.acker.simplezxing.activity.CaptureActivity;
 import com.alibaba.android.arouter.facade.annotation.Route;
 import com.aliyun.auikits.aiagent.ARTCAICallEngine;
 import com.aliyun.auikits.aiagent.util.ARTCAIAgentUtil;
-import com.aliyun.auikits.aicall.bean.AudioToneData;
 import com.aliyun.auikits.aicall.controller.ARTCAICallController;
 import com.aliyun.auikits.aicall.util.AUIAICallAgentDebug;
 import com.aliyun.auikits.aicall.util.AUIAICallAgentIdConfig;
 import com.aliyun.auikits.aicall.util.AUIAICallAuthTokenHelper;
-import com.aliyun.auikits.aicall.util.AUIAICallClipboardUtils;
-import com.aliyun.auikits.aicall.util.AUIAICallManager;
 import com.aliyun.auikits.aicall.util.AUIAIConstStrKey;
 import com.aliyun.auikits.aicall.util.PermissionUtils;
 import com.aliyun.auikits.aicall.util.SettingStorage;
 import com.aliyun.auikits.aicall.util.ToastHelper;
 import com.aliyun.auikits.aicall.widget.AIAgentSettingDialog;
-import com.aliyun.auikits.aicall.widget.AICallPSTNSettingDialog;
 import com.aliyun.auikits.aicall.widget.GradientTextView;
 import com.google.android.material.tabs.TabLayout;
 import com.orhanobut.dialogplus.DialogPlus;
@@ -70,7 +66,8 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
         AUIAICallTypeChatBot,
         AUIAICallTypeVideoChat,
         AUIAICallTypeOutboundCall,
-        AUIAICallTypeInboundCall
+        AUIAICallTypeInboundCall,
+        AUIAICallTypeCustom
     };
 
     private String mLoginUserId = null;
@@ -84,8 +81,21 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
 
     private String mRtcAuthToken = null;
     private LayoutHolder mLayoutHolder = new LayoutHolder();
-    private Button mBtnCreateRoom = null;
+    private ConstraintLayout mBtnCreateRoomLayout = null;
+    private TextView mTvCreateRoom = null;
+    private ImageView mTVScanQR = null;
+    // 自定义智能体Token
+    private String mEtCustomAgentCallToken;
     private  boolean handShareToken = false;
+
+    private ImageButton themeSwitchButton;
+
+    // 保存tab索引，切换主题后恢复
+    private static final String KEY_CURRENT_TAB_POSTION = "current_tab_position";
+    private int currentTabPosition = 0;
+
+    // Debug开关
+    private TextView mTvDebug;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -99,56 +109,70 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_auiaicall);
 
-        mBtnCreateRoom = findViewById(R.id.btn_create_room);
+        if(savedInstanceState != null) {
+            currentTabPosition = savedInstanceState.getInt(KEY_CURRENT_TAB_POSTION, 0);
+        }
+
+        mBtnCreateRoomLayout = findViewById(R.id.btn_create_room_layout);
+        mTvCreateRoom = findViewById(R.id.tv_create_room_btn);
+        mTVScanQR = findViewById(R.id.iv_scan);
 
         mLayoutHolder.init(this);
 
-        findViewById(R.id.btn_back).setOnClickListener(new View.OnClickListener() {
+        // 退出
+        findViewById(R.id.iv_close).setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
                 finish();
             }
         });
-        mBtnCreateRoom.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                jumpToInCallActivity();
-            }
-        });
-        findViewById(R.id.btn_more).setVisibility(BuildConfig.TEST_ENV_MODE ? View.VISIBLE : View.GONE);
-        findViewById(R.id.btn_more).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                boolean showExtraConfig = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_SHOW_EXTRA_DEBUG_CONFIG, SettingStorage.DEFAULT_EXTRA_DEBUG_CONFIG);
-                if (showExtraConfig) {
-                    showRobotIdDialog();
-                } else {
-                    onSettingDialogTitleClicked();
-                }
-            }
-        });
-        findViewById(R.id.config_bgm_view).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                AIAgentSettingDialog.show(AUIAICallEntranceActivity.this, new AIAgentSettingDialog.IAIVoicePrintRecordListener() {
-                    @Override
-                    public void onClick() {
-                        jumpToVoicePrintRecordActivity();
-                    }
-                });
-            }
-        });
 
-        if(!SettingStorage.getInstance().getBoolean(SettingStorage.KEY_VOICE_PRINT_FIRST_RECORD_TIPS, false)) {
-            new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    showVoiceDialog(findViewById(R.id.config_bgm_view));
+        mBtnCreateRoomLayout.setOnClickListener(view -> jumpToInCallActivity());
+
+        findViewById(R.id.iv_more).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(mLayoutHolder.getOfficialLayerHolder().getAUIAICallAgentType() != AUIAICallType.AUIAICallTypeChatBot
+                        && mLayoutHolder.getOfficialLayerHolder().getAUIAICallAgentType() != AUIAICallType.AUIAICallTypeInboundCall
+                        && mLayoutHolder.getOfficialLayerHolder().getAUIAICallAgentType() != AUIAICallType.AUIAICallTypeOutboundCall) {
+                    AIAgentSettingDialog.show(AUIAICallEntranceActivity.this, new AIAgentSettingDialog.IAIVoicePrintRecordListener() {
+                        @Override
+                        public void onClick() {
+                            jumpToVoicePrintRecordActivity();
+                        }
+                    });
                 }
-            }, 1000);
+            }
+        });
+        mTvDebug = findViewById(R.id.tv_debug);
+        if(BuildConfig.TEST_ENV_MODE) {
+            mTvDebug.setVisibility(View.VISIBLE);
         }
+        mTvDebug.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                if(BuildConfig.TEST_ENV_MODE) {
+                    boolean showExtraConfig = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_SHOW_EXTRA_DEBUG_CONFIG, SettingStorage.DEFAULT_EXTRA_DEBUG_CONFIG);
+                    if (showExtraConfig) {
+                        showRobotIdDialog();
+                    } else {
+                        onSettingDialogTitleClicked();
+                    }
+                }
+            }
+        });
 
+//        if(!SettingStorage.getInstance().getBoolean(SettingStorage.KEY_VOICE_PRINT_FIRST_RECORD_TIPS, false)) {
+//            new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+//                @Override
+//                public void run() {
+//                    showVoiceDialog(findViewById(R.id.config_bgm_view));
+//                }
+//            }, 1000);
+//        }
 
+        themeSwitchButton = findViewById(R.id.ib_theme);
+        themeSwitchButton.setOnClickListener(v -> toggleTheme());
 
         PermissionX.init(this)
                 .permissions(PermissionUtils.getPermissions())
@@ -166,6 +190,12 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         featchRtcAuthToken();
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(KEY_CURRENT_TAB_POSTION, currentTabPosition);
     }
 
    private void showVoiceDialog(View itemView) {
@@ -211,7 +241,12 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
        SettingStorage.getInstance().setBoolean(SettingStorage.KEY_VOICE_PRINT_FIRST_RECORD_TIPS, true);
    }
 
-
+    private void toggleTheme() {
+        int currentMode = AppCompatDelegate.getDefaultNightMode();
+        int newMode = currentMode == AppCompatDelegate.MODE_NIGHT_YES ? AppCompatDelegate.MODE_NIGHT_NO : AppCompatDelegate.MODE_NIGHT_YES;
+        AppCompatDelegate.setDefaultNightMode(newMode);
+        recreate();
+    }
 
     private void featchRtcAuthToken() {
 
@@ -261,79 +296,69 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
     }
 
     private void jumpToInCallActivity() {
-        if (mLayoutHolder.isOfficial()) {
-            if(mLayoutHolder.getOfficialLayerHolder().getAUIAICallAgentType() != AUIAICallType.AUIAICallTypeOutboundCall && mLayoutHolder.getOfficialLayerHolder().getAUIAICallAgentType() != AUIAICallType.AUIAICallTypeInboundCall) {
-                Intent intent = new Intent(AUIAICallEntranceActivity.this, mLayoutHolder.getOfficialLayerHolder().getAUIAICallAgentType() == AUIAICallType.AUIAICallTypeChatBot ? AUIAIChatInChatActivity.class:AUIAICallInCallActivity.class);
-                intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_USER_ID, mLoginUserId);
-                intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_AUTHORIZATION, mLoginAuthorization);
-                intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_TYPE, mLayoutHolder.getOfficialLayerHolder().getAICallAgentType());
-                intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_RTC_AUTH_TOKEN, mRtcAuthToken);
-                boolean useEmotional = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_EMOTION, SettingStorage.DEFAULT_BOOT_ENABLE_EMOTION);
-                boolean usePreHost = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_APP_SERVER_TYPE, SettingStorage.DEFAULT_APP_SERVER_TYPE);
-                String agentId = "";
-                if(BuildConfig.TEST_ENV_MODE) {
-                    agentId = usePreHost ? AUIAICallAgentDebug.getAIAgentId(mLayoutHolder.getOfficialLayerHolder().getAICallAgentType(), useEmotional) :  AUIAICallAgentIdConfig.getAIAgentId(mLayoutHolder.getOfficialLayerHolder().getAICallAgentType(), useEmotional);
-                }
-                else {
-                    agentId = AUIAICallAgentIdConfig.getAIAgentId(mLayoutHolder.getOfficialLayerHolder().getAICallAgentType(), useEmotional);
-                }
-                if(!TextUtils.isEmpty(agentId)) {
-                    intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_ID, agentId);
-                }
-                intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_IS_SHARED_AGENT, false);
-                startActivity(intent);
+        AUIAICallType callType = mLayoutHolder.getOfficialLayerHolder().getAUIAICallAgentType();
+        if(callType == AUIAICallType.AUIAICallTypeCustom) {
+            // 自定义智能体
+            boolean isUseTextInputMode = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_CUSTOM_AGENT_TEXT_INPUT_MODE, false);
+            if(BuildConfig.TEST_ENV_MODE && isUseTextInputMode) {
+                // 文本框输入Token体验
+                startTextInputTokenMode();
             } else {
+                // 扫码体验
+                startCaptureActivityForResult();
+            }
 
-                if(mLayoutHolder.getOfficialLayerHolder().getAUIAICallAgentType() == AUIAICallType.AUIAICallTypeOutboundCall) {
-                    String pstnCallNumber = mLayoutHolder.getOfficialLayerHolder().getPSTNOutboundCallNumber();
-                    if(TextUtils.isEmpty(pstnCallNumber)) {
-                        ToastHelper.showToast(AUIAICallEntranceActivity.this, R.string.pstn_out_call_number_vaild, Toast.LENGTH_SHORT);
-                        return;
-                    }
-                    boolean isInterlligentInterrupt = mLayoutHolder.getOfficialLayerHolder().getPSTNSmartInterrupt();
-                    String voiceId = mLayoutHolder.getOfficialLayerHolder().getPSTNVoiceSelect();
-                    boolean usePreHost = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_APP_SERVER_TYPE, SettingStorage.DEFAULT_APP_SERVER_TYPE);
-                    String agentId = "";
-                    if(BuildConfig.TEST_ENV_MODE) {
-                        agentId = usePreHost ? AUIAICallAgentDebug.getOutBoundAgentId() :  AUIAICallAgentIdConfig.getOutBoundAgentId();
-                    }
-                    else {
-                        agentId = AUIAICallAgentIdConfig.getOutBoundAgentId();
-                    }
+            return;
+        }
 
-                    Intent intent = new Intent(AUIAICallEntranceActivity.this, AUIAICallInPhoneCallActivity.class);
-                    intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_PSTN_OUT_NUMBER, pstnCallNumber);
-                    intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_USER_ID, mLoginUserId);
-                    intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_ID, agentId);
-                    intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_AUTHORIZATION, mLoginAuthorization);
-                    intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_PSTN_SMART_INTERRUPT, isInterlligentInterrupt);
-                    intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_PSTN_OUT_VOICE, voiceId);
-                    intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_IS_SHARED_AGENT, false);
-                    startActivity(intent);
-                } else {
-                    String pstnInCallNumber = mLayoutHolder.getOfficialLayerHolder().getPSTNInboundCallNumber();
-                    if(TextUtils.isEmpty(pstnInCallNumber)) {
-                        ToastHelper.showToast(AUIAICallEntranceActivity.this, R.string.pstn_in_call_number_vaild, Toast.LENGTH_SHORT);
-                        return;
-                    }
-
-                    Intent intent = new Intent(Intent.ACTION_DIAL);
-                    intent.setData(Uri.parse("tel:" + pstnInCallNumber));
-                    startActivity(intent);
+        // Official Agent
+        if(callType != AUIAICallType.AUIAICallTypeInboundCall && callType != AUIAICallType.AUIAICallTypeOutboundCall) {
+            Intent intent = new Intent(AUIAICallEntranceActivity.this, mLayoutHolder.getOfficialLayerHolder().getAUIAICallAgentType() == AUIAICallType.AUIAICallTypeChatBot ? AUIAIChatInChatActivity.class:AUIAICallInCallActivity.class);
+            intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_USER_ID, mLoginUserId);
+            intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_AUTHORIZATION, mLoginAuthorization);
+            intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_TYPE, mLayoutHolder.getOfficialLayerHolder().getAICallAgentType());
+            intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_RTC_AUTH_TOKEN, mRtcAuthToken);
+            boolean useEmotional = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_EMOTION, SettingStorage.DEFAULT_BOOT_ENABLE_EMOTION);
+            boolean usePreHost = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_APP_SERVER_TYPE, SettingStorage.DEFAULT_APP_SERVER_TYPE);
+            String agentId = "";
+            if(BuildConfig.TEST_ENV_MODE) {
+                agentId = usePreHost ? AUIAICallAgentDebug.getAIAgentId(mLayoutHolder.getOfficialLayerHolder().getAICallAgentType(), useEmotional) :  AUIAICallAgentIdConfig.getAIAgentId(mLayoutHolder.getOfficialLayerHolder().getAICallAgentType(), useEmotional);
+                String autoTestAgent = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_AUTO_TEST_AGENT);
+                if(!TextUtils.isEmpty(autoTestAgent)) {
+                    agentId = autoTestAgent;
                 }
-
             }
-        } else {
+            else {
+                agentId = AUIAICallAgentIdConfig.getAIAgentId(mLayoutHolder.getOfficialLayerHolder().getAICallAgentType(), useEmotional);
+            }
+            if(!TextUtils.isEmpty(agentId)) {
+                intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_ID, agentId);
+            }
+            intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_IS_SHARED_AGENT, false);
+            startActivity(intent);
+        } else if(callType == AUIAICallType.AUIAICallTypeInboundCall) {
+            Intent intent = new Intent(AUIAICallEntranceActivity.this, AUIAICallPhoneCallInputActivity.class);
+            intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_USER_ID, mLoginUserId);
+            intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_AUTHORIZATION, mLoginAuthorization);
 
-            if(!handShareToken && !mLayoutHolder.getCustomLayerHolder().getExperienceToken().isEmpty()) {
-                handleShareToken(mLayoutHolder.getCustomLayerHolder().getExperienceToken());
+            intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_IS_PSTN_IN, true);
+            startActivity(intent);
+        } else  {
+            boolean usePreHost = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_APP_SERVER_TYPE, SettingStorage.DEFAULT_APP_SERVER_TYPE);
+            String agentId = "";
+            if(BuildConfig.TEST_ENV_MODE) {
+                agentId = usePreHost ? AUIAICallAgentDebug.getOutBoundAgentId() :  AUIAICallAgentIdConfig.getOutBoundAgentId();
+            }
+            else {
+                agentId = AUIAICallAgentIdConfig.getOutBoundAgentId();
             }
 
-            if (System.currentTimeMillis() <= mLayoutHolder.getCustomLayerHolder().getExpireTimestamp()) {
-                ARTCAICallController.launchCallActivity(this, mLayoutHolder.getCustomLayerHolder().getExperienceToken(), mLoginUserId, mLoginAuthorization);
-            } else {
-                ToastHelper.showToast(AUIAICallEntranceActivity.this, R.string.token_expired_tips, Toast.LENGTH_SHORT);
-            }
+            Intent intent = new Intent(AUIAICallEntranceActivity.this, AUIAICallPhoneCallInputActivity.class);
+            intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_USER_ID, mLoginUserId);
+            intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_AUTHORIZATION, mLoginAuthorization);
+            intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_IS_PSTN_IN, false);
+            intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_ID, agentId);
+            startActivity(intent);
         }
     }
 
@@ -373,6 +398,7 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
 
         //((Switch)view.findViewById(R.id.sv_boot_use_voice_print)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_VOICE_PRINT, SettingStorage.DEFAULT_ENABLE_VOICE_PRINT));
         ((Switch)view.findViewById(R.id.sv_share_boot_use_demo_app_server)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_SHARE_BOOT_USE_DEMO_APP_SERVER, SettingStorage.DEFAULT_SHARE_BOOT_USE_DEMO_APP_SERVER));
+        ((Switch)view.findViewById(R.id.sv_custom_agent_text_input_mode)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_CUSTOM_AGENT_TEXT_INPUT_MODE, false));
         ((EditText)view.findViewById(R.id.et_boot_user_data)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_USER_EXTEND_DATA));
 
         ((EditText) view.findViewById(R.id.enable_voice_interrupt_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_ENABLE_VOICE_INTERRUPT, "1"));
@@ -408,8 +434,8 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
         ((EditText) view.findViewById(R.id.pre_connect_audio_url_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_PRE_CONNECT_AUDIO_URL, ""));
         ((EditText) view.findViewById(R.id.output_min_length_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_OUTPUT_MIN_LENGTH, "-1"));
         ((EditText) view.findViewById(R.id.output_max_delay_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_OUTPUT_MAX_DELAY, "-1"));
-
-
+        ((EditText) view.findViewById(R.id.auto_test_agent_id_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_AUTO_TEST_AGENT, ""));
+        ((EditText) view.findViewById(R.id.experimental_config_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_EXPERIMENTAL_CONFIG, ""));
 
 
         if (!showExtraDebugConfig) {
@@ -476,6 +502,10 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
                         boolean shareBootUseDemoAppServer = ((Switch)view.findViewById(R.id.sv_share_boot_use_demo_app_server)).isChecked();
                         SettingStorage.getInstance().setBoolean(SettingStorage.KEY_SHARE_BOOT_USE_DEMO_APP_SERVER, shareBootUseDemoAppServer);
 
+                        // 自动化要求自定义智能体以文本框输入的方式进入而不是扫码体验
+                        boolean isCustomAgentTextInputMode = ((Switch)view.findViewById(R.id.sv_custom_agent_text_input_mode)).isChecked();
+                        SettingStorage.getInstance().setBoolean(SettingStorage.KEY_CUSTOM_AGENT_TEXT_INPUT_MODE, isCustomAgentTextInputMode);
+
                         String bootUserExtendData = ((EditText)view.findViewById(R.id.et_boot_user_data)).getText().toString();
                         SettingStorage.getInstance().set(SettingStorage.KEY_BOOT_USER_EXTEND_DATA, bootUserExtendData);
 
@@ -541,6 +571,8 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
                         SettingStorage.getInstance().set(SettingStorage.KEY_BOOT_PRE_CONNECT_AUDIO_URL, ((EditText)view.findViewById(R.id.pre_connect_audio_url_input)).getText().toString());
                         SettingStorage.getInstance().set(SettingStorage.KEY_BOOT_OUTPUT_MIN_LENGTH, ((EditText)view.findViewById(R.id.output_min_length_input)).getText().toString());
                         SettingStorage.getInstance().set(SettingStorage.KEY_BOOT_OUTPUT_MAX_DELAY, ((EditText)view.findViewById(R.id.output_max_delay_input)).getText().toString());
+                        SettingStorage.getInstance().set(SettingStorage.KEY_BOOT_AUTO_TEST_AGENT, ((EditText)view.findViewById(R.id.auto_test_agent_id_input)).getText().toString());
+                        SettingStorage.getInstance().set(SettingStorage.KEY_BOOT_EXPERIMENTAL_CONFIG, ((EditText)view.findViewById(R.id.experimental_config_input)).getText().toString());
 
 
                     }
@@ -598,62 +630,34 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        switch (requestCode) {
-            case CaptureActivity.REQ_CODE:
-                switch (resultCode) {
-                    case RESULT_OK: {
-                        String token = data.getStringExtra(CaptureActivity.EXTRA_SCAN_RESULT);
-                        handleShareToken(token);
-                        break;
-                    }
-                    case RESULT_CANCELED: {
-                        if (data != null) {
-                            String token = data.getStringExtra(CaptureActivity.EXTRA_SCAN_RESULT);
-                            handleShareToken(token);
-                        }
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                break;
-            default:
-                break;
-        }
-    }
-
-    private void handleShareToken(String shareToken) {
-        if (!TextUtils.isEmpty(shareToken)) {
-            try {
-                Log.i("AUIAICall", "handleShareToken: [shareToken: " + shareToken + "]");
-                ARTCAIAgentUtil.ARTCAIAgentShareInfo shareInfo = ARTCAIAgentUtil.parseAiAgentShareInfo(shareToken);
-                if (null != shareInfo) {
-                    if (System.currentTimeMillis() <= shareInfo.expireTimestamp) {
-                        mLayoutHolder.getCustomLayerHolder().setExperienceToken(shareToken);
-                        mLayoutHolder.getCustomLayerHolder().setAiAgentId(shareInfo.aiAgentId);
-                        mLayoutHolder.getCustomLayerHolder().setExpireTimestamp(shareInfo.expireTimestamp);
-                        ARTCAICallEngine.ARTCAICallAgentType aiCallAgentType = ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent;
-                        if ("AvatarChat3D".equals(shareInfo.workflowType)) {
-                            aiCallAgentType = ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent;
-                        } else if ("VisionChat".equals(shareInfo.workflowType)) {
-                            aiCallAgentType = ARTCAICallEngine.ARTCAICallAgentType.VisionAgent;
-                        } else if("MessageChat".equals(shareInfo.workflowType)) {
-                            aiCallAgentType = ARTCAICallEngine.ARTCAICallAgentType.ChatBot;
-                        } else if("VideoChat".equals(shareInfo.workflowType)) {
-                            aiCallAgentType = ARTCAICallEngine.ARTCAICallAgentType.VideoAgent;
-                        }
-                        mLayoutHolder.getCustomLayerHolder().setExperienceTokenCallType(aiCallAgentType);
-                        mLayoutHolder.getCustomLayerHolder().setExperienceRegion(shareInfo.region);
-                        handShareToken = true;
-                    } else {
-                        ToastHelper.showToast(this, R.string.token_expired_tips, Toast.LENGTH_SHORT);
-                    }
-                }
-                Log.i("AUIAICALL", "handleShareToken: [shareInfo: " + shareInfo + "]");
-            } catch (Exception ex) {
-                ex.printStackTrace();
+        if(requestCode == CaptureActivity.REQ_CODE && data != null) {
+            String token = data.getStringExtra(CaptureActivity.EXTRA_SCAN_RESULT);
+            if(!TextUtils.isEmpty((token))) {
+                handleCustomAgentToken(token);
             }
         }
+//        switch (requestCode) {
+//            case CaptureActivity.REQ_CODE:
+//                switch (resultCode) {
+//                    case RESULT_OK: {
+//                        String token = data.getStringExtra(CaptureActivity.EXTRA_SCAN_RESULT);
+//                        handleShareToken(token);
+//                        break;
+//                    }
+//                    case RESULT_CANCELED: {
+//                        if (data != null) {
+//                            String token = data.getStringExtra(CaptureActivity.EXTRA_SCAN_RESULT);
+//                            handleShareToken(token);
+//                        }
+//                        break;
+//                    }
+//                    default:
+//                        break;
+//                }
+//                break;
+//            default:
+//                break;
+//        }
     }
 
     private void startCaptureActivityForResult() {
@@ -670,65 +674,69 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
         startActivityForResult(intent, CaptureActivity.REQ_CODE);
     }
 
+    // 用于自动化，文本框输入Token
+    private void startTextInputTokenMode() {
+        EditText editText = new EditText(this);
+        editText.setHint("请输入Token");
+        editText.setMaxLines(3);
+        editText.setMovementMethod(android.text.method.ScrollingMovementMethod.getInstance());
+        editText.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("输入Token")
+                .setView(editText)
+                .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        String token = editText.getText().toString().trim();
+                        if (!TextUtils.isEmpty(token)) {
+                            handleCustomAgentToken(token);
+                        } else {
+                            ToastHelper.showToast(AUIAICallEntranceActivity.this, "Token不能为空", Toast.LENGTH_SHORT);
+                        }
+                    }
+                })
+                .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                })
+                .show();
+    }
+
+    private void handleCustomAgentToken(String token) {
+        mEtCustomAgentCallToken = token;
+        // 启动通话
+        try {
+            ARTCAIAgentUtil.ARTCAIAgentShareInfo shareInfo = ARTCAIAgentUtil.parseAiAgentShareInfo(mEtCustomAgentCallToken);
+            if(shareInfo != null) {
+                if (System.currentTimeMillis() <= shareInfo.expireTimestamp) {
+                    ARTCAICallController.launchCallActivity(this, mEtCustomAgentCallToken, mLoginUserId, mLoginAuthorization);
+                } else {
+                    ToastHelper.showToast(this, R.string.token_expired_tips, Toast.LENGTH_SHORT);
+                }
+            } else {
+                ToastHelper.showToast(this, "null shareInfo", Toast.LENGTH_SHORT);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            ToastHelper.showToast(this, "请输入正确的Token", Toast.LENGTH_SHORT);
+        }
+    }
+
     private class LayoutHolder implements View.OnClickListener {
-        private ViewGroup mVGFunctionBar = null;
-        private GradientTextView mVGFunctionOfficial = null;
-        private GradientTextView mVGFunctionCustom = null;
-        private boolean mIsOfficial = true;
 
         private ViewGroup mVGFunctionDetailOfficial = null;
         private OfficialLayerHolder mOfficialLayerHolder = new OfficialLayerHolder();
-        private ViewGroup mVGFunctionDetailCustom = null;
-        private CustomLayerHolder mCustomLayerHolder = new CustomLayerHolder();
 
         private void init(Context context) {
-            mVGFunctionBar = findViewById(R.id.function_bar);
-            mVGFunctionOfficial = findViewById(R.id.tv_function_official);
-            mVGFunctionOfficial.setOnClickListener(this);
-            mVGFunctionCustom = findViewById(R.id.tv_function_custom);
-            mVGFunctionCustom.setOnClickListener(this);
-
             mVGFunctionDetailOfficial = findViewById(R.id.layer_function_detail_official);
             mOfficialLayerHolder.init(context);
-
-            mVGFunctionDetailCustom = findViewById(R.id.layer_function_detail_custom);
-            mCustomLayerHolder.init(context);
-
-            onFunctionOfficialClick();
         }
 
         @Override
         public void onClick(View v) {
-            if (null != v) {
-                if (v.equals(mVGFunctionOfficial)) {
-                    onFunctionOfficialClick();
-                } else if (v.equals(mVGFunctionCustom)) {
-                    onFunctionCustomClick();
-                }
-            }
-        }
-
-        private void onFunctionOfficialClick() {
-            setSelectedTextColor(mVGFunctionOfficial, true);
-            mVGFunctionOfficial.setBackgroundResource(R.drawable.bg_function_selector_selected);
-            setSelectedTextColor(mVGFunctionCustom, false);
-            mVGFunctionCustom.setBackgroundResource(0);
-            mIsOfficial = true;
-
-            mVGFunctionDetailOfficial.setVisibility(View.VISIBLE);
-            mVGFunctionDetailCustom.setVisibility(View.GONE);
-
-        }
-
-        private void onFunctionCustomClick() {
-            setSelectedTextColor(mVGFunctionOfficial, false);
-            mVGFunctionOfficial.setBackgroundResource(0);
-            setSelectedTextColor(mVGFunctionCustom, true);
-            mVGFunctionCustom.setBackgroundResource(R.drawable.bg_function_selector_selected);
-            mIsOfficial = false;
-
-            mVGFunctionDetailOfficial.setVisibility(View.GONE);
-            mVGFunctionDetailCustom.setVisibility(View.VISIBLE);
 
         }
 
@@ -748,87 +756,8 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
             return mOfficialLayerHolder.getAICallAgentType();
         }
 
-        public boolean isOfficial() {
-            return mIsOfficial;
-        }
-
-        public CustomLayerHolder getCustomLayerHolder() {
-            return mCustomLayerHolder;
-        }
-
         public OfficialLayerHolder getOfficialLayerHolder() {
             return mOfficialLayerHolder;
-        }
-    }
-
-    private class CustomLayerHolder implements View.OnClickListener {
-
-        private EditText mEtExperienceToken = null;
-        private ImageView mIvExperienceTokenScan = null;
-        private String mAiAgentId = null;
-        private ARTCAICallEngine.ARTCAICallAgentType mExperienceTokenCallType = ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent;
-        private String mExperienceRegion = null;
-        private long mExpireTimestamp = 0;
-
-        private void init(Context context) {
-            mEtExperienceToken = findViewById(R.id.et_experience_token);
-            //mEtExperienceToken.setEnabled(false);
-            mIvExperienceTokenScan = findViewById(R.id.tv_experience_token_scan);
-            mIvExperienceTokenScan.setOnClickListener(this);
-        }
-
-        @Override
-        public void onClick(View v) {
-            if (v.equals(mIvExperienceTokenScan)) {
-                startCaptureActivityForResult();
-            }
-        }
-
-
-        private String getExperienceToken() {
-            String ret = "";
-            if (null != mEtExperienceToken) {
-                ret = mEtExperienceToken.getText().toString();
-            }
-            return ret;
-        }
-
-        private void setExperienceToken(String token) {
-            if (null != mEtExperienceToken) {
-                mEtExperienceToken.setText(token);
-            }
-        }
-
-        public void setAiAgentId(String aiAgentId) {
-            this.mAiAgentId = aiAgentId;
-        }
-
-        public String getAiAgentId() {
-            return mAiAgentId;
-        }
-
-        public void setExperienceTokenCallType(ARTCAICallEngine.ARTCAICallAgentType experienceTokenCallType) {
-            this.mExperienceTokenCallType = experienceTokenCallType;
-        }
-
-        public ARTCAICallEngine.ARTCAICallAgentType getExperienceTokenCallType() {
-            return mExperienceTokenCallType;
-        }
-
-        public void setExpireTimestamp(long expireTimestamp) {
-            this.mExpireTimestamp = expireTimestamp;
-        }
-
-        public long getExpireTimestamp() {
-            return mExpireTimestamp;
-        }
-
-        public void setExperienceRegion(String experienceRegion) {
-            this.mExperienceRegion = experienceRegion;
-        }
-
-        public String getExperienceRegion() {
-            return mExperienceRegion;
         }
     }
 
@@ -848,6 +777,32 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
                 return context.getString(R.string.phone_agent_call);
             case AUIAICallTypeInboundCall:
                 return context.getString(R.string.phone_agent_in_call);
+            case AUIAICallTypeCustom:
+                return context.getString(R.string.custom_agent);
+            default:
+                break;
+        }
+        return "";
+    }
+
+    private static String aiCallAgentTypeDecription(Context context, AUIAICallType aICallAgentType) {
+        switch (aICallAgentType) {
+            case AUIAICallTypeVoiceChat:
+                return context.getString(R.string.description_voice_call);
+            case AUIAICallTypeAvatarChat:
+                return context.getString(R.string.description_avatar_call);
+            case AUIAICallTypeVisionChat:
+                return context.getString(R.string.description_vision_call);
+            case AUIAICallTypeChatBot:
+                return context.getString(R.string.description_chatbot);
+            case AUIAICallTypeVideoChat:
+                return context.getString(R.string.description_video_call);
+            case AUIAICallTypeOutboundCall:
+                return context.getString(R.string.description_pstn_out_bound);
+            case AUIAICallTypeInboundCall:
+                return context.getString(R.string.description_pstn_in_bound);
+            case AUIAICallTypeCustom:
+                return context.getString(R.string.description_custom_agent);
             default:
                 break;
         }
@@ -857,77 +812,140 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
     private class OfficialLayerHolder {
         private AUIAICallType mAICallAgentType = AUIAICallType.AUIAICallTypeVoiceChat;
         private TabLayout mTabCallType = null;
-        private ViewPager mViewPagerCallType = null;
+        private ViewPager2 mViewPagerCallType = null;
         private List<AUIAICallType> mAUICallTypeList = new LinkedList<>();
-        private ViewGroup mMotionalLayout = null;
+
+        private Context mContext;
 
         private void init(Context context) {
-
             mAUICallTypeList.add(AUIAICallType.AUIAICallTypeVoiceChat);
             mAUICallTypeList.add(AUIAICallType.AUIAICallTypeAvatarChat);
             mAUICallTypeList.add(AUIAICallType.AUIAICallTypeVisionChat);
-            mAUICallTypeList.add(AUIAICallType.AUIAICallTypeChatBot);
             mAUICallTypeList.add(AUIAICallType.AUIAICallTypeVideoChat);
+            mAUICallTypeList.add(AUIAICallType.AUIAICallTypeChatBot);
             if(mShowPstnCallPage) {
                 if(!mInternalBuild) {
                     mAUICallTypeList.add(AUIAICallType.AUIAICallTypeOutboundCall);
                     mAUICallTypeList.add(AUIAICallType.AUIAICallTypeInboundCall);
                 }
             }
+            mAUICallTypeList.add(AUIAICallType.AUIAICallTypeCustom);
 
-            mMotionalLayout = findViewById(R.id.config_layout);
+            mContext = context;
+
             mTabCallType = findViewById(R.id.tab_function_detail_call_type);
             mViewPagerCallType = findViewById(R.id.viewpager_function_detail_call_type);
 
-            mTabCallType.setupWithViewPager(mViewPagerCallType);
-            mTabCallType.setTabTextColors(context.getResources().getColor(R.color.layout_base_white_default),
-                    context.getResources().getColor(R.color.layout_base_light_blue));
-            ViewPagerAdapter adapter = new ViewPagerAdapter(
-                    ((AppCompatActivity)context).getSupportFragmentManager()
-            );
-
+            ViewPagerAdapter adapter = new ViewPagerAdapter((AppCompatActivity) context);
             for (AUIAICallType aiCallAgentType : mAUICallTypeList) {
-                adapter.addFragment(aiCallAgentType, aiCallAgentTypeTitle(context, aiCallAgentType), context, mBtnCreateRoom, mLoginUserId, mLoginAuthorization);
+                adapter.addFragment(aiCallAgentType, aiCallAgentTypeTitle(context, aiCallAgentType));
+            }
+            mViewPagerCallType.setAdapter(adapter);
+            mViewPagerCallType.setOffscreenPageLimit(2);
+            mViewPagerCallType.setPageTransformer(new StackGalleryPageTransformer());
+            // 获取实际位置
+            int actualPossition = adapter.getActualPosition(currentTabPosition);
+            mAICallAgentType = mAUICallTypeList.get(actualPossition);
+            setupTabLayout(adapter, actualPossition);
+
+            mViewPagerCallType.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+                @Override
+                public void onPageSelected(int position) {
+                    super.onPageSelected(position);
+                    currentTabPosition = position;
+                    int actualPosition = adapter.getActualPosition(position);
+
+                    if (mTabCallType.getTabCount() > actualPosition) {
+                        mTabCallType.selectTab(mTabCallType.getTabAt(actualPosition));
+                    }
+
+                    mAICallAgentType = mAUICallTypeList.get(actualPosition);
+                    if (mAICallAgentType == AUIAICallType.AUIAICallTypeInboundCall) {
+                        mTVScanQR.setVisibility(View.GONE);
+                        mTvCreateRoom.setText(R.string.pstn_in_call_entrance_text);
+                    } else if (mAICallAgentType == AUIAICallType.AUIAICallTypeCustom) {
+                        mTvCreateRoom.setText(R.string.custom_agent_room_entrance_text);
+                        mTVScanQR.setVisibility(View.VISIBLE);
+                    } else {
+                        mTVScanQR.setVisibility(View.GONE);
+                        mTvCreateRoom.setText(R.string.room_entrance_text);
+                    }
+                    updateAgentInfo(actualPosition);
+                }
+            });
+            // 首次更新viewpager页面
+            mViewPagerCallType.setCurrentItem(currentTabPosition, false);
+        }
+
+        private void setupTabLayout(ViewPagerAdapter adapter, int actualPosition) {
+            mTabCallType.removeAllTabs();
+
+            for (int i = 0; i < mAUICallTypeList.size(); i++) {
+                TabLayout.Tab tab = mTabCallType.newTab().setCustomView(R.layout.tab_title_custom_text_view);
+                View tabView = tab.getCustomView();
+                if (tabView != null) {
+                    TextView textView = tabView.findViewById(R.id.tab_title);
+                    View indicator = tabView.findViewById(R.id.tab_indicator);
+                    textView.setText(adapter.getPageTitle(i));
+                    if (i == actualPosition) {
+                        textView.setTypeface(null, Typeface.BOLD);
+                        indicator.setVisibility(View.VISIBLE);
+                    } else {
+                        textView.setTypeface(null, Typeface.NORMAL);
+                        indicator.setVisibility(View.INVISIBLE);
+                    }
+                }
+
+                mTabCallType.addTab(tab);
             }
 
-            mViewPagerCallType.setAdapter(adapter);
-
-            mViewPagerCallType.setCurrentItem(0);
-            mAICallAgentType = mAUICallTypeList.get(0);
+            // 默认选中第一个
+            mTabCallType.selectTab(mTabCallType.getTabAt(currentTabPosition), false);
+            // Tab 点击事件：跳转到 ViewPager 中对应位置（居中区域）
             mTabCallType.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
                 @Override
                 public void onTabSelected(TabLayout.Tab tab) {
-                    mAICallAgentType = mAUICallTypeList.get(tab.getPosition());
-                    if(mAICallAgentType == AUIAICallType.AUIAICallTypeChatBot || mAICallAgentType == AUIAICallType.AUIAICallTypeOutboundCall || mAICallAgentType == AUIAICallType.AUIAICallTypeInboundCall) {
-                        mMotionalLayout.setVisibility(View.GONE);
-                    } else {
-                        mMotionalLayout.setVisibility(View.VISIBLE);
+                    View tabView = tab.getCustomView();
+                    if(tabView != null) {
+                        TextView textView = tabView.findViewById(R.id.tab_title);
+                        textView.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+                        tabView.findViewById(R.id.tab_indicator).setVisibility(View.VISIBLE);
                     }
-
-                    if(mAICallAgentType == AUIAICallType.AUIAICallTypeInboundCall) {
-                        mBtnCreateRoom.setText(R.string.pstn_in_call_entrance_text);
-                        ((ViewPagerAdapter)mViewPagerCallType.getAdapter()).featchInBoundCallerNumber();
-                    } else {
-                        mBtnCreateRoom.setText(R.string.room_entrance_text);
-                    }
-
-                    if(mAICallAgentType == AUIAICallType.AUIAICallTypeInboundCall || mAICallAgentType == AUIAICallType.AUIAICallTypeOutboundCall) {
-                        findViewById(R.id.generate_by_ai_text).setVisibility(View.VISIBLE);
-                    } else {
-                        findViewById(R.id.generate_by_ai_text).setVisibility(View.GONE);
+                    int actualPosition = tab.getPosition();
+                    int targetVirtualPosition = adapter.getInitialPosition() + actualPosition;
+                    // 防止重复设置触发 onPageSelected
+                    if (mViewPagerCallType.getCurrentItem() != targetVirtualPosition) {
+                        mViewPagerCallType.setCurrentItem(targetVirtualPosition, false);
                     }
                 }
 
                 @Override
                 public void onTabUnselected(TabLayout.Tab tab) {
-
+                    View tabView = tab.getCustomView();
+                    if (tabView != null) {
+                        TextView textView = tabView.findViewById(R.id.tab_title);
+                        textView.setTypeface(Typeface.DEFAULT);
+                        tabView.findViewById(R.id.tab_indicator).setVisibility(View.INVISIBLE);
+                    }
                 }
 
                 @Override
                 public void onTabReselected(TabLayout.Tab tab) {
-
+                    // 可选：双击滚动到顶部或其他操作
                 }
             });
+        }
+
+        // 跟随Tab更新智能体介绍
+        private void updateAgentInfo(int position) {
+            TextView agentNameText = findViewById(R.id.tv_agent_name);
+            TextView agentIndexText = findViewById(R.id.tv_agent_index);
+            TextView agentDescription = findViewById(R.id.tv_agent_description);
+            agentNameText.setText(aiCallAgentTypeTitle(mContext, mAUICallTypeList.get(position)));
+            String indexMsg = String.format(java.util.Locale.getDefault(), "[. %02d_%02d]", position + 1, mAUICallTypeList.size());
+            agentIndexText.setText(indexMsg);
+
+            agentDescription.setText(aiCallAgentTypeDecription(mContext, mAUICallTypeList.get(position)));
         }
 
         public AUIAICallType getAUIAICallAgentType() {
@@ -949,130 +967,88 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
             }
             return ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent;
         }
+    }
 
-        public String getPSTNOutboundCallNumber() {
-            return ((ViewPagerAdapter)mViewPagerCallType.getAdapter()).getPSTNOutCallNumber();
+    private static class ViewPagerAdapter extends FragmentStateAdapter {
+        private final List<AUIAICallType> fragmentTypeList = new ArrayList<>();
+        private final List<String> fragmentTitleList = new ArrayList<>();
+        private static final int INFINITE_COUNT = 10;
+
+        public ViewPagerAdapter(AppCompatActivity activity) {
+            super(activity);
         }
 
-        public boolean getPSTNSmartInterrupt() {
-            return ((ViewPagerAdapter)mViewPagerCallType.getAdapter()).getPSTNIsSmartInterrupt();
+        @Override
+        public int getItemCount() {
+            return fragmentTypeList.isEmpty() ? 0 : fragmentTypeList.size() * INFINITE_COUNT;
         }
 
-        public String getPSTNVoiceSelect() {
-            return ((ViewPagerAdapter)mViewPagerCallType.getAdapter()).getPSTNVoiceSelect();
+        @NonNull
+        @Override
+        public Fragment createFragment(int position) {
+            int actualPosition = position % fragmentTypeList.size();
+            return OfficialCallPreviewFragment.newInstance(fragmentTypeList.get(actualPosition));
         }
 
-        public String getPSTNInboundCallNumber() {
-            return ((ViewPagerAdapter)mViewPagerCallType.getAdapter()).getPSTNInCallerNumber();
+        public void addFragment(AUIAICallType callAgentType, String title) {
+            fragmentTypeList.add(callAgentType);
+            fragmentTitleList.add(title);
         }
 
-        public void setPSTNInboundCallNumber(String number) {
-            ((ViewPagerAdapter)mViewPagerCallType.getAdapter()).setPSTNInCallerNumber(number);
+        public CharSequence getPageTitle(int position) {
+            int actualPosition = position % fragmentTitleList.size();
+            return fragmentTitleList.get(actualPosition);
+        }
+
+        // 获取实际位置
+        public int getActualPosition(int position) {
+            return fragmentTypeList.isEmpty() ? 0 : position % fragmentTypeList.size();
+        }
+
+        // 获取初始位置，中间
+        public int getInitialPosition() {
+            if (fragmentTypeList.isEmpty()) return 0;
+            return (INFINITE_COUNT / 2) * fragmentTypeList.size();
         }
     }
 
-    private static class ViewPagerAdapter extends FragmentPagerAdapter {
-        private final List<Fragment> fragmentList = new ArrayList<>();
-        private final List<String> fragmentTitleList = new ArrayList<>();
+    public class StackGalleryPageTransformer implements ViewPager2.PageTransformer {
 
-        public ViewPagerAdapter(FragmentManager fm) {
-            super(fm);
-        }
-
-        @Override
-        public Fragment getItem(int position) {
-            return fragmentList.get(position);
-        }
+        private static final float SCALE_FACTOR = 0.9f;
+        private static final float ALPHA_FACTOR = 1.0f;
+        private static final float TRANSLATION_X_OFFSET = 80f;
+        private static final float VERTICAL_OFFSET = 0f;
 
         @Override
-        public int getCount() {
-            return fragmentList.size();
-        }
+        public void transformPage(@NonNull View page, float position) {
+            float pageWidth = page.getWidth();
+            float pageHeight = page.getHeight();
 
-        @Override
-        public CharSequence getPageTitle(int position) {
-            return fragmentTitleList.get(position);
-        }
+            if (position < 0) {
+                // 完全不可见的左侧页面
+                page.setAlpha(0f);
+                page.setTranslationX(-pageWidth * 0.5f);
+                page.setTranslationY(pageHeight * 0.5f);
+                page.setScaleX(0.7f);
+                page.setScaleY(0.7f);
+            } else if (position <= 2) {
+                float scaleFactor = SCALE_FACTOR + (1 - SCALE_FACTOR) * (1 - position);
+                page.setScaleX(scaleFactor);
+                page.setScaleY(scaleFactor);
+                page.setAlpha(ALPHA_FACTOR);
+                page.setTranslationX(-pageWidth * position * 1.15f);
+                page.setTranslationY(-VERTICAL_OFFSET * Math.abs(position));
 
-        public void addFragment(Fragment fragment, String title) {
-            fragmentList.add(fragment);
-            fragmentTitleList.add(title);
-        }
+                // Z 轴分层（Android 5.0+）
+                page.setTranslationZ(10 * (1 - Math.abs(position)));
 
-        public void addFragment(AUIAICallType callAgentType, String title, Context context, Button mCreateRoomBtn, String userId, String auth) {
-            Fragment fragment = OfficialCallPreviewFragment.newInstance(callAgentType, context, mCreateRoomBtn, userId, auth);
-            fragmentList.add(fragment);
-            fragmentTitleList.add(title);
-        }
-
-        public String getPSTNOutCallNumber() {
-
-            for (Fragment fragment : fragmentList) {
-                if (fragment instanceof OfficialCallPreviewFragment) {
-                    OfficialCallPreviewFragment officialCallPreviewFragment = (OfficialCallPreviewFragment) fragment;
-                    if (officialCallPreviewFragment.mCallAgentType == AUIAICallType.AUIAICallTypeOutboundCall) {
-                        return officialCallPreviewFragment.mPstnOutNumberEditText.getText().toString();
-                    }
-                }
-            }
-            return null;
-        }
-
-        public String getPSTNInCallerNumber() {
-            for (Fragment fragment : fragmentList) {
-                if (fragment instanceof OfficialCallPreviewFragment) {
-                    OfficialCallPreviewFragment officialCallPreviewFragment = (OfficialCallPreviewFragment) fragment;
-                    if (officialCallPreviewFragment.mCallAgentType == AUIAICallType.AUIAICallTypeInboundCall) {
-                        return officialCallPreviewFragment.mPSTNInNumberEditText.getText().toString();
-                    }
-                }
-            }
-            return null;
-        }
-
-        public void setPSTNInCallerNumber(String number) {
-            for (Fragment fragment : fragmentList) {
-                if (fragment instanceof OfficialCallPreviewFragment) {
-                    OfficialCallPreviewFragment officialCallPreviewFragment = (OfficialCallPreviewFragment) fragment;
-                    if (officialCallPreviewFragment.mCallAgentType == AUIAICallType.AUIAICallTypeInboundCall) {
-                        officialCallPreviewFragment.mPSTNInNumberEditText.setText(number);
-                    }
-                }
-            }
-        }
-
-        public boolean getPSTNIsSmartInterrupt() {
-            for (Fragment fragment : fragmentList) {
-                if (fragment instanceof OfficialCallPreviewFragment) {
-                    OfficialCallPreviewFragment officialCallPreviewFragment = (OfficialCallPreviewFragment) fragment;
-                    if (officialCallPreviewFragment.mCallAgentType == AUIAICallType.AUIAICallTypeOutboundCall) {
-                        return officialCallPreviewFragment.mSwitchInterrupt.isChecked();
-                    }
-                }
-            }
-            return false;
-        }
-
-        public String getPSTNVoiceSelect() {
-            for (Fragment fragment : fragmentList) {
-                if (fragment instanceof OfficialCallPreviewFragment) {
-                    OfficialCallPreviewFragment officialCallPreviewFragment = (OfficialCallPreviewFragment) fragment;
-                    if (officialCallPreviewFragment.mCallAgentType == AUIAICallType.AUIAICallTypeOutboundCall) {
-                        return officialCallPreviewFragment.mPstnVoiceSelectTextView.getText().toString();
-                    }
-                }
-           }
-            return null;
-        }
-
-        public void featchInBoundCallerNumber() {
-            for (Fragment fragment : fragmentList) {
-                if (fragment instanceof OfficialCallPreviewFragment) {
-                    OfficialCallPreviewFragment officialCallPreviewFragment = (OfficialCallPreviewFragment) fragment;
-                    if (officialCallPreviewFragment.mCallAgentType == AUIAICallType.AUIAICallTypeInboundCall) {
-                         officialCallPreviewFragment.featchInBoundCallerNumber(officialCallPreviewFragment.mUserId, officialCallPreviewFragment.mAuth);
-                    }
-                }
+            } else {
+                // 完全不可见的右侧页面
+                page.setAlpha(0f);
+                page.setTranslationX(pageWidth * 0.5f);
+                page.setTranslationY(pageHeight * 0.5f);
+                page.setScaleX(0.7f);
+                page.setScaleY(0.7f);
             }
         }
     }
@@ -1080,34 +1056,20 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
     public static class OfficialCallPreviewFragment extends Fragment {
         private AUIAICallType mCallAgentType;
         private ImageView mIvPreview;
-        private ImageView mPstnVoiceSelectImageView;
-        private TextView mPstnVoiceSelectTextView;
-        private EditText mPstnOutNumberEditText;
-        private Context mContext;
-        private Button mCreateRoomBtn = null;
-        private Switch mSwitchInterrupt = null;
-        private TextView mPSTNInNumberEditText;
-        private String mUserId;
-        private String mAuth;
 
-        private OfficialCallPreviewFragment() {}
+        public OfficialCallPreviewFragment() {}
 
-        private OfficialCallPreviewFragment(Context context,  Button createRoomBtn, String userId, String auth, AUIAICallType callAgentType) {
-            this.mContext = context;
-            this.mCreateRoomBtn = createRoomBtn;
-            this.mUserId = userId;
-            this.mAuth = auth;
+        private OfficialCallPreviewFragment(AUIAICallType callAgentType) {
             this.mCallAgentType = callAgentType;
         }
 
-        public static OfficialCallPreviewFragment newInstance(AUIAICallType callAgentType, Context context, Button createRoomBtn, String userId, String auth) {
-            OfficialCallPreviewFragment fragment = new OfficialCallPreviewFragment(context, createRoomBtn, userId, auth, callAgentType);
+        public static OfficialCallPreviewFragment newInstance(AUIAICallType callAgentType) {
+            OfficialCallPreviewFragment fragment = new OfficialCallPreviewFragment(callAgentType);
             Bundle args = new Bundle();
             args.putString("callAgentType", callAgentType.name());
             fragment.setArguments(args);
             return fragment;
         }
-
 
         private void printLifeCycle(String lifeCycle) {
             Log.i("OfficialCallPreview", lifeCycle);
@@ -1117,97 +1079,27 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
         @Override
         public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
             printLifeCycle("onCreateView");
-            if(mCallAgentType != AUIAICallType.AUIAICallTypeOutboundCall && mCallAgentType != AUIAICallType.AUIAICallTypeInboundCall) {
-                View view = inflater.inflate(R.layout.layout_fragment_aicall_preview, container, false);
-                mIvPreview = view.findViewById(R.id.iv_entrance_preview);
-                if (mCallAgentType == AUIAICallType.AUIAICallTypeAvatarChat) {
-                    mIvPreview.setImageResource(R.drawable.bg_entrance_avatar_agent);
-                } else if (mCallAgentType == AUIAICallType.AUIAICallTypeVisionChat) {
-                    mIvPreview.setImageResource(R.drawable.bg_entrance_vision_agent);
-                } else if(mCallAgentType == AUIAICallType.AUIAICallTypeChatBot) {
-                    mIvPreview.setImageResource(R.drawable.bg_entrance_chatbot_agent);
-                } else if(mCallAgentType == AUIAICallType.AUIAICallTypeVideoChat) {
-                    mIvPreview.setImageResource(R.drawable.bg_entrance_video_agent);
-                } else {
-                    mIvPreview.setImageResource(R.drawable.bg_entrance_voice_agent);
-                }
-                return view;
+
+            View view = inflater.inflate(R.layout.layout_fragment_aicall_preview, container, false);
+            mIvPreview = view.findViewById(R.id.iv_entrance_preview);
+            if (mCallAgentType == AUIAICallType.AUIAICallTypeAvatarChat) {
+                mIvPreview.setImageResource(R.drawable.bg_entrance_avatar_agent);
+            } else if (mCallAgentType == AUIAICallType.AUIAICallTypeVisionChat) {
+                mIvPreview.setImageResource(R.drawable.bg_entrance_vision_agent);
+            } else if(mCallAgentType == AUIAICallType.AUIAICallTypeChatBot) {
+                mIvPreview.setImageResource(R.drawable.bg_entrance_chatbot_agent);
+            } else if(mCallAgentType == AUIAICallType.AUIAICallTypeVideoChat) {
+                mIvPreview.setImageResource(R.drawable.bg_entrance_video_agent);
+            } else if(mCallAgentType == AUIAICallType.AUIAICallTypeVoiceChat) {
+                mIvPreview.setImageResource(R.drawable.bg_entrance_voice_agent);
+            } else if(mCallAgentType == AUIAICallType.AUIAICallTypeInboundCall) {
+                mIvPreview.setImageResource(R.drawable.bg_entrance_pstn_in);
+            } else if(mCallAgentType == AUIAICallType.AUIAICallTypeOutboundCall) {
+                mIvPreview.setImageResource(R.drawable.bg_entrance_pstn_out);
             } else {
-                if(mCallAgentType == AUIAICallType.AUIAICallTypeOutboundCall) {
-                    View view = inflater.inflate(R.layout.layout_fragment_pstn_out_call_preview, container, false);
-
-                    mPstnVoiceSelectImageView = view.findViewById(R.id.iv_pstn_out_voice_select);
-                    mPstnVoiceSelectTextView = view.findViewById(R.id.tv_pstn_out_voice_value);
-                    List<AudioToneData> audioToneList = AICallPSTNSettingDialog.getDefaultAudioToneList();
-                    mPstnVoiceSelectTextView.setText(AICallPSTNSettingDialog.currentVoice);
-                    mPstnVoiceSelectImageView.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            AICallPSTNSettingDialog.show(mContext, audioToneList, new AICallPSTNSettingDialog.AICallPSTNVoiceChangeListener() {
-                                @Override
-                                public void onVoiceChange(String voice) {
-                                    mPstnVoiceSelectTextView.setText(AICallPSTNSettingDialog.currentVoice);
-                                }
-                            });
-                        }
-                    });
-                    mPstnOutNumberEditText = view.findViewById(R.id.et_pstn_out_called_number);
-                    mSwitchInterrupt = view.findViewById(R.id.sv_pstn_out_interrupt_config);
-                    return view;
-                } else {
-                    View view = inflater.inflate(R.layout.layout_fragment_pstn_in_call_preview, container, false);
-                    mPSTNInNumberEditText = view.findViewById(R.id.et_pstn_in_called_number);
-                    view.findViewById(R.id.iv_pstn_in_copy).setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            AUIAICallClipboardUtils.copyToClipboard(mContext, mPSTNInNumberEditText.getText().toString());
-                            ToastHelper.showToast(mContext, R.string.pstn_in_call_number_copied, Toast.LENGTH_SHORT);
-                        }
-                    });
-                    view.findViewById(R.id.iv_pstn_in_get_number_again).setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            featchInBoundCallerNumber(mUserId, mAuth);
-                        }
-                    });
-                    return view;
-                }
+                mIvPreview.setImageResource(R.drawable.bg_entrance_custom_agent);
             }
-        }
-
-        private void featchInBoundCallerNumber(String userId, String auth) {
-            String agentId;
-            boolean usePreHost = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_APP_SERVER_TYPE, SettingStorage.DEFAULT_APP_SERVER_TYPE);
-            if(BuildConfig.TEST_ENV_MODE) {
-                agentId = usePreHost ? AUIAICallAgentDebug.getAIAgentId(ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent, false) :  AUIAICallAgentIdConfig.getAIAgentId(ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent, false);
-            }
-            else {
-                agentId = AUIAICallAgentIdConfig.getAIAgentId(ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent, false);
-            }
-            AUIAICallManager.getInBoundCallNumber(userId, auth, agentId, AUIAICallAgentDebug.getRegion(), new AUIAICallManager.IAUIAICallManagerBoundCallNumberCallback() {
-                @Override
-                public void onSuccess(String data) {
-                    if(data != null) {
-                        new Handler(Looper.getMainLooper()).post(new Runnable() {
-                            @Override
-                            public void run() {
-                                mPSTNInNumberEditText.setText(data);
-                            }
-                        });
-
-                    }
-                }
-
-                @Override
-                public void onFailed(int errorCode, String errorMsg) {
-                    new Handler(Looper.getMainLooper()).post(new Runnable() {
-                        @Override
-                        public void run() {
-                            ToastHelper.showToast(mContext, R.string.pstn_in_call_get_number_failed, Toast.LENGTH_SHORT);
-                        }
-                    });
-                }
-            });
+            return view;
         }
 
         @Override
@@ -1274,5 +1166,4 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
             super.onViewCreated(view, savedInstanceState);
         }
     }
-
 }

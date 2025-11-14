@@ -1,5 +1,6 @@
 package com.aliyun.auikits.aicall.widget;
 import android.content.Context;
+import android.text.Layout;
 import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -29,7 +30,9 @@ import com.scwang.smart.refresh.layout.SmartRefreshLayout;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class AICallPSTNSettingDialog {
 
@@ -39,33 +42,49 @@ public class AICallPSTNSettingDialog {
     BizParameter mBizParameter;
 
     public static String currentVoice = "";
+    public static String currentAudioToneId = "";
+
     private static String mDefaultTitle;
 
     public interface AICallPSTNVoiceChangeListener {
         void onVoiceChange(String voice) ;
     }
 
-    public static List<AudioToneData> getDefaultAudioToneList() {
-        List<AudioToneData> mAgentVoiceIdList = new ArrayList<AudioToneData>();
-        List<String> audioToneStrList = new ArrayList<>(Arrays.asList("longwan_v2", "longcheng_v2","longhua_v2","longshu_v2","loongbella_v2","loongstella"));
+    public static List<AudioToneData> getDefaultAudioToneList(Context context) {
+        Map<String, String> audioToneList = new HashMap<String, String>() {{
+            put("", context.getString(R.string.chat_bot_default_voice));
+            put("1185", "云峰");
+            put("11", "云穹");
+            put("1397", "云薇");
+            put("1151", "云玲");
+        }};
 
-        for(int i = 0; i < audioToneStrList.size(); i++) {
-            String voiceId = (String) audioToneStrList.get(i);
-            AudioToneData audioTone = new AudioToneData(voiceId, voiceId);
-            if(i % 3 == 0)
-            {
-                audioTone.setIconResId(R.drawable.ic_audio_tone_0);
-            } else if(i % 3 == 1) {
-                audioTone.setIconResId(R.drawable.ic_audio_tone_1);
-            } else if(i % 3 == 2) {
-                audioTone.setIconResId(R.drawable.ic_audio_tone_2);
+        List<AudioToneData> mAgentVoiceIdList = new ArrayList<AudioToneData>();
+
+        int index = 0;
+        for(Map.Entry<String, String> entry : audioToneList.entrySet()) {
+            String voiceId = entry.getKey();
+            String voiceTitle = entry.getValue();
+            AudioToneData audioTone = new AudioToneData(voiceId, voiceTitle);
+            if(index % 2 == 0) {
+                audioTone.setIconResId(R.drawable.ic_audio_tone_3);
+            } else if(index % 2 == 1) {
+                audioTone.setIconResId(R.drawable.ic_audio_tone_4);
             }
             mAgentVoiceIdList.add(audioTone);
+            index++;
         }
 
         if(TextUtils.isEmpty(currentVoice)) {
-            currentVoice = mAgentVoiceIdList.get(0).getAudioToneId();
+            currentVoice = mAgentVoiceIdList.get(0).getTitle();
             mAgentVoiceIdList.get(0).setUsing(true);
+        } else {
+            for(AudioToneData data : mAgentVoiceIdList) {
+                if(data.getTitle().equals(currentVoice)) {
+                    data.setUsing(true);
+                    break;
+                }
+            }
         }
 
         return mAgentVoiceIdList;
@@ -76,13 +95,21 @@ public class AICallPSTNSettingDialog {
         AICallPSTNSettingDialog aiSettingDialog = new AICallPSTNSettingDialog(context, view, audioToneList, listener);
         view.setTag(aiSettingDialog);
 
+        View audioToneConfig = view.findViewById(R.id.ll_audio_tone_config);
+        audioToneConfig.setVisibility(View.GONE);
+
         ViewHolder viewHolder = new ViewHolder(view);
         DialogPlus dialog = DialogPlus.newDialog(context)
                 .setContentHolder(viewHolder)
                 .setGravity(Gravity.BOTTOM)
                 .setExpanded(true, DisplayUtil.dip2px(340))
-                .setOverlayBackgroundResource(android.R.color.transparent)
-                .setContentBackgroundResource(R.color.layout_base_dialog_background)
+                .setOverlayBackgroundResource(R.color.color_bg_mask_transparent_70)
+                .setContentBackgroundResource(R.drawable.bg_rounded_setting_dialog)
+                .setOnClickListener((dialog1, v) -> {
+                    if(v.getId() == R.id.iv_close_setting){
+                        dialog1.dismiss();
+                    }
+                })
                 .setOnDismissListener(new OnDismissListener() {
                     @Override
                     public void onDismiss(DialogPlus dialog) {
@@ -100,15 +127,15 @@ public class AICallPSTNSettingDialog {
         srlAudioToneList.setEnableLoadMore(false);
         srlAudioToneList.setEnableRefresh(false);
         RecyclerView rvAudioToneList = root.findViewById(R.id.rv_audio_tone_list);
-        root.findViewById(R.id.ll_audio_tone_config).setVisibility(View.GONE);
+        root.findViewById(R.id.ll_audio_tone_config).setVisibility(View.VISIBLE);
         mDefaultTitle = context.getString(R.string.chat_bot_default_voice);
 
         TextView audioToneDetail = root.findViewById(R.id.tv_config_audio_tone_tips);
         audioToneDetail.setText(R.string.chat_bot_audio_tone_detail);
         if(audioToneList.size() == 0) {
-            root.findViewById(R.id.ll_audio_tone_list).getLayoutParams().height = DisplayUtil.dip2px(( 48  + 24));
+            root.findViewById(R.id.ll_audio_tone_list).getLayoutParams().height = DisplayUtil.dip2px(( 56  + 24));
         }else {
-            root.findViewById(R.id.ll_audio_tone_list).getLayoutParams().height = DisplayUtil.dip2px((audioToneList.size() * 48  + 24));
+            root.findViewById(R.id.ll_audio_tone_list).getLayoutParams().height = DisplayUtil.dip2px((audioToneList.size() * 56  + 24));
         }
 
         DefaultCardViewFactory factory = new DefaultCardViewFactory();
@@ -120,7 +147,7 @@ public class AICallPSTNSettingDialog {
         boolean couldSwitch = audioToneList.size() == 0 ? false:true;
         if(audioToneList.size() == 0) {
             AudioToneData audioTone = new AudioToneData("", mDefaultTitle);
-            audioTone.setIconResId(R.drawable.ic_audio_tone_0);
+            audioTone.setIconResId(R.drawable.ic_audio_tone_3);
             audioTone.setUsing(true);
             audioToneList.add(audioTone);
         }
@@ -141,7 +168,8 @@ public class AICallPSTNSettingDialog {
                     CardEntity newCardEntity = (CardEntity) adapter.getItem(position);
                     AudioToneData newAudioToneData = (AudioToneData) newCardEntity.bizData;
                     if (!newAudioToneData.isUsing()) {
-                        currentVoice = newAudioToneData.getAudioToneId();
+                        currentVoice = newAudioToneData.getTitle();
+                        currentAudioToneId = newAudioToneData.getAudioToneId();
                         for (int i = 0; i < adapter.getItemCount(); i++) {
                             CardEntity cardEntity = (CardEntity) adapter.getItem(i);
                             AudioToneData audioToneData = (AudioToneData) cardEntity.bizData;
@@ -153,9 +181,9 @@ public class AICallPSTNSettingDialog {
 
                         newAudioToneData.setUsing(true);
                         mAudioToneContentModel.updateContent(newCardEntity, position);
-                        currentVoice = newAudioToneData.getAudioToneId();
+                        currentVoice = newAudioToneData.getTitle();
                         if(listener != null) {
-                            listener.onVoiceChange(newAudioToneData.getAudioToneId());
+                            listener.onVoiceChange(currentVoice);
                         }
                     }
                 }
@@ -163,9 +191,5 @@ public class AICallPSTNSettingDialog {
         }
 
         mContentViewModel.bindView(mCardListAdapter);
-
-
     }
-
-
 }

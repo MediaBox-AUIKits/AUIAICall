@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+
 import standardService from '../../service/standard';
 
 export default class AUIAICallAuthTokenHelper {

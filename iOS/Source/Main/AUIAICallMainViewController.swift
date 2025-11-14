@@ -12,121 +12,81 @@ import ARTCAICallKit
 public let AUIAIMainBundle = AUIAICallTheme("AUIAIMain")
 
 
-@objcMembers open class AUIAICallMainViewController: AVBaseViewController {
+@objcMembers open class AUIAICallMainViewController: UIViewController {
     
     deinit {
         debugPrint("deinit:\(self)")
     }
-
+    
     open override func viewDidLoad() {
         super.viewDidLoad()
-
+        
         // Do any additional setup after loading the view.
-        self.view.backgroundColor = AVTheme.bg_medium
-        self.titleView.text = AUIAIMainBundle.getString("AIAgent")
+        self.view.backgroundColor = AUIAIMainBundle.color_bg
         
-#if DEMO_FOR_DEBUG
-        self.hiddenMenuButton = false
-        self.menuButton.addTarget(self, action: #selector(onMenuBtnClick), for: .touchUpInside)
-        AUIAICallDebugManager.shared.setup()
-#else
-        self.hiddenMenuButton = true
-#endif
-        
-        self.contentView.addSubview(self.agentTypeBgView)
-        self.agentTypeBgView.addSubview(self.agentSeletctBgView)
-        self.agentTypeBgView.addSubview(self.sysAgentBtn)
-        self.agentTypeBgView.addSubview(self.cusAgentBtn)
-
-        
-        self.contentView.addSubview(self.configCallBtn)
+        self.view.addSubview(self.bgLineView)
+        self.view.addSubview(self.headerView)
+        self.view.addSubview(self.contentView)
         self.contentView.addSubview(self.startCallBtn)
         
-        self.contentView.addSubview(self.sysAgentTabView)
-        self.contentView.addSubview(self.sysAgentContentView)
-        self.contentView.addSubview(self.cusAgentContentView)
+        self.setupDebug()
+        
+        self.contentView.addSubview(self.mainTabView)
+        self.contentView.addSubview(self.mainInfoView)
 
-        self.sysAgentTabView.agentWillChanged = { [weak self] agentIndex in
-            self?.sysAgentContentView.scrollToAgent(agentIndex)
-            self?.onTabIndexChanged()
-        }
-        self.sysAgentContentView.pageChanged = { [weak self] agentIndex in
-            self?.sysAgentTabView.agentIndex = agentIndex
-            self?.onTabIndexChanged()
-        }
-        self.sysAgentContentView.outboundCallView.onInputPhoneNumberChanged = { [weak self] in
-            self?.onTabIndexChanged()
-        }
-        
-        self.sysAgentContentView.inboundCallView.onPhoneNumAvailable = { [weak self] in
-            self?.onTabIndexChanged()
-        }
-        
-        self.selectAgent(isCus: false, isAni: false)
-        
-        self.showVoiceprintBubbleIfNeed()
-        
         // 提前获取Token
         AUIAICallAuthTokenHelper.shared.fetchAuthToken(userId: AUIAICallManager.defaultManager.userId!, completed: nil)
     }
     
-    open lazy var agentTypeBgView: UIView = {
-        let view = UIView(frame: CGRect(x: 20.0, y: 16.0, width: self.contentView.av_width - 20.0 - 20.0, height: 46))
-        view.layer.cornerRadius = view.av_height / 2.0
-        view.layer.borderWidth = 1
-        view.layer.borderColor = AVTheme.border_weak.cgColor
-        view.layer.masksToBounds = true
+    open override var shouldAutorotate: Bool {
+        return false
+    }
+    
+    open override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+        return .portrait
+    }
+    
+    open override var preferredInterfaceOrientationForPresentation: UIInterfaceOrientation {
+        return .portrait
+    }
+    
+    open lazy var bgLineView: AUIAICallBgLineView = {
+        let view = AUIAICallBgLineView(frame: self.view.bounds, gradient: false)
         return view
     }()
     
-    open lazy var agentSeletctBgView: UIView = {
-        let view = UIView(frame: CGRect(x: 0, y: 0, width: self.agentTypeBgView.av_width / 2.0, height: self.agentTypeBgView.av_height))
-        view.layer.cornerRadius = view.av_height / 2.0
-        view.layer.borderWidth = 1
-        view.layer.borderColor = AVTheme.border_infrared.cgColor
-        view.layer.masksToBounds = true
-        view.backgroundColor = AVTheme.bg_weak
-        return view
-    }()
-    
-    open lazy var sysAgentBtn: AVBlockButton = {
-        let btn = AVBlockButton(frame: CGRect(x: 0.0, y: 0.0, width: self.agentTypeBgView.av_width / 2.0, height: self.agentTypeBgView.av_height))
-        btn.setTitle(AUIAIMainBundle.getString("Official Agent"), for: .normal)
-        btn.setTitleColor(AVTheme.text_weak, for: .normal)
-        btn.setTitleColor(AVTheme.colourful_text_strong, for: .selected)
-        btn.titleLabel?.font = AVTheme.regularFont(14)
-        btn.clickBlock = { [weak self] sender in
-            self?.selectAgent(isCus: false, isAni: true)
+    open lazy var headerView: UIView = {
+        let view = UIView(frame: CGRect(x: 0, y: UIView.av_safeTop, width: self.view.av_width, height: 0))
+        
+        let themeBtn = AVBlockButton(frame: CGRect(x: 24, y: 6, width: 36, height: 36))
+        themeBtn.setImage(AUIAIMainBundle.getTemplateImage("ic_theme_light"), for: .normal)
+        themeBtn.setImage(AUIAIMainBundle.getTemplateImage("ic_theme_dark"), for: .selected)
+        themeBtn.tintColor = AUIAIMainBundle.color_icon
+        themeBtn.av_setLayerBorderColor(AUIAIMainBundle.color_border_tertiary, borderWidth: 1)
+        themeBtn.layer.cornerRadius = 18
+        themeBtn.backgroundColor = AUIAIMainBundle.color_bg_elevated
+        themeBtn.isSelected = AVTheme.currentMode == .dark
+        themeBtn.clickBlock = { sender in
+            AVTheme.currentMode = sender.isSelected ? .light : .dark
+            sender.isSelected = !sender.isSelected
         }
-        return btn
-    }()
-    
-    open lazy var cusAgentBtn: AVBlockButton = {
-        let btn = AVBlockButton(frame: CGRect(x: self.agentTypeBgView.av_width / 2.0, y: 0.0, width: self.agentTypeBgView.av_width / 2.0, height: self.agentTypeBgView.av_height))
-        btn.setTitle(AUIAIMainBundle.getString("Custom Agent"), for: .normal)
-        btn.setTitleColor(AVTheme.text_weak, for: .normal)
-        btn.setTitleColor(AVTheme.colourful_text_strong, for: .selected)
-        btn.titleLabel?.font = AVTheme.regularFont(14)
-        btn.clickBlock = { [weak self] sender in
-            self?.selectAgent(isCus: true, isAni: true)
-        }
-        return btn
-    }()
-    
-    open lazy var configCallBtn: AVBaseButton = {
-        let btn = AVBaseButton.imageText(with: .bottom)
-        btn.frame = CGRect(x: self.contentView.av_width - 48 - 24, y: self.contentView.av_height - 36.0 - UIView.av_safeBottom - 44.0, width: 48, height: 44)
-        btn.title = AUIAIMainBundle.getString("Options")
-        btn.image = AUIAIMainBundle.getCommonImage("ic_agent_config")
-        btn.color = AVTheme.text_weak
-        btn.font = AVTheme.regularFont(10)
-        btn.action = { [weak self] sender in
+        view.addSubview(themeBtn)
+        
+        let rightView = UIView(frame: CGRect(x: view.av_width - 92 - 24, y: 7, width: 92, height: 34))
+        rightView.av_setLayerBorderColor(AUIAIMainBundle.color_border_tertiary, borderWidth: 1)
+        rightView.layer.cornerRadius = 17
+        rightView.backgroundColor = AUIAIMainBundle.color_bg_elevated
+        view.addSubview(rightView)
+        
+        let settingBtn = AVBlockButton(frame: CGRect(x: 0, y: 0, width: rightView.av_width / 2.0, height: rightView.av_height))
+        settingBtn.setImage(AUIAIMainBundle.getTemplateImage("ic_setting"), for: .normal)
+        settingBtn.tintColor = AUIAIMainBundle.color_icon
+        settingBtn.clickBlock = { [weak self] sender in
             guard let self = self else {
                 return
             }
-            self.hideVoiceprintBubble()
             let panel = AUIAICallAgentConfigPanel(frame: CGRect(x: 0, y: 0, width: self.view.av_width, height: 0))
-            panel.voiceprintSettingView.registerBtn.clickBlock = { [weak self, weak panel] btn in
+            panel.voiceprintSettingView.registerBar.tappedAction = { [weak self, weak panel] bar in
                 panel?.hide()
                 if let self = self {
                     self.navigationController?.pushViewController(AUIAICallVoiceprintViewController(), animated: true)
@@ -134,169 +94,121 @@ public let AUIAIMainBundle = AUIAICallTheme("AUIAIMain")
             }
             panel.show(on: self.view, with: .clickToClose)
         }
-        return btn
+        rightView.addSubview(settingBtn)
+        
+        let splitView = UIView(frame: CGRect(x: rightView.av_width / 2.0, y: 8, width: 1.0, height: 18))
+        splitView.backgroundColor = AUIAIMainBundle.color_border_tertiary
+        rightView.addSubview(splitView)
+        
+        let exitBtn = AVBlockButton(frame: CGRect(x: rightView.av_width / 2.0, y: 0, width: rightView.av_width / 2.0, height: rightView.av_height))
+        exitBtn.setImage(AUIAIMainBundle.getTemplateImage("ic_exit"), for: .normal)
+        exitBtn.tintColor = AUIAIMainBundle.color_icon
+        exitBtn.clickBlock = { [weak self] sender in
+            self?.goBack()
+        }
+        rightView.addSubview(exitBtn)
+        
+        
+        let titleView = UIImageView(frame: CGRect(x: 25, y: 57, width: 0, height: 0))
+        if AVLocalization.isInternational() {
+            titleView.image = AUIAIMainBundle.getTemplateImage("img_title_eng")
+        }
+        else {
+            titleView.image = AUIAIMainBundle.getTemplateImage("img_title")
+        }
+        titleView.tintColor = AUIAIMainBundle.color_icon
+        titleView.sizeToFit()
+        view.addSubview(titleView)
+        
+        view.av_height = titleView.av_bottom
+        return view
     }()
     
+    open lazy var contentView: UIView = {
+        let view = UIView(frame: CGRect(x: 0, y: self.headerView.av_bottom, width: self.view.av_width, height: self.view.av_height - self.headerView.av_bottom))
+        return view
+    }()
+    
+    
     open lazy var startCallBtn: UIButton = {
-        let btn = AVBlockButton(frame: CGRect(x: 36.0, y: self.contentView.av_height - 36.0 - UIView.av_safeBottom - 44.0, width: self.contentView.av_width - 36.0 - 36.0 - 32 - 8, height: 44.0))
-        btn.layer.cornerRadius = 22.0
+        let btn = AVBlockButton(frame: CGRect(x: 25.0, y: self.contentView.av_height - 12.0 - UIView.av_safeBottom - 44.0, width: self.contentView.av_width - 25.0 - 25.0, height: 44.0))
+        btn.layer.cornerRadius = 2.0
         btn.layer.masksToBounds = true
+        btn.setImage(nil, for: .normal)
         btn.setTitle(AUIAIMainBundle.getString("Start"), for: .normal)
-        btn.setBackgroundColor(AVTheme.colourful_fill_strong, for: .normal)
-        btn.setBackgroundColor(UIColor.av_color(withHexString: "004C61"), for: .disabled)
-        btn.setTitleColor(AVTheme.text_strong, for: .normal)
-        btn.setTitleColor(AVTheme.text_ultraweak, for: .disabled)
+        btn.setBackgroundColor(AUIAIMainBundle.color_fill, for: .normal)
+        btn.setTitleColor(AUIAIMainBundle.color_text_Inverse, for: .normal)
+        btn.tintColor = AUIAIMainBundle.color_icon_Inverse
+        btn.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 4)
         btn.titleLabel?.font = AVTheme.regularFont(16)
+        btn.isHighlighted = false
         btn.clickBlock = { [weak self] sender in
+            
             guard let self = self else {
                 return
             }
-            let isCus = self.cusAgentBtn.isSelected == true
-            if isCus {
-                let authToken = self.cusAgentContentView.inputField.text ?? ""
-                if authToken.isEmpty {
-                    AVAlertController.show(AUIAIMainBundle.getString("Please Scan Code to Get Authorized Token"), vc: self)
-                    return
-                }
-                if let ret = AUIAICallMainViewController.checkAuthToken(authToken: authToken) {
-                    if ret.agentIndex == ChatAgentTypeIndex {
-                        self.startChat(agentShareInfo: authToken)
-                    }
-                    else {
-                        self.startCall(agentShareInfo: authToken)
-                    }
-                }
+            
+            let tabIndex = self.mainTabView.currTabItem.index
+            if tabIndex == .CustomAgent {
+                self.startCustomAgent()
+            }
+            else if tabIndex == .InboundCall {
+                self.startInbound()
+            }
+            else if tabIndex == .OutboundCall {
+                self.startOutbound()
+                
+            }
+            else if tabIndex == .ChatAgent {
+                self.startChat()
             }
             else {
-                let agentIndex = self.sysAgentTabView.agentIndex
-                if agentIndex == ChatAgentTypeIndex {
-                    self.startChat()
-                }
-                else if agentIndex == OutboundCallTypeIndex {
-                    let outboundCallView = self.sysAgentContentView.outboundCallView
-                    guard let phoneNumber = outboundCallView.phoneNumber else { return }
-                    AUIAICallManager.defaultManager.startOutboundCall(phoneNumber: phoneNumber, voiceId: outboundCallView.voiceId, enableVoiceInterrupt: outboundCallView.isVoiceInterrupted, viewController: self)
-                }
-                else if agentIndex == InboundCallTypeIndex {
-                    let inboundCallView = self.sysAgentContentView.inboundCallView
-                    guard let phoneNumber = inboundCallView.phoneNumber else { return }
-                    if let url = URL(string: "tel://\(phoneNumber)") {
-                        UIApplication.shared.open(url, options: [:]) { success in
-                            if !success {
-                                debugPrint("无法打开电话功能，请检查设备设置")
-                            }
-                        }
-                    }
-                }
-                else {
-                    self.startCall(agentType: ARTCAICallAgentType(rawValue: Int32(agentIndex))!)
-                }
+                self.startCall(agentType: ARTCAICallAgentType(rawValue: Int32(tabIndex.rawValue))!)
             }
         }
         return btn
     }()
     
-    lazy var sysAgentTabView: AUIAICallSysAgentTabView = {
-        let tabView = AUIAICallSysAgentTabView(frame: CGRect(x: 0, y: self.agentTypeBgView.av_bottom + 24.0, width: self.contentView.av_width, height: 34.0))
+    
+    lazy var mainTabView: AUIAICallMianTabView = {
+        let tabView = AUIAICallMianTabView(frame: CGRect(x: 0, y: 16.0, width: self.contentView.av_width, height: 40.0))
+        tabView.tabWillChanged = { [weak self] item, posIndex in
+            self?.mainInfoView.currTabItem = item
+            self?.mainInfoView.contentShowView.scrollView.scroll(item)
+            self?.updateStartBtn()
+        }
         return tabView
     }()
     
-    open lazy var sysAgentContentView: AUIAICallSysAgentContentView = {
-        let view = AUIAICallSysAgentContentView(frame: CGRect(x: 20, y: self.sysAgentTabView.av_bottom + 30, width: self.contentView.av_width - 40, height: self.startCallBtn.av_top - self.sysAgentTabView.av_bottom - 32 - 32))
-        return view
-    }()
-    
-    open lazy var cusAgentContentView: AUIAICallCusAgentContentView = {
-        let view = AUIAICallCusAgentContentView(frame: CGRect(x: 20, y: self.cusAgentBtn.av_bottom + 16, width: self.contentView.av_width - 40, height: self.startCallBtn.av_top - self.cusAgentBtn.av_bottom - 16 - 38))
-#if !DEMO_FOR_DEBUG
-        view.inputField.isEnabled = false
-#endif
-        view.scanBtn.clickBlock = { [weak self] btn in
-            let qr = AVQRCodeScanner()
-            qr.scanResultBlock = { scaner, content in
-                scaner.navigationController?.popViewController(animated: true)
-                if let _ = AUIAICallMainViewController.checkAuthToken(authToken: content) {
-                    self?.cusAgentContentView.inputField.text = content
-                }
-            }
-            self?.navigationController?.pushViewController(qr, animated: true)
+    open lazy var mainInfoView: AUIAICallMainInfoView = {
+        let view = AUIAICallMainInfoView(frame: CGRect(x: 0, y: self.mainTabView.av_bottom, width: self.contentView.av_width, height: self.startCallBtn.av_top - self.mainTabView.av_bottom))
+        view.contentShowView.scrollView.tabWillChanged = { [weak self] item, posIndex in
+            self?.mainTabView.currTabItem = item
+            self?.mainInfoView.currTabItem = item
+            self?.updateStartBtn()
         }
         return view
     }()
-
-#if DEMO_FOR_DEBUG
-    @objc open func onMenuBtnClick() {
-        AUIAICallDebugManager.shared.openSetting(self)
-    }
-#endif
     
-    open func onTabIndexChanged() {
-        var visible = false
-        if self.sysAgentBtn.isSelected == true {
-            let agentIndex = self.sysAgentTabView.agentIndex
-            if agentIndex != ChatAgentTypeIndex && agentIndex != OutboundCallTypeIndex && agentIndex != InboundCallTypeIndex {
-                visible = true
-            }
-        }
-        self.configCallBtn.isHidden = !visible
-        self.voiceprintBubbleView?.isHidden = !visible
-        self.startCallBtn.frame = visible ? CGRect(x: 36.0, y: self.contentView.av_height - 36.0 - UIView.av_safeBottom - 44.0, width: self.contentView.av_width - 36.0 - 36.0 - 32 - 8, height: 44.0) : CGRect(x: 36.0, y: self.contentView.av_height - 36.0 - UIView.av_safeBottom - 44.0, width: self.contentView.av_width - 36.0 - 36.0, height: 44.0)
-        
-        var enable = true
-        if self.sysAgentBtn.isSelected == true {
-            if self.sysAgentTabView.agentIndex == OutboundCallTypeIndex {
-                enable = self.sysAgentContentView.outboundCallView.phoneNumber?.isEmpty == false
-            }
-            else if self.sysAgentTabView.agentIndex == InboundCallTypeIndex {
-                enable = self.sysAgentContentView.inboundCallView.phoneNumber?.isEmpty == false
-            }
-        }
-        self.startCallBtn.isEnabled = enable
-        
-        var startCallText = AUIAIMainBundle.getString("Start")
-        if self.sysAgentBtn.isSelected == true {
-            if self.sysAgentTabView.agentIndex == InboundCallTypeIndex {
-                self.sysAgentContentView.inboundCallView.fetchCalledNumber(force: false)
-                startCallText = AUIAIMainBundle.getString("Call Immediately")
-            }
-        }
-        self.startCallBtn.setTitle(startCallText, for: .normal)
-    }
-    
-    open func selectAgent(isCus: Bool, isAni: Bool) {
-        if isCus {
-            self.cusAgentBtn.isSelected = true
-            self.cusAgentBtn.titleLabel?.font = AVTheme.mediumFont(14)
-            self.sysAgentBtn.isSelected = false
-            self.sysAgentBtn.titleLabel?.font = AVTheme.regularFont(14)
-            self.sysAgentTabView.isHidden = true
-            self.cusAgentContentView.isHidden = false
-            self.sysAgentContentView.isHidden = true
+    func goBack() {
+        if let nv = self.navigationController {
+            nv.popViewController(animated: true)
         }
         else {
-            self.sysAgentBtn.isSelected = true
-            self.sysAgentBtn.titleLabel?.font = AVTheme.mediumFont(14)
-            self.cusAgentBtn.isSelected = false
-            self.cusAgentBtn.titleLabel?.font = AVTheme.regularFont(14)
-            self.sysAgentTabView.isHidden = false
-            self.sysAgentContentView.isHidden = false
-            self.cusAgentContentView.isHidden = true
-        }
-        self.onTabIndexChanged()
-        if isAni {
-            UIView.animate(withDuration: 0.25) {
-                self.agentSeletctBgView.av_left = isCus ? self.cusAgentBtn.av_left : 0.0
-            } completion: { _ in
-                self.agentSeletctBgView.av_left = isCus ? self.cusAgentBtn.av_left : 0.0
-            }
-        }
-        else {
-            self.agentSeletctBgView.av_left = isCus ? self.cusAgentBtn.av_left : 0.0
+            self.dismiss(animated: true)
         }
     }
     
-    open func startCall(agentShareInfo: String) {
-        AUIAICallManager.defaultManager.startCall(agentShareInfo: agentShareInfo, viewController: self)
+    func updateStartBtn() {
+        if self.mainTabView.currTabItem.index == .CustomAgent {
+            self.startCallBtn.setImage(AUIAIMainBundle.getTemplateImage("ic_scan"), for: .normal)
+            self.startCallBtn.setTitle(AUIAIMainBundle.getString("Start Scan"), for: .normal)
+        }
+        else {
+            self.startCallBtn.setImage(nil, for: .normal)
+            self.startCallBtn.setTitle(AUIAIMainBundle.getString("Start"), for: .normal)
+        }
+        
     }
     
     open func startCall(agentType: ARTCAICallAgentType, agentId: String? = nil, region: String? = nil) {
@@ -311,6 +223,58 @@ public let AUIAIMainBundle = AUIAICallTheme("AUIAIMain")
     
     open func startChat(agentId: String? = nil) {
         AUIAICallManager.defaultManager.startChat(agentId: agentId, viewController: self)
+    }
+    
+    open func startOutbound() {
+        let vc = AUIAICallOutboundViewController()
+        self.navigationController?.pushViewController(vc, animated: true)
+    }
+    
+    open func startInbound() {
+        let vc = AUIAICallInboundViewController()
+        self.navigationController?.pushViewController(vc, animated: true)
+    }
+}
+
+// shareInfo
+extension AUIAICallMainViewController {
+
+    open func startCustomAgent() {
+#if DEMO_FOR_DEBUG
+        let enableInput = AUIAICallDebugManager.shared.customAgentInputAuthToken
+#else
+        let enableInput = false
+#endif
+        let openBlock: (_ authToken: String) -> Void = { authToken in
+            if let ret = AUIAICallMainViewController.checkAuthToken(authToken: authToken) {
+                if ret.agentIndex == ChatAgentTypeIndex {
+                    self.startChat(agentShareInfo: authToken)
+                }
+                else {
+                    self.startCall(agentShareInfo: authToken)
+                }
+            }
+        }
+        if enableInput {
+            AVAlertController.showInput("Auth Token", vc: self) { content in
+                if content.count > 0 {
+                    openBlock(content)
+                }
+            }
+        }
+        else {
+            let qr = AVQRCodeScanner()
+            qr.scanResultBlock = { scaner, content in
+                scaner.navigationController?.popViewController(animated: true)
+                openBlock(content)
+            }
+            self.navigationController?.pushViewController(qr, animated: true)
+        }
+        
+    }
+    
+    open func startCall(agentShareInfo: String) {
+        AUIAICallManager.defaultManager.startCall(agentShareInfo: agentShareInfo, viewController: self)
     }
     
     open func startChat(agentShareInfo: String) {
@@ -366,34 +330,26 @@ public let AUIAIMainBundle = AUIAICallTheme("AUIAIMain")
         
         return (agentId, agentIndex, region)
     }
-    
-    open var voiceprintBubbleView: AUIAICallVoiceprintBubbleView? = nil
-    
-    func showVoiceprintBubbleIfNeed() {
         
-        let showTips = UserDefaults.standard.object(forKey: "aui_voiceprint_tips") as? Bool
-        if showTips == true {
-            return
+}
+
+extension AUIAICallMainViewController {
+    
+    func setupDebug() {
+#if DEMO_FOR_DEBUG
+        AUIAICallDebugManager.shared.setup()
+        
+        let debugBtn = AVBlockButton(frame: CGRect.zero)
+        debugBtn.setTitle("Debug", for: .normal)
+        debugBtn.setTitleColor(AUIAIMainBundle.color_text, for: .normal)
+        debugBtn.backgroundColor = AUIAIMainBundle.color_bg_elevated
+        debugBtn.clickBlock = { sender in
+            AUIAICallDebugManager.shared.openSetting(self)
         }
-        
-        let view = AUIAICallVoiceprintBubbleView()
-        view.text = "新增声纹特征信息录入"
-        view.textAlignment = .center
-        view.font = AVTheme.regularFont(12)
-        view.textColor = AVTheme.text_strong
-        view.sizeToFit()
-        view.av_height += 26
-        view.av_width += 32
-        view.av_right = self.configCallBtn.av_right - 6
-        view.av_bottom = self.configCallBtn.av_top - 14
-        self.contentView.addSubview(view)
-        self.voiceprintBubbleView = view
+        debugBtn.sizeToFit()
+        debugBtn.center = CGPoint(x: self.view.av_width / 2.0, y: UIView.av_safeTop + 22 )
+        self.view.addSubview(debugBtn)
+#endif
     }
     
-    func hideVoiceprintBubble() {
-        self.voiceprintBubbleView?.removeFromSuperview()
-        self.voiceprintBubbleView = nil
-        
-        UserDefaults.standard.set(true, forKey: "aui_voiceprint_tips")
-    }
 }

@@ -5,30 +5,33 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/layout_base_dialog_background">
-
+    android:background="@drawable/bg_rounded_setting_dialog">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/top_bar"
         android:layout_width="match_parent"
-        android:layout_height="46dp">
+        android:layout_height="46dp"
+        android:layout_marginHorizontal="20dp">
         <TextView
             android:id="@+id/title"
             app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
-            style="@style/layout_base_text_style_14"
+            style="@style/text_style_16"
             android:text="@string/ai_agent_config"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
-    </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@color/layout_base_iv_border"
-        />
+        <ImageView
+            android:id="@+id/iv_close_setting"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:src="@drawable/ic_aicall_close"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <ScrollView
         android:layout_width="match_parent"
@@ -47,9 +50,10 @@
                 android:paddingRight="20dp"
                 android:visibility="visible"
                 >
-                <LinearLayout
+
+                <androidx.constraintlayout.widget.ConstraintLayout
                     android:id="@+id/ll_voiceprint_title"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     app:layout_constraintLeft_toLeftOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
@@ -58,40 +62,49 @@
                     android:orientation="vertical">
                     <TextView
                         android:id="@+id/tv_voiceprint_title"
-                        style="@style/layout_base_text_style_14"
+                        style="@style/text_style_16"
+                        android:paddingVertical="4dp"
                         android:text="@string/voiceprint_recognition_test_title"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="4dp"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
                         />
                     <TextView
                         android:id="@+id/tv_voiceprint_tips"
-                        style="@style/layout_base_text_style_10_light_white"
+                        style="@style/text_style_tertiary_12"
                         android:text="@string/voiceprint_recognition_test_desc"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"/>
-                </LinearLayout>
-                <Switch
-                    android:id="@+id/sv_voiceprint_switch"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    app:layout_constraintRight_toRightOf="parent"
-                    app:layout_constraintTop_toTopOf="@id/ll_voiceprint_title"
-                    app:layout_constraintBottom_toTopOf="@id/ll_voiceprint_status"
-                    />
+                        android:layout_height="wrap_content"
+                        app:layout_constraintTop_toBottomOf="@+id/tv_voiceprint_title"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"/>
+
+                    <Switch
+                        android:id="@+id/sv_voiceprint_switch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:thumb="@drawable/bg_switch_thumb"
+                        android:track="@drawable/bg_switch_track"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        />
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
                 <LinearLayout
                     android:id="@+id/ll_voiceprint_status"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     app:layout_constraintLeft_toLeftOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/ll_voiceprint_title"
-                    android:background="@drawable/bg_voice_print_status"
+                    android:background="@drawable/bg_rounded_rectangle_small"
                     android:paddingVertical="14dp"
                     android:paddingHorizontal="16dp"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
                     <TextView
                         android:id="@+id/tv_voiceprint_record_status"
-                        style="@style/layout_base_text_style_12_light_white"
+                        style="@style/text_style_14"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
@@ -101,11 +114,10 @@
                         android:id="@+id/btn_record_voiceprint"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        style="@style/layout_base_text_style_12_light_white"
+                        style="@style/text_style_14"
                         android:layout_gravity="center_vertical"
                         android:layout_marginBottom="1dp"
-                        android:text="@string/voiceprint_info_record"
-                        />
+                        android:text="@string/voiceprint_info_record" />
                     <ImageView
                         android:id="@+id/iv_record_voice_select"
                         android:layout_width="21dp"
@@ -131,14 +143,14 @@
                     android:paddingBottom="12dp"
                     android:orientation="vertical">
                     <TextView
-                        style="@style/layout_base_text_style_14"
+                        style="@style/text_style_16"
                         android:text="@string/ai_agent_config_emotional"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="4dp"
                         />
                     <TextView
-                        style="@style/layout_base_text_style_10_light_white"
+                        style="@style/text_style_tertiary_12"
                         android:text="@string/ai_agent_config_emotional_desc"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"/>
@@ -146,7 +158,7 @@
             </androidx.constraintlayout.widget.ConstraintLayout>
 
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
 
                 android:paddingHorizontal="20dp"
@@ -157,14 +169,12 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:background="@drawable/btn_emotional_mode_selector"
+                    android:background="@drawable/bg_rounded_rectangle_small"
                     android:text="@string/ai_agent_config_emotional_not"
-                    android:paddingTop="7dp"
-                    android:paddingBottom="7dp"
-                    android:paddingLeft="16dp"
-                    android:paddingRight="16dp"
+                    android:paddingVertical="10dp"
+                    android:paddingHorizontal="16dp"
                     android:gravity="center_horizontal"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_secondary_14"
                     app:layout_constraintLeft_toLeftOf="parent"
                     app:layout_constraintRight_toLeftOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
@@ -175,24 +185,20 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:background="@drawable/btn_emotional_mode_selector"
+                    android:background="@drawable/bg_rounded_rectangle_small"
                     android:gravity="center_horizontal"
                     android:text="@string/ai_agent_config_emotional_yes"
-                    android:paddingTop="7dp"
-                    android:paddingBottom="7dp"
+                    android:paddingVertical="10dp"
                     android:paddingLeft="16dp"
                     android:paddingRight="16dp"
                     android:layout_marginLeft="16dp"
-                    style="@style/layout_base_text_style_12"
+                    style="@style/text_style_secondary_14"
                     app:layout_constraintLeft_toRightOf="parent"
                     app:layout_constraintRight_toLeftOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"/>
 
             </LinearLayout>
-
-
-
         </LinearLayout>
     </ScrollView>
 </LinearLayout>

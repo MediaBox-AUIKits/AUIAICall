@@ -112,8 +112,8 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:x.x.x'                     //修改x.x.x为你工程适配的版本
     implementation 'com.google.android.material:material:x.x.x'             //修改x.x.x为你工程适配的版本
     androidTestImplementation 'androidx.test.espresso:espresso-core:x.x.x'  //修改x.x.x为你工程适配的版本
-    implementation 'com.aliyun.aio:AliVCSDK_ARTC:7.5.0'                  //修改x.x.x为你工程适配的版本
-    implementation 'com.aliyun.auikits.android:ARTCAICallKit:2.8.0'
+    implementation 'com.aliyun.aio:AliVCSDK_ARTC:7.8.0'                  //修改x.x.x为你工程适配的版本
+    implementation 'com.aliyun.auikits.android:ARTCAICallKit:2.9.0'
     implementation 'com.alivc.live.component:PluginAEC:1.0.0'
     //如果你的业务还需要支持消息对话，还需要集成AliVCInteractionMessage，版本最低是1.7.0
     implementation 'com.aliyun.sdk.android:AliVCInteractionMessage:1.7.0'
@@ -223,4 +223,4 @@ ARTCAICallController.launchCallActivity(currentActivity,
 ```
 
 ## 常见问题
-更多AUIKits问题咨询及使用说明，请搜索钉钉群（35685013712）加入AUI客户支持群联系我们。
+更多问题咨询及使用说明，请搜索钉钉群（106730016696）加入AI实时互动项目咨询群联系我们。

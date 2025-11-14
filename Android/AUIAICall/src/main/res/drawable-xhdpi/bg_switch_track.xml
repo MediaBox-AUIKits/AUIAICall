@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 选中状态的轨道 -->
+    <item android:state_checked="true">
+        <shape android:shape="rectangle">
+            <corners android:radius="12dp" />
+            <solid android:color="@color/color_fill_primary" />
+            <size android:width="50dp" android:height="24dp" />
+        </shape>
+    </item>
+
+    <!-- 默认状态的轨道 -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="12dp" />
+            <solid android:color="@color/color_fill_quaternary" />
+            <size android:width="50dp" android:height="24dp" />
+        </shape>
+    </item>
+</selector>

@@ -45,9 +45,9 @@ public class AICallSubtitleRecyclerViewAdapter extends RecyclerView.Adapter<AICa
 
         // 根据消息为AI的消息或者用户的消息设置不同的颜色
         if (subtitleMessageItem.isAsrText()) {
-            holder.mTvSubtitleItem.setTextColor(ContextCompat.getColor(mContext, R.color.layout_base_white_default));
+            holder.mTvSubtitleItem.setTextColor(ContextCompat.getColor(mContext, R.color.color_text));
         } else {
-            holder.mTvSubtitleItem.setTextColor(ContextCompat.getColor(mContext, R.color.layout_base_light_white));
+            holder.mTvSubtitleItem.setTextColor(ContextCompat.getColor(mContext, R.color.color_text_tertiary));
         }
     }
 

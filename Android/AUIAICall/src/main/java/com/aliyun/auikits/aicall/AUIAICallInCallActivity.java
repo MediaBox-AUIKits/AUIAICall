@@ -8,18 +8,13 @@ import static com.aliyun.auikits.aiagent.ARTCAICallEngine.ARTCAICallTurnDetectio
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
+import android.graphics.Rect;
 import android.os.Message;
-import android.view.LayoutInflater;
 import android.view.WindowManager;
-import android.content.ClipData;
-import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.PointF;
@@ -57,7 +52,6 @@ import com.aliyun.auikits.aicall.util.ToastHelper;
 import com.aliyun.auikits.aicall.widget.AICallAudioTipsDialog;
 import com.aliyun.auikits.aicall.widget.AICallDebugDialog;
 import com.aliyun.auikits.aicall.widget.AICallNoticeDialog;
-import com.aliyun.auikits.aicall.widget.AICallReportingDialog;
 import com.aliyun.auikits.aicall.widget.AICallSentenceLatencyItem;
 import com.aliyun.auikits.aicall.widget.AICallSentenceLatencyViewModel;
 import com.aliyun.auikits.aicall.widget.AICallSettingDialog;
@@ -70,6 +64,7 @@ import com.aliyun.auikits.aiagent.ARTCAICallEngine;
 import com.aliyun.auikits.aiagent.debug.ARTCAICallEngineDebuger;
 import com.aliyun.auikits.aicall.util.AppServiceConst;
 import com.aliyun.auikits.aicall.widget.AUIAICallAgentSimpleAnimator;
+import com.aliyun.auikits.aicall.widget.AudioSoundWaveView;
 import com.orhanobut.dialogplus.DialogPlus;
 import com.orhanobut.dialogplus.OnDismissListener;
 
@@ -78,10 +73,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 public class AUIAICallInCallActivity extends AppCompatActivity {
@@ -120,6 +112,8 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
 
     private AICallSentenceLatencyViewModel mAICallSentenceLatencyViewModel;
 
+    private AudioSoundWaveView mAudioSoundWaveView = null;
+
     private ARTCAICallController.IARTCAICallStateCallback mCallStateCallback = new ARTCAICallController.IARTCAICallStateCallback() {
         @Override
         public void onAICallEngineStateChanged(ARTCAICallController.AICallState oldCallState, ARTCAICallController.AICallState newCallState, ARTCAICallEngine.AICallErrorCode errorCode) {
@@ -153,10 +147,13 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         public void onAICallEngineRobotStateChanged(ARTCAICallEngine.ARTCAICallRobotState oldRobotState, ARTCAICallEngine.ARTCAICallRobotState newRobotState) {
             switch (newRobotState) {
                 case Listening:
+                    mAudioSoundWaveView.resume();
                     break;
                 case Thinking:
+                    mAudioSoundWaveView.pause();
                     break;
                 case Speaking:
+                    mAudioSoundWaveView.pause();
                     break;
                 default:
                     break;
@@ -398,6 +395,7 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        mAudioSoundWaveView.stop();
         aiCallSentenceLatencyItems.clear();
         // 去掉屏幕常亮
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -415,42 +413,10 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         mHandler = new Handler();
-
-        findViewById(R.id.btn_reporting).setVisibility(
-                AICallReportingDialog.AI_CALL_REPORTING_ENABLE ? View.VISIBLE : View.GONE);
-        findViewById(R.id.btn_reporting).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                AICallReportingDialog.showDialog(AUIAICallInCallActivity.this, new AICallReportingDialog.IReportingDialogDismissListener() {
-                    @Override
-                    public void onReportingSubmit(List<Integer> reportTypeStatIdList, String reportIssueDesc) {
-                        mARTCAICallController.commitReporting(reportTypeStatIdList, reportIssueDesc);
-                    }
-
-                    @Override
-                    public void onDismiss(boolean hasSubmit) {
-                        if (hasSubmit) {
-                            String requestId = mARTCAICallController.getAiAgentRequestId();
-                            String content = getResources().getString(R.string.reporting_id_display, requestId);
-                            AICallNoticeDialog.showFunctionalDialog(AUIAICallInCallActivity.this,
-                                    null, false, content, true,
-                                    R.string.copy, new AICallNoticeDialog.IActionHandle() {
-                                        @Override
-                                        public void handleAction() {
-                                            AUIAICallClipboardUtils.copyToClipboard(AUIAICallInCallActivity.this, requestId);
-                                            ToastHelper.showToast(AUIAICallInCallActivity.this, R.string.copied, Toast.LENGTH_SHORT);
-                                        }
-                                    }
-                            );
-                        }
-                    }
-                });
-            }
-        });
         findViewById(R.id.btn_setting).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                AICallSettingDialog.show(AUIAICallInCallActivity.this, mARTCAICallEngine,
+                AICallSettingDialog.show(AUIAICallInCallActivity.this, mARTCAICallEngine, mARTCAICallController,
                         mAiAgentType== ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent,
                         mIsVoicePrintRecognized, mIsSharedAgent, mARTCAICallController.getAgentVoiceList());
             }
@@ -463,21 +429,22 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             }
         });
 
+        mAudioSoundWaveView = findViewById(R.id.audio_sound_wave_view);
+        mAudioSoundWaveView.start();
+
         // 字幕开关控制全屏字幕的可见性
         mSubtitleHolder = new SubtitleHolder(this);
         TextView tvBtnSubtitle = findViewById(R.id.btn_ai_call_full_screen_subtitle);
-        tvBtnSubtitle.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View view) {
-                if(mIsFullScreenSubtitleOpen) {
-                    tvBtnSubtitle.setBackgroundResource(R.drawable.bg_btn_subtitle_black);
-                    tvBtnSubtitle.setTextColor(getResources().getColor(R.color.layout_base_white_default));
-                } else {
-                    tvBtnSubtitle.setBackgroundResource(R.drawable.bg_btn_subtitle_white);
-                    tvBtnSubtitle.setTextColor(getResources().getColor(R.color.layout_base_black_alpha_50));
-                }
-                mSubtitleHolder.setFullScreenSubtitleVisibility(!mIsFullScreenSubtitleOpen);
-            }
+        TextView tvBtnSubtitleOpen = findViewById(R.id.btn_ai_call_full_screen_subtitle_open);
+        tvBtnSubtitle.setOnClickListener(view -> {
+            tvBtnSubtitle.setVisibility(View.GONE);
+            tvBtnSubtitleOpen.setVisibility(View.VISIBLE);
+            mSubtitleHolder.setFullScreenSubtitleVisibility(true);
+        });
+        tvBtnSubtitleOpen.setOnClickListener(view -> {
+            tvBtnSubtitle.setVisibility(View.VISIBLE);
+            tvBtnSubtitleOpen.setVisibility(View.GONE);
+            mSubtitleHolder.setFullScreenSubtitleVisibility(false);
         });
         findViewById(R.id.avatar_layer).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -884,7 +851,7 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             boolean hasNextRun = true;
             // 更新通话时长
             long duration = mCallConnectedMillis > 0 ? SystemClock.elapsedRealtime() - mCallConnectedMillis : 0;
-            ((TextView)findViewById(R.id.tv_call_duration)).setText(TimeUtil.formatDuration(duration));
+//            ((TextView)findViewById(R.id.tv_call_duration)).setText(TimeUtil.formatDuration(duration));
 
             // 更新实时字幕
 //            mSubtitleHolder.refreshSubtitle();
@@ -1181,6 +1148,15 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             agentConfig.preConnectAudioUrl = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_PRE_CONNECT_AUDIO_URL, "");
             agentConfig.llmConfig.outputMinLength = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_OUTPUT_MIN_LENGTH, "-1"));
             agentConfig.llmConfig.outputMaxDelay = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_OUTPUT_MAX_DELAY, "-1"));
+            String experimentalConfigStr = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_EXPERIMENTAL_CONFIG);
+            if(!TextUtils.isEmpty(experimentalConfigStr)) {
+                try {
+                    JSONObject jsonObject = new JSONObject(experimentalConfigStr);
+                    agentConfig.experimentalConfig = new ARTCAICallEngine.ARTCAICallExperimentalConfig(jsonObject);
+                }catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -1188,7 +1164,8 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
 
     private class SubtitleHolder {
         private ImageView mIvBtnSetting = null;
-        private TextView mTvBtnReporting = null;
+        private ImageView mIvBtnBack = null;
+        private View mVerticalLinesDecoration = null;
         private LinearLayout mLlFullScreenSubtitle = null;
 
         private List<SubtitleTextPart> mSubtitlePartList = new ArrayList<>();
@@ -1213,8 +1190,17 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
 
         public SubtitleHolder(Context context) {
             mIvBtnSetting = findViewById(R.id.btn_setting);
-            mTvBtnReporting = findViewById(R.id.btn_reporting);
+            mVerticalLinesDecoration = findViewById(R.id.vertical_lines_decoration);
             initUIComponent();
+            mIvBtnBack = findViewById(R.id.btn_back);
+            mIvBtnBack.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if(handUp(false)) {
+                        finish();
+                    }
+                }
+            });
             mSubtitleItemAdapter = new AICallSubtitleRecyclerViewAdapter(context, mFullScreenSubtitleMessageList);
             mRvFullScreenSubtitle.setAdapter(mSubtitleItemAdapter);
             LinearLayoutManager layoutManager = new LinearLayoutManager(context);
@@ -1351,8 +1337,6 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         private void setFullScreenSubtitleVisibility(boolean visible) {
             if (null != mLlFullScreenSubtitle) {
                 mLlFullScreenSubtitle.setVisibility(visible ? View.VISIBLE : View.GONE);
-                findViewById(R.id.ll_full_screen_subtitle_top_container).setVisibility(visible ? View.VISIBLE : View.GONE);
-                findViewById(R.id.ll_full_screen_subtitle_bottom_container).setVisibility(visible ? View.VISIBLE : View.GONE);
                 mIsFullScreenSubtitleOpen = visible;
                 setTobBarBtnVisibility(!visible);
                 setEngineTipVisibility(!visible);
@@ -1363,19 +1347,30 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             }
         }
 
-        // 设置顶部栏设置、reporting按钮的可见性
+        // 设置顶部栏设置、装饰细线按钮的可见性
         private void setTobBarBtnVisibility(boolean visible) {
-            if(null != mTvBtnReporting) {
-                mTvBtnReporting.setVisibility(visible ? View.VISIBLE : View.GONE);
+            if(null != mIvBtnBack) {
+                mIvBtnBack.setVisibility(visible ? View.VISIBLE : View.GONE);
+            }
+            TextView tvTitle = findViewById(R.id.tv_ai_call_title);
+            if(null != tvTitle) {
+                tvTitle.setVisibility(visible ? View.VISIBLE : View.GONE);
             }
             if(null != mIvBtnSetting) {
                 mIvBtnSetting.setVisibility(visible ? View.VISIBLE : View.GONE);
+            }
+            // 装饰竖线
+            if(mVerticalLinesDecoration != null) {
+                mVerticalLinesDecoration.setVisibility(visible ? View.VISIBLE : View.GONE);
             }
         }
 
         private void setEngineTipVisibility(boolean visible) {
             findViewById(R.id.tv_call_tips).setVisibility(visible ? View.VISIBLE : View.GONE);
-            findViewById(R.id.generate_by_ai_text).setVisibility(visible ? View.VISIBLE : View.GONE);
+            View generateByAiTextView = findViewById(R.id.generate_by_ai_text);
+            if (generateByAiTextView != null) {
+                generateByAiTextView.setVisibility(visible ? View.VISIBLE : View.GONE);
+            }
         }
 
         private boolean containsChinese(String str) {
@@ -1387,6 +1382,7 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
 
     private abstract class ActionLayerHolder {
         protected View mActionLayer = null;
+        protected View mPushToTalk = null;
         protected ActionLayerHolder(View actionLayer) {
             findViewById(R.id.action_layer_voice).setVisibility(View.GONE);
             findViewById(R.id.action_layer_video).setVisibility(View.GONE);
@@ -1394,6 +1390,7 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             findViewById(R.id.action_layer_push_to_talk_video).setVisibility(View.GONE);
             mActionLayer = actionLayer;
             mActionLayer.setVisibility(View.VISIBLE);
+            mPushToTalk = findViewById(R.id.layout_auiaicall_push_to_talk);
         }
         protected void init() {
             initStopCallButtonUI();
@@ -1427,13 +1424,10 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
 
         protected void updateMuteButtonUI(boolean isMuted) {
             ImageView ivMuteCall = (ImageView) mActionLayer.findViewById(R.id.iv_mute_call);
-            TextView tvMuteCall = (TextView) mActionLayer.findViewById(R.id.tv_mute_call);
             if (isMuted) {
-                ivMuteCall.setImageResource(R.drawable.ic_voice_mute);
-                tvMuteCall.setText(R.string.mute_call);
+                ivMuteCall.setImageResource(R.drawable.ic_microphone_on);
             } else {
-                ivMuteCall.setImageResource(R.drawable.ic_voice_open);
-                tvMuteCall.setText(R.string.unmute_call);
+                ivMuteCall.setImageResource(R.drawable.ic_microphone_off);
             }
         }
 
@@ -1450,18 +1444,18 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         protected void updateSpeakerButtonUI() {
             boolean isSpeakerOn = null != mARTCAICallEngine ? mARTCAICallEngine.isSpeakerOn() : true;
             ImageView ivSpeaker = (ImageView) mActionLayer.findViewById(R.id.iv_speaker);
-            TextView tvSpeaker = (TextView) mActionLayer.findViewById(R.id.tv_speaker);
             if (isSpeakerOn) {
                 ivSpeaker.setImageResource(R.drawable.ic_speaker_on);
-                tvSpeaker.setText(R.string.speaker_on);
             } else {
                 ivSpeaker.setImageResource(R.drawable.ic_speaker_off);
-                tvSpeaker.setText(R.string.speaker_on);
             }
         }
 
         protected void initPushToTalkButton() {
             ViewGroup llPushToTalk = mActionLayer.findViewById(R.id.btn_push_to_talk);
+
+            ImageView ivPushToTalkCancel = mPushToTalk.findViewById(R.id.iv_push_to_talk_cancel_send);
+            FrameLayout flPushToTalkContainer = mPushToTalk.findViewById(R.id.fl_push_to_talk_gesture_container);
 
             llPushToTalk.setOnTouchListener(new View.OnTouchListener() {
                 static final int MSG_AUTO_FINISH_PUSH_TO_TALK = 8888;
@@ -1481,10 +1475,25 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                 @Override
                 public boolean onTouch(View v, MotionEvent event) {
                     Log.i("initPushToTalkButton",  "onTouch: " + event.getAction());
+                    int[] location = new int[2];
+                    v.getLocationOnScreen(location);
+                    int viewXOnScreen = location[0];
+                    int viewYOnScreen = location[1];
+                    int screenX = (int) (viewXOnScreen + event.getX());
+                    int screenY = (int) (viewYOnScreen + event.getY());
+
+                    Rect targetRect = getTargetAreaRect();
+
                     if (event.getAction() == MotionEvent.ACTION_DOWN) {
                         onStartTalk();
+                    } else if(event.getAction() == MotionEvent.ACTION_MOVE) {
+                        ivPushToTalkCancel.setEnabled(targetRect.contains(screenX, screenY));
                     } else if (event.getAction() == MotionEvent.ACTION_UP) {
-                        onFinishTalk(false);
+                        if(targetRect.contains(screenX, screenY)) {
+                            onFinishTalk(false);
+                        } else {
+                            onCancelTalk();
+                        }
                     }
                     return true;
                 }
@@ -1496,11 +1505,9 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                         startTalkMillis = SystemClock.uptimeMillis();
                         uiHandler.sendEmptyMessageDelayed(MSG_AUTO_FINISH_PUSH_TO_TALK, AUTO_FINISH_PUSH_TO_TALK_TIME);
 
-                        ImageView ivPushToTalk = mActionLayer.findViewById(R.id.iv_push_to_talk);
-                        TextView tvPushToTalk = mActionLayer.findViewById(R.id.tv_push_to_talk);
-                        ivPushToTalk.setImageResource(R.drawable.ic_microphone_speaking);
-                        tvPushToTalk.setText(R.string.release_to_send);
                     }
+
+                    mPushToTalk.setVisibility(View.VISIBLE);
                 }
                 private void onFinishTalk(boolean auto) {
                     Log.i("initPushToTalkButton",  "onFinishTalk");
@@ -1513,17 +1520,33 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                             mARTCAICallEngine.cancelPushToTalk();
                         }
 
-                        ImageView ivPushToTalk = mActionLayer.findViewById(R.id.iv_push_to_talk);
-                        TextView tvPushToTalk = mActionLayer.findViewById(R.id.tv_push_to_talk);
-                        ivPushToTalk.setImageResource(R.drawable.ic_microphone_idle);
-                        tvPushToTalk.setText(R.string.push_to_talk);
+                        mPushToTalk.setVisibility(View.GONE);
                     }
                     if (!auto) {
                         uiHandler.removeMessages(MSG_AUTO_FINISH_PUSH_TO_TALK);
                     }
                 }
 
+                private void onCancelTalk() {
+                    if(null != mARTCAICallEngine) {
+                        mARTCAICallEngine.cancelPushToTalk();
+                        mPushToTalk.setVisibility(View.GONE);
+                    }
+                }
+
             });
+        }
+
+        private Rect getTargetAreaRect() {
+            View targetView = mPushToTalk.findViewById(R.id.fl_push_to_talk_gesture_container);
+            int[] location = new int[2];
+            targetView.getLocationOnScreen(location);
+            Rect rect = new Rect();
+            rect.left = location[0];
+            rect.top = location[1];
+            rect.right = rect.left + targetView.getWidth();
+            rect.bottom = rect.top + targetView.getHeight();
+            return rect;
         }
 
         protected void initCameraButtonUI() {
@@ -1547,13 +1570,10 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         }
         protected void updateCameraButtonUI(boolean isCameraMute) {
             ImageView ivCamera = (ImageView) mActionLayer.findViewById(R.id.iv_camera);
-            TextView tvCamera = (TextView) mActionLayer.findViewById(R.id.tv_camera);
             if (isCameraMute) {
-                ivCamera.setImageResource(R.drawable.ic_camera_preview_off);
-                tvCamera.setText(R.string.camera_off);
+                ivCamera.setImageResource(R.drawable.ic_camera_disable);
             } else {
-                ivCamera.setImageResource(R.drawable.ic_camera_preview_on);
-                tvCamera.setText(R.string.camera_on);
+                ivCamera.setImageResource(R.drawable.ic_camera_enable);
             }
         }
     }

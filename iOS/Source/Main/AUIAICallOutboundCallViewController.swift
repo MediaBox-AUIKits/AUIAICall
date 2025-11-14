@@ -27,46 +27,23 @@ import ARTCAICallKit
     open var errorMsg: String = ""
 }
 
-@objcMembers open class AUIAICallOutboundCallViewController: AVBaseViewController {
-    
-    public override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
-        super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
-        
-#if AICALL_ENABLE_FEEDBACK
-        AUIAICallReport.shared.start()
-#endif
-    }
-    
-    
-    required public init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
+@objcMembers open class AUIAICallOutboundCallViewController: UIViewController {
     
     deinit {
         debugPrint("deinit: \(self)")
-        
-#if AICALL_ENABLE_FEEDBACK
-        AUIAICallReport.shared.finish()
-#endif
-        
-        ARTCAICallEngineDebuger.Debug_ClearTipsData()
     }
     
     open override func viewDidLoad() {
         super.viewDidLoad()
         
-        self.view.backgroundColor = AVTheme.bg_medium
-        self.hiddenMenuButton = true
-        self.titleView.text = AUIAIMainBundle.getString("AI Call Out")
+        self.view.backgroundColor = AUIAIMainBundle.color_bg
+        self.view.addSubview(self.backBtn)
+                
+        self.view.addSubview(self.iconView)
+        self.view.addSubview(self.stateLabel)
         
-#if AICALL_ENABLE_FEEDBACK
-        self.reportBtn = self.setupReportBtn()
-#endif
-        self.contentView.addSubview(self.iconView)
-        self.contentView.addSubview(self.stateLabel)
-        
-        self.contentView.addSubview(self.infoLabel)
-        self.contentView.addSubview(self.copyBtn)
+        self.view.addSubview(self.infoLabel)
+        self.view.addSubview(self.copyBtn)
         
         self.infoLabel.isHidden = true
         self.copyBtn.isHidden = true
@@ -77,29 +54,61 @@ import ARTCAICallKit
     open override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         
-        let size = self.stateLabel.sizeThatFits(CGSize(width: self.contentView.av_width, height: 0))
-        self.stateLabel.frame = CGRect(x: 0, y: self.iconView.av_bottom + 26, width: self.contentView.av_width, height: size.height)
+        self.iconView.center = CGPoint(x: self.view.av_width / 2, y: self.view.av_height / 5 * 2)
+
+        let size = self.stateLabel.sizeThatFits(CGSize(width: self.view.av_width, height: 0))
+        self.stateLabel.frame = CGRect(x: 0, y: self.iconView.av_bottom + 24, width: self.view.av_width, height: size.height)
 
         self.infoLabel.sizeToFit()
         self.copyBtn.sizeToFit()
         let width = self.infoLabel.av_width + self.copyBtn.av_width + 8
-        self.infoLabel.frame = CGRect(x: (self.contentView.av_width - width) / 2, y: self.stateLabel.av_bottom + 18, width: self.infoLabel.av_width, height: 18)
-        self.copyBtn.frame = CGRect(x: self.infoLabel.av_right + 8, y: self.infoLabel.av_top, width: self.copyBtn.av_width, height: 18)
+        self.infoLabel.frame = CGRect(x: (self.view.av_width - width) / 2, y: self.stateLabel.av_bottom + 8, width: self.infoLabel.av_width, height: 24)
+        self.copyBtn.frame = CGRect(x: self.infoLabel.av_right + 8, y: self.infoLabel.av_top, width: self.copyBtn.av_width, height: 24)
     }
     
-    open var reportBtn: UIButton? = nil
+    open override var shouldAutorotate: Bool {
+        return false
+    }
+    
+    open override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+        return .portrait
+    }
+    
+    open override var preferredInterfaceOrientationForPresentation: UIInterfaceOrientation {
+        return .portrait
+    }
+    
+    open lazy var backBtn: AVBlockButton = {
+        let btn = AVBlockButton(frame: CGRect.zero)
+        btn.setImage(AUIAIMainBundle.getTemplateImage("ic_back"), for: .normal)
+        btn.tintColor = AUIAIMainBundle.color_icon
+        btn.setTitle(AUIAIMainBundle.getString("AI Call Out"), for: .normal)
+        btn.setTitleColor(AUIAIMainBundle.color_text, for: .normal)
+        btn.titleLabel?.font = AVTheme.mediumFont(16)
+        btn.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 12)
+        btn.sizeToFit()
+        btn.frame = CGRect(x: 24, y: UIView.av_safeTop, width: btn.av_width + 12, height: 48)
+        btn.clickBlock = { [weak self] sender in
+            self?.navigationController?.popViewController(animated: true)
+        }
+        return btn
+    }()
     
     open lazy var iconView: UIImageView = {
-        let view = UIImageView(frame: CGRect(x: 0, y: 0, width: 75, height: 75))
-        view.image = AUIAIMainBundle.getImage("ic_call_out_succ")
-        view.center = CGPoint(x: self.contentView.av_width / 2, y: self.contentView.av_height / 5 * 1)
+        let view = UIImageView(frame: CGRect(x: 0, y: 0, width: 90, height: 90))
+        view.contentMode = .center
+        view.backgroundColor = AUIAIMainBundle.color_fill_secondary
+        view.layer.cornerRadius = 45
+        view.layer.masksToBounds = true
+        view.tintColor = AUIAIMainBundle.color_icon
+        view.image = AUIAIMainBundle.getTemplateImage("ic_call_out_succ")
         return view
     }()
     
     open lazy var stateLabel: UILabel = {
         let title = UILabel(frame: CGRect.zero)
         title.text = AUIAIMainBundle.getString("The call is being placed, please be ready to answer")
-        title.textColor = AVTheme.text_strong
+        title.textColor = AUIAIMainBundle.color_text
         title.font = AVTheme.regularFont(16)
         title.numberOfLines = 0
         title.textAlignment = .center
@@ -109,8 +118,8 @@ import ARTCAICallKit
     open lazy var infoLabel: UILabel = {
         let title = UILabel(frame: CGRect.zero)
         title.text = "ID: xxxxx"
-        title.textColor = AVTheme.text_strong
-        title.font = AVTheme.regularFont(14)
+        title.textColor = AUIAIMainBundle.color_text
+        title.font = AVTheme.regularFont(16)
         title.textAlignment = .center
         return title
     }()
@@ -118,17 +127,13 @@ import ARTCAICallKit
     open lazy var copyBtn: AVBlockButton = {
         let btn = AVBlockButton(frame: CGRect.zero)
         btn.setTitle("Copy", for: .normal)
-        btn.setTitleColor(AVTheme.text_strong, for: .normal)
-        btn.titleLabel?.font = AVTheme.regularFont(12)
+        btn.setTitleColor(AUIAIMainBundle.color_link, for: .normal)
+        btn.titleLabel?.font = AVTheme.regularFont(14)
         btn.contentEdgeInsets = UIEdgeInsets(top: 2, left: 8, bottom: 2, right: 8)
-        btn.layer.cornerRadius = 9
-        btn.layer.borderWidth = 1
-        btn.layer.masksToBounds = true
-        btn.setBorderColor(AVTheme.border_strong, for: .normal)
         btn.clickBlock = { [weak self] btn in
             guard let self = self, let instanceId = self.rspModel?.instanceId else { return }
             UIPasteboard.general.string = instanceId
-            AVToastView.show(AUIAIMainBundle.getString("InstanceId copied"), view: self.view, position: .mid)
+            self.view.aicall_showToast(AUIAIMainBundle.getString("InstanceId copied"))
         }
         return btn
     }()
@@ -194,7 +199,7 @@ import ARTCAICallKit
     }
     
     open func refreshUIWithFailed() {
-        self.iconView.image = AUIAIMainBundle.getImage("ic_call_out_failed")
+        self.iconView.image = AUIAIMainBundle.getTemplateImage("ic_call_out_failed")
         self.stateLabel.text = "\(AUIAIMainBundle.getString("Call failed")): \(self.rspModel?.errorCode ?? "unknown")"
         self.infoLabel.text = "ID: \(self.rspModel?.instanceId ?? "")"
         self.infoLabel.isHidden = !(self.rspModel?.instanceId.isEmpty == false)
@@ -202,32 +207,3 @@ import ARTCAICallKit
         self.viewDidLayoutSubviews()
     }
 }
-
-#if AICALL_ENABLE_FEEDBACK
-extension AUIAICallOutboundCallViewController {
-    
-    func setupReportBtn() -> UIButton {
-        let btn = AVBlockButton()
-        btn.titleLabel?.font = AVTheme.regularFont(12)
-        btn.setTitle(AUIAIMainBundle.getString("Report Issues"), for: .normal)
-        btn.setTitleColor(AVTheme.text_weak, for: .normal)
-        btn.clickBlock = { [weak self] btn in
-            guard let self = self else {
-                return
-            }
-            if let rspModel = self.rspModel {
-                ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "AgentId", value: self.reqModel.agentId)
-                ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "UserId", value: self.reqModel.userId)
-                ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "InstanceId", value: rspModel.instanceId)
-                ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "RequestId", value: rspModel.requestId)
-            }
-            
-            self.av_presentFullScreenViewController(AUIAICallReportViewController(), animated: true)
-        }
-        self.headerView.addSubview(btn)
-        btn.sizeToFit()
-        btn.frame = CGRect(x: self.headerView.av_width - 24 - btn.av_width, y: self.headerView.av_height - 44, width: btn.av_width, height: 44)
-        return btn
-    }
-}
-#endif

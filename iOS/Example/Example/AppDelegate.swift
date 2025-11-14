@@ -12,12 +12,15 @@ import AUIFoundation
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
 
+    override init() {
+        super.init()
+        
+        AVTheme.supportsAutoMode = true;
+    }
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
         
-        // 仅支持暗黑模式
-        AVTheme.supportsAutoMode = false;
         AVTheme.currentMode = .dark;
         
         return true

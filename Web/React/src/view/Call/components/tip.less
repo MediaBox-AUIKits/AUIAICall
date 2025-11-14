@@ -1,0 +1,39 @@
+.tip {
+  position: relative;
+  z-index: 3;
+  margin: 16px 0;
+  font-size: 12px;
+  line-height: 20px;
+  text-align: center;
+
+  ._indicator {
+    margin-bottom: 8px;
+    ol {
+      display: inline-flex;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    li {
+      width: 5px;
+      height: 5px;
+      background-color: var(---ai-color-primary);
+      margin: 0 1px;
+      opacity: 0.5;
+    }
+  }
+}
+
+@media screen and (min-width: 769px) {
+  .tip {
+    font-size: 16px;
+    line-height: 24px;
+  }
+}
+
+@media screen and (min-width: 1537px) {
+  .tip {
+    font-size: 20px;
+    line-height: 30px;
+  }
+}

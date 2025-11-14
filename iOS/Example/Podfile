@@ -7,9 +7,9 @@ AlivcSDK='AliVCSDK_ARTC'
 
 target 'Example' do
 
-  pod "#{AlivcSDK}", '~> 7.5.0'
+  pod "#{AlivcSDK}", '~> 7.8.0'
   pod 'AliVCInteractionMessage', '~> 1.8.0'
-  pod "ARTCAICallKit/Chatbot", '~> 2.8.0'
+  pod "ARTCAICallKit/Chatbot", '~> 2.9.0'
 
   pod 'MJRefresh', :modular_headers => true
   pod 'SDWebImage', :modular_headers => true

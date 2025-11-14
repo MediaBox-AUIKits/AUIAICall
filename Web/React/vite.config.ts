@@ -1,8 +1,8 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react-swc';
-import svgr from 'vite-plugin-svgr';
 import legacy from '@vitejs/plugin-legacy';
+import react from '@vitejs/plugin-react-swc';
 import path from 'path';
+import { defineConfig } from 'vite';
+import svgr from 'vite-plugin-svgr';
 
 import packageJSON from './package.json';
 
@@ -15,6 +15,10 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'), // 将 '@' 映射到 './src' 目录
+      call: path.resolve(__dirname, './src/view/Call'),
+      chat: path.resolve(__dirname, './src/view/Chat'),
+      components: path.resolve(__dirname, './src/view/components'),
+      hooks: path.resolve(__dirname, './src/view/hooks'),
     },
   },
   build: {

@@ -6,7 +6,6 @@ export default {
       holder: '这里输入UID，最少8个数字，最多16个数字',
     },
     btn: '确定',
-    logging: '登录中...',
     failed: '登录失败',
 
     agreement: {
@@ -19,21 +18,19 @@ export default {
     },
 
     phone: {
-      title: '手机号码登录',
+      title: '登录',
       holder: '请输入手机号码',
       errorMessage: '请输入正确的手机号码',
 
       verification: {
-        title: '获取短信验证码',
         btn: '发送',
-        getting: '获取验证码中...',
-        holder: '输入验证码',
+        holder: '验证码',
+        next: '下一步',
         success: '验证码已发送至 {phone}',
-        resend: '重新获取验证码',
+        resend: '重新发送',
         wait: '{count}秒',
         failed: '获取短信验证码失败',
         errorMessage: '短信验证码格式不正确',
-        exceeded: '获取短信验证码超出限制，请在1小时候后再试',
       },
       captcha: {
         holder: '请输入图片校验码',
@@ -42,10 +39,6 @@ export default {
         errorMessage: '图片校验码不正确',
       },
     },
-  },
-
-  logout: {
-    text: '退出登录',
   },
 
   welcome: {
@@ -82,11 +75,23 @@ export default {
   },
 
   agent: {
-    voice: '语音通话',
-    avatar: '数字人通话',
-    vision: '视觉理解通话',
+    voice: '音频对话',
+    avatar: '数字人对话',
+    vision: '视觉理解对话',
+    video: '视频对话',
     chatbot: '消息对话',
-    video: '视频通话',
+    pstnOut: '电话呼出',
+    pstnIn: '电话呼入',
+
+    descriptions: {
+      voice: '用户通过语音与智能助手交流对话。',
+      avatar: '通过视频与数字人互动，提升用户体验真实性。',
+      vision: '通过视频互动，智能体结合语音和画面提供反馈。',
+      video: '数字人结合视觉理解，与用户双向视频通话。',
+      chatbot: '通过语音或文本以聊天对话框的形式直接与智能体进行交流。',
+      pstnOut: '智能体通过运营商线路直接向用户手机号发起电话呼出。',
+      pstnIn: '用户通过运营商线路主动拨打智能体进行呼入。',
+    },
 
     ended: '通话已经结束',
     endedByInactivity: '由于你长时间未进行通话，该通话已经结束',
@@ -98,10 +103,6 @@ export default {
 
     voiceprintIgnored: '（声纹）识别到不是常用对话人，暂未响应您的问题',
     aivadIgnored: '（AIVad）识别到不是常用对话人，暂未响应您的问题',
-  },
-
-  hero: {
-    name: '小云',
   },
 
   actions: {
@@ -117,7 +118,8 @@ export default {
   },
 
   subtitleList: {
-    btn: '字幕',
+    btnText: '字幕',
+    title: '字幕',
   },
 
   settings: {
@@ -153,6 +155,7 @@ export default {
       title: '选择音色',
       help: '切换音色后，AI将在下一次回答中使用新的音色',
       success: '音色切换成功',
+      use: '使用',
     },
 
     pushToTalk: {
@@ -161,30 +164,25 @@ export default {
       disabled: '对讲机模式已关闭',
       spaceTip: '已开启对讲机模式，长按空格开始讲话，对讲机状态下，麦克风默认开启。',
     },
+
+    feedback: {
+      title: '问题反馈',
+      action: '去录入',
+    },
   },
 
   pushToTalk: {
     push: '按住讲话',
     releaseToSend: '松开发送',
-    tip: '按下按钮后讲话，松开按钮后结束讲话',
+    tip: '按下开始录制，松开结束',
     spaceTip: '长按空格，开始讲话',
     tooShort: '按住时间太短，已取消发送',
     canceled: '已取消发送',
-  },
 
-  microphone: {
-    open: '开麦克风',
-    close: '关麦克风',
-    closed: '麦克风已关',
-    opened: '麦克风已开',
-  },
-
-  camera: {
-    switch: '镜头翻转',
-    open: '开摄像头',
-    close: '关摄像头',
-    closed: '摄像头已关',
-    opened: '摄像头已开',
+    // 新增Footer组件的按钮文案
+    holdToSpeak: '按住说话',
+    releaseToSendSwipeToCancel: '松开发送 上滑取消',
+    speakTimeTooShort: '说话时间太短',
   },
 
   status: {
@@ -193,7 +191,6 @@ export default {
     thinking: '思考中...',
     speaking: '我正在回复中，可以点击“tab”键或说话打断我',
     speakingNoInterrupt: '我正在回复中，可以点击“tab”键打断我',
-    interrupted: '当前讲话已被打断',
 
     mobile: {
       speaking: '我正在回复中，可以轻触屏幕或说话打断我',
@@ -270,7 +267,6 @@ export default {
     use: '使用',
     close: '关闭',
     exit: '退出',
-    back: '返回',
     delete: '删除',
   },
 
@@ -279,7 +275,6 @@ export default {
     disconnected: '连接已断开',
 
     history: {
-      failed: '获取历史消息失败',
       noMore: '没有更多历史消息',
 
       pullingText: '下拉加载历史消息',
@@ -294,9 +289,6 @@ export default {
       deleteConfirm: '确定删除该消息？',
       deleteHelp: '消息删除后，不可恢复',
       deleteFailed: '删除失败',
-
-      customReceived: '接收到自定义消息：{msg}',
-
       tableTitle: '表格',
     },
 
@@ -322,7 +314,6 @@ export default {
     },
 
     uploader: {
-      imageFailed: '上传图片失败',
       notReady: '部分图片上传中或上传失败',
 
       countLimit: '最多上传 {count} 个文件',
@@ -357,7 +348,9 @@ export default {
         label: '智能打断',
       },
       voiceId: {
+        title: '音色选择',
         label: '音色选择',
+        use: '使用',
       },
       help: '体验后，系统将会被被叫号码拨通AI电话，请注意查收',
       start: '开始体验',
@@ -393,7 +386,7 @@ export default {
     failed: '声纹录入失败，请重新录制',
     noiseReduction: '声纹降噪',
     help: 'AI仅把您的声音作为输入，即使同时有多个人在讲话',
-    enrolled: '声纹特征信息（已录入）',
+    enrolled: '已录入',
     enroll: '录入',
   },
 };

@@ -31,7 +31,7 @@ import AUIFoundation
         let count = 3
         for i in 0..<count {
             let view = UIView()
-            view.backgroundColor = AVTheme.fill_infrared
+            view.backgroundColor = AUIAICallBundle.color_fill
             view.layer.cornerRadius = self.circleLength / 2.0
             view.layer.masksToBounds = true
             list.append(view)

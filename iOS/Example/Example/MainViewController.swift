@@ -25,6 +25,7 @@ class MainViewController: UIViewController {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             self.showMainViewController(ani: false)
 //            self.testSwiftyMarkdown()
+//            self.testPushToTalkView()
         }
     }
     
@@ -59,6 +60,11 @@ class MainViewController: UIViewController {
         }
     }
     
+    func testPushToTalkView() {
+        let view = AUIAICallPushToTalkView(frame: self.view.bounds)
+        self.view.addSubview(view)
+    }
+    
     lazy var scrollView: UIScrollView = {
         let scroll = UIScrollView(frame: CGRect(x: 12, y: 240, width: self.view.bounds.width - 24, height: 400))
         scroll.contentSize = CGSize(width: scroll.bounds.width, height: 3600)
@@ -79,7 +85,7 @@ class MainViewController: UIViewController {
 extension MainViewController {
     func testSwiftyMarkdown() {
         
-        let attributedText = AUIAIChatMarkdownManager.shared.toAttributedString(markdownString: markdownContent3)
+        let attributedText = AUIAIChatMarkdownManager.shared.toAttributedString(markdownString: markdownContent3, isLeft: false)
         self.markdownView.attributedText = attributedText
         debugPrint(attributedText)
         

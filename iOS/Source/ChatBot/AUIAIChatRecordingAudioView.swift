@@ -32,6 +32,7 @@ import ARTCAICallKit
     
     public init() {
         super.init(frame: CGRect.zero)
+        self.layer.addSublayer(self.gradientlayer)
         self.addSubview(self.sendingBar)
         self.addSubview(self.recordTipsLabel)
         self.sendingBar.addSubview(self.timeLabel)
@@ -46,24 +47,41 @@ import ARTCAICallKit
     open override func layoutSubviews() {
         super.layoutSubviews()
         
-        self.recordTipsLabel.frame = CGRect(x: 0, y: 0, width: self.av_width, height: self.getRecordTipsHeight())
-        self.sendingBar.frame = CGRect(x: 20, y: self.recordTipsLabel.av_bottom + 2.0 + 14, width: self.av_width - 40, height: 40)
+        let y = self.getRecordTipsHeight() + 8.0
+        self.gradientlayer.frame = CGRect(x: 0, y: 0, width: self.av_width, height: y)
+        self.recordTipsLabel.frame = CGRect(x: 0, y: self.getRecordTipsHeight() - 18 - 16, width: self.av_width, height: 18)
+        self.sendingBar.frame = CGRect(x: 24, y: y, width: self.av_width - 48, height: 50)
         self.animator.center = CGPoint(x: self.sendingBar.bounds.midX, y: self.sendingBar.bounds.midY)
-        self.timeLabel.frame = CGRect(x: 12, y: 0, width: 100, height: 40)
+        self.timeLabel.frame = CGRect(x: 12, y: 0, width: 100, height: 50)
         
     }
     
+    open override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        
+        self.gradientlayer.colors = [AUIAIChatBundle.color_bg_elevated.withAlphaComponent(0.0).cgColor, AUIAIChatBundle.color_bg_elevated.cgColor]
+    }
+    
+    open lazy var gradientlayer: CAGradientLayer = {
+        let layer = CAGradientLayer()
+        layer.startPoint = CGPoint(x: 0.5, y: 0.0)
+        layer.endPoint = CGPoint(x: 0.5, y: 32.0/108.0)
+        layer.colors = [AUIAIChatBundle.color_bg_elevated.withAlphaComponent(0.0).cgColor, AUIAIChatBundle.color_bg_elevated.cgColor]
+        return layer
+    }()
+
+    
     open lazy var sendingBar: UIView = {
         let view = UIView()
-        view.backgroundColor = UIColor.av_color(withHexString: "#3295FB", alpha: 1.0)
-        view.layer.cornerRadius = 20
+        view.backgroundColor = AUIAIChatBundle.color_primary
+        view.layer.cornerRadius = 4
         return view
     }()
     
     open lazy var recordTipsLabel: UILabel = {
         let label = UILabel()
         label.font = AVTheme.regularFont(14)
-        label.textColor = AVTheme.text_strong
+        label.textColor = AUIAIChatBundle.color_text_tertiary
         label.text = AUIAIChatBundle.getString("Release to send, swipe up to cancel")
         label.textAlignment = .center
         return label
@@ -72,7 +90,7 @@ import ARTCAICallKit
     open lazy var timeLabel: UILabel = {
         let label = UILabel()
         label.font = AVTheme.mediumFont(14)
-        label.textColor = AVTheme.text_strong
+        label.textColor = AUIAIChatBundle.color_text_identical
         label.text = "0''"
         label.textAlignment = .left
         label.sizeToFit()
@@ -88,16 +106,16 @@ import ARTCAICallKit
         didSet {
             switch self.viewState {
             case .Recording:
-                self.sendingBar.backgroundColor = UIColor.av_color(withHexString: "#3295FB", alpha: 1.0)
+                self.sendingBar.backgroundColor = AUIAIChatBundle.color_primary
                 self.recordTipsLabel.text = AUIAIChatBundle.getString("Release to send, swipe up to cancel")
-                self.recordTipsLabel.textColor = AVTheme.text_strong
+                self.recordTipsLabel.textColor = AUIAIChatBundle.color_text_tertiary
                 
                 self.animator.start()
                 break
             case .CancelRecord:
-                self.sendingBar.backgroundColor = UIColor.av_color(withHexString: "#F95353", alpha: 1.0)
+                self.sendingBar.backgroundColor = AUIAIChatBundle.color_error
                 self.recordTipsLabel.text = AUIAIChatBundle.getString("Release to cancel")
-                self.recordTipsLabel.textColor = UIColor.av_color(withHexString: "#F95353", alpha: 1.0)
+                self.recordTipsLabel.textColor = AUIAIChatBundle.color_error
                 
                 self.animator.stop()
                 break
@@ -140,11 +158,11 @@ import ARTCAICallKit
 extension AUIAIChatRecordingAudioView {
     
     open func getSendingBarHeight() -> CGFloat {
-        return 68.0
+        return 66.0
     }
     
     open func getRecordTipsHeight() -> CGFloat {
-        return 20.0
+        return 108.0
     }
     
     open func presentOnView(parent: UIView, bottom: CGFloat) {

@@ -1,14 +1,18 @@
 package com.aliyun.auikits.aicall.widget;
 
 import android.content.Context;
+import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.aliyun.auikits.aiagent.ARTCAIChatEngine;
+import com.aliyun.auikits.aiagent.util.Logger;
 import com.aliyun.auikits.aicall.R;
 import com.aliyun.auikits.aicall.base.card.CardEntity;
 import com.aliyun.auikits.aicall.base.card.CardListAdapter;
@@ -17,7 +21,10 @@ import com.aliyun.auikits.aicall.base.feed.BizParameter;
 import com.aliyun.auikits.aicall.base.feed.ContentViewModel;
 import com.aliyun.auikits.aicall.model.AudioToneContentModel;
 import com.aliyun.auikits.aicall.bean.AudioToneData;
+import com.aliyun.auikits.aicall.util.AUIAICallClipboardUtils;
+import com.aliyun.auikits.aicall.util.BizStatHelper;
 import com.aliyun.auikits.aicall.util.DisplayUtil;
+import com.aliyun.auikits.aicall.util.ToastHelper;
 import com.aliyun.auikits.aicall.widget.card.AudioToneCard;
 import com.aliyun.auikits.aicall.widget.card.CardTypeDef;
 import com.chad.library.adapter.base.BaseQuickAdapter;
@@ -27,7 +34,7 @@ import com.orhanobut.dialogplus.OnDismissListener;
 import com.orhanobut.dialogplus.ViewHolder;
 import com.scwang.smart.refresh.layout.SmartRefreshLayout;
 
-import java.util.ArrayList;
+import org.json.JSONObject;
 import java.util.List;
 
 
@@ -40,8 +47,10 @@ public class AIChatBotSettingDialog {
 
     public static String currentVoice = "";
     private static String mDefaultTitle;
+    private static boolean isShouleShowReportingDialog = false;
 
-    public static void show(Context context, List<AudioToneData> audioToneList) {
+    public static void show(Context context, ARTCAIChatEngine chatEngine, String currentRequestId, String agentId,
+                            String userId, String sessionId, List<AudioToneData> audioToneList) {
         View view = LayoutInflater.from(context).inflate(R.layout.dialog_aichat_setting, null, false);
         AIChatBotSettingDialog aiChatSettingDialog = new AIChatBotSettingDialog(context, view, audioToneList);
         view.setTag(aiChatSettingDialog);
@@ -51,17 +60,94 @@ public class AIChatBotSettingDialog {
                 .setContentHolder(viewHolder)
                 .setGravity(Gravity.BOTTOM)
                 .setExpanded(true, DisplayUtil.dip2px(420))
-                .setOverlayBackgroundResource(android.R.color.transparent)
-                .setContentBackgroundResource(R.color.layout_base_dialog_background)
+                .setOverlayBackgroundResource(R.color.color_bg_mask_transparent_70)
+                .setContentBackgroundResource(R.drawable.bg_rounded_setting_dialog)
+                .setOnClickListener((dialog1, v) -> {
+                    if(v.getId() == R.id.iv_close_setting) {
+                        dialog1.dismiss();
+                        return;
+                    } else if(v.getId() == R.id.iv_reporting_issue) {
+                        isShouleShowReportingDialog = true;
+                        dialog1.dismiss();
+                        return;
+                    }
+                    aiChatSettingDialog.onClick(v);
+                })
                 .setOnDismissListener(new OnDismissListener() {
                     @Override
                     public void onDismiss(DialogPlus dialog) {
+                        if(isShouleShowReportingDialog) {
+                            isShouleShowReportingDialog = false;
 
+                            AICallReportingDialog.showDialog(context, new AICallReportingDialog.IReportingDialogDismissListener() {
+                                @Override
+                                public void onReportingSubmit(List<Integer> reportTypeStatIdList, String reportIssueDesc) {
+                                    // commitReporting
+                                    if (null == reportTypeStatIdList || reportTypeStatIdList.isEmpty()) {
+                                        return;
+                                    }
+                                    try {
+                                        {
+                                            JSONObject args = new JSONObject();
+                                            args.put("req_id", currentRequestId);
+                                            args.put("aid", agentId);
+                                            args.put("uid", userId);
+                                            args.put("atype", "MessageChat");
+                                            args.put("sid", sessionId);
+                                            String round = chatEngine.currentChatRound();
+                                            if(!TextUtils.isEmpty(round)) {
+                                                args.put("round_type", round);
+                                            }
+                                            args.put("round_req_id", currentRequestId);
+
+                                            StringBuilder idBuilder = new StringBuilder();
+                                            for (int reportTypeId : reportTypeStatIdList) {
+                                                if (idBuilder.length() > 0) {
+                                                    idBuilder.append(",");
+                                                }
+                                                idBuilder.append(reportTypeId);
+                                            }
+                                            args.put("rep_type", idBuilder.toString());
+                                            if (!reportIssueDesc.isEmpty()) {
+                                                args.put("rep_desc", reportIssueDesc);
+                                            }
+                                            BizStatHelper.stat("2001", args.toString());
+                                        }
+                                        {
+                                            JSONObject args = new JSONObject();
+
+                                            String allLog = Logger.getAllLogRecordStr();
+                                            args.put("log_str", allLog);
+                                            BizStatHelper.stat("2002", args.toString());
+                                        }
+                                    } catch (Exception ex) {
+                                        ex.printStackTrace();
+                                    }
+                                }
+
+                                @Override
+                                public void onDismiss(boolean hasSubmit) {
+                                    if (hasSubmit) {
+                                        String requestId = agentId;
+                                        String content = context.getResources().getString(R.string.reporting_id_display, requestId);
+                                        AICallNoticeDialog.showFunctionalDialog(context,
+                                                null, false, content, true,
+                                                R.string.copy, new AICallNoticeDialog.IActionHandle() {
+                                                    @Override
+                                                    public void handleAction() {
+                                                        AUIAICallClipboardUtils.copyToClipboard(context, requestId);
+                                                        ToastHelper.showToast(context, R.string.chat_bot_copy_text_tips, Toast.LENGTH_SHORT);
+                                                    }
+                                                }
+                                        );
+                                    }
+                                }
+                            });
+                        }
                     }
                 })
                 .create();
         dialog.show();
-
     }
 
     private AIChatBotSettingDialog(Context context, View root, List<AudioToneData> audioToneList) {
@@ -76,9 +162,9 @@ public class AIChatBotSettingDialog {
         TextView audioToneDetail = root.findViewById(R.id.tv_config_audio_tone_tips);
         audioToneDetail.setText(R.string.chat_bot_audio_tone_detail);
         if(audioToneList.size() == 0) {
-            root.findViewById(R.id.ll_audio_tone_list).getLayoutParams().height = DisplayUtil.dip2px(( 48  + 24));
+            root.findViewById(R.id.ll_audio_tone_list).getLayoutParams().height = DisplayUtil.dip2px(( 56  + 24));
         }else {
-            root.findViewById(R.id.ll_audio_tone_list).getLayoutParams().height = DisplayUtil.dip2px((audioToneList.size() * 48  + 24));
+            root.findViewById(R.id.ll_audio_tone_list).getLayoutParams().height = DisplayUtil.dip2px((audioToneList.size() * 56  + 24));
         }
 
         DefaultCardViewFactory factory = new DefaultCardViewFactory();
@@ -90,7 +176,7 @@ public class AIChatBotSettingDialog {
         boolean couldSwitch = audioToneList.size() == 0 ? false:true;
         if(audioToneList.size() == 0) {
             AudioToneData audioTone = new AudioToneData("", mDefaultTitle);
-            audioTone.setIconResId(R.drawable.ic_audio_tone_0);
+            audioTone.setIconResId(R.drawable.ic_audio_tone_3);
             audioTone.setUsing(true);
             audioToneList.add(audioTone);
         }
@@ -129,20 +215,9 @@ public class AIChatBotSettingDialog {
         }
 
         mContentViewModel.bindView(mCardListAdapter);
-
-
     }
 
     private void onClick(View v) {
 
     }
-
-
-
-
-
-
-
-
-
 }

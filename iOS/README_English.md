@@ -113,11 +113,11 @@ platform :ios, '10.0'
 
 target 'Your App target' do
     # Integrate the appropriate audio and video terminal SDK based on your business scenario. Supports: AliVCSDK_ARTC, AliVCSDK_Standard, AliVCSDK_InteractiveLive
-    pod 'AliVCSDK_ARTC', '~> 7.5.0'
+    pod 'AliVCSDK_ARTC', '~> 7.8.0'
 
     # AI real-time interactive call scenario SDK
-    # If your business also needs to support message conversations, use "ARTCAICallKit/Chatbot" for integration, change the line below to: pod 'ARTCAICallKit/Chatbot', '~> 2.8.0'
-    pod 'ARTCAICallKit', '~> 2.8.0'
+    # If your business also needs to support message conversations, use "ARTCAICallKit/Chatbot" for integration, change the line below to: pod 'ARTCAICallKit/Chatbot', '~> 2.9.0'
+    pod 'ARTCAICallKit', '~> 2.9.0'
 
     # Basic UI component source code
     pod 'AUIFoundation', :path => "./AUIAICall/AUIBaseKits/AUIFoundation/", :modular_headers => true
@@ -233,4 +233,4 @@ AUIAICallManager.defaultManager.checkDeviceAuth(agentType: .VisionAgent) {
 ```
 
 ## Common Issues
-For more AUIKits questions and usage instructions, search for DingTalk group (35685013712) to join the AUI customer support group and contact us.
+For more questions and usage instructions, search for DingTalk group (106730016696) to join the support group and contact us.

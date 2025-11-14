@@ -24,6 +24,12 @@
     return self;
 }
 
+- (void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection {
+    [super traitCollectionDidChange:previousTraitCollection];
+    
+    [self updateBorderColor];
+}
+
 - (void)setClickBlock:(void (^)(AVBlockButton * _Nonnull))clickBlock {
     _clickBlock = clickBlock;
     if (clickBlock) {
@@ -130,6 +136,9 @@
 }
 
 - (void)updateBorderColor {
+    if (self.borderColorDict.count == 0) {
+        return;
+    }
     NSUInteger state = UIControlStateNormal;
     if (self.isSelected) {
         state = state | UIControlStateSelected;

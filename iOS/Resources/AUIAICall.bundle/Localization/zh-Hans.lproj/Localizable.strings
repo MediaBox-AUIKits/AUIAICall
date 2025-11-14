@@ -1,8 +1,8 @@
 
-"AI Voice Call" = "音频通话";
-"AI Avatar Call" = "数字人通话";
-"AI Vision Call" = "视觉理解通话";
-"AI Video Call" = "视频通话";
+"Voice Call" = "音频通话";
+"Avatar Call" = "数字人通话";
+"Vision Call" = "视觉理解通话";
+"Video Call" = "视频通话";
 
 "Options" = "配置项";
 "Emotion Support" = "情绪音色";
@@ -70,10 +70,9 @@
 
 
 "Push to Talk" = "按住讲话";
-"Release to Send" = "松开发送";
+"Release to send, swipe up to cancel" = "松开发送，上滑取消";
 "Push to Talk Mode" = "对讲机模式";
 "Natural Conversation Mode" = "自然对话模式";
-"Push to Talk, Release to Send" = "按下按钮后讲话，松开按钮后结束讲话 ";
 "Failed to enable/disable push to talk Mode" = "打开/关闭对讲机模式失败";
 "Push to talk mode is turned on" = "对讲机模式已打开";
 "Push to talk mode is turned off" = "对讲机模式已关闭";
@@ -95,11 +94,11 @@
 "Thank you for your support. Your request ID is %@" = "感谢您的支持，你的反馈Id是：%@";
 
 "Voiceprint" = "声纹识别";
-"Voiceprint Feature Information" = "声纹特征信息";
+"Voiceprint Feature Information" = "声纹信息";
 "Register" = "录入";
 "Registered" = "已录入";
 "Re-register" = "重新录入";
-"Unavailable in calls unless registered" = "未录入无法在通话中启用";
+"Unavailable in calls unless registered" = "未录入";
 "The AI only uses your voice as input." = "AI仅把您的声音作为输入，即使同时有多个人在讲话";
 "Please read the following sentence in a quiet environment." = "请在安静的环境下朗读下面这段话";
 "'Woah, I think the dress you're wearing today is especially vibrant and elegant. It really complements your style – it's absolutely beautiful! Could you tell me where you bought such a lovely dress? I'd love to find one too.'" = "“哇，我觉得你今天穿的这件裙子特别鲜艳，款式很优雅，特别衬托你的气质，真的太漂亮了。你能告诉我是在哪家店买的这么好看的裙子嘛，我也去淘一件。”";
@@ -108,6 +107,7 @@
 "Recording failed" = "录音失败";
 "Voiceprint information is uploading. Please wait..." = "声纹信息正在上传中，请耐心等待";
 "Voiceprint enrollment failed. Please re-record." = "声纹录入失败，请重新录制";
+"Voiceprint enrollment failed. Duration is less than 12 seconds." = "声纹录入失败，时长少于12秒";
 "Voiceprint enrollment successful." = "声纹录入成功";
 "Voiceprint noise reduction is not enabled. This feature is temporarily unavailable. Please go to the Entry Page > Settings to enable it before use." = "声纹降噪未开启，此功能暂不能使用。请去进入页-配置项，开启后使用。";
 "Recording Duration: Minimum 12s, Maximum 60s" = "录制时长：最少12秒，最多60秒";
@@ -118,10 +118,8 @@
 "Voiceprint is turned off" = "声纹识别已关闭";
 "Detected other speaking, stop responded this question." = "（声纹）识别到不是常用对话人，暂未响应您的问题";
 "VAD detected other speaking, stop responded this question." = "（AIVad）识别到不是常用对话人，暂未响应您的问题";
-"Failed to clear voiceprint's data." = "删除声纹数据失！";
 "Due to your prolonged inactivity, the call has ended." = "由于你长时间未进行通话，该通话已经结束";
 "The call has ended." = "通话已经结束";
-"Restore" = "恢复";
 
 "The current call will soon be handled by a real person." = "当前通话即将被真人接管";
 "The current call is now being handled by a real person." = "当前通话已经被真人接管";

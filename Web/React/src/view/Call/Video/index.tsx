@@ -1,14 +1,16 @@
-import { useContext, useEffect, useRef, useState } from 'react';
-import ControllerContext from '@/view/Call/ControlerContext';
-
-import './index.less';
-import useCallStore from '@/view/Call/store';
 import { Button, FloatingBubble } from 'antd-mobile';
-import { NoCameraSVG, SwitchViewSVG } from '../Icons';
-import { addVideoBackground } from '@/common/videoHelper';
-import { isMobile } from '@/common/utils';
+import { useContext, useEffect, useRef, useState } from 'react';
 
-function Video() {
+import { isMobile } from '@/common/utils';
+import ControllerContext from 'call/ControlerContext';
+import useCallStore from 'call/store';
+
+import { switchViewSVG } from '../components/Icons';
+
+import Video from '../components/Video';
+import './index.less';
+
+function VideoActor() {
   const controller = useContext(ControllerContext);
 
   const primaryVideoRef = useRef<HTMLVideoElement>(null);
@@ -16,7 +18,6 @@ function Video() {
 
   const cameraMuted = useCallStore((state) => state.cameraMuted);
 
-  const [remoteLoading, setRemoteLoading] = useState(true);
   const [primaryVideoType, setPrimaryVideoType] = useState<'local' | 'agent'>('agent');
 
   useEffect(() => {
@@ -29,9 +30,6 @@ function Video() {
       controller?.engine?.setAgentView(primaryVideoRef.current);
       controller?.engine?.setLocalView(secondaryVideoRef.current);
     }
-
-    addVideoBackground(primaryVideoRef.current);
-    addVideoBackground(secondaryVideoRef.current);
   }, [controller, primaryVideoType]);
 
   useEffect(() => {
@@ -41,23 +39,6 @@ function Video() {
     };
   }, [controller]);
 
-  useEffect(() => {
-    const videoElement = primaryVideoType === 'agent' ? primaryVideoRef.current : secondaryVideoRef.current;
-    const loaded = () => {
-      setRemoteLoading(false);
-    };
-
-    if (remoteLoading) {
-      // canplay / timeupdate 都认为是加载完成
-      videoElement?.addEventListener('canplay', loaded);
-      videoElement?.addEventListener('timeupdate', loaded);
-    }
-    return () => {
-      videoElement?.removeEventListener('canplay', loaded);
-      videoElement?.removeEventListener('timeupdate', loaded);
-    };
-  }, [primaryVideoType, remoteLoading]);
-
   const switchView = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     e.stopPropagation();
     if (isMobile()) {
@@ -65,29 +46,13 @@ function Video() {
     }
   };
 
-  let localVideoClassName = 'is-loaded';
-  if (cameraMuted) {
-    localVideoClassName = 'is-muted';
-  }
-
-  let remoteVideoClassName = 'is-loaded';
-  if (remoteLoading) {
-    remoteVideoClassName = 'is-loading';
-  }
-
   return (
-    <div className={`character video  ${cameraMuted ? '' : 'has-camera'}`}>
-      <div className={`_video-box ${primaryVideoType === 'agent' ? remoteVideoClassName : localVideoClassName}`}>
-        <ul className='_video-loading'>
-          <li></li>
-          <li></li>
-          <li></li>
-          <li></li>
-          <li></li>
-        </ul>
-        <div className='_video-none'>{NoCameraSVG}</div>
-        <video ref={primaryVideoRef} className='_primary-video' />
-      </div>
+    <div className={`actor video  ${cameraMuted ? '' : 'has-camera'}`}>
+      <Video
+        ref={primaryVideoRef}
+        className={primaryVideoType === 'agent' ? 'is-remote' : 'is-local'}
+        muted={primaryVideoType !== 'agent' && cameraMuted}
+      />
 
       <FloatingBubble
         className='_secondary-video-box'
@@ -101,21 +66,15 @@ function Video() {
         }}
         onClick={switchView}
       >
-        <div className={`_video-box ${primaryVideoType === 'agent' ? localVideoClassName : remoteVideoClassName}`}>
-          <ul className='_video-loading'>
-            <li></li>
-            <li></li>
-            <li></li>
-            <li></li>
-            <li></li>
-          </ul>
-          <div className='_video-none'>{NoCameraSVG}</div>
-          <video ref={secondaryVideoRef} className='_secondary-video' />
-        </div>
-        <Button className='_switchViewBtn'>{SwitchViewSVG}</Button>
+        <Video
+          ref={secondaryVideoRef}
+          className={primaryVideoType === 'agent' ? 'is-remote' : 'is-local'}
+          muted={primaryVideoType === 'agent' && cameraMuted}
+        />
+        <Button className='_switch-view-btn'>{switchViewSVG}</Button>
       </FloatingBubble>
     </div>
   );
 }
 
-export default Video;
+export default VideoActor;

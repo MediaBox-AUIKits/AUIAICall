@@ -26,7 +26,12 @@ import ARTCAICallKit
     open override func layoutSubviews() {
         super.layoutSubviews()
         
-        self.interruptLabel.frame = CGRect(x: 12, y: self.actionView.av_top - 16, width: self.bgView.av_width - 24, height: 16)
+        self.interruptLabel.frame = CGRect(x: 16, y: self.bgView.av_height - 20 - 8, width: self.bgView.av_width - 32, height: 20)
+    }
+    
+    override func getBgViewHeight(contentHeight: CGFloat) -> CGFloat {
+        super.getBgViewHeight(contentHeight: contentHeight)
+        
     }
     
     override func getTextLabelPositionY() -> CGFloat {
@@ -36,12 +41,10 @@ import ARTCAICallKit
         return self.reasonView.av_bottom + 8.0
     }
     
-    override func getTextLabelHeight() -> CGFloat {
-        let actionViewHeight = self.actionView.isHidden ? 0.0 : 36.0
-        let bottomMargin = self.actionView.isHidden ? 12.0 : 0
+    override func getTextLabelHeight(contentHeight: CGFloat) -> CGFloat {
         let interruptLabelHeight = self.interruptLabel.isHidden ? 0.0 : 20.0
         // bg高度 - 起点坐标 - 操作栏高度 - 打断提示词高度 - 底部边距高度
-        return self.bgView.av_height - self.getTextLabelPositionY() - actionViewHeight - interruptLabelHeight - bottomMargin
+        return self.getBgViewHeight(contentHeight: contentHeight) - self.getTextLabelPositionY() - interruptLabelHeight - 8.0
     }
     
     open var onReasonExpandBlock: ((_ cell: AUIAIChatMessageAgentTextCell) -> Void)? = nil
@@ -60,8 +63,8 @@ import ARTCAICallKit
     
     open lazy var interruptLabel: UILabel = {
         let label = UILabel()
-        label.font = AVTheme.regularFont(10)
-        label.textColor = AVTheme.text_ultraweak
+        label.font = AVTheme.regularFont(12)
+        label.textColor = AUIAIChatBundle.color_text_tertiary
         label.text = AUIAIChatBundle.getString("User terminated this response")
         label.isHidden = true
         return label
@@ -81,19 +84,17 @@ import ARTCAICallKit
                 if self.loadingAniView.isHidden == false {
                     self.loadingAniView.start()
                 }
-                self.actionView.isHidden = !(item.message.messageState == .Interrupted || item.message.messageState == .Failed || item.message.messageState == .Finished)
                 self.interruptLabel.isHidden = item.message.messageState != .Interrupted
                 
                 self.reasonView.isHidden = !AUIAIChatMessageReasonView.isEnableReason(item: item)
                 self.reasonView.expandBtn.isSelected = !item.isExpandReasonText
                 self.reasonView.updateReasonType(type: AUIAIChatMessageReasonView.getReasonType(item: item))
-                self.reasonView.frame = CGRect(x: 0, y: 0, width: item.reasonSize?.width ?? 0.0, height: item.reasonSize?.height ?? 0.0)
+                self.reasonView.frame = CGRect(x: 0, y: 8, width: item.reasonSize?.width ?? 0.0, height: item.reasonSize?.height ?? 0.0)
                 self.reasonView.textLabel.text = item.message.reasoningText
             }
             else {
                 self.loadingAniView.stop()
                 self.loadingAniView.isHidden = true
-                self.actionView.isHidden = false
                 self.interruptLabel.isHidden = true
                 
                 self.reasonView.isHidden = true
@@ -121,7 +122,7 @@ extension AUIAIChatMessageAgentTextCell {
             let maxSize = CGSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude) // 限制宽度，允许无限制高度
             let attributes: [NSAttributedString.Key: Any] = [.font: font]
             let boundingBox = (text as NSString).boundingRect(with: maxSize, options: [.usesLineFragmentOrigin, .usesFontLeading], attributes: attributes, context: nil)
-            _interruptedMinWidth = boundingBox.width + 24
+            _interruptedMinWidth = boundingBox.width + 32
         }
         return _interruptedMinWidth
     }
@@ -130,10 +131,10 @@ extension AUIAIChatMessageAgentTextCell {
         if attributeText.string.isEmpty {
             return CGSize.zero
         }
-        let maxSize = CGSize(width: maxWidth - 12 - 12, height: CGFloat.greatestFiniteMagnitude) // 限制宽度，允许无限制高度
+        let maxSize = CGSize(width: maxWidth - 16 - 16, height: CGFloat.greatestFiniteMagnitude) // 限制宽度，允许无限制高度
         let boundingBox = attributeText.boundingRect(with: maxSize, options: [.usesLineFragmentOrigin, .usesFontLeading], context: nil)
 
-        let width = max(boundingBox.width + 24, self.minSize.width)
+        let width = max(boundingBox.width + 32, self.minSize.width)
         let height = ceil(boundingBox.height)
         return CGSize(width: width, height: height)
     }
@@ -169,41 +170,30 @@ extension AUIAIChatMessageAgentTextCell {
         var width = max(reasonSize.width, contentSize.width, self.minSize.width, self.getInterruptedMinWidth())
         width = min(width, maxWidth)
         
+        var height = 8.0
         // 加上reasonView
-        var height = reasonSize.height
+        if reasonSize.height > 0.0 {
+            height = height + reasonSize.height + 8.0
+        }
 
         // 加上textLabel
         if contentSize.height > 0.0 {
-            if height > 0.0 {
-                // 顶部间距8.0
-                height = height + 8.0 + contentSize.height
-            }
-            else {
-                // 顶部间距12.0
-                height = 12.0 + contentSize.height
-            }
+            height = height + contentSize.height + 8.0
         }
         
+        height = max(height, self.minSize.height)
+        
         if item.message.messageState == .Printing {
-            var printingHeight = height
-            if contentSize.height > 0.0 {
-                // textLabel的底部间距12.0
-                printingHeight = printingHeight + 12.0
-            }
-            else {
-                // reasonView的底部间距8.0
-                printingHeight = printingHeight + 8.0
-            }
+            let printingHeight = height
             item.displaySize = CGSize(width: width, height: printingHeight)
             return
         }
-
-        // 加上Actionview
-        height = height + 8 + 20 + 8
+        
         // 加上InterruptLabel
         if item.message.messageState == .Interrupted {
-            height = height + 4 + 16
+            height = height + 20.0 + 8.0
         }
+
         item.displaySize = CGSize(width: width, height: height)
     }
 }

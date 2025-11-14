@@ -1,5 +1,6 @@
-import { AICallRunConfig } from '@/interface.ts';
 import { AICallAgentConfig } from 'aliyun-auikit-aicall';
+
+import { AICallRunConfig } from '@/interface.ts';
 
 // 如果需要自定义 AgentConfig，请参考以下写法
 // when you need to customize AgentConfig, please refer to the following code

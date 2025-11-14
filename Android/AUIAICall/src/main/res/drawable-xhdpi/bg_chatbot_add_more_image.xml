@@ -3,8 +3,8 @@
     <!-- 正常状态 -->
     <item>
         <shape android:shape="rectangle" >
-            <corners android:radius="2dp" />
-            <solid android:color="@color/layout_base_divider" /> <!-- 选中时的颜色 -->
+            <corners android:radius="5dp" />
+            <solid android:color="@color/color_fill_secondary" /> <!-- 选中时的颜色 -->
         </shape>
     </item>
 </selector>

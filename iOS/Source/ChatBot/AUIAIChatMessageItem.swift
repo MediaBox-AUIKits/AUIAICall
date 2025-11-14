@@ -33,6 +33,7 @@ import ARTCAICallKit
     // 整个cell的展示大小（由contentSize\reasonSize\底部操作栏size组成），为空时表示需要计算大小
     open var displaySize: CGSize? = nil
     open var isLeft: Bool = false
+    open var isShowAction: Bool = false
     open var error: NSError? = nil
     
     // 文本内容相关属性，包括原始文本、富文本、是否需要刷新、占位大小
@@ -107,7 +108,7 @@ extension AUIAIChatMessageItem {
         guard self.needsUpdateContentInfo else {
             return
         }
-        self.contentAttributeText = AUIAIChatMarkdownManager.shared.toAttributedString(markdownString: self.contentOriginText)
+        self.contentAttributeText = AUIAIChatMarkdownManager.shared.toAttributedString(markdownString: self.contentOriginText, isLeft: self.isLeft)
         if self.isLeft {
             self.contentSize = AUIAIChatMessageAgentTextCell.computAgentContentSize(attributeText: self.contentAttributeText, maxWidth: maxWidth)
         }
@@ -151,8 +152,8 @@ extension AUIAIChatMessageItem {
             }
         }
         
-        let doBlock = {
-            let attributeText = AUIAIChatMarkdownManager.shared.toAttributedString(markdownString: markdownString)
+        let doBlock: (AUIAIChatMessageItem) -> Void = { item in
+            let attributeText = AUIAIChatMarkdownManager.shared.toAttributedString(markdownString: markdownString, isLeft: item.isLeft)
             if needsProcessContentImage {
                 let maxSize = CGSize(width: maxWidth - 24 , height: CGFloat.greatestFiniteMagnitude)
                 AUIAIChatMarkdownManager.shared.renderImage(attributedString: attributeText, originMarkdownString: markdownString, maxImageSize: maxSize ,renderQueue: computeQueue) { attri in
@@ -166,11 +167,11 @@ extension AUIAIChatMessageItem {
         
         if let computeQueue = computeQueue {
             computeQueue.async {
-                doBlock()
+                doBlock(self)
             }
         }
         else {
-            doBlock()
+            doBlock(self)
         }
     }
     

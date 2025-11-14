@@ -10,7 +10,7 @@ import AUIFoundation
 import SDWebImage
 
 
-@objcMembers open class AUIAIChatImageViewer: AVBaseViewController {
+@objcMembers open class AUIAIChatImageViewer: UIViewController {
 
     public init(image: UIImage) {
         self.image = image
@@ -24,14 +24,17 @@ import SDWebImage
     open override func viewDidLoad() {
         super.viewDidLoad()
         
-        self.view.backgroundColor = .black
-        self.hiddenMenuButton = true
+        self.view.backgroundColor = AUIAIChatBundle.color_bg
         
-        self.scrollView = UIScrollView(frame: self.contentView.bounds)
+        self.backBtn.sizeToFit()
+        self.backBtn.frame = CGRect(x: 24, y: UIView.av_safeTop, width: self.backBtn.av_width + 12, height: 48)
+        self.view.addSubview(self.backBtn)
+
+        self.scrollView = UIScrollView(frame: CGRect(x: 0, y: self.backBtn.av_bottom, width: self.view.av_width, height: self.view.av_height - self.backBtn.av_bottom))
         self.scrollView.delegate = self
         self.scrollView.minimumZoomScale = 1.0
         self.scrollView.maximumZoomScale = 6.0
-        self.contentView.addSubview(self.scrollView)
+        self.view.addSubview(self.scrollView)
 
         self.imageView = UIImageView(image: self.image)
         self.imageView.contentMode = .scaleAspectFit
@@ -44,9 +47,41 @@ import SDWebImage
         self.scrollView.addGestureRecognizer(doubleTapGesture)
     }
     
+    open override var shouldAutorotate: Bool {
+        return false
+    }
+    
+    open override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+        return .portrait
+    }
+    
+    open override var preferredInterfaceOrientationForPresentation: UIInterfaceOrientation {
+        return .portrait
+    }
+    
     let image: UIImage!
     var scrollView: UIScrollView!
     var imageView: UIImageView!
+    
+    open lazy var backBtn: AVBlockButton = {
+        let btn = AVBlockButton(frame: CGRect.zero)
+        btn.setImage(AUIAIChatBundle.getTemplateImage("ic_back"), for: .normal)
+        btn.tintColor = AUIAIChatBundle.color_text
+        btn.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 12)
+        btn.clickBlock = { [weak self] sender in
+            self?.goBack()
+        }
+        return btn
+    }()
+    
+    open func goBack() {
+        if let nv = self.navigationController {
+            nv.popViewController(animated: true)
+        }
+        else {
+            self.dismiss(animated: true)
+        }
+    }
     
     // 调整图片的初始缩放比例
     private func updateImageViewZoomScale() {

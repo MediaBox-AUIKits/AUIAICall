@@ -6,7 +6,6 @@ export default {
       holder: 'Enter UID here, minimum 8 digits, maximum 16 digits',
     },
     btn: 'Confirm',
-    logging: 'Logging in...',
     failed: 'Login Failed',
 
     agreement: {
@@ -24,16 +23,14 @@ export default {
       errorMessage: 'Please enter a valid phone number',
 
       verification: {
-        title: 'Get SMS Verification Code',
         btn: 'Get',
-        getting: 'Getting Verification Code...',
         holder: 'Enter Verification Code',
+        next: 'Next',
         success: 'Verification code has been sent to {phone}',
         resend: 'Re-get Verification Code',
         wait: '{count} seconds',
         failed: 'Failed to get SMS verification code.',
         errorMessage: 'Verification Code has error',
-        exceeded: 'The limit for obtaining SMS verification code has been exceeded, please try again after 1 hour',
       },
       captcha: {
         holder: 'Please enter the image verification code',
@@ -42,10 +39,6 @@ export default {
         errorMessage: 'Verification code has error',
       },
     },
-  },
-
-  logout: {
-    text: 'Logout',
   },
 
   welcome: {
@@ -85,8 +78,21 @@ export default {
     voice: 'AI Voice Call',
     avatar: 'AI Avatar Call',
     vision: 'AI Vision Call',
-    chatbot: 'AI Chatbot',
     video: 'AI Video Call',
+
+    chatbot: 'AI Message Chat',
+    pstnOut: 'PSTN Outbound',
+    pstnIn: 'PSTN Inbound',
+
+    descriptions: {
+      voice: 'Users communicate with intelligent assistants through voice.',
+      avatar: 'Interact with digital humans through video to enhance user experience authenticity.',
+      vision: 'Through video interaction, the agent combines voice and visual feedback.',
+      video: 'Digital humans combined with visual understanding for two-way video calls with users.',
+      chatbot: 'Communicate directly with the agent through voice or text in a chat dialog format.',
+      pstnOut: 'The agent initiates phone calls directly to user mobile numbers through carrier lines.',
+      pstnIn: 'Users actively dial the agent through carrier lines for incoming calls.',
+    },
 
     ended: 'Call ended',
     endedByInactivity: 'Due to your prolonged inactivity, the call has ended.',
@@ -100,16 +106,11 @@ export default {
     aivadIgnored: 'VAD detected other speaker, stop responded this question.',
   },
 
-  hero: {
-    name: 'XiaoYun',
-  },
-
   actions: {
     clickToCall: 'Click to Call',
     call: 'Call',
     handup: 'Handup',
   },
-
   resume: {
     title: 'Audio/Video playback failed',
     content: 'Please click the "Confirm" button to resume playback',
@@ -117,7 +118,8 @@ export default {
   },
 
   subtitleList: {
-    btn: 'Subtitle',
+    btnText: 'Subtitle',
+    title: 'Subtitle',
   },
 
   settings: {
@@ -153,6 +155,7 @@ export default {
       title: 'Choose Voice Tone',
       help: 'New Voice Tone Will Take Effect in Next Response',
       success: 'Voice Tone changed successfully',
+      use: 'Use',
     },
 
     pushToTalk: {
@@ -161,6 +164,11 @@ export default {
       disabled: 'Push to talk mode is turned off',
       spaceTip:
         'Push To Talk Mode is turned on, press space to start talking, and the microphone is enabled by default in push to talk mode.',
+    },
+
+    feedback: {
+      title: 'Feedback',
+      action: 'Submit',
     },
   },
 
@@ -171,21 +179,11 @@ export default {
     spaceTip: 'Press space to start talking',
     tooShort: 'Canceled due to short hold time.',
     canceled: 'You have canceled to send your talk.',
-  },
 
-  microphone: {
-    open: 'Open',
-    close: 'Close',
-    closed: 'Closed',
-    opened: 'Opened',
-  },
-
-  camera: {
-    switch: 'Switch',
-    open: 'Open',
-    close: 'Close',
-    closed: 'Closed',
-    opened: 'Opened',
+    // 新增Footer组件的按钮文案
+    holdToSpeak: 'Hold to Speak',
+    releaseToSendSwipeToCancel: 'Release to Send, Swipe Up to Cancel',
+    speakTimeTooShort: 'Speaking time too short',
   },
 
   status: {
@@ -194,7 +192,6 @@ export default {
     thinking: 'Thinking...',
     speaking: "I'm Replying, Press TAB or Speak to Interrupt Me",
     speakingNoInterrupt: "I'm Replying, Press TAB to Interrupt Me",
-    interrupted: 'Speaking interrupted',
 
     mobile: {
       speaking: "I'm Replying, Tap Screen or Speak to Interrupt Me",
@@ -271,7 +268,6 @@ export default {
     use: 'Use',
     close: 'Close',
     exit: 'Exit',
-    back: 'Back',
     delete: 'Delete',
   },
 
@@ -280,7 +276,6 @@ export default {
     disconnected: 'Disconnected',
 
     history: {
-      failed: 'Failed to retrieve historical messages',
       noMore: 'No more messages',
 
       pullingText: 'Pull down to load more',
@@ -294,9 +289,6 @@ export default {
       deleteConfirm: 'Confirm delete message?',
       deleteHelp: 'Deleted messages cannot be restored.',
       deleteFailed: 'Delete failed',
-
-      customReceived: 'Received custom message: {msg}',
-
       tableTitle: 'Table',
     },
 
@@ -322,7 +314,6 @@ export default {
     },
 
     uploader: {
-      imageFailed: 'Failed to upload image',
       notReady: 'Some images uploading or failed to upload',
 
       countLimit: 'Max {count} files can be uploaded at once ',
@@ -357,7 +348,9 @@ export default {
         label: 'Smart Interrupt',
       },
       voiceId: {
+        title: 'Voice Selection',
         label: 'Choose Voice Tone',
+        use: 'Use',
       },
       help: 'The system will place an AI call to the recipient after you proceed. Please be ready to receive it.',
       start: 'Start',

@@ -14,11 +14,13 @@ import ARTCAICallKit
     public init() {
         super.init(frame: CGRect.zero)
         
-        self.backgroundColor = AVTheme.bg_weak
-        self.addSubview(self.addBtn)
-        self.addSubview(self.rightBtn)
-        self.addSubview(self.textView)
-        self.addSubview(self.audioView)
+        self.backgroundColor = AUIAIChatBundle.color_bg_elevated
+        self.addSubview(self.topLineView)
+        self.addSubview(self.dragLineView)
+        self.addSubview(self.inputContainer)
+        self.inputContainer.addSubview(self.addBtn)
+        self.inputContainer.addSubview(self.textView)
+        self.inputContainer.addSubview(self.audioView)
     }
     
     public required init?(coder: NSCoder) {
@@ -32,28 +34,55 @@ import ARTCAICallKit
     open override func layoutSubviews() {
         super.layoutSubviews()
         
-        self.addBtn.frame = CGRect(x: 14, y: 14, width: 40, height: 40)
-        self.rightBtn.frame = CGRect(x: self.av_right - 40 - 14, y: 14, width: 40, height: 40)
-
-        let left = self.addBtn.av_right + 6
-        var width = self.rightBtn.av_left - 12 - left
-        self.textView.frame = CGRect(x: left, y: 14, width: width, height: 40)
+        self.topLineView.frame = CGRect(x: 0, y: 0, width: self.av_width, height: 1)
+        self.dragLineView.frame = CGRect(x: 0, y: 8, width: 26, height: 3)
+        self.dragLineView.av_centerX = self.av_width / 2.0
         
-        width = self.av_width - 20 - left
-        self.audioView.frame = CGRect(x: left, y: 14, width: width, height: 40)
+        self.inputContainer.frame = CGRect(x: 24, y: 16 + self.dragLineView.av_bottom, width: self.av_width - 48, height: 50)
+        
+        self.addBtn.frame = CGRect(x: 8, y: 0, width: 40, height: 50)
+
+        let left = self.addBtn.av_right
+        let width = self.inputContainer.av_width - left
+        self.textView.frame = CGRect(x: left, y: 0, width: width, height: 50)
+        self.audioView.frame = CGRect(x: left, y: 0, width: width, height: 50)
     }
+    
+    open lazy var topLineView: UIView = {
+        let view = UIView()
+        view.backgroundColor = AUIAIChatBundle.color_border_tertiary
+        return view
+    }()
+    
+    open lazy var dragLineView: UIView = {
+        let view = UIView()
+        view.layer.cornerRadius = 2
+        view.layer.masksToBounds = true
+        view.backgroundColor = AUIAIChatBundle.color_fill_quaternary
+        return view
+    }()
+    
+    open lazy var inputContainer: UIView = {
+        let btn = UIView()
+        btn.backgroundColor = AUIAIChatBundle.color_fill_secondary
+        btn.av_setLayerBorderColor(AUIAIChatBundle.color_border_secondary)
+        btn.layer.borderWidth = 0.5
+        btn.layer.cornerRadius = 4
+        btn.layer.masksToBounds = true
+        return btn
+    }()
     
     open lazy var addBtn: AVBlockButton = {
         let btn = AVBlockButton()
-        btn.setImage(AUIAIChatBundle.getImage("ic_add"), for: .normal)
-        btn.setImage(AUIAIChatBundle.getImage("ic_add_selected"), for: .selected)
-        btn.setImage(AUIAIChatBundle.getImage("ic_add_disabled"), for: .disabled)
-
+        btn.setImage(AUIAIChatBundle.getTemplateImage("ic_add"), for: .normal)
+        btn.setImage(AUIAIChatBundle.getTemplateImage("ic_add_selected"), for: .selected)
+        btn.tintColor = AUIAIChatBundle.color_icon
         btn.clickBlock = { [weak self] btn in
             if btn.isSelected {
                 self?.reset()
             }
             else {
+                self?.isAudioMode = false
                 self?.expand()
             }
         }
@@ -66,6 +95,7 @@ import ARTCAICallKit
             guard let self = self else {
                 return
             }
+            self.reset()
             self.isAudioMode = true
         }
         view.onClickedStop = {[weak self] sender in
@@ -95,19 +125,6 @@ import ARTCAICallKit
         return view
     }()
     
-    open lazy var rightBtn: AVBlockButton = {
-        let btn = AVBlockButton()
-        btn.setImage(AUIAIChatBundle.getImage("ic_audio"), for: .normal)
-        btn.setImage(AUIAIChatBundle.getImage("ic_audio_disabled"), for: .disabled)
-        btn.clickBlock = { [weak self] btn in
-            guard let self = self else {
-                return
-            }
-            self.isAudioMode = !self.isAudioMode
-        }
-        return btn
-    }()
-    
     open var isAudioMode: Bool = false {
         didSet {
             self.audioView.isHidden = !self.isAudioMode
@@ -120,7 +137,6 @@ import ARTCAICallKit
             self.audioView.isStopped = self.isStopped
             self.textView.isStopped = self.isStopped
             self.addBtn.isEnabled = !self.isStopped
-            self.rightBtn.isEnabled = !self.isStopped
         }
     }
     open var onClickedStop: ((_ sender: AUIAIChatBottomView) -> Void)? = nil
@@ -133,93 +149,99 @@ import ARTCAICallKit
     
     open lazy var scrollView: UIScrollView = {
         let scrollView = UIScrollView()
+        scrollView.showsVerticalScrollIndicator = false
+        scrollView.showsHorizontalScrollIndicator = false
         self.addSubview(scrollView)
         return scrollView
     }()
     
-    open lazy var voiceCallBtn: AUIAICallButton = {
-        let btn = AUIAICallButton.create(title: AUIAIChatBundle.getString("Voice Call"), iconBgColor: AVTheme.fg_strong, normalIcon: AUIAIChatBundle.getImage("ic_call_voice"))
-        btn.iconCorner = 10.0
-        btn.iconLength = 70.0
-        btn.iconMargin = 18.0
-        btn.isHidden = true
+    open lazy var voiceCallBtn: AUIAIChatMenuButton = {
+        let btn = AUIAIChatMenuButton()
+        btn.titleLabel.text = AUIAIChatBundle.getString("Voice Call")
+        btn.imageView.image = AUIAIChatBundle.getTemplateImage("ic_call_voice")
+        btn.av_size = CGSize(width: 86, height: 86)
         self.scrollView.addSubview(btn)
         return btn
     }()
     
-    open lazy var avatarCallBtn: AUIAICallButton = {
-        let btn = AUIAICallButton.create(title: AUIAIChatBundle.getString("Avatar Call"), iconBgColor: AVTheme.fg_strong, normalIcon: AUIAIChatBundle.getImage("ic_call_avatar"))
-        btn.iconCorner = 10.0
-        btn.iconLength = 70.0
-        btn.iconMargin = 18.0
-        btn.isHidden = true
+    open lazy var avatarCallBtn: AUIAIChatMenuButton = {
+        let btn = AUIAIChatMenuButton()
+        btn.titleLabel.text = AUIAIChatBundle.getString("Avatar Call")
+        btn.imageView.image = AUIAIChatBundle.getTemplateImage("ic_call_avatar")
+        btn.av_size = CGSize(width: 86, height: 86)
         self.scrollView.addSubview(btn)
         return btn
     }()
     
-    open lazy var visionCallBtn: AUIAICallButton = {
-        let btn = AUIAICallButton.create(title: AUIAIChatBundle.getString("Vision Call"), iconBgColor: AVTheme.fg_strong, normalIcon: AUIAIChatBundle.getImage("ic_call_vision"))
-        btn.iconCorner = 10.0
-        btn.iconLength = 70.0
-        btn.iconMargin = 18.0
-        btn.isHidden = true
+    open lazy var visionCallBtn: AUIAIChatMenuButton = {
+        let btn = AUIAIChatMenuButton()
+        btn.titleLabel.text = AUIAIChatBundle.getString("Vision Call")
+        btn.imageView.image = AUIAIChatBundle.getTemplateImage("ic_call_vision")
+        btn.av_size = CGSize(width: 86, height: 86)
         self.scrollView.addSubview(btn)
         return btn
     }()
     
-    open lazy var videoCallBtn: AUIAICallButton = {
-        let btn = AUIAICallButton.create(title: AUIAIChatBundle.getString("Video Call"), iconBgColor: AVTheme.fg_strong, normalIcon: AUIAIChatBundle.getImage("ic_call_video"))
-        btn.iconCorner = 10.0
-        btn.iconLength = 70.0
-        btn.iconMargin = 18.0
-        btn.isHidden = true
+    open lazy var videoCallBtn: AUIAIChatMenuButton = {
+        let btn = AUIAIChatMenuButton()
+        btn.titleLabel.text = AUIAIChatBundle.getString("Video Call")
+        btn.imageView.image = AUIAIChatBundle.getTemplateImage("ic_call_video")
+        btn.av_size = CGSize(width: 86, height: 86)
         self.scrollView.addSubview(btn)
         return btn
     }()
     
-    open lazy var addPhotoBtn: AUIAICallButton = {
-        let btn = AUIAICallButton.create(title: AUIAIChatBundle.getString("Album"), iconBgColor: AVTheme.fg_strong, normalIcon: AUIAIChatBundle.getImage("ic_photo_picker"))
-        btn.iconCorner = 10.0
-        btn.iconLength = 70.0
-        btn.iconMargin = 18.0
-        btn.isHidden = true
+    open lazy var addPhotoBtn: AUIAIChatMenuButton = {
+        let btn = AUIAIChatMenuButton()
+        btn.titleLabel.text = AUIAIChatBundle.getString("Album")
+        btn.imageView.image = AUIAIChatBundle.getTemplateImage("ic_photo_picker")
+        btn.av_size = CGSize(width: 86, height: 86)
         self.scrollView.addSubview(btn)
         return btn
     }()
-
+    
+    var expandHeight: CGFloat {
+        get {
+            let height = 8 + 3 + 8 + 66 + 8 + 86 + 16 + UIView.av_safeBottom
+            return height
+        }
+    }
 
     func expand() {
         guard self.addBtn.isSelected == false else {
             return
         }
         
-        let left = 20.0
-        let top = 68.0 + 4.0
-        let width = 70.0
-        let height = 98.0
-        let margin = 18.0
-        self.addPhotoBtn.frame = CGRect(x: left, y: 0, width: width, height: height)
-        self.voiceCallBtn.frame = CGRect(x: self.addPhotoBtn.av_right + margin, y: 0, width: width, height: height)
-        self.avatarCallBtn.frame = CGRect(x: self.voiceCallBtn.av_right + margin, y: 0, width: width, height: height)
-        self.visionCallBtn.frame = CGRect(x: self.avatarCallBtn.av_right + margin, y: 0, width: width, height: height)
-        self.videoCallBtn.frame = CGRect(x: self.visionCallBtn.av_right + margin, y: 0, width: width, height: height)
-        
+        let margin = 9.0
+        self.addPhotoBtn.av_left = 24.0
+        self.voiceCallBtn.av_left = self.addPhotoBtn.av_right + margin
+        self.avatarCallBtn.av_left = self.voiceCallBtn.av_right + margin
+        self.visionCallBtn.av_left = self.avatarCallBtn.av_right + margin
+        self.videoCallBtn.av_left = self.visionCallBtn.av_right + margin
+
         self.addPhotoBtn.isHidden = false
         self.voiceCallBtn.isHidden = self.enableCall ? false : true
         self.avatarCallBtn.isHidden = self.enableCall ? false : true
         self.visionCallBtn.isHidden = self.enableCall ? false : true
         self.videoCallBtn.isHidden = self.enableCall ? false : true
         
-        self.scrollView.frame = CGRect(x: 0, y: top, width: self.av_width, height: height)
-        self.scrollView.contentSize = CGSize(width: self.enableCall ? self.videoCallBtn.av_right + left : self.addPhotoBtn.av_right + left, height: height)
+        self.scrollView.frame = CGRect(x: 0, y: self.inputContainer.av_bottom + 16, width: self.av_width, height: 86)
+        self.scrollView.contentSize = CGSize(width: self.enableCall ? self.videoCallBtn.av_right + 24.0 : self.addPhotoBtn.av_right + 24.0, height: 86)
 
         UIView.animate(withDuration: 0.25) {
             let bot = self.av_bottom
-            let height = 68 + 106 + UIView.av_safeBottom
+            let height = self.expandHeight
             self.av_height = height
             self.av_bottom = bot
         }
         self.addBtn.isSelected = true
+    }
+    
+    var normalHeight: CGFloat {
+        get {
+            let height = 8 + 3 + 8 + 66 + UIView.av_safeBottom
+            return height
+        }
     }
     
     func reset() {
@@ -236,7 +258,7 @@ import ARTCAICallKit
 
         UIView.animate(withDuration: 0.25) {
             let bot = self.av_bottom
-            let height = 68 + UIView.av_safeBottom
+            let height = self.normalHeight
             self.av_height = height
             self.av_bottom = bot
         }
@@ -249,12 +271,8 @@ import ARTCAICallKit
     public init() {
         super.init(frame: CGRect.zero)
         
-        self.backgroundColor = AVTheme.fg_strong
-        self.layer.cornerRadius = 20
-        self.layer.masksToBounds = true
-        
         self.addSubview(self.placeholderView)
-        self.addSubview(self.stopBtn)
+        self.addSubview(self.rightBtn)
     }
     
     public required init?(coder: NSCoder) {
@@ -264,16 +282,16 @@ import ARTCAICallKit
     open override func layoutSubviews() {
         super.layoutSubviews()
         
-        self.stopBtn.frame = CGRect(x: self.av_width - 40 - 6, y: 0, width: 40, height: 40)
-        self.placeholderView.frame = CGRect(x: 12, y: 0, width: self.stopBtn.av_left - 6, height: 40)
+        self.rightBtn.frame = CGRect(x: self.av_width - 40 - 6, y: 0, width: 40, height: self.av_height)
+        self.placeholderView.frame = CGRect(x: 0, y: 0, width: self.rightBtn.av_left - 6, height: self.av_height)
     }
     
     fileprivate lazy var placeholderView: AVBlockButton = {
         let view = AVBlockButton()
         view.contentHorizontalAlignment = .left
         view.setTitle(AUIAIChatBundle.getString("Please enter content"), for: .normal)
-        view.setTitleColor(AVTheme.text_ultraweak, for: .normal)
-        view.titleLabel?.font = AVTheme.regularFont(14)
+        view.setTitleColor(AUIAIChatBundle.color_text_tertiary, for: .normal)
+        view.titleLabel?.font = AVTheme.regularFont(16)
         view.clickBlock = { [weak self] btn in
             guard let self = self else {
                 return
@@ -283,14 +301,21 @@ import ARTCAICallKit
         return view
     }()
     
-    fileprivate lazy var stopBtn: AVBlockButton = {
+    fileprivate lazy var rightBtn: AVBlockButton = {
         let btn = AVBlockButton()
-        btn.setImage(AUIAIChatBundle.getImage("ic_stop"), for: .normal)
+        btn.setImage(AUIAIChatBundle.getTemplateImage("ic_audio"), for: .normal)
+        btn.setImage(AUIAIChatBundle.getCommonImage("ic_stop"), for: .selected)
+        btn.tintColor = AUIAIChatBundle.color_icon
         btn.clickBlock = { [weak self] btn in
             guard let self = self else {
                 return
             }
-            self.onClickedStop?(self)
+            if btn.isSelected {
+                self.onClickedStop?(self)
+            }
+            else {
+                self.onClickedSelectedAudio?(self)
+            }
         }
         return btn
     }()
@@ -298,7 +323,7 @@ import ARTCAICallKit
     fileprivate var onClickedSelectedAudio: ((_ sender: AUIAIChatInputTextView) -> Void)? = nil
     fileprivate var isStopped: Bool = false {
         didSet {
-            self.stopBtn.isHidden = !self.isStopped
+            self.rightBtn.isSelected = self.isStopped
             self.placeholderView.isEnabled = !self.isStopped
         }
     }
@@ -321,10 +346,6 @@ import ARTCAICallKit
     public init() {
         super.init(frame: CGRect.zero)
         
-        self.backgroundColor = AVTheme.fg_strong
-        self.layer.cornerRadius = 20
-        self.layer.masksToBounds = true
-        
         self.addSubview(self.placeholderView)
         self.addSubview(self.rightBtn)
     }
@@ -336,17 +357,17 @@ import ARTCAICallKit
     open override func layoutSubviews() {
         super.layoutSubviews()
         
-        self.rightBtn.frame = CGRect(x: self.av_width - 40 - 6, y: 0, width: 40, height: 40)
-        self.placeholderView.frame = CGRect(x: 12, y: 0, width: self.rightBtn.av_left - 6, height: 40)
+        self.rightBtn.frame = CGRect(x: self.av_width - 40 - 6, y: 0, width: 40, height: self.av_height)
+        self.placeholderView.frame = CGRect(x: 0, y: 0, width: self.rightBtn.av_left, height: self.av_height)
     }
     
     fileprivate lazy var placeholderView: AUIAICallDragButton = {
         let view = AUIAICallDragButton()
         view.contentHorizontalAlignment = .center
         view.setTitle(AUIAIChatBundle.getString("Press and hold to speak"), for: .normal)
-        view.setTitleColor(AVTheme.text_strong, for: .normal)
-        view.setTitleColor(AVTheme.text_ultraweak, for: .disabled)
-        view.titleLabel?.font = AVTheme.regularFont(14)
+        view.setTitleColor(AUIAIChatBundle.color_text, for: .normal)
+        view.setTitleColor(AUIAIChatBundle.color_text_disabled, for: .disabled)
+        view.titleLabel?.font = AVTheme.mediumFont(16)
         view.adjustsImageWhenHighlighted = false
         view.touchDownBlock = { [weak self] btn in
             guard let self = self else {
@@ -371,8 +392,9 @@ import ARTCAICallKit
     
     fileprivate lazy var rightBtn: AVBlockButton = {
         let btn = AVBlockButton()
-        btn.setImage(AUIAIChatBundle.getImage("ic_text"), for: .normal)
-        btn.setImage(AUIAIChatBundle.getImage("ic_stop"), for: .selected)
+        btn.setImage(AUIAIChatBundle.getTemplateImage("ic_text"), for: .normal)
+        btn.setImage(AUIAIChatBundle.getCommonImage("ic_stop"), for: .selected)
+        btn.tintColor = AUIAIChatBundle.color_icon
         btn.clickBlock = { [weak self] btn in
             guard let self = self else {
                 return
@@ -400,4 +422,53 @@ import ARTCAICallKit
     public var onTouchingRecordingAreaAndDrag: ((_ sender: AUIAIChatInputAudioView,_ isExit: Bool) -> Void)? = nil
     public var onTouchUpRecordingArea: ((_ sender: AUIAIChatInputAudioView,_ isInside: Bool) -> Void)? = nil
 
+}
+
+
+@objcMembers open class AUIAIChatMenuButton: UIView {
+    
+    public override init(frame: CGRect) {
+        super.init(frame: frame)
+        
+        self.backgroundColor = AUIAIChatBundle.color_fill_secondary
+        self.layer.cornerRadius = 2
+        self.layer.borderWidth = 1
+        self.av_setLayerBorderColor(AUIAIChatBundle.color_border_secondary)
+        self.layer.masksToBounds = true
+        self.addSubview(self.imageView)
+        self.addSubview(self.titleLabel)
+        
+        self.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(onTapped)))
+    }
+    
+    public required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    open override func layoutSubviews() {
+        super.layoutSubviews()
+        
+        self.imageView.frame = CGRect(x: 30, y: 16, width: 26, height: 26)
+        self.titleLabel.frame = CGRect(x: 0, y: self.imageView.av_bottom + 8, width: self.av_width, height: 20)
+    }
+    
+    open lazy var imageView: UIImageView = {
+        let img = UIImageView()
+        img.tintColor =  AUIAIChatBundle.color_icon
+        return img
+    }()
+    
+    open lazy var titleLabel: UILabel = {
+        let label = UILabel()
+        label.font = AVTheme.regularFont(12.0)
+        label.textColor = AUIAIChatBundle.color_text
+        label.textAlignment = .center
+        return label
+    }()
+    
+    open var tappedAction: ((_ btn: AUIAIChatMenuButton)->Void)? = nil
+    
+    @objc open func onTapped() {
+        self.tappedAction?(self)
+    }
 }

@@ -9,12 +9,16 @@ import UIKit
 import AUIFoundation
 import ARTCAICallKit
 
+let AUIAICallContentBottomViewHeight: CGFloat = 214.0
+let AUIAICallContentTopViewHeight: CGFloat = 56.0
+
 @objcMembers open class AUIAICallContentView: UIView {
 
     public init(frame: CGRect, agentType: ARTCAICallAgentType) {
         self.agentType = agentType
         super.init(frame: frame)
                 
+        self.addSubview(self.volumeAnimator)
         self.addSubview(self.tipsLabel)
         self.addSubview(self.agentAni)
 
@@ -33,12 +37,24 @@ import ARTCAICallKit
         
         self.updateAgentLayout()
     }
+    
+    open lazy var volumeAnimator: AUIAICallVolumeBarAnimator = {
+        var params = AUIAICallVolumeBarAnimator.Params()
+        params.count = 7
+        params.margin = 2
+        params.width = 5
+        params.minHeight = 5
+        params.cornerRadius = 0
+        params.barColor = AUIAICallBundle.color_fill
+        let animator = AUIAICallVolumeBarAnimator(frame: CGRect(x: 0, y: 0, width: 200, height: 40), params: params)
+        return animator
+    }()
             
     open lazy var tipsLabel: UILabel = {
         let label = UILabel()
-        label.textColor = AVTheme.text_strong
+        label.textColor = AUIAICallBundle.color_text
         label.textAlignment = .center
-        label.font = AVTheme.regularFont(14)
+        label.font = AVTheme.regularFont(16)
         label.text = ""
         return label
     }()
@@ -58,18 +74,24 @@ import ARTCAICallKit
         }
         else if agentType == .AvatarAgent {
             let agentView = AUIAICallContentAgentView()
+            agentView.layer.cornerRadius = 8
+            agentView.clipsToBounds = true
             agentView.isHidden = true
             self.insertSubview(agentView, at: 0)
             self.agentView = agentView
         }
         else if agentType == .VisionAgent {
             let cameraView = AUIAICallContentCameraView()
+            cameraView.layer.cornerRadius = 8
+            cameraView.clipsToBounds = true
             cameraView.isHidden = true
             self.insertSubview(cameraView, at: 0)
             self.cameraView = cameraView
         }
         else if  agentType == .VideoAgent {
             let agentView = AUIAICallContentAgentView()
+            agentView.layer.cornerRadius = 8
+            agentView.clipsToBounds = true
             agentView.isHidden = true
             agentView.switchBtn.clickBlock = { [weak self] btn in
                 self?.switchWindow()
@@ -78,6 +100,8 @@ import ARTCAICallKit
             self.agentView = agentView
             
             let cameraView = AUIAICallContentCameraView()
+            cameraView.layer.cornerRadius = 8
+            cameraView.clipsToBounds = true
             cameraView.isHidden = true
             cameraView.switchBtn.clickBlock = { [weak self] btn in
                 self?.switchWindow()
@@ -89,25 +113,32 @@ import ARTCAICallKit
         }
     }
     
+    var contentViewFrame: CGRect {
+        get {
+            let cx = 24.0
+            let cy = UIView.av_safeTop + AUIAICallContentTopViewHeight
+            let cw = self.av_width - 48
+            let ch = self.av_height - UIView.av_safeBottom - AUIAICallContentBottomViewHeight - cy
+            let crect = CGRect(x: cx, y: cy, width: cw, height: ch)
+            return crect
+        }
+    }
+    
     private func updateAgentLayout() {
+        let y = self.contentViewFrame.maxY + 36
+        self.tipsLabel.frame = CGRect(x: 0, y: y, width: self.av_width, height: 24)
+
+        self.volumeAnimator.center = CGPoint(x: self.av_width / 2, y: y - 12)
+        
         if agentType == .VoiceAgent {
-            let hei = self.av_bottom - 228 - 18
-            self.tipsLabel.frame = CGRect(x: 0, y: hei, width: self.av_width, height: 18)
         }
         else if agentType == .AvatarAgent {
-            let hei = self.av_bottom - 228 - 18
-            self.tipsLabel.frame = CGRect(x: 0, y: hei, width: self.av_width, height: 18)
-            self.agentView?.frame = self.bounds
+            self.agentView?.frame = self.contentViewFrame
         }
         else if agentType == .VisionAgent {
-            let hei = self.av_bottom - 240 - 18
-            self.tipsLabel.frame = CGRect(x: 0, y: hei, width: self.av_width, height: 18)
-            self.cameraView?.frame = self.bounds
+            self.cameraView?.frame = self.contentViewFrame
         }
         else if agentType == .VideoAgent {
-            let hei = self.av_bottom - 240 - 18
-            self.tipsLabel.frame = CGRect(x: 0, y: hei, width: self.av_width, height: 18)
-            
             self.updateVideoAgentLayout()
         }
     }
@@ -137,18 +168,19 @@ import ARTCAICallKit
     }
     
     private func updateVideoAgentLayout() {
-        let size = CGSize(width: 120, height: 120 * 16 / 9.0)
-        let y = self.av_height / 5.0
-        let defauleFrame = CGRect(x: self.av_width - size.width - 16, y: y, width: size.width, height: size.height)
+        let size = CGSize(width: 105, height: 140.0)
+        let contentViewFrame = self.contentViewFrame
+        let defauleFrame = CGRect(x: contentViewFrame.maxX - size.width - 16, y: contentViewFrame.maxY - size.height - 16, width: size.width, height: size.height)
         if CGRectIsEmpty(self.smallWindowFrame) {
             self.smallWindowFrame = defauleFrame
         }
+        
         if self.agentView?.isSmallWindow == true {
-            self.cameraView?.frame = self.bounds
+            self.cameraView?.frame = self.contentViewFrame
             self.agentView?.frame = self.smallWindowFrame
         }
         else if self.cameraView?.isSmallWindow == true {
-            self.agentView?.frame = self.bounds
+            self.agentView?.frame = self.contentViewFrame
             self.cameraView?.frame = self.smallWindowFrame
         }
     }
@@ -184,6 +216,7 @@ import ARTCAICallKit
             return
         }
         let point: CGPoint = recognizer.translation(in: view)
+        /*
         let center = CGPoint(x: view.center.x + point.x, y: view.center.y + point.y)
         view.center = center
         recognizer.setTranslation(CGPoint.zero, in: view)
@@ -192,12 +225,39 @@ import ARTCAICallKit
         if recognizer.state == .ended || recognizer.state == .cancelled || recognizer.state == .failed {
             self.updateViewPosition(view: view)
         }
+         */
+        // 仅限智能体渲染区域内移动
+        self.updateViewPosition(view: view, translation: point)
+        recognizer.setTranslation(CGPoint.zero, in: view)
     }
     
     @objc func tapGesture(recognizer: UITapGestureRecognizer) {
         self.switchWindow()
     }
     
+    
+    // 更新位置
+    open func updateViewPosition(view: UIView, translation: CGPoint) {
+        let rect = self.contentViewFrame
+        var frame = view.frame.offsetBy(dx: translation.x, dy: translation.y)
+        if frame.minX < rect.minX {
+            frame.origin.x = rect.minX
+        }
+        
+        if frame.minY < rect.minY {
+            frame.origin.y = rect.minY
+        }
+        
+        if frame.maxX >= rect.maxX {
+            frame.origin.x = rect.maxX - view.av_width
+        }
+        
+        if frame.maxY >= rect.maxY {
+            frame.origin.y = rect.maxY - view.av_height
+        }
+
+        view.frame = frame
+    }
     
     // 更新位置
     open func updateViewPosition(view: UIView) {
@@ -237,7 +297,7 @@ import ARTCAICallKit
         self.addSubview(self.muteView)
         self.addSubview(self.switchBtn)
         
-        self.backgroundColor = AVTheme.bg_medium
+        self.backgroundColor = AUIAICallBundle.color_bg_elevated
     }
     
     public required init?(coder: NSCoder) {
@@ -254,12 +314,10 @@ import ARTCAICallKit
             self.muteView.center = CGPoint(x: self.av_width / 2.0, y: (self.av_height - 30) / 2.0)
         }
         else {
-            self.muteView.frame = CGRect(x: 0, y: 0, width: 75, height: 75)
+            self.muteView.frame = CGRect(x: 0, y: 0, width: 80, height: 80)
             self.muteView.center = CGPoint(x: self.av_width / 2.0, y: self.av_height * 2.0 / 5.0)
         }
-        
-        
-        self.switchBtn.sizeToFit()
+                
         self.switchBtn.center = CGPoint(x: self.av_width - self.switchBtn.av_width / 2 - 8, y: self.av_height - self.switchBtn.av_height / 2 - 8)
     }
     
@@ -271,7 +329,7 @@ import ARTCAICallKit
     
     private var muteView: UIImageView = {
         let agentView = UIImageView()
-        agentView.image = AUIAICallBundle.getImage("ic_user")
+        agentView.image = AUIAICallBundle.getImage("ic_camera_user")
         agentView.contentMode = .scaleAspectFit
         agentView.isHidden = true
         return agentView
@@ -286,9 +344,16 @@ import ARTCAICallKit
     
     open private(set) var switchBtn: AVBlockButton = {
         let btn = AVBlockButton()
-        btn.setImage(AUIAICallBundle.getCommonImage("ic_video_switch"), for: .normal)
+        btn.backgroundColor = AUIAICallBundle.color_fill_toast_identical
+        btn.setImage(AUIAICallBundle.getTemplateImage("ic_video_switch"), for: .normal)
+        btn.tintColor = AUIAICallBundle.color_icon_identical
         btn.isHidden = true
         btn.isUserInteractionEnabled = false
+        btn.av_size = CGSize(width: 28, height: 28)
+        btn.layer.cornerRadius = 14
+        btn.layer.borderWidth = 0.4
+        btn.av_setLayerBorderColor(AUIAICallBundle.color_border_identical)
+        btn.layer.masksToBounds = true
         return btn
     }()
     
@@ -297,14 +362,10 @@ import ARTCAICallKit
             self.switchBtn.isHidden = !self.isSmallWindow
             if self.isSmallWindow {
                 self.layer.cornerRadius = 4
-                self.layer.borderWidth = 1
-                self.layer.borderColor = AVTheme.fill_ultraweak.cgColor
                 self.layer.masksToBounds = true
             }
             else {
-                self.layer.cornerRadius = 0
-                self.layer.borderWidth = 0
-                self.layer.borderColor = AVTheme.fill_ultraweak.cgColor
+                self.layer.cornerRadius = 8
                 self.layer.masksToBounds = true
             }
             self.setNeedsLayout()
@@ -320,7 +381,7 @@ import ARTCAICallKit
         self.addSubview(self.renderView)
         self.addSubview(self.switchBtn)
         
-        self.backgroundColor = AVTheme.bg_medium
+        self.backgroundColor = AUIAICallBundle.color_bg_elevated
     }
     
     public required init?(coder: NSCoder) {
@@ -332,7 +393,6 @@ import ARTCAICallKit
         
         self.renderView.frame = self.bounds
         
-        self.switchBtn.sizeToFit()
         self.switchBtn.center = CGPoint(x: self.av_width - self.switchBtn.av_width / 2 - 8, y: self.av_height - self.switchBtn.av_height / 2 - 8)
     }
     
@@ -344,9 +404,16 @@ import ARTCAICallKit
     
     open private(set) var switchBtn: AVBlockButton = {
         let btn = AVBlockButton()
-        btn.setImage(AUIAICallBundle.getCommonImage("ic_video_switch"), for: .normal)
+        btn.backgroundColor = AUIAICallBundle.color_fill_toast_identical
+        btn.setImage(AUIAICallBundle.getTemplateImage("ic_video_switch"), for: .normal)
+        btn.tintColor = AUIAICallBundle.color_icon_identical
         btn.isHidden = true
         btn.isUserInteractionEnabled = false
+        btn.av_size = CGSize(width: 28, height: 28)
+        btn.layer.cornerRadius = 14
+        btn.layer.borderWidth = 0.4
+        btn.av_setLayerBorderColor(AUIAICallBundle.color_border_identical)
+        btn.layer.masksToBounds = true
         return btn
     }()
     
@@ -355,14 +422,10 @@ import ARTCAICallKit
             self.switchBtn.isHidden = !self.isSmallWindow
             if self.isSmallWindow {
                 self.layer.cornerRadius = 4
-                self.layer.borderWidth = 1
-                self.layer.borderColor = AVTheme.fill_ultraweak.cgColor
                 self.layer.masksToBounds = true
             }
             else {
-                self.layer.cornerRadius = 0
-                self.layer.borderWidth = 0
-                self.layer.borderColor = AVTheme.fill_ultraweak.cgColor
+                self.layer.cornerRadius = 8
                 self.layer.masksToBounds = true
             }
         }
