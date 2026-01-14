@@ -116,11 +116,11 @@ platform :ios, '10.0'
 
 target '你的App target' do
     # 根据自己的业务场景，集成合适的音视频终端SDK，支持：AliVCSDK_ARTC、AliVCSDK_Standard、AliVCSDK_InteractiveLive
-    pod 'AliVCSDK_ARTC', '~> 7.8.0'
+    pod 'AliVCSDK_ARTC', '~> 7.9.1'
 
     # AI实时互动通话场景SDK
-    # 如果你的业务还需要支持消息对话，则使用“ARTCAICallKit/Chatbot”进行集成，把下面一行改为：pod 'ARTCAICallKit/Chatbot', '~> 2.9.0'
-    pod 'ARTCAICallKit', '~> 2.9.0'
+    # 如果你的业务还需要支持消息对话，则使用“ARTCAICallKit/Chatbot”进行集成，把下面一行改为：pod 'ARTCAICallKit/Chatbot', '~> 2.10.0'
+    pod 'ARTCAICallKit', '~> 2.10.0'
 
     # 基础UI组件源码
     pod 'AUIFoundation', :path => "./AUIAICall/AUIBaseKits/AUIFoundation/", :modular_headers => true

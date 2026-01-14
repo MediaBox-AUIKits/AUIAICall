@@ -23,7 +23,7 @@
     "swiper": "^12.0.2",
     "uuid": "^11.1.0",
     "zustand": "^4.5.5",
-    "aliyun-auikit-aicall": "2.9.0"
+    "aliyun-auikit-aicall": "2.10.2"
   },
   "devDependencies": {
     "@arms/rum-browser": "^0.0.37",

@@ -31,6 +31,7 @@ import com.aliyun.auikits.aicall.util.ToastHelper;
 import com.aliyun.auikits.aicall.widget.AICallNoticeDialog;
 import com.aliyun.auikits.aicall.widget.AICallReportingDialog;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -169,7 +170,7 @@ public class AUIAICallInPhoneCallActivity extends AppCompatActivity {
                 }
 
                 ARTCAICallEngine.ARTCAICallAgentConfig agentConfig = new ARTCAICallEngine.ARTCAICallAgentConfig();
-                agentConfig.asrConfig.asrMaxSilence = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_ASR_MAX_SILENCE, "400"));
+                agentConfig.asrConfig.asrMaxSilence = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_ASR_MAX_SILENCE, "-1"));
                 agentConfig.asrConfig.asrLanguageId = SettingStorage.getInstance().get(SettingStorage.KEY_USER_ASR_LANGUAGE);
                 agentConfig.asrConfig.customParams = SettingStorage.getInstance().get(SettingStorage.KEY_ASR_CUSTOM_PARAMS);
                 String asrHotWords = SettingStorage.getInstance().get(SettingStorage.KEY_ASR_HOT_WORDS);
@@ -192,7 +193,7 @@ public class AUIAICallInPhoneCallActivity extends AppCompatActivity {
                 agentConfig.agentGreeting = SettingStorage.getInstance().get(SettingStorage.KEY_GREETING);
                 agentConfig.llmConfig.bailianAppParams = SettingStorage.getInstance().get(SettingStorage.KEY_BAILIAN_APP_PARAMS);
                 agentConfig.llmConfig.llmSystemPrompt = SettingStorage.getInstance().get(SettingStorage.KEY_LLM_SYSTEM_PROMPT);
-                agentConfig.llmConfig.llmHistoryLimit = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_LLM_HISTORY_LIMIT, "10"));
+                agentConfig.llmConfig.llmHistoryLimit = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_LLM_HISTORY_LIMIT, "-1"));
                 String interruptWorks = SettingStorage.getInstance().get(SettingStorage.KEY_INTERRUPT_WORDS);
                 if(!TextUtils.isEmpty(interruptWorks)) {
                     agentConfig.interruptConfig.interruptWords = new ArrayList<String>();
@@ -214,7 +215,7 @@ public class AUIAICallInPhoneCallActivity extends AppCompatActivity {
                     agentConfig.interruptConfig.enableVoiceInterrupt = false;
                 }
                 agentConfig.ttsConfig.agentVoiceId = mVoiceId;
-                agentConfig.ttsConfig.speechRate = Double.parseDouble(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_TTS_SPEECH_RATE, "1.0"));
+                agentConfig.ttsConfig.speechRate = Double.parseDouble(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_TTS_SPEECH_RATE, "-1"));
                 agentConfig.ttsConfig.languageId = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_TTS_LANGUAGE_ID, "");
                 agentConfig.ttsConfig.emotion = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_TTS_EMOTION, "");
                 agentConfig.ttsConfig.modelId = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_TTS_MODEL_ID, "");
@@ -251,14 +252,43 @@ public class AUIAICallInPhoneCallActivity extends AppCompatActivity {
                 agentConfig.preConnectAudioUrl = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_PRE_CONNECT_AUDIO_URL, "");
                 agentConfig.llmConfig.outputMinLength = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_OUTPUT_MIN_LENGTH, "-1"));
                 agentConfig.llmConfig.outputMaxDelay = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_OUTPUT_MAX_DELAY, "-1"));
+                agentConfig.llmConfig.historySyncWithTTS = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_HISTORY_SYNC_WITH_TTS, false);
                 String experimentalConfigStr = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_EXPERIMENTAL_CONFIG);
                 if(!TextUtils.isEmpty(experimentalConfigStr)) {
-                    try {
-                        JSONObject experimentalConfigObject = new JSONObject(experimentalConfigStr);
-                        agentConfig.experimentalConfig = new ARTCAICallEngine.ARTCAICallExperimentalConfig(experimentalConfigObject);
-                    }catch (JSONException e) {
-                        e.printStackTrace();
+                    JSONObject experimentalConfigObject = new JSONObject(experimentalConfigStr);
+                    agentConfig.experimentalConfig = new ARTCAICallEngine.ARTCAICallExperimentalConfig(experimentalConfigObject);
+                }
+
+                String autoSpeechForLlmPendingConfigStr = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_LLMPENDING_CONFIG);
+                if(!TextUtils.isEmpty(autoSpeechForLlmPendingConfigStr)) {
+                    JSONObject LlmPendingJsonObject = new JSONObject(autoSpeechForLlmPendingConfigStr);
+                    agentConfig.autoSpeechForLlmPendingConfig = new ARTCAICallEngine.ARTCAICallAgentAutoSpeechLlmPending(LlmPendingJsonObject);
+                }
+                String autoSpeechForUserIdleConfigStr = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_USERIDLE_CONFIG);
+                if(!TextUtils.isEmpty(autoSpeechForUserIdleConfigStr)) {
+                    JSONObject userIdleJsonObject = new JSONObject(autoSpeechForUserIdleConfigStr);
+                    agentConfig.autoSpeechForUserIdleConfig = new ARTCAICallEngine.ARTCAICallAgentAutoSpeechUserIdle(userIdleJsonObject);
+                }
+                String backChannelingConfigStr = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_BACKCHANNELING_CONFIG);
+                if(!TextUtils.isEmpty(backChannelingConfigStr)) {
+                    JSONArray jsonArray = new JSONArray(backChannelingConfigStr);
+                    if(jsonArray.length() > 0) {
+                        List<ARTCAICallEngine.ARTCAICallAgentBackChanneling> backChannelingConfigList = new ArrayList<>();
+                        for(int i = 0; i < jsonArray.length(); i++) {
+                            JSONObject backChannelingJsonObject = jsonArray.getJSONObject(i);
+                            ARTCAICallEngine.ARTCAICallAgentBackChanneling backChannelingConfig = new ARTCAICallEngine.ARTCAICallAgentBackChanneling(backChannelingJsonObject);
+                            backChannelingConfigList.add(backChannelingConfig);
+                        }
+                        agentConfig.backChannelingConfig = backChannelingConfigList;
                     }
+                }
+                String noInterruptModeStr = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_NOINTERRUPTMODE_CONFIG, "");
+                if(!TextUtils.isEmpty(noInterruptModeStr)) {
+                    agentConfig.interruptConfig.noInterruptMode = noInterruptModeStr;
+                }
+                String eagernessStr = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_EAGERNESS_CONFIG, "");
+                if(!TextUtils.isEmpty(eagernessStr)) {
+                    agentConfig.turnDetectionConfig.eagerness = eagernessStr;
                 }
 
                 JSONObject outboundCallObject = new JSONObject();

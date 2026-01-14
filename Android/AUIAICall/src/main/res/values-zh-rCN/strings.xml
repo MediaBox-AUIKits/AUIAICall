@@ -26,6 +26,7 @@
     <string name="call_error_local_device_exception">通话失败，本地设备出现了错误</string>
     <string name="call_error_agent_subscription_required">接通失败，请检查您账号是否正确订购套餐</string>
     <string name="call_error_agent_not_found">接通失败，请检查智能体ID是否正确</string>
+    <string name="call_error_engine_is_destroying">通话失败，当前引擎正在销毁，请稍后重试</string>
 
     <string name="user_mute_tips">你已静音</string>
     <string name="robot_pause_tips">通话暂停，轻触开启</string>

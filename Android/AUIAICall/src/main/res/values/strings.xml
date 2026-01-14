@@ -25,6 +25,7 @@
     <string name="call_error_local_device_exception">Call failed, a local device error occurred</string>
     <string name="call_error_agent_subscription_required">Call Failed, Subscription Required</string>
     <string name="call_error_agent_not_found">Call Failed, agent not found</string>
+    <string name="call_error_engine_is_destroying">Call failed, engine is destroying, please try again later</string>
 
     <string name="user_mute_tips">You are muted</string>
     <string name="robot_pause_tips">Call paused, tap to start</string>

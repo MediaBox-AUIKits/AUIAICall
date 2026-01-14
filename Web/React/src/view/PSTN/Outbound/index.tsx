@@ -17,7 +17,7 @@ import { callFailSVG, callSuccessSVG } from '../Icons';
 import './index.less';
 
 
-const agentVoiceIdList = ['1185:云峰', '11:云穹', '1397:云薇', '1151:云玲'];
+const agentVoiceIdList = [':默认', '1185:云峰', '11:云穹', '1397:云薇', '1151:云玲'];
 
 function VoiceIdPicker({
   value,
@@ -59,7 +59,7 @@ function VoiceIdPicker({
             return {
               label: (
                 <div className='_voice-id-item'>
-                  <img src={index % 2 === 0 ? settingVoiceImg1 : settingVoiceImg2} alt='' />
+                  <img src={index % 2 === 1 ? settingVoiceImg1 : settingVoiceImg2} alt='' />
                   <span className='_title'>{value || id}</span>
                   <div className='ai-flex-1'></div>
                   <div className='_tip'>
@@ -71,7 +71,7 @@ function VoiceIdPicker({
               value: id,
             };
           })}
-          value={value ? [value] : []}
+          value={typeof value !== 'undefined' ? [value] : []}
           onChange={(v) => {
             if (v.length) {
               onChange?.(v[0] as string);
@@ -101,6 +101,7 @@ function PSTNOutbound({
   const [form] = Form.useForm();
   const [voiceIdVisible, setVoiceIdVisible] = useState(false);
   const [submittable, setSubmittable] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const [result, setResult] = useState<{ instanceId: string; reqId: string } | null>(null);
   const [error, setError] = useState<Error | null>(null);
@@ -108,6 +109,8 @@ function PSTNOutbound({
   const onSubmit = async () => {
     const values = await form.validateFields();
     if (!values) return;
+
+    setLoading(true);
 
     const config: AICallConfig = {
       agentId,
@@ -140,6 +143,8 @@ function PSTNOutbound({
         return;
       }
       setError(error as Error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -200,7 +205,7 @@ function PSTNOutbound({
               initialValues={{
                 phone: '',
                 interrupt: true,
-                voiceId: '1185',
+                voiceId: '',
               }}
             >
               <Form.Item
@@ -239,7 +244,7 @@ function PSTNOutbound({
             <div className='_holder' />
 
             <div className='pstn-btn-box'>
-              <Button fill='none' color='primary' block onClick={onSubmit} disabled={!submittable}>
+              <Button fill='none' color='primary' block onClick={onSubmit} disabled={!submittable} loading={loading}>
                 {t('pstn.outbound.start')}
               </Button>
               <div className='ai-statement'>{t('system.statement')}</div>

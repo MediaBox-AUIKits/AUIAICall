@@ -40,7 +40,7 @@ import Lottie
     }
     
     open override func updateState(newState: AUIAICallState) {
-        let isLoading = newState == .Connecting || newState == .None
+        let isLoading = newState == .Connecting
         let showOnCall = !isLoading && self.isStartAniCompleted
         self.startCallAni.isHidden = showOnCall
         self.onCallingAni.isHidden = !showOnCall

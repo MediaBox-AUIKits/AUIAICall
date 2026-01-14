@@ -113,11 +113,11 @@ platform :ios, '10.0'
 
 target 'Your App target' do
     # Integrate the appropriate audio and video terminal SDK based on your business scenario. Supports: AliVCSDK_ARTC, AliVCSDK_Standard, AliVCSDK_InteractiveLive
-    pod 'AliVCSDK_ARTC', '~> 7.8.0'
+    pod 'AliVCSDK_ARTC', '~> 7.9.1'
 
     # AI real-time interactive call scenario SDK
-    # If your business also needs to support message conversations, use "ARTCAICallKit/Chatbot" for integration, change the line below to: pod 'ARTCAICallKit/Chatbot', '~> 2.9.0'
-    pod 'ARTCAICallKit', '~> 2.9.0'
+    # If your business also needs to support message conversations, use "ARTCAICallKit/Chatbot" for integration, change the line below to: pod 'ARTCAICallKit/Chatbot', '~> 2.10.0'
+    pod 'ARTCAICallKit', '~> 2.10.0'
 
     # Basic UI component source code
     pod 'AUIFoundation', :path => "./AUIAICall/AUIBaseKits/AUIFoundation/", :modular_headers => true

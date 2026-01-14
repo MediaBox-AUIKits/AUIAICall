@@ -29,9 +29,11 @@ export default class AUIAICallAuthTokenHelper {
 
   async requestNewAuthToken(): Promise<string> {
     this.authToken = '';
-    this.authToken = await standardService.getRtcAuthToken(this.userId, uuidv4());
+    this.authToken = await standardService.getRtcAuthToken(this.userId, uuidv4()).finally(() => {
+      // 失败也要置空，否则登录后会复用之前失败的 promise
+      this.requestPromise = null;
+    });
     this.requestTime = Date.now();
-    this.requestPromise = null;
     return this.authToken;
   }
 }

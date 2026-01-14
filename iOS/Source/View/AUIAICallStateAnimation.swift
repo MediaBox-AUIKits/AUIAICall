@@ -48,7 +48,7 @@ import AUIFoundation
     
     open func updateState(newState: AUIAICallState) {
         let isAppActive = UIApplication.shared.applicationState == .active
-        let isLoading = newState == .Connecting || newState == .None
+        let isLoading = newState == .Connecting
         let isError = newState == .Error
         self.loadingAniView.isHidden = !isLoading
         self.errorView.isHidden = !isError

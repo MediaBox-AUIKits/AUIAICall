@@ -35,6 +35,7 @@ import com.alibaba.android.arouter.facade.annotation.Route;
 import com.aliyun.auikits.aiagent.ARTCAICallEngine;
 import com.aliyun.auikits.aiagent.util.ARTCAIAgentUtil;
 import com.aliyun.auikits.aicall.controller.ARTCAICallController;
+import com.aliyun.auikits.aicall.controller.ARTCAICallEngineSingleton;
 import com.aliyun.auikits.aicall.util.AUIAICallAgentDebug;
 import com.aliyun.auikits.aicall.util.AUIAICallAgentIdConfig;
 import com.aliyun.auikits.aicall.util.AUIAICallAuthTokenHelper;
@@ -394,6 +395,12 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
         ((Switch)view.findViewById(R.id.sv_boot_enable_llm_complete_reply)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_LLM_COMPLETE_REPLY, false));
         ((Switch)view.findViewById(R.id.sv_boot_enable_brust_send_recv)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_BRUST_SEND_RECV, true));
         ((Switch)view.findViewById(R.id.sv_boot_enable_screen_track)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_SCREEN_TRACK_SENG, false));
+        ((Switch)view.findViewById(R.id.sv_boot_enable_history_sync_with_tts)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_HISTORY_SYNC_WITH_TTS, false));
+
+        ((Switch)view.findViewById(R.id.sv_boot_enable_aicall_engine_singleton)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_AICALL_ENGINE_SINGLETON_SWITCH, false));
+        ((Switch)view.findViewById(R.id.sv_boot_enable_audio_early_start)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_AUIDO_ELARY_START, false));
+        ((Switch)view.findViewById(R.id.sv_boot_enable_audio_profile_default)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_AUIDO_PROFILE_DEFAULT, false));
+        ((Switch)view.findViewById(R.id.sv_boot_enable_play_client_welcome_audio)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_CLIENT_AUDIO_PLAY_WELCOME, false));
 
 
         //((Switch)view.findViewById(R.id.sv_boot_use_voice_print)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_VOICE_PRINT, SettingStorage.DEFAULT_ENABLE_VOICE_PRINT));
@@ -412,11 +419,11 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
         ((EditText) view.findViewById(R.id.VoiceprintId_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_VOICE_PRINT_ID));
         ((EditText) view.findViewById(R.id.EnableIntelligentSegment_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_ENABLE_INTELLIGENT_SEGMENT, "1"));
         ((EditText) view.findViewById(R.id.AvatarId_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_AVATAR_ID));
-        ((EditText) view.findViewById(R.id.AsrMaxSilence_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_ASR_MAX_SILENCE, "400"));
+        ((EditText) view.findViewById(R.id.AsrMaxSilence_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_ASR_MAX_SILENCE, "-1"));
         ((EditText) view.findViewById(R.id.UserOnlineTimeout_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_USER_ONLINE_TIME_OUT, "60"));
         ((EditText) view.findViewById(R.id.asrLanguage_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_USER_ASR_LANGUAGE, ""));
         ((EditText) view.findViewById(R.id.llmSystemPrompt_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_LLM_SYSTEM_PROMPT));
-        ((EditText) view.findViewById(R.id.llm_history_limit_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_LLM_HISTORY_LIMIT, "10"));
+        ((EditText) view.findViewById(R.id.llm_history_limit_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_LLM_HISTORY_LIMIT, "-1"));
         ((EditText) view.findViewById(R.id.interrupt_words_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_INTERRUPT_WORDS, ""));
         ((EditText) view.findViewById(R.id.vad_level_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_VAD_LEVEL, "11"));
         ((EditText) view.findViewById(R.id.asr_hot_words_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_ASR_HOT_WORDS, ""));
@@ -426,7 +433,7 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
         ((EditText) view.findViewById(R.id.vcr_config_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_VCR_CONFIG_RULES, ""));
         ((EditText) view.findViewById(R.id.semantic_duration_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_SEMATNIC_DURATION, "-1"));
         ((EditText) view.findViewById(R.id.vad_duration_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_VAD_DURATION, "0"));
-        ((EditText) view.findViewById(R.id.speech_rate_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_TTS_SPEECH_RATE, "1.0"));
+        ((EditText) view.findViewById(R.id.speech_rate_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_TTS_SPEECH_RATE, "-1"));
         ((EditText) view.findViewById(R.id.tts_language_id_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_TTS_LANGUAGE_ID, ""));
         ((EditText) view.findViewById(R.id.tts_emotion_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_TTS_EMOTION, ""));
         ((EditText) view.findViewById(R.id.openai_extra_query_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_OPENAI_EXTRA_QUERY, ""));
@@ -436,6 +443,12 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
         ((EditText) view.findViewById(R.id.output_max_delay_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_OUTPUT_MAX_DELAY, "-1"));
         ((EditText) view.findViewById(R.id.auto_test_agent_id_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_AUTO_TEST_AGENT, ""));
         ((EditText) view.findViewById(R.id.experimental_config_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_EXPERIMENTAL_CONFIG, ""));
+        ((EditText) view.findViewById(R.id.llm_pending_config_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_LLMPENDING_CONFIG, ""));
+        ((EditText) view.findViewById(R.id.user_idle_config_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_USERIDLE_CONFIG, ""));
+        ((EditText) view.findViewById(R.id.backchanneling_config_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_BACKCHANNELING_CONFIG, ""));
+        ((EditText) view.findViewById(R.id.no_interrupt_mode_config_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_NOINTERRUPTMODE_CONFIG, ""));
+        ((EditText) view.findViewById(R.id.eagerness_config_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_EAGERNESS_CONFIG, ""));
+
 
 
         if (!showExtraDebugConfig) {
@@ -495,6 +508,24 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
 
                         boolean enableScreenTrack = ((Switch)view.findViewById(R.id.sv_boot_enable_screen_track)).isChecked();
                         SettingStorage.getInstance().setBoolean(SettingStorage.KEY_BOOT_ENABLE_SCREEN_TRACK_SENG, enableScreenTrack);
+
+                        boolean enableHistorySyncWithTTS = ((Switch)view.findViewById(R.id.sv_boot_enable_history_sync_with_tts)).isChecked();
+                        SettingStorage.getInstance().setBoolean(SettingStorage.KEY_BOOT_ENABLE_HISTORY_SYNC_WITH_TTS, enableHistorySyncWithTTS);
+                        boolean enableAIEngineSingleton = ((Switch)view.findViewById(R.id.sv_boot_enable_aicall_engine_singleton)).isChecked();
+                        SettingStorage.getInstance().setBoolean(SettingStorage.KEY_BOOT_AICALL_ENGINE_SINGLETON_SWITCH, enableAIEngineSingleton);
+
+                        if(!enableAIEngineSingleton) {
+                            ARTCAICallEngineSingleton.getInstance().releaseEngineInstance();
+                        }
+
+                        boolean enableAudioEarlyStart = ((Switch)view.findViewById(R.id.sv_boot_enable_audio_early_start)).isChecked();
+                        SettingStorage.getInstance().setBoolean(SettingStorage.KEY_BOOT_AUIDO_ELARY_START, enableAudioEarlyStart);
+
+                        boolean enableAudioDefaultProfile = ((Switch)view.findViewById(R.id.sv_boot_enable_audio_profile_default)).isChecked();
+                        SettingStorage.getInstance().setBoolean(SettingStorage.KEY_BOOT_ENABLE_AUIDO_PROFILE_DEFAULT, enableAudioDefaultProfile);
+
+                        boolean enableClientPlayWelcome = ((Switch)view.findViewById(R.id.sv_boot_enable_play_client_welcome_audio)).isChecked();
+                        SettingStorage.getInstance().setBoolean(SettingStorage.KEY_BOOT_ENABLE_CLIENT_AUDIO_PLAY_WELCOME, enableClientPlayWelcome);
 
                         //boolean bootUseVoicePrint = ((Switch)view.findViewById(R.id.sv_boot_use_voice_print)).isChecked();
                         //SettingStorage.getInstance().setBoolean(SettingStorage.KEY_BOOT_ENABLE_VOICE_PRINT, bootUseVoicePrint);
@@ -573,6 +604,11 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
                         SettingStorage.getInstance().set(SettingStorage.KEY_BOOT_OUTPUT_MAX_DELAY, ((EditText)view.findViewById(R.id.output_max_delay_input)).getText().toString());
                         SettingStorage.getInstance().set(SettingStorage.KEY_BOOT_AUTO_TEST_AGENT, ((EditText)view.findViewById(R.id.auto_test_agent_id_input)).getText().toString());
                         SettingStorage.getInstance().set(SettingStorage.KEY_BOOT_EXPERIMENTAL_CONFIG, ((EditText)view.findViewById(R.id.experimental_config_input)).getText().toString());
+                        SettingStorage.getInstance().set(SettingStorage.KEY_BOOT_LLMPENDING_CONFIG, ((EditText)view.findViewById(R.id.llm_pending_config_input)).getText().toString());
+                        SettingStorage.getInstance().set(SettingStorage.KEY_BOOT_USERIDLE_CONFIG, ((EditText)view.findViewById(R.id.user_idle_config_input)).getText().toString());
+                        SettingStorage.getInstance().set(SettingStorage.KEY_BOOT_BACKCHANNELING_CONFIG, ((EditText)view.findViewById(R.id.backchanneling_config_input)).getText().toString());
+                        SettingStorage.getInstance().set(SettingStorage.KEY_BOOT_NOINTERRUPTMODE_CONFIG, ((EditText)view.findViewById(R.id.no_interrupt_mode_config_input)).getText().toString());
+                        SettingStorage.getInstance().set(SettingStorage.KEY_BOOT_EAGERNESS_CONFIG, ((EditText)view.findViewById(R.id.eagerness_config_input)).getText().toString());
 
 
                     }
