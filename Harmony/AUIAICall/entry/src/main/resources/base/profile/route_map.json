@@ -1,0 +1,85 @@
+{
+  "routerMap": [
+    {
+      "name": "audio_call_page",
+      "pageSourceFile": "src/main/ets/_generated/ZRAudioCallPage.ets",
+      "buildFunction": "entryAudioCallPageBuilder",
+      "data": {
+        "needLogin": "false",
+        "others": "eyJtb2R1bGVOYW1lIjoiZW50cnkiLCJ1c2VUZW1wbGF0ZSI6ZmFsc2UsInRpdGxlIjoiIiwiaGlkZVRpdGxlQmFyIjp0cnVlLCJ1c2VWMiI6ZmFsc2UsImxvQXR0cmlidXRlTmFtZSI6IiIsInBhcmFtIjoiIn0="
+      }
+    },
+    {
+      "name": "avatar_call_page",
+      "pageSourceFile": "src/main/ets/_generated/ZRAvatarCallPage.ets",
+      "buildFunction": "entryAvatarCallPageBuilder",
+      "data": {
+        "needLogin": "false",
+        "others": "eyJtb2R1bGVOYW1lIjoiZW50cnkiLCJ1c2VUZW1wbGF0ZSI6ZmFsc2UsInRpdGxlIjoiIiwiaGlkZVRpdGxlQmFyIjp0cnVlLCJ1c2VWMiI6ZmFsc2UsImxvQXR0cmlidXRlTmFtZSI6IiIsInBhcmFtIjoiIn0="
+      }
+    },
+    {
+      "name": "inbound_page",
+      "pageSourceFile": "src/main/ets/_generated/ZRInboundPage.ets",
+      "buildFunction": "entryInboundPageBuilder",
+      "data": {
+        "needLogin": "false",
+        "others": "eyJtb2R1bGVOYW1lIjoiZW50cnkiLCJ1c2VUZW1wbGF0ZSI6ZmFsc2UsInRpdGxlIjoiIiwiaGlkZVRpdGxlQmFyIjp0cnVlLCJ1c2VWMiI6ZmFsc2UsImxvQXR0cmlidXRlTmFtZSI6IiIsInBhcmFtIjoiIn0="
+      }
+    },
+    {
+      "name": "main_page",
+      "pageSourceFile": "src/main/ets/_generated/ZRMainPage.ets",
+      "buildFunction": "entryMainPageBuilder",
+      "data": {
+        "needLogin": "false",
+        "others": "eyJtb2R1bGVOYW1lIjoiZW50cnkiLCJ1c2VUZW1wbGF0ZSI6ZmFsc2UsInRpdGxlIjoiIiwiaGlkZVRpdGxlQmFyIjp0cnVlLCJ1c2VWMiI6ZmFsc2UsImxvQXR0cmlidXRlTmFtZSI6IiIsInBhcmFtIjoiIn0="
+      }
+    },
+    {
+      "name": "outbound_calling_page",
+      "pageSourceFile": "src/main/ets/_generated/ZROutboundCallingPage.ets",
+      "buildFunction": "entryOutboundCallingPageBuilder",
+      "data": {
+        "needLogin": "false",
+        "others": "eyJtb2R1bGVOYW1lIjoiZW50cnkiLCJ1c2VUZW1wbGF0ZSI6ZmFsc2UsInRpdGxlIjoiIiwiaGlkZVRpdGxlQmFyIjp0cnVlLCJ1c2VWMiI6ZmFsc2UsImxvQXR0cmlidXRlTmFtZSI6IiIsInBhcmFtIjoiIn0="
+      }
+    },
+    {
+      "name": "outbound_page",
+      "pageSourceFile": "src/main/ets/_generated/ZROutboundPage.ets",
+      "buildFunction": "entryOutboundPageBuilder",
+      "data": {
+        "needLogin": "false",
+        "others": "eyJtb2R1bGVOYW1lIjoiZW50cnkiLCJ1c2VUZW1wbGF0ZSI6ZmFsc2UsInRpdGxlIjoiIiwiaGlkZVRpdGxlQmFyIjp0cnVlLCJ1c2VWMiI6ZmFsc2UsImxvQXR0cmlidXRlTmFtZSI6IiIsInBhcmFtIjoiIn0="
+      }
+    },
+    {
+      "name": "video_call_page",
+      "pageSourceFile": "src/main/ets/_generated/ZRVideoCallPage.ets",
+      "buildFunction": "entryVideoCallPageBuilder",
+      "data": {
+        "needLogin": "false",
+        "others": "eyJtb2R1bGVOYW1lIjoiZW50cnkiLCJ1c2VUZW1wbGF0ZSI6ZmFsc2UsInRpdGxlIjoiIiwiaGlkZVRpdGxlQmFyIjp0cnVlLCJ1c2VWMiI6ZmFsc2UsImxvQXR0cmlidXRlTmFtZSI6IiIsInBhcmFtIjoiIn0="
+      }
+    },
+    {
+      "name": "vision_call_page",
+      "pageSourceFile": "src/main/ets/_generated/ZRVisionCallPage.ets",
+      "buildFunction": "entryVisionCallPageBuilder",
+      "data": {
+        "needLogin": "false",
+        "others": "eyJtb2R1bGVOYW1lIjoiZW50cnkiLCJ1c2VUZW1wbGF0ZSI6ZmFsc2UsInRpdGxlIjoiIiwiaGlkZVRpdGxlQmFyIjp0cnVlLCJ1c2VWMiI6ZmFsc2UsImxvQXR0cmlidXRlTmFtZSI6IiIsInBhcmFtIjoiIn0="
+      }
+    },
+    {
+      "name": "voice_style_dialog",
+      "pageSourceFile": "src/main/ets/_generated/ZRVoiceStyleDialog.ets",
+      "buildFunction": "entryVoiceStyleDialogBuilder",
+      "data": {
+        "needLogin": "false",
+        "others": "eyJtb2R1bGVOYW1lIjoiZW50cnkiLCJ1c2VUZW1wbGF0ZSI6ZmFsc2UsInRpdGxlIjoiIiwiaGlkZVRpdGxlQmFyIjp0cnVlLCJ1c2VWMiI6ZmFsc2UsImxvQXR0cmlidXRlTmFtZSI6IiIsInBhcmFtIjoiIn0="
+      }
+    }
+  ]
+}

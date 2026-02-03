@@ -1,0 +1,148 @@
+{
+  "color": [
+    {
+      "name": "start_window_background",
+      "value": "#000000"
+    },
+    {
+      "name": "main_page_background_color",
+      "value": "#000000"
+    },
+    {
+      "name": "main_page_right_color",
+      "value": "#EEEEEE"
+    },
+    {
+      "name": "main_page_right_border_color",
+      "value": "#EDEFEE"
+    },
+    {
+      "name": "btn_control_gray",
+      "value": "#202020"
+    },
+    {
+      "name": "btn_control_red",
+      "value": "#C72727"
+    },
+    {
+      "name": "bottom_message_gray_text",
+      "value": "#ABACAE"
+    },
+    {
+      "name": "btn_audio_model_gray",
+      "value": "#33D1D1D1"
+    },
+    {
+      "name": "item_style_gray_text",
+      "value": "#808080"
+    },
+    {
+      "name": "btn_control_black",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "btn_route_next_page_black",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "btn_route_next_page_white",
+      "value": "#000000"
+    },
+    {
+      "name": "text_extend_color_white",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "text_only_support_gray",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "text_input_care_green",
+      "value": "#0C8073"
+    },
+    {
+      "name": "btn_question_submit_gray",
+      "value": "#434343"
+    },
+    {
+      "name": "btn_question_submit_font_gray",
+      "value": "#A9A9A9"
+    },
+    {
+      "name": "test_dev_toggle_green",
+      "value": "#7EC7C0"
+    },
+    {
+      "name": "test_dev_toggle_select_green",
+      "value": "#D6EAE9"
+    },
+    {
+      "name": "test_dev_bottom_deep_green",
+      "value": "#07BDCB"
+    },
+    {
+      "name": "video_convert_button_gray",
+      "value": "#CC878787"
+    },
+    {
+      "name": "main_page_more_dialog_button_deep_gray",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "question_conteng_button_deep_gray",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "phone_call_out_holder_gray",
+      "value": "#ABABAB"
+    },
+    {
+      "name": "long_click_button_black",
+      "value": "#CC000000"
+    },
+    {
+      "name": "talk_white_color",
+      "value": "#EDEEF0"
+    },
+    {
+      "name": "base_page_deep_blue",
+      "value": "#23262F"
+    },
+    {
+      "name": "question_feed_back_copygreen_blue",
+      "value": "#0DB7C8"
+    },
+    {
+      "name": "question_feed_back_divicer_gray",
+      "value": "#3A3C48"
+    },
+    {
+      "name": "choose_scene__text_deep_purple",
+      "value": "#7862FE"
+    },
+    {
+      "name": "choose_scene__button_light_purple",
+      "value": "#F1EFFF"
+    },
+    {
+      "name": "choose_light_gray",
+      "value": "#000000"
+    },
+    {
+      "name": "choose_scene__background_color",
+      "value": "#33D1D1D1"
+    },
+    {
+      "name": "item_style_light_gray_text",
+      "value": "#E6808080"
+    },
+    {
+      "name": "item_style_text_color",
+      "value": "#C62F0E"
+    },
+    {
+      "name": "item_style_text_background_color",
+      "value": "#FFEDEA"
+    }
+  ]
+}

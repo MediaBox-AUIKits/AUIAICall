@@ -1,0 +1,23 @@
+{
+  "name": "entry",
+  "version": "1.0.0",
+  "description": "Please describe the basic information.",
+  "main": "",
+  "author": "",
+  "license": "",
+  "dependencies": {
+    "@pura/harmony-utils": "^1.3.9",
+    "@hzw/zrouter": "^1.8.2",
+    "@pura/harmony-dialog": "^1.1.8",
+    "@pura/spinkit": "^1.0.5",
+    "@xsqd/component": "^1.1.1",
+    "@pura/picker_utils": "^1.0.2",
+    "@ohos/axios": "^2.2.7",
+    "@aliyun/oss": "^2.0.0-beta.1",
+    "@aliyun_video_cloud/alivcsdk_artc": "7.9.1"
+  },
+  "devDependencies": {
+    "@aliyun_video_cloud/alivcsdk_artc": "7.9.1"
+  }
+}
+

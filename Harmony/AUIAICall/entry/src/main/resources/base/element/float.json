@@ -1,0 +1,16 @@
+{
+  "float": [
+    {
+      "name": "page_text_font_size",
+      "value": "50fp"
+    },
+    {
+      "name": "under_line_tab_divider_width",
+      "value": "60vp"
+    },
+    {
+      "name": "swiper_text_size",
+      "value": "18fp"
+    }
+  ]
+}

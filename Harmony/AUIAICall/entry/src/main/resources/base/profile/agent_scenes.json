@@ -1,0 +1,274 @@
+{
+  "version": 1,
+  "agents": [
+    {
+      "agent_type": "VoiceAgent",
+      "scenes": [
+        {
+          "agent_id": "641a89ec23db4d61bad0c1eb76769691",
+          "region": "cn-shanghai",
+          "title": "官方语音通话",
+          "tags": [
+            {
+              "name": "低延迟",
+              "bg": "#FF90A5D8"
+            },
+            {
+              "name": "情感",
+              "bg": "#FFD6E2FF"
+            }
+          ],
+          "limit_seconds": 1800,
+          "description": "string",
+          "asr_model_id": "nls-cn-boson-neural",
+          "tts_model_id": "cv3-plus",
+          "voice_styles": [
+            {
+              "voice_id": "longwan2",
+              "name": "longwan2",
+              "gender": "female"
+            },
+            {
+              "voice_id": "longanhuan",
+              "name": "longanhuan",
+              "gender": "female"
+            }
+          ]
+        },
+        {
+          "agent_id": "641a89ec23db4d61bad0c1eb76769691",
+          "region": "cn-shanghai",
+          "title": "官方语音通话——情绪",
+          "tags": [
+            {
+              "name": "低延迟",
+              "bg": "#FF90A5D8"
+            },
+            {
+              "name": "情感",
+              "bg": "#FFD6E2FF"
+            }
+          ],
+          "limit_seconds": 1800,
+          "description": "string",
+          "asr_model_id": "nls-cn-boson-neural",
+          "tts_model_id": "cv3-plus",
+          "voice_styles": [
+            {
+              "voice_id": "longwan2",
+              "name": "longwan2",
+              "gender": "female"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "agent_type": "AvatarAgent",
+      "scenes": [
+        {
+          "agent_id": "fd99f0b24b7d4b0496f3e418a28fd290",
+          "region": "cn-shanghai",
+          "title": "官方数字人通话",
+          "tags": [
+            {
+              "name": "低延迟",
+              "bg": "#FF90A5D8"
+            },
+            {
+              "name": "情感",
+              "bg": "#FFD6E2FF"
+            }
+          ],
+          "limit_seconds": 300,
+          "description": "string",
+          "asr_model_id": "nls-cn-boson-neural",
+          "tts_model_id": "cv3-plus",
+          "voice_styles": [
+            {
+              "voice_id": "longwan2",
+              "name": "longwan2",
+              "gender": "female"
+            },
+            {
+              "voice_id": "longanhuan",
+              "name": "longanhuan",
+              "gender": "female"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "agent_type": "VisionAgent",
+      "scenes": [
+        {
+          "agent_id": "c613e53cfd1f4529bcc2cf30bcc02b17",
+          "region": "cn-shanghai",
+          "title": "官方视频理解通话",
+          "tags": [
+            {
+              "name": "低延迟",
+              "bg": "#FF90A5D8"
+            },
+            {
+              "name": "情感",
+              "bg": "#FFD6E2FF"
+            }
+          ],
+          "limit_seconds": 1800,
+          "description": "string",
+          "asr_model_id": "nls-cn-boson-neural",
+          "tts_model_id": "cv3-plus",
+          "voice_styles": [
+            {
+              "voice_id": "longwan2",
+              "name": "longwan2",
+              "gender": "female"
+            },
+            {
+              "voice_id": "longanhuan",
+              "name": "longanhuan",
+              "gender": "female"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "agent_type": "VideoAgent",
+      "scenes": [
+        {
+          "agent_id": "0d354e6b751748b29722c708c49aa164",
+          "region": "cn-shanghai",
+          "title": "官方视频通话",
+          "tags": [
+            {
+              "name": "低延迟",
+              "bg": "#FF90A5D8"
+            },
+            {
+              "name": "情感",
+              "bg": "#FFD6E2FF"
+            }
+          ],
+          "limit_seconds": 300,
+          "description": "string",
+          "asr_model_id": "nls-cn-boson-neural",
+          "tts_model_id": "cv3-plus",
+          "voice_styles": [
+            {
+              "voice_id": "longwan2",
+              "name": "longwan2",
+              "gender": "female"
+            },
+            {
+              "voice_id": "longanhuan",
+              "name": "longanhuan",
+              "gender": "female"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "agent_type": "ChatAgent",
+      "scenes": [
+        {
+          "agent_id": "",
+          "region": "cn-shanghai",
+          "title": "消息对话",
+          "tags": [],
+          "limit_seconds": -1,
+          "description": "string",
+          "asr_model_id": "nls-cn-boson-neural",
+          "tts_model_id": "cv3-plus",
+          "voice_styles": [
+            {
+              "voice_id": "longwan_v2",
+              "name": "longwan_v2",
+              "gender": "female"
+            },
+            {
+              "voice_id": "longcheng_v2",
+              "name": "longcheng_v2",
+              "gender": "female"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "agent_type": "OutboundCall",
+      "scenes": [
+        {
+          "agent_id": "",
+          "region": "cn-shanghai",
+          "title": "官方呼出电话",
+          "tags": [
+            {
+              "name": "低延迟",
+              "bg": "#FF90A5D8"
+            },
+            {
+              "name": "情感",
+              "bg": "#FFD6E2FF"
+            }
+          ],
+          "limit_seconds": -1,
+          "description": "string",
+          "asr_model_id": "nls-cn-boson-neural",
+          "tts_model_id": "cv3-plus",
+          "voice_styles": [
+            {
+              "voice_id": "longwan2",
+              "name": "longwan2",
+              "gender": "female"
+            },
+            {
+              "voice_id": "longanhuan",
+              "name": "longanhuan",
+              "gender": "female"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "agent_type": "InboundCall",
+      "scenes": [
+        {
+          "agent_id": "",
+          "region": "cn-shanghai",
+          "title": "官方呼入电话",
+          "tags": [
+            {
+              "name": "低延迟",
+              "bg": "#FF90A5D8"
+            },
+            {
+              "name": "情感",
+              "bg": "#FFD6E2FF"
+            }
+          ],
+          "limit_seconds": -1,
+          "description": "string",
+          "asr_model_id": "nls-cn-boson-neural",
+          "tts_model_id": "cv3-plus",
+          "voice_styles": [
+            {
+              "voice_id": "longwan2",
+              "name": "longwan2",
+              "gender": "female"
+            },
+            {
+              "voice_id": "longanhuan",
+              "name": "longanhuan",
+              "gender": "female"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

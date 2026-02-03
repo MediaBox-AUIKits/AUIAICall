@@ -1,0 +1,130 @@
+{
+  "routerMap": [
+    {
+      "name": "audio_call_page",
+      "pageSourceFile": "src/main/ets/_generated/ZRAudioCallPage.ets",
+      "buildFunction": "entryAudioCallPageBuilder",
+      "data": {
+        "needLogin": "false",
+        "others": "eyJtb2R1bGVOYW1lIjoiZW50cnkiLCJ1c2VUZW1wbGF0ZSI6ZmFsc2UsInRpdGxlIjoiIiwiaGlkZVRpdGxlQmFyIjp0cnVlLCJ1c2VWMiI6ZmFsc2UsImxvQXR0cmlidXRlTmFtZSI6IiIsInBhcmFtIjoiIn0="
+      }
+    },
+    {
+      "name": "digital_human_call_page",
+      "pageSourceFile": "src/main/ets/_generated/ZRDigitalHumanCallPage.ets",
+      "buildFunction": "entryDigitalHumanCallPageBuilder",
+      "data": {
+        "needLogin": "false",
+        "others": "eyJtb2R1bGVOYW1lIjoiZW50cnkiLCJ1c2VUZW1wbGF0ZSI6ZmFsc2UsInRpdGxlIjoiIiwiaGlkZVRpdGxlQmFyIjp0cnVlLCJ1c2VWMiI6ZmFsc2UsImxvQXR0cmlidXRlTmFtZSI6IiIsInBhcmFtIjoiIn0="
+      }
+    },
+    {
+      "name": "main_page",
+      "pageSourceFile": "src/main/ets/_generated/ZRMainPage.ets",
+      "buildFunction": "entryMainPageBuilder",
+      "data": {
+        "needLogin": "false",
+        "others": "eyJtb2R1bGVOYW1lIjoiZW50cnkiLCJ1c2VUZW1wbGF0ZSI6ZmFsc2UsInRpdGxlIjoiIiwiaGlkZVRpdGxlQmFyIjp0cnVlLCJ1c2VWMiI6ZmFsc2UsImxvQXR0cmlidXRlTmFtZSI6IiIsInBhcmFtIjoiIn0="
+      }
+    },
+    {
+      "name": "phone_call_in_page",
+      "pageSourceFile": "src/main/ets/_generated/ZRPhoneCallInPage.ets",
+      "buildFunction": "entryPhoneCallInPageBuilder",
+      "data": {
+        "needLogin": "false",
+        "others": "eyJtb2R1bGVOYW1lIjoiZW50cnkiLCJ1c2VUZW1wbGF0ZSI6ZmFsc2UsInRpdGxlIjoiIiwiaGlkZVRpdGxlQmFyIjp0cnVlLCJ1c2VWMiI6ZmFsc2UsImxvQXR0cmlidXRlTmFtZSI6IiIsInBhcmFtIjoiIn0="
+      }
+    },
+    {
+      "name": "phone_call_out_num_page",
+      "pageSourceFile": "src/main/ets/_generated/ZRPhoneCallOutNumPage.ets",
+      "buildFunction": "entryPhoneCallOutNumPageBuilder",
+      "data": {
+        "needLogin": "false",
+        "others": "eyJtb2R1bGVOYW1lIjoiZW50cnkiLCJ1c2VUZW1wbGF0ZSI6ZmFsc2UsInRpdGxlIjoiIiwiaGlkZVRpdGxlQmFyIjp0cnVlLCJ1c2VWMiI6ZmFsc2UsImxvQXR0cmlidXRlTmFtZSI6IiIsInBhcmFtIjoiIn0="
+      }
+    },
+    {
+      "name": "phone_call_out_page",
+      "pageSourceFile": "src/main/ets/_generated/ZRPhoneCallOutPage.ets",
+      "buildFunction": "entryPhoneCallOutPageBuilder",
+      "data": {
+        "needLogin": "false",
+        "others": "eyJtb2R1bGVOYW1lIjoiZW50cnkiLCJ1c2VUZW1wbGF0ZSI6ZmFsc2UsInRpdGxlIjoiIiwiaGlkZVRpdGxlQmFyIjp0cnVlLCJ1c2VWMiI6ZmFsc2UsImxvQXR0cmlidXRlTmFtZSI6IiIsInBhcmFtIjoiIn0="
+      }
+    },
+    {
+      "name": "video_call_page",
+      "pageSourceFile": "src/main/ets/_generated/ZRVideoCallPage.ets",
+      "buildFunction": "entryVideoCallPageBuilder",
+      "data": {
+        "needLogin": "false",
+        "others": "eyJtb2R1bGVOYW1lIjoiZW50cnkiLCJ1c2VUZW1wbGF0ZSI6ZmFsc2UsInRpdGxlIjoiIiwiaGlkZVRpdGxlQmFyIjp0cnVlLCJ1c2VWMiI6ZmFsc2UsImxvQXR0cmlidXRlTmFtZSI6IiIsInBhcmFtIjoiIn0="
+      }
+    },
+    {
+      "name": "visual_understanding_call_page",
+      "pageSourceFile": "src/main/ets/_generated/ZRVisualUnderstandingPage.ets",
+      "buildFunction": "entryDigitalHumanCallPageBuilder",
+      "data": {
+        "needLogin": "false",
+        "others": "eyJtb2R1bGVOYW1lIjoiZW50cnkiLCJ1c2VUZW1wbGF0ZSI6ZmFsc2UsInRpdGxlIjoiIiwiaGlkZVRpdGxlQmFyIjp0cnVlLCJ1c2VWMiI6ZmFsc2UsImxvQXR0cmlidXRlTmFtZSI6IiIsInBhcmFtIjoiIn0="
+      }
+    },
+    {
+      "name": "vocal_print_page",
+      "pageSourceFile": "src/main/ets/_generated/ZRVocalPrintPage.ets",
+      "buildFunction": "entryVocalPrintPageBuilder",
+      "data": {
+        "needLogin": "false",
+        "others": "eyJtb2R1bGVOYW1lIjoiZW50cnkiLCJ1c2VUZW1wbGF0ZSI6ZmFsc2UsInRpdGxlIjoiIiwiaGlkZVRpdGxlQmFyIjp0cnVlLCJ1c2VWMiI6ZmFsc2UsImxvQXR0cmlidXRlTmFtZSI6IiIsInBhcmFtIjoiIn0="
+      }
+    },
+    {
+      "name": "delay_rate",
+      "pageSourceFile": "src/main/ets/_generated/ZRDelayRateComponent.ets",
+      "buildFunction": "entryDelayRateComponentBuilder",
+      "data": {
+        "needLogin": "false",
+        "others": "eyJtb2R1bGVOYW1lIjoiZW50cnkiLCJ1c2VUZW1wbGF0ZSI6ZmFsc2UsInRpdGxlIjoiIiwiaGlkZVRpdGxlQmFyIjp0cnVlLCJ1c2VWMiI6ZmFsc2UsImxvQXR0cmlidXRlTmFtZSI6IiIsInBhcmFtIjoiIn0="
+      }
+    },
+    {
+      "name": "question_feedback",
+      "pageSourceFile": "src/main/ets/_generated/ZRQuestionFeedBackComponent.ets",
+      "buildFunction": "entryQuestionFeedBackComponentBuilder",
+      "data": {
+        "needLogin": "false",
+        "others": "eyJtb2R1bGVOYW1lIjoiZW50cnkiLCJ1c2VUZW1wbGF0ZSI6ZmFsc2UsInRpdGxlIjoiIiwiaGlkZVRpdGxlQmFyIjp0cnVlLCJ1c2VWMiI6ZmFsc2UsImxvQXR0cmlidXRlTmFtZSI6IiIsInBhcmFtIjoiIn0="
+      }
+    },
+    {
+      "name": "bottom_sheet_dialog",
+      "pageSourceFile": "src/main/ets/_generated/ZRBottomSheetDialog.ets",
+      "buildFunction": "entryBottomSheetDialogBuilder",
+      "data": {
+        "needLogin": "false",
+        "others": "eyJtb2R1bGVOYW1lIjoiZW50cnkiLCJ1c2VUZW1wbGF0ZSI6ZmFsc2UsInRpdGxlIjoiIiwiaGlkZVRpdGxlQmFyIjp0cnVlLCJ1c2VWMiI6ZmFsc2UsImxvQXR0cmlidXRlTmFtZSI6IiIsInBhcmFtIjoiIn0="
+      }
+    },
+    {
+      "name": "main_page_more_dialog",
+      "pageSourceFile": "src/main/ets/_generated/ZRMainPageMoreDialog.ets",
+      "buildFunction": "entryMainPageMoreDialogBuilder",
+      "data": {
+        "needLogin": "false",
+        "others": "eyJtb2R1bGVOYW1lIjoiZW50cnkiLCJ1c2VUZW1wbGF0ZSI6ZmFsc2UsInRpdGxlIjoiIiwiaGlkZVRpdGxlQmFyIjp0cnVlLCJ1c2VWMiI6ZmFsc2UsImxvQXR0cmlidXRlTmFtZSI6IiIsInBhcmFtIjoiIn0="
+      }
+    },
+    {
+      "name": "phone_call_out_dialog",
+      "pageSourceFile": "src/main/ets/_generated/ZRPhoneCallOutDialog.ets",
+      "buildFunction": "entryPhoneCallOutDialogBuilder",
+      "data": {
+        "needLogin": "false",
+        "others": "eyJtb2R1bGVOYW1lIjoiZW50cnkiLCJ1c2VUZW1wbGF0ZSI6ZmFsc2UsInRpdGxlIjoiIiwiaGlkZVRpdGxlQmFyIjp0cnVlLCJ1c2VWMiI6ZmFsc2UsImxvQXR0cmlidXRlTmFtZSI6IiIsInBhcmFtIjoiIn0="
+      }
+    }
+  ]
+}

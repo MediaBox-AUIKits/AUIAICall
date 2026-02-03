@@ -1,0 +1,428 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "module description"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "description"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "AI实时互动"
+    },
+    {
+      "name": "audio_call",
+      "value": "音频通话"
+    },
+    {
+      "name": "digital_man_call",
+      "value": "数字人通话"
+    },
+    {
+      "name": "visual_understanding",
+      "value": "视觉理解通话"
+    },
+    {
+      "name": "video_call",
+      "value": "视频通话"
+    },
+    {
+      "name": "message_talk",
+      "value": "消息对话"
+    },
+    {
+      "name": "AI_phone_call",
+      "value": "AI电话呼出"
+    },
+    {
+      "name": "AI_phone_import",
+      "value": "AI电话呼入"
+    },
+    {
+      "name": "custom_agent",
+      "value": "自定义智能体"
+    },
+    {
+      "name": "audio_call_des",
+      "value": "用户通过语音与智能助手交流对话。"
+    },
+    {
+      "name": "digital_man_call_des",
+      "value": "通过视频与数字人互动，提升用户体验真实性。"
+    },
+    {
+      "name": "visual_understanding_des",
+      "value": "通过视频互动，智能体结合语音和画面提供反馈。"
+    },
+    {
+      "name": "video_call_des",
+      "value": "数字人结合视觉理解，与用户双向视频通话。"
+    },
+    {
+      "name": "message_talk_des",
+      "value": "提供语音或文本以聊天对话框的形式直接与智能体进行交流。"
+    },
+    {
+      "name": "AI_phone_call_des",
+      "value": "智能体提供运营商线路直接向用户手机号发起电话呼出。"
+    },
+    {
+      "name": "AI_phone_import_des",
+      "value": "用户主动拨打智能体进行呼入。"
+    },
+    {
+      "name": "custom_agent_des",
+      "value": "请前往控制台，去扫描获得临时体验Token"
+    },
+    {
+      "name": "bot_message_cankao",
+      "value": "内容由AI生成，仅供参考"
+    },
+    {
+      "name": "delay_rate_content",
+      "value": "在一个通话轮次中，从用户讲完最后一个字，到接收到 AI智能体首字响应的延时。注:对话延时有一定的统计失败率当有不可抗拒的脏数据时，系统将会自动舍弃对话延时数据。"
+    },
+    {
+      "name": "camera_reason",
+      "value": "调用摄像头"
+    },
+    {
+      "name": "microphone_reason",
+      "value": "调用麦克风"
+    },
+    {
+      "name": "background_reason",
+      "value": "开启后台播放任务"
+    },
+    {
+      "name": "get_network_info",
+      "value": "获取网络信息"
+    },
+    {
+      "name": "get_wifi_info",
+      "value": "获取wifi信息"
+    },
+    {
+      "name": "write_media",
+      "value": "写入公共媒体目录（如相册/下载目录）"
+    },
+    {
+      "name": "write_usb",
+      "value": "写入用户目录（部分场景）"
+    },
+    {
+      "name": "write_user_file",
+      "value": "写入用户文件"
+    },
+    {
+      "name": "get_read_pasteboard_info",
+      "value": "获取剪贴板信息"
+    },
+    {
+      "name": "recode_content_text",
+      "value": "哇，我觉得你今天穿的这件裙子特别 鲜艳，款式很优雅，特别衬托你的气 质，真的太漂亮了。你能告诉我是在哪 家店买的这么好看的裙子嘛，我也去淘 一件。"
+    },
+    {
+      "name": "push_down_open_recode",
+      "value": "按下开始录制，松开结束"
+    },
+    {
+      "name": "call_out_success",
+      "value": "呼出成功，请注意接收手机来电"
+    },
+    {
+      "name": "null",
+      "value": ""
+    },
+    {
+      "name": "room_entrance_text",
+      "value": "开始体验"
+    },
+    {
+      "name": "pstn_in_call_entrance_text",
+      "value": "马上拨打"
+    },
+    {
+      "name": "custom_agent_room_entrance_text",
+      "value": "扫码体验"
+    },
+    {
+      "name": "btn_text_ai_call_full_screen_subtitle",
+      "value": "字幕"
+    },
+    {
+      "name": "robot_listening_tips",
+      "value": "你在说，我在听"
+    },
+    {
+      "name": "AI_phone_call_Add_space",
+      "value": "AI电话呼出 "
+    },
+    {
+      "name": "ai_agent_config",
+      "value": "配置项"
+    },
+    {
+      "name": "voiceprint_recognition_test_title",
+      "value": "声纹降噪"
+    },
+    {
+      "name": "voiceprint_recognition_test_desc",
+      "value": "AI仅把您的声音作为输入，即使同时有多个人在讲话"
+    },
+    {
+      "name": "voiceprint_info_tipe_cannot_use",
+      "value": "声纹特征信息（未录入）"
+    },
+    {
+      "name": "voiceprint_info_title",
+      "value": "声纹特征信息（已录入）"
+    },
+    {
+      "name": "voiceprint_info_record",
+      "value": "录入"
+    },
+    {
+      "name": "voiceprint_rerecord",
+      "value": "重新录入"
+    },
+    {
+      "name": "ai_agent_config_emotional",
+      "value": "情绪音色"
+    },
+    {
+      "name": "ai_agent_config_emotional_desc",
+      "value": "用于选择智能体的音色是否包含情绪"
+    },
+    {
+      "name": "ai_agent_config_emotional_not",
+      "value": "不含情绪"
+    },
+    {
+      "name": "ai_agent_config_emotional_yes",
+      "value": "包含情绪"
+    },
+    {
+      "name": "voiceprint_info_tipe",
+      "value": "声纹特征信息"
+    },
+    {
+      "name": "voiceprint_info_tipe_desc",
+      "value": "请在安静的环境下朗读下面这段话"
+    },
+    {
+      "name": "voiceprint_record_time_desc",
+      "value": "录制时长：最少12S最多60S"
+    },
+    {
+      "name": "voiceprint_recording",
+      "value": "录音中"
+    },
+    {
+      "name": "mode_natural_conversation",
+      "value": "自然对话模式"
+    },
+    {
+      "name": "mode_push_to_talk",
+      "value": "对讲机模式"
+    },
+    {
+      "name": "dialog_robot_title",
+      "value": "设置"
+    },
+    {
+      "name": "reporting_title",
+      "value": "问题反馈"
+    },
+    {
+      "name": "latency_rate_title",
+      "value": "延时率"
+    },
+    {
+      "name": "config_interrupt_title",
+      "value": "智能打断"
+    },
+    {
+      "name": "config_interrupt_tips",
+      "value": "根据声音和环境智能打断AI机器人"
+    },
+    {
+      "name": "config_audio_tone_title",
+      "value": "音色选择"
+    },
+    {
+      "name": "config_audio_tone_tips",
+      "value": "切换音色后，AI将在下一次回答中使用新的音色"
+    },
+    {
+      "name": "audio_tone_selector",
+      "value": "使用"
+    },
+    {
+      "name": "reporting_type",
+      "value": "问题类型"
+    },
+    {
+      "name": "reporting_type_function_unavailable",
+      "value": "功能不可用"
+    },
+    {
+      "name": "reporting_type_function_bugs",
+      "value": "可用但有BUG"
+    },
+    {
+      "name": "reporting_type_response_slow",
+      "value": "AI响应太慢"
+    },
+    {
+      "name": "reporting_type_response_inaccurate",
+      "value": "AI响应内容不准确"
+    },
+    {
+      "name": "reporting_type_media_quality",
+      "value": "音质/画质有问题"
+    },
+    {
+      "name": "reporting_type_others",
+      "value": "其他问题"
+    },
+    {
+      "name": "submit",
+      "value": "提交"
+    },
+    {
+      "name": "aicall_sentence_latency_title",
+      "value": "对话延迟"
+    },
+    {
+      "name": "pstn_out_called_number",
+      "value": "被叫号码"
+    },
+    {
+      "name": "pstn_out_input_number",
+      "value": "请输入手机号"
+    },
+    {
+      "name": "pstn_out_called_tips",
+      "value": "仅支持中国内地手机号"
+    },
+    {
+      "name": "pstn_out_call_after_tips",
+      "value": "体验后，系统将会被被叫号码拨通AI电话，请注意查收"
+    },
+    {
+      "name": "pstn_in_called_number",
+      "value": "坐席号码"
+    },
+    {
+      "name": "pstn_in_input_number",
+      "value": "请输入坐席号码"
+    },
+    {
+      "name": "pstn_in_called_tips",
+      "value": "此号码可前往控制台配置"
+    },
+    {
+      "name": "push_to_talk",
+      "value": "按住说话"
+    },
+    {
+      "name": "push_to_talk_gesture_hint",
+      "value": "松开发送 上滑取消"
+    },
+    {
+      "name": "reporting_id_display",
+      "value": "反馈ID："
+    },
+    {
+      "name": "dialog_robot_confirm",
+      "value": "确定"
+    },
+    {
+      "name": "copy",
+      "value": "复制"
+    },
+    {
+      "name": "pstn_out_call_instanceid_copied",
+      "value": "实例ID已复制"
+    },
+    {
+      "name": "copied",
+      "value": "已复制"
+    },
+    {
+      "name": "pstn_out_call_failed_tips",
+      "value": "呼出失败"
+    },
+    {
+      "name": "pstn_out_calling_tips",
+      "value": "电话呼出中"
+    },
+    {
+      "name": "pstn_out_call_tips",
+      "value": "呼出成功，请注意接收手机来电"
+    },
+    {
+      "name": "tips_exit",
+      "value": "再按一次挂断"
+    },
+    {
+      "name": "token_time_lit_tips",
+      "value": "通话结束，数字人或视频通话仅可以体验5分钟"
+    },
+    {
+      "name": "token_time_lit_tips_thirty",
+      "value": "通话结束，音频或视频理解仅可以体验30分钟"
+    },
+    {
+      "name": "choose_scene",
+      "value": "选择场景"
+    },
+    {
+      "name": "choose_scene_into_text",
+      "value": "进入"
+    },
+    {
+      "name": "choose_scene_tags_text",
+      "value": "女"
+    },
+    {
+      "name": "token_input_text",
+      "value": "请输入Token"
+    },
+    {
+      "name": "token_dialog_cancel",
+      "value": "取消"
+    },
+    {
+      "name": "new_params_set",
+      "value": "新增通话参数设置"
+    },
+    {
+      "name": "call_time_limit_know",
+      "value": "知道了"
+    },
+    {
+      "name": "call_time_limit_dialog_message",
+      "value": "体验对话限时30分钟\n 本次对话时间已到"
+    },
+    {
+      "name": "call_time_limit_dialog_message_five",
+      "value": "体验对话限时5分钟\n 本次对话时间已到"
+    },
+    {
+      "name": "robot_thinking_tips",
+      "value": "思考中..."
+    },
+    {
+      "name": "robot_speaking_tips",
+      "value": "我正在回复中，可以轻触屏幕或说话打断我"
+    },
+    {
+      "name": "start_call_failed",
+      "value": "通话失败，出现了错误"
+    }
+  ]
+}
