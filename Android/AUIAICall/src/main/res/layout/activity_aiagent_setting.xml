@@ -1,0 +1,649 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:fitsSystemWindows="true"
+    android:background="@color/color_bg">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/top_bar"
+        android:layout_width="match_parent"
+        android:layout_height="46dp"
+        android:layout_marginHorizontal="20dp">
+
+        <!-- 左侧返回区域：箭头 + 文本 -->
+        <LinearLayout
+            android:id="@+id/layout_back_area"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:clickable="true"
+            android:focusable="true"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <ImageView
+                android:id="@+id/iv_close_setting"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingEnd="8dp"
+                android:paddingVertical="10dp"
+                android:src="@drawable/ic_aicall_in_call_back"/>
+
+            <TextView
+                android:id="@+id/title"
+                style="@style/text_style_16"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/ai_agent_config"/>
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="20dp"
+            android:orientation="vertical">
+
+            <!-- 声纹降噪 -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/ll_voiceprint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingVertical="16dp"
+                android:visibility="visible">
+
+                <TextView
+                    android:id="@+id/tv_voiceprint_title"
+                    style="@style/text_style_16"
+                    android:text="@string/voiceprint_recognition_test_title"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/sv_voiceprint_switch"
+                    app:layout_constraintTop_toTopOf="parent"/>
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/sv_voiceprint_switch"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:thumb="@drawable/bg_switch_thumb"
+                    app:track="@drawable/bg_switch_track"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"/>
+
+                <TextView
+                    android:id="@+id/tv_voiceprint_tips"
+                    style="@style/text_style_tertiary_12"
+                    android:text="@string/voiceprint_recognition_test_desc"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/tv_voiceprint_title"/>
+
+                <!-- 声纹详细配置区域：当开关关闭时整体隐藏 -->
+                <LinearLayout
+                    android:id="@+id/layout_voiceprint_detail"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/tv_voiceprint_tips">
+
+                    <LinearLayout
+                        android:id="@+id/ll_voiceprint_mode"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:paddingVertical="12dp">
+
+                        <TextView
+                            android:id="@+id/tv_voice_print_mode_pre_register"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_rounded_rectangle_small"
+                            android:text="@string/voice_print_mode_pre_register"
+                            android:paddingVertical="13dp"
+                            android:paddingHorizontal="16dp"
+                            android:gravity="center_horizontal"
+                            style="@style/text_style_secondary_14"/>
+
+                        <TextView
+                            android:id="@+id/tv_voice_print_mode_auto_register"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="16dp"
+                            android:background="@drawable/bg_rounded_rectangle_small"
+                            android:gravity="center_horizontal"
+                            android:text="@string/voice_print_mode_auto_register"
+                            android:paddingVertical="13dp"
+                            android:paddingHorizontal="16dp"
+                            style="@style/text_style_secondary_14"/>
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/tv_voiceprint_record_tips"
+                        style="@style/text_style_tertiary_12"
+                        android:text="@string/voiceprint_pre_register_desc"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+
+                    <!-- 状态 + 删除 按钮组合 -->
+                    <LinearLayout
+                        android:id="@+id/ll_voiceprint_status_group"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:orientation="horizontal">
+
+                        <!-- 左侧状态卡片：预注册和无感共用 -->
+                        <LinearLayout
+                            android:id="@+id/ll_voiceprint_status"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_rounded_rectangle_small"
+                            android:paddingVertical="13dp"
+                            android:paddingHorizontal="16dp"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <TextView
+                                android:id="@+id/tv_voiceprint_record_status"
+                                style="@style/text_style_14"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="@string/voiceprint_info_tipe_cannot_use"/>
+
+                            <TextView
+                                android:id="@+id/btn_record_voiceprint"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                style="@style/text_style_14"
+                                android:layout_marginBottom="1dp"
+                                android:text="@string/voiceprint_info_record"/>
+
+                            <ImageView
+                                android:id="@+id/iv_record_voice_select"
+                                android:layout_width="21dp"
+                                android:layout_height="21dp"
+                                android:src="@drawable/ic_pstn_out_select_voice"/>
+                        </LinearLayout>
+
+                        <!-- 右侧 删除 按钮卡片：仅在无感+已录入时显示 -->
+                        <TextView
+                            android:id="@+id/btn_delete_voiceprint"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:background="@drawable/bg_rounded_rectangle_small"
+                            android:paddingVertical="13dp"
+                            android:paddingHorizontal="16dp"
+                            style="@style/text_style_14"
+                            android:text="@string/delete_voiceprint"
+                            android:gravity="center"
+                            android:visibility="gone"/>
+                    </LinearLayout>
+                </LinearLayout>
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginVertical="8dp"
+                android:background="@drawable/bg_setting_section_divider" />
+
+            <!-- 情绪模式标题 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="12dp"
+                android:paddingBottom="12dp"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    style="@style/text_style_16"
+                    android:text="@string/ai_agent_config_emotional"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
+                <TextView
+                    style="@style/text_style_tertiary_12"
+                    android:text="@string/ai_agent_config_emotional_desc"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"/>
+            </LinearLayout>
+
+            <!-- 情绪模式选择 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/tv_mode_not_emotional"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_rounded_rectangle_small"
+                    android:text="@string/ai_agent_config_emotional_not"
+                    android:paddingVertical="10dp"
+                    android:paddingHorizontal="16dp"
+                    android:gravity="center_horizontal"
+                    style="@style/text_style_secondary_14"/>
+
+                <TextView
+                    android:id="@+id/tv_mode_yes_emotional"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="16dp"
+                    android:background="@drawable/bg_rounded_rectangle_small"
+                    android:gravity="center_horizontal"
+                    android:text="@string/ai_agent_config_emotional_yes"
+                    android:paddingVertical="10dp"
+                    android:paddingHorizontal="16dp"
+                    style="@style/text_style_secondary_14"/>
+            </LinearLayout>
+
+            <!-- 语义断句 -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/cl_layout_semantic_break"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp">
+
+                <TextView
+                    android:id="@+id/tv_semantic_break"
+                    style="@style/text_style_16"
+                    android:text="@string/semantic_break"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/sv_semantic_break"
+                    app:layout_constraintTop_toTopOf="parent"/>
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/sv_semantic_break"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:thumb="@drawable/bg_switch_thumb"
+                    app:track="@drawable/bg_switch_track"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"/>
+
+                <TextView
+                    android:id="@+id/tv_semantic_break_tips"
+                    style="@style/text_style_tertiary_12"
+                    android:text="@string/semantic_break_tips"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/tv_semantic_break"/>
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <!-- 检测速度 -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/cl_layout_eagerness"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?android:attr/selectableItemBackground">
+
+                <TextView
+                    android:id="@+id/tv_eagerness"
+                    style="@style/text_style_16"
+                    android:text="@string/eagerness"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/tv_eagerness_value"
+                    app:layout_constraintTop_toTopOf="parent"/>
+
+                <TextView
+                    android:id="@+id/tv_eagerness_tips"
+                    style="@style/text_style_tertiary_12"
+                    android:text="@string/eagerness_tips"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/tv_eagerness"/>
+
+                <TextView
+                    android:id="@+id/tv_eagerness_value"
+                    style="@style/text_style_14"
+                    android:text="Medium"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    app:layout_constraintEnd_toStartOf="@+id/iv_detection_speed_arrow"
+                    app:layout_constraintTop_toTopOf="parent"/>
+
+                <ImageView
+                    android:id="@+id/iv_detection_speed_arrow"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_pstn_out_select_voice"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"/>
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginVertical="8dp"
+                android:background="@drawable/bg_setting_section_divider" />
+
+            <!-- 智能打断 -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/cl_layout_voice_interrupt"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp">
+
+                <TextView
+                    android:id="@+id/tv_voice_interrupt"
+                    style="@style/text_style_16"
+                    android:text="@string/voice_interrupt_title"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/sv_voice_interrupt"
+                    app:layout_constraintTop_toTopOf="parent"/>
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/sv_voice_interrupt"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:thumb="@drawable/bg_switch_thumb"
+                    app:track="@drawable/bg_switch_track"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"/>
+
+                <TextView
+                    android:id="@+id/tv_voice_interrupt_tips"
+                    style="@style/text_style_tertiary_12"
+                    android:text="@string/voice_interrupt_tips"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/tv_voice_interrupt"/>
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <!-- 附和语 -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/cl_layout_back_channeling"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp">
+
+                <TextView
+                    android:id="@+id/tv_back_channeling"
+                    style="@style/text_style_16"
+                    android:text="@string/back_channel_title"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/sv_back_channeling"
+                    app:layout_constraintTop_toTopOf="parent"/>
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/sv_back_channeling"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:thumb="@drawable/bg_switch_thumb"
+                    app:track="@drawable/bg_switch_track"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"/>
+
+                <TextView
+                    android:id="@+id/tv_backchannel_tips"
+                    style="@style/text_style_tertiary_12"
+                    android:text="@string/back_channel_tips"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/tv_back_channeling"/>
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginVertical="8dp"
+                android:background="@drawable/bg_setting_section_divider" />
+
+            <!-- 主动问询 -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/cl_layout_auto_speech_user_idle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp">
+
+                <TextView
+                    android:id="@+id/tv_auto_speech_user_idle"
+                    style="@style/text_style_16"
+                    android:text="@string/auto_speech_title"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/sv_auto_speech_user_idle"
+                    app:layout_constraintTop_toTopOf="parent"/>
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/sv_auto_speech_user_idle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:thumb="@drawable/bg_switch_thumb"
+                    app:track="@drawable/bg_switch_track"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"/>
+
+                <TextView
+                    android:id="@+id/tv_auto_speech_user_idle_tips"
+                    style="@style/text_style_tertiary_12"
+                    android:text="@string/auto_speech_user_idle_tips"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/tv_auto_speech_user_idle"/>
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <!-- 等待时间 -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/cl_layout_auto_speech_user_idle_wait_time"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?android:attr/selectableItemBackground">
+
+                <TextView
+                    android:id="@+id/tv_auto_speech_user_idle_wait_time_tips"
+                    style="@style/text_style_16"
+                    android:text="@string/auto_speech_user_idle_wait_time_title"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/tv_auto_speech_user_idle_wait_time_value"
+                    app:layout_constraintTop_toTopOf="parent"/>
+
+                <TextView
+                    android:id="@+id/tv_wait_time_tips"
+                    style="@style/text_style_tertiary_12"
+                    android:text="@string/auto_speech_user_idle_wait_time_tips"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/tv_auto_speech_user_idle_wait_time_tips"/>
+
+                <TextView
+                    android:id="@+id/tv_auto_speech_user_idle_wait_time_value"
+                    style="@style/text_style_14"
+                    android:text="5000 ms"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    app:layout_constraintEnd_toStartOf="@+id/iv_auto_speech_idle_wait_time_arrow"
+                    app:layout_constraintTop_toTopOf="parent"/>
+
+                <ImageView
+                    android:id="@+id/iv_auto_speech_idle_wait_time_arrow"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_pstn_out_select_voice"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"/>
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <!-- 问询次数 -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/cl_layout_auto_speech_user_idle_max_repeats"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?android:attr/selectableItemBackground">
+
+                <TextView
+                    android:id="@+id/tv_auto_speech_user_idle_max_repeats_title"
+                    style="@style/text_style_16"
+                    android:text="@string/auto_speech_user_idle_max_repeats_title"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/tv_auto_speech_user_idle_max_repeats_value"
+                    app:layout_constraintTop_toTopOf="parent"/>
+
+                <TextView
+                    android:id="@+id/tv_auto_speech_user_idle_max_repeats_tips"
+                    style="@style/text_style_tertiary_12"
+                    android:text="@string/auto_speech_user_idle_max_repeats_tips"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/tv_auto_speech_user_idle_max_repeats_title"/>
+
+                <TextView
+                    android:id="@+id/tv_auto_speech_user_idle_max_repeats_value"
+                    style="@style/text_style_14"
+                    android:text="10 次"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    app:layout_constraintEnd_toStartOf="@+id/iv_auto_speech_user_idle_max_repeats_arrow"
+                    app:layout_constraintTop_toTopOf="parent"/>
+
+                <ImageView
+                    android:id="@+id/iv_auto_speech_user_idle_max_repeats_arrow"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_pstn_out_select_voice"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"/>
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginVertical="8dp"
+                android:background="@drawable/bg_setting_section_divider" />
+
+            <!-- 通话背景音 -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/cl_layout_ambient"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?android:attr/selectableItemBackground">
+
+                <TextView
+                    android:id="@+id/tv_ambient_title"
+                    style="@style/text_style_16"
+                    android:text="@string/ambient_title"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/tv_ambient_value"
+                    app:layout_constraintTop_toTopOf="parent"/>
+
+                <TextView
+                    android:id="@+id/tv_ambient_tips"
+                    style="@style/text_style_tertiary_12"
+                    android:text="@string/ambient_tips"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/tv_ambient_title"/>
+
+                <TextView
+                    android:id="@+id/tv_ambient_value"
+                    style="@style/text_style_14"
+                    android:text="不选择背景音"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    app:layout_constraintEnd_toStartOf="@+id/iv_ambient_arrow"
+                    app:layout_constraintTop_toTopOf="parent"/>
+
+                <ImageView
+                    android:id="@+id/iv_ambient_arrow"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_pstn_out_select_voice"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"/>
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

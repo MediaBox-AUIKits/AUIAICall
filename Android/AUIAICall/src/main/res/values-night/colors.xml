@@ -112,4 +112,10 @@
     <color name="color_border_tertiary_transparent">#00202020</color>
     <color name="color_bg_elevated_transparent">#00111111</color>
 
+    <!-- Scenario Selection Page Colors (Dark Mode) -->
+    <color name="aicall_scenario_text_primary">#FCFCFD</color>
+    <color name="aicall_scenario_text_secondary">#B2B7C4</color>
+    <color name="aicall_scenario_item_background">#23262F</color>
+    <color name="aicall_scenario_item_border_unselected">#3A3D48</color>
+    <color name="aicall_scenario_item_border_selected">#FFFFFF</color>
 </resources>

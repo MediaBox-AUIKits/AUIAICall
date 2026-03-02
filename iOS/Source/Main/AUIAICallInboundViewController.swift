@@ -11,6 +11,16 @@ import ARTCAICallKit
 
 @objcMembers open class AUIAICallInboundViewController: UIViewController {
     
+    public init(scene: AUIAICallAgentScene) {
+        self.scene = scene
+
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    public required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     open override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -172,17 +182,15 @@ import ARTCAICallKit
         return label
     }()
     
+    private let scene: AUIAICallAgentScene
+    
     internal var appserver: AUIAICallAppServer? = nil
         
     public func fetchCalledNumber() {
-        
-#if DEMO_FOR_DEBUG
-        let agentId = AUIAICallDebugManager.shared.getInboundCallAgentId()
-        let region = AUIAICallDebugManager.shared.getRegion()
-#else
-        let agentId = InboundAgentId
-        let region = Region
-#endif
+                
+        let agentId = self.scene.agentId
+        let region = self.scene.region
+
         let body: [String: Any] = [
             "user_id": AUIAICallManager.defaultManager.userId ?? "",
             "ai_agent_id": agentId,

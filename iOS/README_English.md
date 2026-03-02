@@ -34,19 +34,25 @@ You need to create an agent. For details, please refer to the official website d
 - After downloading the source code, navigate to the Example directory.
 - Execute the command "pod install --repo-update" in the Example directory to automatically install the dependent SDKs.
 - Open the project file "AUIAICallExample.xcworkspace" and modify the bundle ID.
-- Configure the agent ID and its region by entering the file AUIAICallAgentConfig.swift.
-```swift
-// AUIAICallAgentConfig.swift
-
-// Configure the agent ID 
-let VoiceAgentId = "xxx"
-let AvatarAgentId = "xxx"
-let VisionAgentId = "xxx"
-let VideoAgentId = "xxx"
-let ChatAgentId = "xxx"
-
-// Configure the region
-let Region = "cn-shanghai"
+- Configure the agent ID and its region by editing the file /Resources/AUIAIMain.bundle/agent_scenes.json. Locate the agent_id field corresponding to the agent type and enter the appropriate value; configure the region setting using the same method. For example, when configuring a Voice Agent, find the Scenes node with agent_type set to VoiceAgent, and fill in the values for both agent_id and region fields.
+```json
+// agent_scenes.json
+    {
+      "agent_type": "VoiceAgent",
+      "scenes": [
+        {
+          "agent_id": "<Your Agent Id for Voice Agent>",
+          "region": "<Your Agent's region>",
+          "title": "Voice Call",
+          "tags": [],
+          "limit_seconds": 1800,
+          "description": "",
+          "asr_model_id": "xxx",
+          "tts_model_id": "xxx",
+          "voice_styles": []
+        }
+      ]
+    },
 ```
 
 - After configuring the agent, there are two methods to start the agent:
@@ -113,11 +119,11 @@ platform :ios, '10.0'
 
 target 'Your App target' do
     # Integrate the appropriate audio and video terminal SDK based on your business scenario. Supports: AliVCSDK_ARTC, AliVCSDK_Standard, AliVCSDK_InteractiveLive
-    pod 'AliVCSDK_ARTC', '~> 7.9.1'
+    pod 'AliVCSDK_ARTC', '~> 7.10.0'
 
     # AI real-time interactive call scenario SDK
-    # If your business also needs to support message conversations, use "ARTCAICallKit/Chatbot" for integration, change the line below to: pod 'ARTCAICallKit/Chatbot', '~> 2.10.0'
-    pod 'ARTCAICallKit', '~> 2.10.0'
+    # If your business also needs to support message conversations, use "ARTCAICallKit/Chatbot" for integration, change the line below to: pod 'ARTCAICallKit/Chatbot', '~> 2.11.0'
+    pod 'ARTCAICallKit', '~> 2.11.0'
 
     # Basic UI component source code
     pod 'AUIFoundation', :path => "./AUIAICall/AUIBaseKits/AUIFoundation/", :modular_headers => true

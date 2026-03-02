@@ -2,16 +2,15 @@ package com.aliyun.auikits.aicall.widget;
 
 import android.content.Context;
 import android.text.TextUtils;
-import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CompoundButton;
-import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelStoreOwner;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -222,7 +221,7 @@ public class AICallSettingDialog {
 
     private void initInterruptButton(View root) {
         mVgInterruptConfig = root.findViewById(R.id.ll_interrupt_config);
-        Switch svInterruptConfig = root.findViewById(R.id.sv_interrupt_config);
+        SwitchCompat svInterruptConfig = root.findViewById(R.id.sv_interrupt_config);
         svInterruptConfig.setChecked(mARTCAICallEngine.isVoiceInterruptEnable());
         svInterruptConfig.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -242,7 +241,7 @@ public class AICallSettingDialog {
     private void initVoicePrintButton(View root) {
         if (IS_VOICE_PRINT_FUNCTION_SHOWN) {
             boolean voicePrint = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_VOICE_PRINT_RECORD_ALRAEDY, false);
-            Switch svVoicePrint = root.findViewById(R.id.sv_voiceprint);
+            SwitchCompat svVoicePrint = root.findViewById(R.id.sv_voiceprint);
             svVoicePrint.setChecked(mARTCAICallEngine.isUsingVoicePrint());
             svVoicePrint.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override

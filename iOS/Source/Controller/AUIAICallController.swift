@@ -68,7 +68,11 @@ import ARTCAICallKit
             self.delegate?.onAICallStateChanged?()
         }
     }
-    public internal(set) var agentVoiceIdList: [String] = []
+    public var agentVoiceStyles: [AUIAICallAgentVoiceStyle] {
+        get {
+            return self.config.voiceStyles ?? []
+        }
+    }
     public internal(set) var errorCode: ARTCAICallErrorCode = .None
     public var agentInfo: ARTCAICallAgentInfo? {
         get {
@@ -97,8 +101,11 @@ import ARTCAICallKit
                 self.config.agentId = agentShareConfig.shareId
                 self.config.agentType = agentShareConfig.agentType
                 self.config.region = agentShareConfig.region
-                if agentShareConfig.agentType == .AvatarAgent {
+                if agentShareConfig.agentType == .AvatarAgent || agentShareConfig.agentType == .VideoAgent {
                     self.config.limitSecond = 5 * 60
+                }
+                else {
+                    self.config.limitSecond = 30 * 60
                 }
             }
         }
@@ -348,7 +355,6 @@ extension AUIAICallController: ARTCAICallEngineDelegate {
         ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "InstanceId", value: agent.instanceId)
         
         self.delegate?.onAICallAIAgentStarted?(agentInfo: agent, elapsedTime: Date().timeIntervalSince1970 - self.startTime)
-        self.fetchVoiceIdList(instanceId: agent.instanceId)
     }
     
     public func onAgentDataChannelAvailable() {
@@ -499,41 +505,4 @@ extension AUIAICallController: ARTCAICallEngineDelegate {
         debugPrint("AUIAICalController onAudioDelayInfo: sentenceId:\(sentenceId), delayMs: \(delayMs)")
         self.delegate?.onAudioDelayInfo?(sentenceId: sentenceId, delayMs: delayMs)
     }
-}
-
-// 获取音色列表
-extension AUIAICallController {
-    
-    // 如果你的业务无需获取音色列表，请把这个开关关闭
-    static let EnableVoiceIdList: Bool = false
-    
-    public func fetchVoiceIdList(instanceId: String) {
-        
-        guard AUIAICallController.EnableVoiceIdList else {
-            return
-        }
-           
-        let body: [String: Any] = [
-            "user_id": self.userId,
-            "ai_agent_instance_id": instanceId
-        ]
-        
-        self.appserver.request(path: "/api/v2/aiagent/describeAIAgentInstance", body: body) { [weak self] response, data, error in
-            guard let self = self else {
-                return
-            }
-            
-            if let agent_config = data?["agent_config"] as? String, let dict = agent_config.aicall_jsonObj() {
-                if let tts_dict = dict["TtsConfig"] as? Dictionary<String, Any> {
-                    if let voiceId  = tts_dict["VoiceId"] as? String {
-                        self.config.agentConfig.ttsConfig.agentVoiceId = voiceId
-                    }
-                    if let voiceIdList  = tts_dict["VoiceIdList"] as? [String] {
-                        self.agentVoiceIdList = voiceIdList
-                    }
-                }
-            }
-        }
-    }
-    
 }

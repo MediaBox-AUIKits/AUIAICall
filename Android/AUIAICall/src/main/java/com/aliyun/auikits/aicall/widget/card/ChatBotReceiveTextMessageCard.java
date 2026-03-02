@@ -18,6 +18,7 @@ import com.aliyun.auikits.aicall.widget.PlayMessageAnimationView;
 import com.aliyun.auikits.aicall.widget.SpeechAnimationView;
 import com.aliyun.auikits.aicall.base.card.CardEntity;
 import com.aliyun.auikits.aicall.util.markwon.AUIAIMarkwonManager;
+import com.aliyun.auikits.aicall.util.MessageBubbleHelper;
 
 public class ChatBotReceiveTextMessageCard extends BaseCard {
 
@@ -59,6 +60,9 @@ public class ChatBotReceiveTextMessageCard extends BaseCard {
         mReceiveThinkTitleButton = root.findViewById(R.id.chat_msg_message_item_ai_thinking_title_button);
         mReceiveThinkTextDescMessageLayout = root.findViewById(R.id.chat_msg_message_item_ai_thinking_desc_layout);
 
+        MessageBubbleHelper.applyMaxWidth(context, mReceiveTextContentView, mReceiveThinkDesc);
+        applyMaxWidthForThinkingLayout();
+
         mReceiveThinkTitleButton.setOnClickListener(new View.OnClickListener() {
                @Override
                public void onClick(View v) {
@@ -75,9 +79,21 @@ public class ChatBotReceiveTextMessageCard extends BaseCard {
 
     }
 
+    private void applyMaxWidthForThinkingLayout() {
+        int maxWidth = MessageBubbleHelper.getMaxBubbleWidthPx(mContext);
+        android.view.ViewGroup.LayoutParams params = mReceiveThinkTextMessageLayout.getLayoutParams();
+        if (params instanceof ConstraintLayout.LayoutParams) {
+            ((ConstraintLayout.LayoutParams) params).matchConstraintMaxWidth = maxWidth;
+            mReceiveThinkTextMessageLayout.setLayoutParams(params);
+        }
+    }
+
     @Override
     public void onBind(CardEntity entity) {
         super.onBind(entity);
+        
+        mReceiveInterruptionView.setVisibility(View.GONE);
+        
         if(null != entity.bizData && entity.bizData instanceof ChatBotChatMessage) {
             ChatBotChatMessage chatMessage = (ChatBotChatMessage) entity.bizData;
             String thinkText = chatMessage.getMessage().reasoningText;
@@ -86,22 +102,23 @@ public class ChatBotReceiveTextMessageCard extends BaseCard {
                 if(chatMessage.getMessage().messageState == ARTCAIChatEngine.ARTCAIChatMessageState.Transfering) {
                     mThinkingView.setVisibility(View.VISIBLE);
                     mThinkingView.setAnimationType(SpeechAnimationView.AnimationType.CHATBOT_THINKING);
+
                     mReceiveThinkTextMessageLayout.setVisibility(View.GONE);
                     mReceiveTextMessageLayout.setVisibility(View.GONE);
                     mReceiveTextContentView.setVisibility(View.GONE);
-
                     mReceiveTextMessageActionButtonLayout.setVisibility(View.GONE);
                 } else  {
                     mThinkingView.setVisibility(View.GONE);
                     if(!TextUtils.isEmpty(thinkText)) {
-                        //has thinking text
+                        isThinkingShow = true;
+                        mReceiveThinkTextDescMessageLayout.setVisibility(View.VISIBLE);
+                        mReceiveThinkTitleButton.setImageResource(R.drawable.ic_chatbot_think_open);
+                        
                         mReceiveThinkTextMessageLayout.setVisibility(View.VISIBLE);
                         if(isThinkingEnd) {
-                            //think end show response text
                             mReceiveThinkFinishImage.setVisibility(View.VISIBLE);
                             mReceiveThinkTitle.setText(R.string.robot_thinking_finish_tips);
                             AUIAIMarkwonManager.getInstance(mContext).getMarkwon().setMarkdown(mReceiveTextContentView, chatMessage.getMessage().text);
-                           // mReceiveTextContentView.setText(chatMessage.getMessage().text);
                             mReceiveTextMessageLayout.setVisibility(View.VISIBLE);
                             if(chatMessage.getMessage().messageState == ARTCAIChatEngine.ARTCAIChatMessageState.Printing) {
                                 mReceiveTextMessageActionButtonLayout.setVisibility(View.GONE);
@@ -112,8 +129,21 @@ public class ChatBotReceiveTextMessageCard extends BaseCard {
                         } else {
                             mReceiveThinkFinishImage.setVisibility(View.GONE);
                             mReceiveThinkTitle.setText(R.string.robot_thinking_tips);
-                            mReceiveTextMessageLayout.setVisibility(View.GONE);
-                            mReceiveTextMessageActionButtonLayout.setVisibility(View.GONE);
+
+                            mReceiveTextMessageLayout.setVisibility(View.VISIBLE);
+                            if(!TextUtils.isEmpty(chatMessage.getMessage().text)) {
+                                AUIAIMarkwonManager.getInstance(mContext).getMarkwon().setMarkdown(mReceiveTextContentView, chatMessage.getMessage().text);
+                                mReceiveTextContentView.setVisibility(View.VISIBLE);
+
+                                if(chatMessage.getMessage().messageState == ARTCAIChatEngine.ARTCAIChatMessageState.Printing) {
+                                    mReceiveTextMessageActionButtonLayout.setVisibility(View.GONE);
+                                } else {
+                                    mReceiveTextMessageActionButtonLayout.setVisibility(entity.isLastItem ? View.VISIBLE : View.GONE);
+                                }
+                            } else {
+                                mReceiveTextContentView.setVisibility(View.GONE);
+                                mReceiveTextMessageActionButtonLayout.setVisibility(View.GONE);
+                            }
                         }
                         mReceiveThinkDesc.setText(thinkText);
                     } else {
@@ -142,8 +172,6 @@ public class ChatBotReceiveTextMessageCard extends BaseCard {
                     } else {
                         mReceiveInterruptionView.setVisibility(View.VISIBLE);
                     }
-                } else {
-                    mReceiveInterruptionView.setVisibility(View.GONE);
                 }
             }
         }

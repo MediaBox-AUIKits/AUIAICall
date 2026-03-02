@@ -19,7 +19,7 @@ import AVFoundation
         super.viewDidLoad()
 
         // Do any additional setup after loading the view.
-        self.view.backgroundColor = AUIAICallBundle.color_bg
+        self.view.backgroundColor = AUIAIMainBundle.color_bg
         self.view.addSubview(self.bgLineView)
         self.backBtn.sizeToFit()
         self.backBtn.frame = CGRect(x: 24, y: UIView.av_safeTop, width: self.backBtn.av_width + 12, height: 48)
@@ -66,10 +66,10 @@ import AVFoundation
     
     open lazy var backBtn: AVBlockButton = {
         let btn = AVBlockButton(frame: CGRect.zero)
-        btn.setImage(AUIAICallBundle.getTemplateImage("ic_back"), for: .normal)
-        btn.tintColor = AUIAICallBundle.color_icon
-        btn.setTitle(AUIAICallBundle.getString("Voiceprint Feature Information"), for: .normal)
-        btn.setTitleColor(AUIAICallBundle.color_text, for: .normal)
+        btn.setImage(AUIAIMainBundle.getTemplateImage("ic_back"), for: .normal)
+        btn.tintColor = AUIAIMainBundle.color_icon
+        btn.setTitle(AUIAIMainBundle.getString("Voiceprint Feature Information"), for: .normal)
+        btn.setTitleColor(AUIAIMainBundle.color_text, for: .normal)
         btn.titleLabel?.font = AVTheme.mediumFont(16)
         btn.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 12)
         btn.clickBlock = { [weak self] sender in
@@ -87,24 +87,24 @@ import AVFoundation
     
     open lazy var imageView: UIImageView = {
         let view = UIImageView(frame: CGRect(x: 0, y: 0, width: 190, height: 190))
-        view.image = AUIAICallBundle.getImage("ic_voiceprint_info")
+        view.image = AUIAIMainBundle.getImage("ic_voiceprint_info")
         return view
     }()
     
     open lazy var envTipsLabel: UILabel = {
         let label = UILabel()
         label.font = AVTheme.regularFont(14)
-        label.textColor = AUIAICallBundle.color_text
+        label.textColor = AUIAIMainBundle.color_text
         label.numberOfLines = 0
         label.textAlignment = .center
-        label.text = AUIAICallBundle.getString("Please read the following sentence in a quiet environment.")
+        label.text = AUIAIMainBundle.getString("Please read the following sentence in a quiet environment.")
         return label
     }()
     
     open lazy var recordTipsLabel: UILabel = {
         let label = UILabel()
         label.font = AVTheme.regularFont(12)
-        label.textColor = AUIAICallBundle.color_text
+        label.textColor = AUIAIMainBundle.color_text
         label.numberOfLines = 0
         label.textAlignment = .center
         return label
@@ -113,26 +113,26 @@ import AVFoundation
     open lazy var readLabel: UILabel = {
         let label = UILabel()
         label.font = AVTheme.regularFont(14)
-        label.textColor = AUIAICallBundle.color_text
+        label.textColor = AUIAIMainBundle.color_text
         label.numberOfLines = 0
         label.textAlignment = .center
 
         let paragraphStyle = NSMutableParagraphStyle();
         paragraphStyle.lineHeightMultiple = 1.2;
-        label.attributedText = NSMutableAttributedString(string: AUIAICallBundle.getString("'Woah, I think the dress you're wearing today is especially vibrant and elegant. It really complements your style – it's absolutely beautiful! Could you tell me where you bought such a lovely dress? I'd love to find one too.'"), attributes: [NSAttributedString.Key.paragraphStyle: paragraphStyle, NSAttributedString.Key.kern: 0.56]);
+        label.attributedText = NSMutableAttributedString(string: AUIAIMainBundle.getString("'Woah, I think the dress you're wearing today is especially vibrant and elegant. It really complements your style – it's absolutely beautiful! Could you tell me where you bought such a lovely dress? I'd love to find one too.'"), attributes: [NSAttributedString.Key.paragraphStyle: paragraphStyle, NSAttributedString.Key.kern: 0.56]);
         return label
     }()
         
     open lazy var speakBtn: AUIAICallButton = {
         let btn = AUIAICallButton()
-        btn.normalBgColor = AUIAICallBundle.color_fill_secondary
-        btn.selectedBgColor = AUIAICallBundle.color_fill_selection
-        btn.normalImage = AUIAICallBundle.getTemplateImage("ic_ptt_press")
-        btn.selectedImage = AUIAICallBundle.getTemplateImage("ic_ptt_release")
-        btn.normalTintColor = AUIAICallBundle.color_icon
-        btn.selectedTintColor = AUIAICallBundle.color_icon_Inverse
-        btn.normalTitle = AUIAICallBundle.getString("Press to start recording, release to stop.")
-        btn.selectedTitle = AUIAICallBundle.getString("Press to start recording, release to stop.")
+        btn.normalBgColor = AUIAIMainBundle.color_fill_secondary
+        btn.selectedBgColor = AUIAIMainBundle.color_fill_selection
+        btn.normalImage = AUIAIMainBundle.getTemplateImage("ic_ptt_press")
+        btn.selectedImage = AUIAIMainBundle.getTemplateImage("ic_ptt_release")
+        btn.normalTintColor = AUIAIMainBundle.color_icon
+        btn.selectedTintColor = AUIAIMainBundle.color_icon_Inverse
+        btn.normalTitle = AUIAIMainBundle.getString("Press to start recording, release to stop.")
+        btn.selectedTitle = AUIAIMainBundle.getString("Press to start recording, release to stop.")
         btn.iconLength = 70
         btn.iconMargin = 21
         btn.isSelected = false
@@ -153,7 +153,7 @@ import AVFoundation
                 // cancel
                 if let voiceRecorder = self.voiceRecorder{
                     _ = voiceRecorder.stopRecording()
-                    self.contentView.aicall_showToast(AUIAICallBundle.getString("Recording cancelled."))
+                    self.contentView.aicall_showToast(AUIAIMainBundle.getString("Recording cancelled."))
                 }
                 self.updateRecordTipsLabel(time: 0)
             }
@@ -164,7 +164,7 @@ import AVFoundation
                         self.voiceRecorder = AUIAICallVoiceprintRecorder()
                     }
                     if let error = self.voiceRecorder?.startRecording() {
-                        self.contentView.aicall_showToast(AUIAICallBundle.getString("Recording failed") + ": \(error.localizedDescription)")
+                        self.contentView.aicall_showToast(AUIAIMainBundle.getString("Recording failed") + ": \(error.localizedDescription)")
                         self.voiceRecorder = nil
                     }
                     else {
@@ -187,18 +187,18 @@ import AVFoundation
     
     open func onRecordCompleted(_ audioFileUrl: URL) {
         if self.recordTime < 12.0 {
-            AVAlertController.show(AUIAICallBundle.getString("Voiceprint enrollment failed. Duration is less than 12 seconds."), vc: self)
+            AVAlertController.show(AUIAIMainBundle.getString("Voiceprint enrollment failed. Duration is less than 12 seconds."), vc: self)
             return
         }
-        let hud = self.view.aicall_showProgressHud(AUIAICallBundle.getString("Voiceprint information is uploading. Please wait..."))
-        AUIAICallVoiceprintManager.shared.start(audioFileUrl: audioFileUrl) { [weak self] error in
+        let hud = self.view.aicall_showProgressHud(AUIAIMainBundle.getString("Voiceprint information is uploading. Please wait..."))
+        AUIAICallVoiceprintManager.shared.startPreRester(audioFileUrl: audioFileUrl) { [weak self] error in
             guard let self = self else { return }
             hud.hide(animated: true)
             if let error = error {
-                AVAlertController.show(AUIAICallBundle.getString("Voiceprint enrollment failed. Please re-record.") + "：(\(error.aicall_desc))", vc: self)
+                AVAlertController.show(AUIAIMainBundle.getString("Voiceprint enrollment failed. Please re-record.") + "：(\(error.aicall_desc))", vc: self)
             }
             else {
-                AVAlertController.aicall_show(message: AUIAICallBundle.getString("Voiceprint enrollment successful."), on: self) { [weak self] in
+                AVAlertController.aicall_show(message: AUIAIMainBundle.getString("Voiceprint enrollment successful."), on: self) { [weak self] in
                     self?.goBack()
                 }
             }
@@ -211,10 +211,10 @@ import AVFoundation
     private func updateRecordTipsLabel(time: TimeInterval) {
         self.recordTime = time
         if time <= 0 {
-            self.recordTipsLabel.text = AUIAICallBundle.getString("Recording Duration: Minimum 12s, Maximum 60s")
+            self.recordTipsLabel.text = AUIAIMainBundle.getString("Recording Duration: Minimum 12s, Maximum 60s")
         }
         else {
-            self.recordTipsLabel.text = String(format: AUIAICallBundle.getString("Recording: %ds"), Int(time))
+            self.recordTipsLabel.text = String(format: AUIAIMainBundle.getString("Recording: %ds"), Int(time))
         }
     }
     

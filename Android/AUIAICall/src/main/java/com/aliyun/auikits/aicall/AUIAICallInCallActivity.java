@@ -36,9 +36,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.alivc.rtc.AliRtcEngine;
-import com.alivc.rtc.AliRtcEngineNotify;
 import com.aliyun.auikits.aiagent.ARTCAICallBase;
 import com.aliyun.auikits.aiagent.util.Logger;
+import com.aliyun.auikits.aicall.bean.AudioToneData;
+import com.aliyun.auikits.aicall.bean.AUIAICallAgentScenario;
 import com.aliyun.auikits.aicall.controller.ARTCAICallController;
 import com.aliyun.auikits.aicall.controller.ARTCAICustomController;
 import com.aliyun.auikits.aicall.controller.ARTCAICallDepositController;
@@ -46,12 +47,11 @@ import com.aliyun.auikits.aicall.controller.ARTCAISingletonController;
 import com.aliyun.auikits.aicall.service.ForegroundAliveService;
 import com.aliyun.auikits.aicall.util.AUIAIAssetFilePathHelper;
 import com.aliyun.auikits.aicall.util.AUIAICallAgentDebug;
-import com.aliyun.auikits.aicall.util.AUIAICallAgentIdConfig;
+import com.aliyun.auikits.aicall.util.AUIAICallAgentScenarioConfig;
 import com.aliyun.auikits.aicall.util.AUIAICallClipboardUtils;
 import com.aliyun.auikits.aicall.util.AUIAIConstStrKey;
 import com.aliyun.auikits.aicall.util.DisplayUtil;
 import com.aliyun.auikits.aicall.util.SettingStorage;
-import com.aliyun.auikits.aicall.util.TimeUtil;
 import com.aliyun.auikits.aicall.util.ToastHelper;
 import com.aliyun.auikits.aicall.widget.AICallAudioTipsDialog;
 import com.aliyun.auikits.aicall.widget.AICallDebugDialog;
@@ -69,6 +69,7 @@ import com.aliyun.auikits.aiagent.debug.ARTCAICallEngineDebuger;
 import com.aliyun.auikits.aicall.util.AppServiceConst;
 import com.aliyun.auikits.aicall.widget.AUIAICallAgentSimpleAnimator;
 import com.aliyun.auikits.aicall.widget.AudioSoundWaveView;
+import com.aliyun.auikits.aicall.voiceprint.AUIAICallVoiceprintManager;
 import com.orhanobut.dialogplus.DialogPlus;
 import com.orhanobut.dialogplus.OnDismissListener;
 
@@ -99,9 +100,23 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
     private long mLastBackButtonExitMillis = 0;
     private long mLastCallMillis = 0;
     private ARTCAICallEngine.ARTCAICallAgentType mAiAgentType = ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent;
+    private String mAiAgentRegion = "cn-shanghai";
     private boolean mIsSharedAgent = false;
     private boolean mIsPushToTalkMode = false;
     private boolean mIsVoicePrintRecognized = false;
+    private boolean mIsFromChatSync = false;
+    
+    // 当前通话的智能体ID
+    private String mAgentId;
+    
+    // 当前通话使用中的音色ID
+    private String mCurrentVoiceId;
+    
+    // 当前通话体验时长上限（秒），-1 表示不限时
+    private int mAgentLimitSeconds = -1;
+    
+    // 当前通话实际使用的声纹ID（用于无感注册回调保存）
+    private String mActualVoiceprintId = null;
 
     private SubtitleHolder mSubtitleHolder = null;
     private boolean mIsFullScreenSubtitleOpen = false;
@@ -189,6 +204,25 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                         voicePrintStatusCode == ARTCAICallEngine.VoicePrintStatusCode.SpeakerRecognized) {
                      mIsVoicePrintRecognized = true;
                  }
+
+                
+                // 无感注册模式下，声纹识别成功后完成注册
+                if (voicePrintStatusCode == ARTCAICallEngine.VoicePrintStatusCode.SpeakerRecognized) {
+                    boolean isAutoRegister = SettingStorage.getInstance()
+                            .getBoolean(SettingStorage.KEY_BOOT_VOICE_PRIINT_AUTO_REGISTER, false);
+                    if (isAutoRegister) {
+                        AUIAICallVoiceprintManager vpManager = AUIAICallVoiceprintManager.getInstance();
+                        // 使用引擎实际配置的声纹 ID（入会时传给引擎的 ID）
+                        String voiceprintId = mActualVoiceprintId;
+                        if (!TextUtils.isEmpty(voiceprintId)) {
+                            vpManager.onAutoRegisted(voiceprintId);
+                            Log.i("AUIAICall", "Auto voiceprint registered with actual ID: " + voiceprintId);
+                        } else {
+                            Log.w("AUIAICall", "Cannot register auto voiceprint: actual ID is empty");
+                        }
+                    }
+                }
+                
                 // 声纹非主讲人反馈结果
                 if (voicePrintStatusCode == ARTCAICallEngine.VoicePrintStatusCode.SpeakerNotRecognized) {
                     setSecondaryCallTips(true, getResources().getString(R.string.main_speaker_not_recognized),
@@ -230,6 +264,7 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         @Override
         public void onVoiceIdChanged(String voiceId) {
             Log.i("AUIAICALL", "onVoiceIdChanged: [voiceId: " + voiceId + "]");
+            mCurrentVoiceId = voiceId;
         }
 
         @Override
@@ -413,10 +448,11 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             } else {
                 boolean audioEarlyStart = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_AUIDO_ELARY_START, false);
                 if(audioEarlyStart) {
-                    engine.setAudioProfile(AliRtcEngine.AliRtcAudioProfile.AliRtcEngineHighQualityMode, AliRtcEngine.AliRtcAudioScenario.AliRtcSceneDefaultMode);
+                    engine.setAudioProfile(AliRtcEngine.AliRtcAudioProfile.AliRtcEngineBasicQualityMode, AliRtcEngine.AliRtcAudioScenario.AliRtcSceneDefaultMode);
                     // 提前启动音频采集，这样在入会过程中就可以采集音频了
                     engine.startAudioCapture();
                     engine.setParameter("{\"audio\":{\"user_specified_ahead_push_stream\":true}}");
+
                 }
             }
             playClientWelcomeIfNeed(engine);
@@ -437,6 +473,192 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_auiaicall_in_call);
 
+        String loginUserId = null;
+        String loginAuthorization = null;
+        String rtcAuthToken = null;
+        mAiAgentType = ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent;
+        if (null != getIntent() && null != getIntent().getExtras()) {
+            mAiAgentRegion = getIntent().getExtras().getString(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_REGION, null);
+            mAgentId = getIntent().getExtras().getString(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_ID, null);
+            mAiAgentType = (ARTCAICallEngine.ARTCAICallAgentType) getIntent().getExtras().getSerializable(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_TYPE);
+            // 扫码体验功能
+            mIsSharedAgent =  getIntent().getExtras().getBoolean(AUIAIConstStrKey.BUNDLE_KEY_IS_SHARED_AGENT, false);
+            // 登陆参数
+            rtcAuthToken = getIntent().getExtras().getString(AUIAIConstStrKey.BUNDLE_KEY_RTC_AUTH_TOKEN, null);
+            loginUserId = getIntent().getExtras().getString(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_USER_ID, null);
+            loginAuthorization = getIntent().getExtras().getString(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_AUTHORIZATION, null);
+
+            mIsFromChatSync = getIntent().getExtras().getBoolean(AUIAIConstStrKey.BUNDLE_KEY_CHAT_SYNC_CONFIG, false);
+            // 读取体验时长配置
+            mAgentLimitSeconds = getIntent().getExtras().getInt(AUIAIConstStrKey.BUNDLE_KEY_AI_LIMIT_SECONDS, -1);
+        }
+
+        initializeUI();
+
+        // 初始化声纹管理器
+        AUIAICallVoiceprintManager vpManager = AUIAICallVoiceprintManager.getInstance();
+        vpManager.init(getApplicationContext());
+        if (!TextUtils.isEmpty(loginUserId)) {
+            vpManager.setUserId(loginUserId);
+            boolean usePreHost = SettingStorage.getInstance()
+                    .getBoolean(SettingStorage.KEY_APP_SERVER_TYPE, SettingStorage.DEFAULT_APP_SERVER_TYPE);
+            vpManager.setPreEnv(usePreHost);
+            
+            // 在初始化时设置声纹模式（只设置一次）
+            boolean isAutoRegister = SettingStorage.getInstance()
+                    .getBoolean(SettingStorage.KEY_BOOT_VOICE_PRIINT_AUTO_REGISTER, false);
+            vpManager.switchVoiceprintMode(isAutoRegister);
+        }
+
+        ARTCAICallEngineDebuger.enableDumpData = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_AUDIO_DUMP_SWITCH);
+        ARTCAICallEngineDebuger.enableUserSpecifiedAudioTips = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_AUDIO_TIPS_SWITCH);
+        ARTCAICallEngineDebuger.enableLabEnvironment = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_USE_RTC_PRE_ENV_SWITCH);
+        ARTCAICallEngineDebuger.enableAecPlugin = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_AUDIO_AEC, true);
+        ARTCAICallBase.isEnableBurst = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_BRUST_SEND_RECV, true);
+
+        boolean useDeposit = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_DEPOSIT_SWITCH, SettingStorage.DEFAULT_DEPOSIT_SWITCH);
+        mUsingSingletonEngine = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_AICALL_ENGINE_SINGLETON_SWITCH, false);
+
+        ARTCAICallEngine.ARTCAICallConfig artcaiCallConfig = new ARTCAICallEngine.ARTCAICallConfig();
+        artcaiCallConfig.region = TextUtils.isEmpty(mAiAgentRegion) ? "cn-shanghai" : mAiAgentRegion;
+        artcaiCallConfig.agentId = mAgentId;
+        artcaiCallConfig.mAiCallAgentTemplateConfig.isSharedAgent = mIsSharedAgent;
+        // 是否使用预发环境
+        boolean usePreHost = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_APP_SERVER_TYPE, SettingStorage.DEFAULT_APP_SERVER_TYPE);
+        artcaiCallConfig.mAiCallAgentTemplateConfig.appServerHost = usePreHost ? AUIAICallAgentDebug.PRE_HOST : AppServiceConst.HOST;
+        artcaiCallConfig.mAiCallAgentTemplateConfig.loginUserId = loginUserId;
+        artcaiCallConfig.mAiCallAgentTemplateConfig.loginAuthrization = loginAuthorization;
+        // 对讲机模式
+        mIsPushToTalkMode = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_PUSH_TO_TALK, SettingStorage.DEFAULT_ENABLE_PUSH_TO_TALK);
+        artcaiCallConfig.agentConfig.enablePushToTalk = mIsPushToTalkMode;
+
+        artcaiCallConfig.userData = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_USER_EXTEND_DATA);
+        artcaiCallConfig.videoConfig.useHighQualityPreview = true;
+        artcaiCallConfig.videoConfig.cameraCaptureFrameRate = 15;
+        // 这里frameRate设置为5，需要根据控制台上的智能体的抽帧帧率（一般为2）进行调整，最大不建议超过15fps
+        // videoEncoderBitRate: videoEncoderFrameRate超过10可以设置为512
+        artcaiCallConfig.videoConfig.videoEncoderFrameRate = 5;
+        artcaiCallConfig.videoConfig.videoEncoderBitRate = 340;
+        if(mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VideoAgent) {
+            artcaiCallConfig.videoConfig.useFrontCameraDefault = true;
+        }
+
+        boolean useAudioDefaultMode = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_AUIDO_PROFILE_DEFAULT, false);
+        if(useAudioDefaultMode) {
+            artcaiCallConfig.audioConfig.audioScenario = ARTCAICallEngine.ARTCAICallAudioScenario.ARTCAICallAudioSceneDefaultMode;
+        }
+        if(mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VisionAgent) {
+            if(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_SCREEN_TRACK_SENG, false)) {
+                artcaiCallConfig.videoConfig.videoSourceType = ARTCAICallEngine.ARTCAICallVideoSourceType.ARTCAICallVideoSourceTypeScreen;
+            }
+        }
+
+        // 应用首页配置（所有模式都生效）
+        updateAgentConfig(artcaiCallConfig.agentConfig);
+        
+        // Debug 模式下额外应用高级配置（会覆盖部分基础配置）
+        if(BuildConfig.TEST_ENV_MODE) {
+            updateDebugAgentConfig(artcaiCallConfig.agentConfig);
+        }
+        artcaiCallConfig.enableAudioDelayInfo = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_AUDIO_DELAY_INFO, true);
+        String pronunciationStr = SettingStorage.getInstance().get(SettingStorage.KEY_PRONUNCIATION_RULES);
+        if(!TextUtils.isEmpty(pronunciationStr)) {
+            List<JSONObject> list = new ArrayList<>();
+            JSONArray jsonArray = null;
+            try {
+                jsonArray = new JSONArray(pronunciationStr);
+                for (int i = 0; i < jsonArray.length(); i++) {
+                    list.add(jsonArray.getJSONObject(i));
+                }
+                artcaiCallConfig.agentConfig.ttsConfig.pronunciationRules = list;
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        String vcrConfigStr = SettingStorage.getInstance().get(SettingStorage.KEY_VCR_CONFIG_RULES);
+        if(!TextUtils.isEmpty(vcrConfigStr)) {
+            try {
+                JSONObject jsonObject = new JSONObject(vcrConfigStr);
+                artcaiCallConfig.agentConfig.vcrConfig = new ARTCAICallEngine.ARTCAICallAgentVcrConfig(jsonObject);
+            }catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        if(mIsFromChatSync) {
+            // 从配置文件读取 ChatBot AgentId
+            List<AUIAICallAgentScenario> chatScenarios = AUIAICallAgentScenarioConfig.getScenariosByAgentType(
+                this,
+                ChatBot,
+                false,
+                false,
+                false
+            );
+            if (chatScenarios != null && !chatScenarios.isEmpty()) {
+                artcaiCallConfig.chatSyncConfig.chatBotAgentId = chatScenarios.get(0).getAgentId();
+            }
+            artcaiCallConfig.chatSyncConfig.sessionId = loginUserId + "_" + artcaiCallConfig.chatSyncConfig.chatBotAgentId;
+            artcaiCallConfig.chatSyncConfig.receiverId = loginUserId;
+        }
+
+        boolean needClientPlay = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_CLIENT_AUDIO_PLAY_WELCOME, false);
+        if(needClientPlay) {
+            artcaiCallConfig.agentConfig.agentGreeting = "";
+        }
+
+        artcaiCallConfig.agentType = mAiAgentType;
+        mARTCAICallController = mUsingSingletonEngine ? new ARTCAISingletonController(this, loginUserId) : useDeposit ? new ARTCAICallDepositController(this, loginUserId) :
+                new ARTCAICustomController(this, loginUserId);
+        if(mUsingSingletonEngine) {
+            artcaiCallConfig.audioConfig.ignoreSetAudioProfile = true;
+        } else {
+            boolean audioEarlyStart = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_AUIDO_ELARY_START, false);
+            if(audioEarlyStart) {
+                artcaiCallConfig.audioConfig.audioProfile = ARTCAICallEngine.ARTCAICallAudioProfile.ARTCAICallAudioBasicQualityMode;
+                artcaiCallConfig.audioConfig.audioScenario = ARTCAICallAudioSceneDefaultMode;
+            }
+        }
+        mARTCAICallController.setBizCallEngineCallback(mARTCAIEngineCallback);
+        mARTCAICallController.setCallStateCallback(mCallStateCallback);
+        mLastCallMillis = SystemClock.elapsedRealtime();
+        mARTCAICallController.init(artcaiCallConfig);
+
+        mARTCAICallController.setAICallAgentType(mAiAgentType);
+        mARTCAICallController.enableFetchVoiceIdList(false);
+
+        mARTCAICallEngine = mARTCAICallController.getARTCAICallEngine();
+        // 根据智能体类型决定设置视频视图
+        if (mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent) {
+            mARTCAICallEngine.setAgentView(findViewById(R.id.avatar_layer),
+                    new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+            );
+        } else if (mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VisionAgent) {
+
+            if(!SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_SCREEN_TRACK_SENG, false)) {
+                mARTCAICallEngine.setLocalView(findViewById(R.id.avatar_layer),
+                        new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+                );
+            }
+        } else if(mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VideoAgent) {
+            ARTCAICallEngine.ARTCAICallVideoCanvas remoteCanvas = new ARTCAICallEngine.ARTCAICallVideoCanvas();
+            remoteCanvas.zOrderOnTop = false;
+            remoteCanvas.zOrderMediaOverlay = false;
+            mARTCAICallEngine.setAgentView(findViewById(R.id.avatar_layer),
+                    new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT), remoteCanvas
+            );
+            mARTCAICallEngine.setLocalView(findViewById(R.id.video_agent_small_view_layer),
+                    new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+            );
+        }
+        if(TextUtils.isEmpty(rtcAuthToken) || SettingStorage.getInstance().getBoolean(SettingStorage.KEY_USE_APP_SERVER_START_AGENT)) {
+            mARTCAICallController.start();
+        } else {
+            mARTCAICallController.startCall(rtcAuthToken);
+        }
+        mSmallVideoViewHolder.init(this);
+        updateActionLayerHolder();
+    }
+
+    private void initializeUI() {
         // Sentence Latency
         mAICallSentenceLatencyViewModel = new ViewModelProvider(this).get(AICallSentenceLatencyViewModel.class);
 
@@ -447,9 +669,15 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         findViewById(R.id.btn_setting).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                // 从本地 JSON 配置读取音色列表
+                List<AudioToneData> audioToneList = buildAudioToneListFromConfig();
+                if (audioToneList == null) {
+                    audioToneList = new ArrayList<>();
+                }
+
                 AICallSettingDialog.show(AUIAICallInCallActivity.this, mARTCAICallEngine, mARTCAICallController,
-                        mAiAgentType== ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent,
-                        mIsVoicePrintRecognized, mIsSharedAgent, mARTCAICallController.getAgentVoiceList());
+                        mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent,
+                        mIsVoicePrintRecognized, mIsSharedAgent, audioToneList);
             }
         });
 
@@ -490,30 +718,6 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             }
         });
 
-        String aiAgentRegion = null;
-        String aiAgentId = null;
-        mAiAgentType = ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent;
-        String loginUserId = null;
-        String loginAuthorization = null;
-        boolean chatSyncConfig = false;
-        String rtcAuthToken = null;
-        if (null != getIntent() && null != getIntent().getExtras()) {
-            aiAgentRegion = getIntent().getExtras().getString(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_REGION, null);
-            aiAgentId = getIntent().getExtras().getString(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_ID, null);
-            mAiAgentType = (ARTCAICallEngine.ARTCAICallAgentType) getIntent().getExtras().getSerializable(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_TYPE);
-            mIsSharedAgent =  getIntent().getExtras().getBoolean(AUIAIConstStrKey.BUNDLE_KEY_IS_SHARED_AGENT, false);
-            rtcAuthToken = getIntent().getExtras().getString(AUIAIConstStrKey.BUNDLE_KEY_RTC_AUTH_TOKEN, null);
-            loginUserId = getIntent().getExtras().getString(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_USER_ID, null);
-            loginAuthorization = getIntent().getExtras().getString(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_AUTHORIZATION, null);
-            chatSyncConfig = getIntent().getExtras().getBoolean(AUIAIConstStrKey.BUNDLE_KEY_CHAT_SYNC_CONFIG, false);
-        }
-
-        if(TextUtils.isEmpty(aiAgentRegion)) {
-            if(!mIsSharedAgent) {
-                aiAgentRegion = AUIAICallAgentIdConfig.getRegion();
-            }
-        }
-
         if (mAICallAgentAnimator == null) {
             FrameLayout callAgentContainer = findViewById(R.id.ai_call_agent_avatar_container);
             if (mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent) {
@@ -545,11 +749,24 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         tvAICallTitle.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if (handUp(false)) {
+                    finish();
+                }
+            }
+        });
+
+        TextView tvDebugInfo = findViewById(R.id.tv_debug_info);
+        if (BuildConfig.TEST_ENV_MODE) {
+            tvDebugInfo.setVisibility(View.VISIBLE);
+        }
+        tvDebugInfo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
                 if (null != mARTCAICallController) {
-                    String titleClickTips = "userId: " + mARTCAICallController.getUserId() +
+                    String debugInfoTips = "userId: " + mARTCAICallController.getUserId() +
                             "\nchannelId: " + mARTCAICallController.getChannelId();
-                    Toast.makeText(AUIAICallInCallActivity.this, titleClickTips, Toast.LENGTH_SHORT).show();
-                    AUIAICallClipboardUtils.copyToClipboard(AUIAICallInCallActivity.this, titleClickTips);
+                    Toast.makeText(AUIAICallInCallActivity.this, debugInfoTips, Toast.LENGTH_SHORT).show();
+                    AUIAICallClipboardUtils.copyToClipboard(AUIAICallInCallActivity.this, debugInfoTips);
 
                     if (SettingStorage.getInstance().getBoolean(SettingStorage.KEY_AUDIO_TIPS_SWITCH)) {
                         AICallAudioTipsDialog.show(AUIAICallInCallActivity.this, mARTCAICallController);
@@ -561,161 +778,6 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                 }
             }
         });
-
-        ARTCAICallEngineDebuger.enableDumpData = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_AUDIO_DUMP_SWITCH);
-        ARTCAICallEngineDebuger.enableUserSpecifiedAudioTips = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_AUDIO_TIPS_SWITCH);
-        ARTCAICallEngineDebuger.enableLabEnvironment = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_USE_RTC_PRE_ENV_SWITCH);
-        ARTCAICallEngineDebuger.enableAecPlugin = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_AUDIO_AEC, true);
-        ARTCAICallBase.isEnableBurst = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_BRUST_SEND_RECV, true);
-
-        boolean useDeposit = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_DEPOSIT_SWITCH, SettingStorage.DEFAULT_DEPOSIT_SWITCH);
-        mUsingSingletonEngine = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_AICALL_ENGINE_SINGLETON_SWITCH, false);
-        ARTCAICallEngine.ARTCAICallConfig artcaiCallConfig = new ARTCAICallEngine.ARTCAICallConfig();
-        artcaiCallConfig.region = aiAgentRegion;
-        artcaiCallConfig.agentId = aiAgentId;
-        artcaiCallConfig.mAiCallAgentTemplateConfig.isSharedAgent = mIsSharedAgent;
-        boolean usePreHost = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_APP_SERVER_TYPE, SettingStorage.DEFAULT_APP_SERVER_TYPE);
-        artcaiCallConfig.mAiCallAgentTemplateConfig.appServerHost = usePreHost ? AUIAICallAgentDebug.PRE_HOST : AppServiceConst.HOST;
-        artcaiCallConfig.mAiCallAgentTemplateConfig.loginUserId = loginUserId;
-        artcaiCallConfig.mAiCallAgentTemplateConfig.loginAuthrization = loginAuthorization;
-        mIsPushToTalkMode = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_PUSH_TO_TALK, SettingStorage.DEFAULT_ENABLE_PUSH_TO_TALK);
-        artcaiCallConfig.agentConfig.enablePushToTalk = mIsPushToTalkMode;
-        artcaiCallConfig.agentConfig.voiceprintConfig.useVoicePrint = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_VOICE_PRINT, SettingStorage.DEFAULT_ENABLE_VOICE_PRINT);
-        artcaiCallConfig.userData = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_USER_EXTEND_DATA);
-        artcaiCallConfig.videoConfig.useHighQualityPreview = true;
-        artcaiCallConfig.videoConfig.cameraCaptureFrameRate = 15;
-        // 这里frameRate设置为5，需要根据控制台上的智能体的抽帧帧率（一般为2）进行调整，最大不建议超过15fps
-        // videoEncoderBitRate: videoEncoderFrameRate超过10可以设置为512
-        artcaiCallConfig.videoConfig.videoEncoderFrameRate = 5;
-        artcaiCallConfig.videoConfig.videoEncoderBitRate = 340;
-        if(mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VideoAgent) {
-            artcaiCallConfig.videoConfig.useFrontCameraDefault = true;
-        }
-
-        boolean useAudioDefaultMode = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_AUIDO_PROFILE_DEFAULT, false);
-        if(useAudioDefaultMode) {
-            artcaiCallConfig.audioConfig.audioScenario = ARTCAICallEngine.ARTCAICallAudioScenario.ARTCAICallAudioSceneDefaultMode;
-        }
-        if(mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VisionAgent) {
-            if(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_SCREEN_TRACK_SENG, false)) {
-                artcaiCallConfig.videoConfig.videoSourceType = ARTCAICallEngine.ARTCAICallVideoSourceType.ARTCAICallVideoSourceTypeScreen;
-            }
-        }
-
-        if(BuildConfig.TEST_ENV_MODE) {
-            updateAgentConfig(artcaiCallConfig.agentConfig);
-        }
-        artcaiCallConfig.enableAudioDelayInfo = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_AUDIO_DELAY_INFO, true);
-        String pronunciationStr = SettingStorage.getInstance().get(SettingStorage.KEY_PRONUNCIATION_RULES);
-        if(!TextUtils.isEmpty(pronunciationStr)) {
-            List<JSONObject> list = new ArrayList<>();
-            JSONArray jsonArray = null;
-            try {
-                jsonArray = new JSONArray(pronunciationStr);
-                for (int i = 0; i < jsonArray.length(); i++) {
-                    list.add(jsonArray.getJSONObject(i));
-                }
-                artcaiCallConfig.agentConfig.ttsConfig.pronunciationRules = list;
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
-        String vcrConfigStr = SettingStorage.getInstance().get(SettingStorage.KEY_VCR_CONFIG_RULES);
-        if(!TextUtils.isEmpty(vcrConfigStr)) {
-            try {
-                JSONObject jsonObject = new JSONObject(vcrConfigStr);
-                artcaiCallConfig.agentConfig.vcrConfig = new ARTCAICallEngine.ARTCAICallAgentVcrConfig(jsonObject);
-            }catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
-        if(chatSyncConfig) {
-            if(BuildConfig.TEST_ENV_MODE) {
-                artcaiCallConfig.chatSyncConfig.chatBotAgentId = usePreHost ? AUIAICallAgentDebug.getAIAgentId(ChatBot, false) : AUIAICallAgentIdConfig.getAIAgentId(ChatBot, false);
-            }
-            else {
-                artcaiCallConfig.chatSyncConfig.chatBotAgentId = AUIAICallAgentIdConfig.getAIAgentId(ChatBot, false);
-            }
-            artcaiCallConfig.chatSyncConfig.sessionId = loginUserId + "_" + artcaiCallConfig.chatSyncConfig.chatBotAgentId;
-            artcaiCallConfig.chatSyncConfig.receiverId = loginUserId;
-        }
-
-        boolean useVoicePrint = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_VOICE_PRINT_RECORD_ALRAEDY, false) && SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_VOICE_PRINT, SettingStorage.DEFAULT_ENABLE_VOICE_PRINT);
-        if(mIsSharedAgent) {
-            if(!TextUtils.isEmpty(aiAgentRegion) && !aiAgentRegion.equals("cn-shanghai")) {
-                useVoicePrint = false;
-                artcaiCallConfig.agentConfig.voiceprintConfig.useVoicePrint = false;
-            }
-        }
-        if(useVoicePrint) {
-            if(TextUtils.isEmpty(artcaiCallConfig.agentConfig.voiceprintConfig.voiceprintId)) {
-                artcaiCallConfig.agentConfig.voiceprintConfig.voiceprintId = loginUserId;
-            }
-        } else {
-
-            if(BuildConfig.TEST_ENV_MODE) {
-                if(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_VOICE_PRINT, SettingStorage.DEFAULT_ENABLE_VOICE_PRINT) && !TextUtils.isEmpty(artcaiCallConfig.agentConfig.voiceprintConfig.voiceprintId)) {
-                    artcaiCallConfig.agentConfig.voiceprintConfig.useVoicePrint = true;
-                }
-            } else {
-                artcaiCallConfig.agentConfig.voiceprintConfig.voiceprintId = "";
-                artcaiCallConfig.agentConfig.voiceprintConfig.useVoicePrint = false;
-            }
-        }
-
-        boolean needClientPlay = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_CLIENT_AUDIO_PLAY_WELCOME, false);
-        if(needClientPlay) {
-            artcaiCallConfig.agentConfig.agentGreeting = " ";
-        }
-
-        artcaiCallConfig.agentType = mAiAgentType;
-        mARTCAICallController = mUsingSingletonEngine ? new ARTCAISingletonController(this, loginUserId) : useDeposit ? new ARTCAICallDepositController(this, loginUserId) :
-                new ARTCAICustomController(this, loginUserId);
-        if(mUsingSingletonEngine) {
-            artcaiCallConfig.audioConfig.ignoreSetAudioProfile = true;
-        } else {
-            boolean audioEarlyStart = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_AUIDO_ELARY_START, false);
-            if(audioEarlyStart) {
-                artcaiCallConfig.audioConfig.audioScenario = ARTCAICallAudioSceneDefaultMode;
-            }
-        }
-        mARTCAICallController.setBizCallEngineCallback(mARTCAIEngineCallback);
-        mARTCAICallController.setCallStateCallback(mCallStateCallback);
-        mLastCallMillis = SystemClock.elapsedRealtime();
-        mARTCAICallController.init(artcaiCallConfig);
-        mARTCAICallController.setAICallAgentType(mAiAgentType);
-        mARTCAICallController.enableFetchVoiceIdList(false);
-
-        mARTCAICallEngine = mARTCAICallController.getARTCAICallEngine();
-        if (mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent) {
-            mARTCAICallEngine.setAgentView(findViewById(R.id.avatar_layer),
-                    new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-            );
-        } else if (mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VisionAgent) {
-
-            if(!SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_SCREEN_TRACK_SENG, false)) {
-                mARTCAICallEngine.setLocalView(findViewById(R.id.avatar_layer),
-                        new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-                );
-            }
-        } else if(mAiAgentType == ARTCAICallEngine.ARTCAICallAgentType.VideoAgent) {
-            ARTCAICallEngine.ARTCAICallVideoCanvas remoteCanvas = new ARTCAICallEngine.ARTCAICallVideoCanvas();
-            remoteCanvas.zOrderOnTop = false;
-            remoteCanvas.zOrderMediaOverlay = false;
-            mARTCAICallEngine.setAgentView(findViewById(R.id.avatar_layer),
-                    new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT), remoteCanvas
-            );
-            mARTCAICallEngine.setLocalView(findViewById(R.id.video_agent_small_view_layer),
-                    new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-            );
-        }
-        if(TextUtils.isEmpty(rtcAuthToken) || SettingStorage.getInstance().getBoolean(SettingStorage.KEY_USE_APP_SERVER_START_AGENT)) {
-            mARTCAICallController.start();
-        } else {
-            mARTCAICallController.startCall(rtcAuthToken);
-        }
-        mSmallVideoViewHolder.init(this);
-        updateActionLayerHolder();
     }
 
     @Override
@@ -748,6 +810,14 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                 }
             }
             mARTCAICallEngine.handup(!mUsingSingletonEngine);
+            
+            // 如果是从消息对话界面跳转过来的，直接finish返回上一页
+            // 否则跳转到首页
+            if (!mIsFromChatSync) {
+                Intent intent = new Intent(this, AUIAICallEntranceActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                startActivity(intent);
+            }
             finish();
             /*
             AICallRatingDialog.show(this,
@@ -900,13 +970,10 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             boolean hasNextRun = true;
             // 更新通话时长
             long duration = mCallConnectedMillis > 0 ? SystemClock.elapsedRealtime() - mCallConnectedMillis : 0;
-//            ((TextView)findViewById(R.id.tv_call_duration)).setText(TimeUtil.formatDuration(duration));
 
-            // 更新实时字幕
-//            mSubtitleHolder.refreshSubtitle();
-
-            // 数字人体验超过5分钟，自动结束
-            if (useAvatar() && duration > 5 * 60 * 1000) {
+            // 按 JSON 中的 limit_seconds 做体验时长限制
+            // limit_seconds 为 -1 表示不限时；>0 表示限制秒数
+            if (mAgentLimitSeconds > 0 && duration > mAgentLimitSeconds * 1000L) {
                 AICallNoticeDialog.showDialog(AUIAICallInCallActivity.this,
                         0, false, R.string.token_time_lit_tips, true, new OnDismissListener() {
                             @Override
@@ -1133,14 +1200,128 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
         }
     }
 
+     /**
+     * 根据首页配置更新智能体配置
+     * @param agentConfig
+     */
     private void updateAgentConfig(ARTCAICallEngine.ARTCAICallAgentConfig agentConfig) {
-        try {
-            String enableVoiceInterruptKey = SettingStorage.getInstance().get(SettingStorage.KEY_ENABLE_VOICE_INTERRUPT);
-            if(TextUtils.isEmpty(enableVoiceInterruptKey) || !enableVoiceInterruptKey.equals("0")) {
-                agentConfig.interruptConfig.enableVoiceInterrupt = true;
+        boolean enableVoicePrintSwitch = SettingStorage.getInstance()
+                .getBoolean(SettingStorage.KEY_BOOT_ENABLE_VOICE_PRINT, SettingStorage.DEFAULT_ENABLE_VOICE_PRINT);
+
+        // 使用声纹管理器获取声纹状态
+        AUIAICallVoiceprintManager vpManager = AUIAICallVoiceprintManager.getInstance();
+        // 直接读取当前模式，不再调用 switchVoiceprintMode 避免触发 saveData()
+        boolean isAutoRegister = vpManager.isAutoRegister();
+        boolean recorded = vpManager.isRegistedVoiceprint();
+        
+        // 区分两种模式的启用条件
+        boolean useVoicePrint;
+        if (isAutoRegister) {
+            // 无感模式：只要开关开启就启用（不需要已注册）
+            useVoicePrint = enableVoicePrintSwitch;
+        } else {
+            // 预注册模式：必须已注册才启用
+            useVoicePrint = enableVoicePrintSwitch && recorded;
+        }
+
+        // 共享智能体 + 非 cn-shanghai 场景强制关闭
+        if (mIsSharedAgent && !TextUtils.isEmpty(mAiAgentRegion)
+                && !TextUtils.equals(mAiAgentRegion, "cn-shanghai")) {
+            useVoicePrint = false;
+        }
+
+        agentConfig.voiceprintConfig.useVoicePrint = useVoicePrint;
+
+        if (useVoicePrint) {
+            String voiceprintId = vpManager.getVoiceprintId();
+            if (isAutoRegister) {
+                // 无感注册模式（Implicit）
+                if (TextUtils.isEmpty(voiceprintId)) {
+                    // 首次使用：生成一个临时 ID 用于本次通话
+                    voiceprintId = vpManager.generateVoiceprintId();
+                }
+                agentConfig.voiceprintConfig.voiceprintId = voiceprintId;
+                agentConfig.voiceprintConfig.registrationMode = "Implicit";
+                // 保存实际使用的声纹 ID，用于后续自动注册回调
+                mActualVoiceprintId = voiceprintId;
             } else {
-                agentConfig.interruptConfig.enableVoiceInterrupt = false;
+                // 预注册模式（Explicit）
+                if (!TextUtils.isEmpty(voiceprintId)) {
+                    agentConfig.voiceprintConfig.voiceprintId = voiceprintId;
+                    agentConfig.voiceprintConfig.registrationMode = "Explicit";
+                } else {
+                    // 预注册模式但没有 ID，关闭声纹
+                    agentConfig.voiceprintConfig.useVoicePrint = false;
+                }
             }
+        } else {
+            // useVoicePrint == false 的情况，保留原 Debug 兜底
+            if (BuildConfig.TEST_ENV_MODE) {
+                if (enableVoicePrintSwitch && !TextUtils.isEmpty(agentConfig.voiceprintConfig.voiceprintId)) {
+                    agentConfig.voiceprintConfig.useVoicePrint = true;
+                }
+            } else {
+                agentConfig.voiceprintConfig.voiceprintId = "";
+            }
+        }
+        // 语义断句
+        agentConfig.turnDetectionConfig.mode = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_SEMATNIC, true) ? ARTCAICallTurnDetectionSemanticMode : ARTCAICallTurnDetectionNormalMode;
+        String sematnicDuration = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_SEMATNIC_DURATION, "-1");
+        if(!TextUtils.isEmpty(sematnicDuration)) {
+            agentConfig.turnDetectionConfig.semanticWaitDuration = Integer.parseInt(sematnicDuration);
+        }
+
+        // 智能打断
+        agentConfig.interruptConfig.enableVoiceInterrupt = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_ENABLE_VOICE_INTERRUPT, true);
+        // 附和语
+        boolean enableBackChanneling = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_BACK_CHANNELING, true);
+        if(enableBackChanneling) {
+            List<ARTCAICallEngine.ARTCAICallAgentBackChanneling> backChannelingConfigList = new ArrayList<>();
+            ARTCAICallEngine.ARTCAICallAgentBackChanneling backChannelingConfig = new ARTCAICallEngine.ARTCAICallAgentBackChanneling();
+            backChannelingConfig.enabled = true;
+            backChannelingConfig.probability = 1.0;
+            backChannelingConfig.words = new ArrayList<>();
+            backChannelingConfig.words.add(new ARTCAICallEngine.ARTCAICallAgentAutoSpeechContent("嗯，你说。", 0.25));
+            backChannelingConfig.words.add(new ARTCAICallEngine.ARTCAICallAgentAutoSpeechContent("嗯嗯。", 0.20));
+            backChannelingConfig.words.add(new ARTCAICallEngine.ARTCAICallAgentAutoSpeechContent("这样啊。", 0.18));
+            backChannelingConfig.words.add(new ARTCAICallEngine.ARTCAICallAgentAutoSpeechContent("嗯，然后呢？", 0.15));
+            backChannelingConfig.words.add(new ARTCAICallEngine.ARTCAICallAgentAutoSpeechContent("啊，明白。", 0.13));
+            backChannelingConfig.words.add(new ARTCAICallEngine.ARTCAICallAgentAutoSpeechContent("还有吗？", 0.09));
+            backChannelingConfigList.add(backChannelingConfig);
+            agentConfig.backChannelingConfigs = backChannelingConfigList;
+        }
+        // 主动问询
+        boolean enableAutoSpeechUserIdle = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_AGENT_AUTO_SPEECH_USER_IDLE, true);
+        int autoSpeechUserIdleWaitTime = SettingStorage.getInstance().getInt(SettingStorage.KEY_BOOT_AUTO_SPEECH_USER_IDLE_WAIT_TIME, 5000);
+        int autoSpeechUserIdleMaxRepeats = SettingStorage.getInstance().getInt(SettingStorage.KEY_BOOT_AUTO_SPEECH_USER_IDLE_MAX_REPEATS, 10);
+        if(enableAutoSpeechUserIdle) {
+            ARTCAICallEngine.ARTCAICallAgentAutoSpeechUserIdle autoSpeechUserIdleConfig = new ARTCAICallEngine.ARTCAICallAgentAutoSpeechUserIdle();
+            autoSpeechUserIdleConfig.waitTime = autoSpeechUserIdleWaitTime;
+            autoSpeechUserIdleConfig.maxRepeats = autoSpeechUserIdleMaxRepeats;
+            List<ARTCAICallEngine.ARTCAICallAgentAutoSpeechContent> messages = new ArrayList<>();
+            messages.add(new ARTCAICallEngine.ARTCAICallAgentAutoSpeechContent("您好，还在吗？如果有任何问题，我很乐意帮您解答。", 0.25));
+            messages.add(new ARTCAICallEngine.ARTCAICallAgentAutoSpeechContent("是不是刚才的信息不太清楚？我可以再为您说明一遍。", 0.20));
+            messages.add(new ARTCAICallEngine.ARTCAICallAgentAutoSpeechContent("请问您还在考虑哪方面的问题呢？我可以帮您一起看看。", 0.15));
+            messages.add(new ARTCAICallEngine.ARTCAICallAgentAutoSpeechContent("如果暂时不方便说话，也可以稍后联系我们，我会一直在这里。", 0.13));
+            messages.add(new ARTCAICallEngine.ARTCAICallAgentAutoSpeechContent("您是不是遇到网络或信号问题了？如果能听到，请回复'在'。", 0.12));
+            messages.add(new ARTCAICallEngine.ARTCAICallAgentAutoSpeechContent("我注意到您刚才没有回应，是我说得不够清楚吗？", 0.09));
+            messages.add(new ARTCAICallEngine.ARTCAICallAgentAutoSpeechContent("感谢您的耐心，若还有需要，随时告诉我哦", 0.06));
+            autoSpeechUserIdleConfig.messages = messages;
+            agentConfig.autoSpeechForUserIdleConfig = autoSpeechUserIdleConfig;
+        }
+
+        // 背景音
+        String ambientResourceId = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_AMBIENT_RESOURCE_ID, "");
+        if(!TextUtils.isEmpty(ambientResourceId)) {
+            agentConfig.ambientConfig = new ARTCAICallEngine.ARTCAICallAgentAmbientConfig(100, ambientResourceId);
+        }
+    }
+    /**
+     * Debug下更新agent配置
+     */
+    private void updateDebugAgentConfig(ARTCAICallEngine.ARTCAICallAgentConfig agentConfig) {
+        try {
+            agentConfig.interruptConfig.enableVoiceInterrupt = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_ENABLE_VOICE_INTERRUPT, true);
             agentConfig.ttsConfig.agentVoiceId = SettingStorage.getInstance().get(SettingStorage.KEY_VOICE_ID);
             agentConfig.ttsConfig.speechRate = Double.parseDouble(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_TTS_SPEECH_RATE, "-1"));
             agentConfig.ttsConfig.languageId = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_TTS_LANGUAGE_ID, "");
@@ -1157,7 +1338,6 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             agentConfig.llmConfig.openAIExtraQuery = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_OPENAI_EXTRA_QUERY);
             agentConfig.volume = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_VOLUME, "100"));
             agentConfig.agentGreeting = SettingStorage.getInstance().get(SettingStorage.KEY_GREETING);
-            agentConfig.voiceprintConfig.voiceprintId = SettingStorage.getInstance().get(SettingStorage.KEY_VOICE_PRINT_ID);
             agentConfig.enableIntelligentSegment = SettingStorage.getInstance().get(SettingStorage.KEY_ENABLE_INTELLIGENT_SEGMENT).equals("1") ? true:false;
             agentConfig.avatarConfig.agentAvatarId = SettingStorage.getInstance().get(SettingStorage.KEY_AVATAR_ID);
             agentConfig.asrConfig.asrMaxSilence = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_ASR_MAX_SILENCE, "-1"));
@@ -1169,7 +1349,6 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             agentConfig.asrConfig.customParams = SettingStorage.getInstance().get(SettingStorage.KEY_ASR_CUSTOM_PARAMS);
             String asrHotWords = SettingStorage.getInstance().get(SettingStorage.KEY_ASR_HOT_WORDS);
             String turnEndWords = SettingStorage.getInstance().get(SettingStorage.KEY_TURN_END_WORDS);
-            String sematnicDuration = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_SEMATNIC_DURATION, "-1");
 
             if(!TextUtils.isEmpty(interruptWorks)) {
                 agentConfig.interruptConfig.interruptWords = new ArrayList<String>();
@@ -1211,19 +1390,10 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                     agentConfig.turnDetectionConfig.turnEndWords.add(turnEndWords);
                 }
             }
+            String sematnicDuration = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_SEMATNIC_DURATION, "-1");
             agentConfig.turnDetectionConfig.mode = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_SEMATNIC, true) ? ARTCAICallTurnDetectionSemanticMode : ARTCAICallTurnDetectionNormalMode;
             if(!TextUtils.isEmpty(sematnicDuration)) {
                 agentConfig.turnDetectionConfig.semanticWaitDuration = Integer.parseInt(sematnicDuration);
-            }
-
-            String ambientConfigStr = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_AMBIENT_CONFIG);
-            if(!TextUtils.isEmpty(ambientConfigStr)) {
-                try {
-                    JSONObject jsonObject = new JSONObject(ambientConfigStr);
-                    agentConfig.ambientConfig = new ARTCAICallEngine.ARTCAICallAgentAmbientConfig(jsonObject);
-                }catch (JSONException e) {
-                    e.printStackTrace();
-                }
             }
 
             agentConfig.preConnectAudioUrl = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_PRE_CONNECT_AUDIO_URL, "");
@@ -1231,9 +1401,9 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             agentConfig.llmConfig.outputMaxDelay = Integer.parseInt(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_OUTPUT_MAX_DELAY, "-1"));
             agentConfig.llmConfig.historySyncWithTTS = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_HISTORY_SYNC_WITH_TTS, false);
             String experimentalConfigStr = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_EXPERIMENTAL_CONFIG);
+
             String autoSpeechForLlmPendingConfigStr = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_LLMPENDING_CONFIG);
             String autoSpeechForUserIdleConfigStr = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_USERIDLE_CONFIG);
-            String backChannelingConfigStr = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_BACKCHANNELING_CONFIG);
             String noInterruptModeStr = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_NOINTERRUPTMODE_CONFIG, "");
             String eagernessStr = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_EAGERNESS_CONFIG, "");
             if(!TextUtils.isEmpty(experimentalConfigStr)) {
@@ -1252,23 +1422,66 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                 JSONObject jsonObject = new JSONObject(autoSpeechForUserIdleConfigStr);
                 agentConfig.autoSpeechForUserIdleConfig = new ARTCAICallEngine.ARTCAICallAgentAutoSpeechUserIdle(jsonObject);
             }
-            if(!TextUtils.isEmpty(backChannelingConfigStr)) {
-                JSONArray jsonArray = new JSONArray(backChannelingConfigStr);
-                if(jsonArray.length() > 0) {
-                    List<ARTCAICallEngine.ARTCAICallAgentBackChanneling> backChannelingConfigList = new ArrayList<>();
-                    for(int i = 0; i < jsonArray.length(); i++) {
-                        JSONObject jsonObject = jsonArray.getJSONObject(i);
-                        ARTCAICallEngine.ARTCAICallAgentBackChanneling backChannelingConfig = new ARTCAICallEngine.ARTCAICallAgentBackChanneling(jsonObject);
-                        backChannelingConfigList.add(backChannelingConfig);
+
+            // 附和语
+            boolean enableBackChanneling = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_BACK_CHANNELING, true);
+            if(enableBackChanneling) {
+                String backChannelingConfigStr = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_BACKCHANNELING_CONFIG);
+                if(!TextUtils.isEmpty(backChannelingConfigStr)) {
+                    JSONArray jsonArray = new JSONArray(backChannelingConfigStr);
+                    if(jsonArray.length() > 0) {
+                        List<ARTCAICallEngine.ARTCAICallAgentBackChanneling> backChannelingConfigList = new ArrayList<>();
+                        for(int i = 0; i < jsonArray.length(); i++) {
+                            JSONObject jsonObject = jsonArray.getJSONObject(i);
+                            ARTCAICallEngine.ARTCAICallAgentBackChanneling backChannelingConfig = new ARTCAICallEngine.ARTCAICallAgentBackChanneling(jsonObject);
+                            backChannelingConfigList.add(backChannelingConfig);
+                        }
+                        agentConfig.backChannelingConfigs = backChannelingConfigList;
                     }
-                    agentConfig.backChannelingConfig = backChannelingConfigList;
                 }
             }
+
             if(!TextUtils.isEmpty(noInterruptModeStr)) {
                 agentConfig.interruptConfig.noInterruptMode = noInterruptModeStr;
             }
             if(!TextUtils.isEmpty(eagernessStr)) {
                 agentConfig.turnDetectionConfig.eagerness = eagernessStr;
+            }
+
+            // 主动问询
+            boolean enableAutoSpeechUserIdle = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_AGENT_AUTO_SPEECH_USER_IDLE, true);
+            int autoSpeechUserIdleWaitTime = SettingStorage.getInstance().getInt(SettingStorage.KEY_BOOT_AUTO_SPEECH_USER_IDLE_WAIT_TIME, 5000);
+            int autoSpeechUserIdleMaxRepeats = SettingStorage.getInstance().getInt(SettingStorage.KEY_BOOT_AUTO_SPEECH_USER_IDLE_MAX_REPEATS, 10);
+            if(enableAutoSpeechUserIdle) {
+                ARTCAICallEngine.ARTCAICallAgentAutoSpeechUserIdle autoSpeechUserIdleConfig = new ARTCAICallEngine.ARTCAICallAgentAutoSpeechUserIdle();
+                autoSpeechUserIdleConfig.waitTime = autoSpeechUserIdleWaitTime;
+                autoSpeechUserIdleConfig.maxRepeats = autoSpeechUserIdleMaxRepeats;
+                List<ARTCAICallEngine.ARTCAICallAgentAutoSpeechContent> messages = new ArrayList<>();
+                messages.add(new ARTCAICallEngine.ARTCAICallAgentAutoSpeechContent("您好，还在吗？如果有任何问题，我很乐意帮您解答。", 0.25));
+                messages.add(new ARTCAICallEngine.ARTCAICallAgentAutoSpeechContent("是不是刚才的信息不太清楚？我可以再为您说明一遍。", 0.20));
+                messages.add(new ARTCAICallEngine.ARTCAICallAgentAutoSpeechContent("请问您还在考虑哪方面的问题呢？我可以帮您一起看看。", 0.15));
+                messages.add(new ARTCAICallEngine.ARTCAICallAgentAutoSpeechContent("如果暂时不方便说话，也可以稍后联系我们，我会一直在这里。", 0.13));
+                messages.add(new ARTCAICallEngine.ARTCAICallAgentAutoSpeechContent("您是不是遇到网络或信号问题了？如果能听到，请回复'在'。", 0.12));
+                messages.add(new ARTCAICallEngine.ARTCAICallAgentAutoSpeechContent("我注意到您刚才没有回应，是我说得不够清楚吗？", 0.09));
+                messages.add(new ARTCAICallEngine.ARTCAICallAgentAutoSpeechContent("感谢您的耐心，若还有需要，随时告诉我哦", 0.06));
+                autoSpeechUserIdleConfig.messages = messages;
+                agentConfig.autoSpeechForUserIdleConfig = autoSpeechUserIdleConfig;
+            }
+
+            // 背景音
+            String ambientResourceId = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_AMBIENT_RESOURCE_ID, "");
+            if(!TextUtils.isEmpty(ambientResourceId)) {
+                agentConfig.ambientConfig = new ARTCAICallEngine.ARTCAICallAgentAmbientConfig(100, ambientResourceId);
+            }
+            // Debug设置背景音
+            String ambientConfigStr = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_AMBIENT_CONFIG);
+            if(!TextUtils.isEmpty(ambientConfigStr)) {
+                try {
+                    JSONObject jsonObject = new JSONObject(ambientConfigStr);
+                    agentConfig.ambientConfig = new ARTCAICallEngine.ARTCAICallAgentAmbientConfig(jsonObject);
+                }catch (JSONException e) {
+                    e.printStackTrace();
+                }
             }
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -1437,7 +1650,7 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
                 return textPaint.measureText(ch);
             }
         }
-        
+
         private void initUIComponent() {
             if (null == mLlFullScreenSubtitle) {
                 mLlFullScreenSubtitle = findViewById(R.id.ll_full_screen_subtitle);
@@ -1790,6 +2003,60 @@ public class AUIAICallInCallActivity extends AppCompatActivity {
             });
 
         }
+    }
+
+    /**
+     * 从本地 agent_scenes.json 构建音色列表
+     */
+    private List<AudioToneData> buildAudioToneListFromConfig() {
+        if (TextUtils.isEmpty(mAgentId)) {
+            return new ArrayList<>();
+        }
+
+        // 直接使用统一管理类获取音色列表
+        List<AudioToneData> audioToneList = AUIAICallAgentScenarioConfig.getVoiceStylesForAgent(
+                this,
+                mAgentId,
+                mAiAgentType
+        );
+
+        // 设置默认选中
+        if (!audioToneList.isEmpty()) {
+            String savedVoiceId = SettingStorage.getInstance().get(SettingStorage.KEY_VOICE_ID);
+            boolean found = false;
+            
+            if (!TextUtils.isEmpty(savedVoiceId)) {
+                for (AudioToneData data : audioToneList) {
+                    if (data.getAudioToneId().equals(savedVoiceId)) {
+                        data.setUsing(true);
+                        found = true;
+                        break;
+                    }
+                }
+            }
+            
+            if (!found) {
+                audioToneList.get(0).setUsing(true);
+            }
+        }
+
+        return audioToneList;
+    }
+
+    /**
+     * 将 ARTCAICallAgentType 枚举转换为 JSON 配置中的 agent_type 字符串
+     */
+    private String getAgentTypeStringForConfig(ARTCAICallEngine.ARTCAICallAgentType type) {
+        if (type == ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent) {
+            return "VoiceAgent";
+        } else if (type == ARTCAICallEngine.ARTCAICallAgentType.AvatarAgent) {
+            return "AvatarAgent";
+        } else if (type == ARTCAICallEngine.ARTCAICallAgentType.VisionAgent) {
+            return "VisionAgent";
+        } else if (type == ARTCAICallEngine.ARTCAICallAgentType.VideoAgent) {
+            return "VideoAgent";
+        }
+        return null;
     }
 
 }

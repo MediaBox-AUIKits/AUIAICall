@@ -138,4 +138,11 @@
 
     <color name="color_border_tertiary_transparent">#00EEEEEE</color>
     <color name="color_bg_elevated_transparent">#00FFFFFF</color>
+    
+    <!-- Scenario Selection Page Colors -->
+    <color name="aicall_scenario_text_primary">#000000</color>
+    <color name="aicall_scenario_text_secondary">#666666</color>
+    <color name="aicall_scenario_item_background">#FFFFFF</color>
+    <color name="aicall_scenario_item_border_unselected">#E0E0E0</color>
+    <color name="aicall_scenario_item_border_selected">#000000</color>
 </resources>

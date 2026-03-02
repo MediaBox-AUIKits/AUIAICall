@@ -43,7 +43,9 @@ class MainViewController: UIViewController {
         self.view.addSubview(btn)
         
         btn.clickBlock = { sender in
-            AUIAICallManager.defaultManager.startCall(agentType: .VoiceAgent)
+            if let scene = AUIAICallAgentManager.shared.getScenes(for: .VoiceAgent).first {
+                AUIAICallManager.defaultManager.startCall(agentType: .VoiceAgent, scene: scene)
+            }
         }
     }
     
@@ -56,7 +58,9 @@ class MainViewController: UIViewController {
         self.view.addSubview(btn)
         
         btn.clickBlock = { sender in
-            AUIAICallManager.defaultManager.startChat(agentId: nil)
+            if let scene = AUIAICallAgentManager.shared.getScenes("ChatAgent").first {
+                AUIAICallManager.defaultManager.startChat(scene: scene)
+            }
         }
     }
     

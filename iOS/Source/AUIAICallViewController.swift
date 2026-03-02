@@ -322,7 +322,7 @@ extension AUIAICallViewController {
             return
         }
         let panel = AUIAICallSettingPanel(frame: CGRect(x: 0, y: 0, width: self.view.av_width, height: 0))
-        panel.voiceIdList = self.controller.agentVoiceIdList
+        panel.voiceStyles = self.controller.agentVoiceStyles
         panel.config = self.controller.config
         panel.applyPlayBlock = { [weak self] item in
             self?.controller.switchVoiceId(voiceId: item.voiceId, completed: { error in
@@ -562,6 +562,11 @@ extension AUIAICallViewController: AUIAICallControllerDelegate {
 #if DEMO_FOR_DEBUG
         let text = self.getUserSubtitle(text: text, voiceprintResult: voiceprintResult)
 #endif
+        if (voiceprintResult == .DetectedSpeaker) {
+            if let voiceprintId = self.controller.config.agentConfig.voiceprintConfig.voiceprintId {
+                AUIAICallVoiceprintManager.shared.onAutoRegisted(voiceprintId: voiceprintId)
+            }
+        }
         
         if voiceprintResult == .UndetectedSpeaker || voiceprintResult == .UndetectedSpeakerWithAIVad {
             self.subtitleListView.removeSubtitle(sentenceId: sentenceId, isAgent: false)

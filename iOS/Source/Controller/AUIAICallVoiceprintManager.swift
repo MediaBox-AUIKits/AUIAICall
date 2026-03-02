@@ -13,18 +13,31 @@ import AliyunOSSiOS
     
     public static let shared = AUIAICallVoiceprintManager()
     
-    public override init() {
+    private override init() {
         super.init()
-
-        _ = self.loadData()
     }
     
     // 获取声纹降噪开关
     open private(set) var isEnable: Bool = true
     
-    public private(set) var voiceprintItem: AUIAICallVoiceprintItem? = nil
+
+    // 是否开启声纹降噪
+    open func enableVoiceprint(_ isEnable: Bool) -> Void {
+        self.isEnable = isEnable
+        self.saveData()
+    }
     
-    public var userId: String = "" {
+    // 获取声纹注册模式，false表示预注册， true表示无感注册
+    open private(set) var isAutoRegister: Bool = false
+    
+    // 切换注册模式，false表示预注册， true表示无感注册
+    open func switchVoiceprintMode(isAutoRegister: Bool) {
+        self.isAutoRegister = isAutoRegister
+        self.saveData()
+    }
+    
+    // 使用当前声纹的用户Id
+    open var userId: String = "" {
         didSet {
             if self.loadData() == false {
                 self.reset()
@@ -32,33 +45,42 @@ import AliyunOSSiOS
         }
     }
     
-    public var region: String {
-#if DEMO_FOR_DEBUG
-        AUIAICallDebugManager.shared.getRegion()
-#else
-        AUIAICallAgentConfig.shared.getRegion()
-#endif
+    // 预注册时，声纹需要上传到OSS所在的区域
+    // ⚠️ 注意智能体如果使用预注册的声纹，智能体所在的区域需要与该区域一致
+    open var region: String {
+        return "cn-shanghai"
     }
-    private var appserver: AUIAICallAppServer? = nil
     
+    // 当前是否预发环境
+    open var isPreEnv: Bool = false {
+        didSet {
+            if self.loadData() == false {
+                self.reset()
+            }
+            self.appserver = nil
+        }
+    }
     
     // 是否完整声纹录入
     open func isRegistedVoiceprint() -> Bool {
-        return self.voiceprintItem != nil
+        if self.isAutoRegister {
+            return self.autoRegisterVoiceprintItem != nil
+        }
+        return self.preRegisterVoiceprintItem != nil
     }
     
-    // 通话时，可否可以使用声纹降噪能力
-    open func canUseVoiceprint() -> Bool {
-        return self.isEnable && self.isRegistedVoiceprint()
+    // 通话时，可以使用的声纹Id，返回nil表示未注册
+    open func getVoiceprintId() -> String? {
+        if self.isAutoRegister{
+            return self.autoRegisterVoiceprintItem?.voiceprintId
+        }
+        return self.preRegisterVoiceprintItem?.voiceprintId
     }
     
-    // 是否开启声纹降噪
-    open func enableVoiceprint(_ isEnable: Bool) -> Void {
-        self.isEnable = isEnable
-        self.saveData()
-    }
-    
-    public func getDirectory() -> URL {
+    private var preRegisterVoiceprintItem: AUIAICallVoiceprintItem? = nil
+    private var autoRegisterVoiceprintItem: AUIAICallVoiceprintItem? = nil
+
+    open func getDirectory() -> URL {
         let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
         let url = paths[0].appendingPathComponent("voiceprint")
         if !FileManager.default.fileExists(atPath: url.path) {
@@ -81,22 +103,32 @@ import AliyunOSSiOS
     
     private func reset() {
         self.isEnable = true
-        self.voiceprintItem = nil
-        self.saveData()
+        self.isAutoRegister = false
+        self.preRegisterVoiceprintItem = nil
+        self.autoRegisterVoiceprintItem = nil
     }
     
     private func loadData() -> Bool {
-        let fileURL = self.getDirectory().appendingPathComponent("\(self.userId)_data.json")
+        let fileURL = self.getDirectory().appendingPathComponent("\(self.userId)_data\(self.isPreEnv ? "_pre" : "").json")
         do {
             let data = try Data(contentsOf: fileURL)
+            self.reset()
             if let dict = String.init(data: data, encoding: .utf8)?.aicall_jsonObj() {
                 if let isEnable = dict["Enable"] as? Bool {
                     self.isEnable = isEnable
                 }
                 if let itemDict = dict["Item"] as? [String: AnyHashable] {
-                    self.voiceprintItem = AUIAICallVoiceprintItem(dict: itemDict)
+                    self.preRegisterVoiceprintItem = AUIAICallVoiceprintItem(dict: itemDict)
+                }
+                if let isAutoRegister = dict["AutoRegister"] as? Bool {
+                    self.isAutoRegister = isAutoRegister
+                }
+                if let itemDict = dict["AutoItem"] as? [String: AnyHashable] {
+                    self.autoRegisterVoiceprintItem = AUIAICallVoiceprintItem(dict: itemDict)
                 }
             }
+            debugPrint("[voiceprint]加载当前预注册声纹Id:\(self.preRegisterVoiceprintItem?.voiceprintId ?? "未注册") 其他信息{uid: \(self.userId), pre: \(self.isPreEnv)}")
+            debugPrint("[voiceprint]加载当前无感注册声纹Id:\(self.autoRegisterVoiceprintItem?.voiceprintId ?? "未注册") 其他信息{uid: \(self.userId), pre: \(self.isPreEnv)}")
             return true
         } catch {
             debugPrint("读取失败: \(error)")
@@ -105,12 +137,20 @@ import AliyunOSSiOS
     }
 
     private func saveData() {
-        let fileURL = self.getDirectory().appendingPathComponent("\(self.userId)_data.json")
+        let fileURL = self.getDirectory().appendingPathComponent("\(self.userId)_data\(self.isPreEnv ? "_pre" : "").json")
         do {
-            let dict: [String: AnyHashable] = [
+            debugPrint("[voiceprint]保存当前预注册声纹Id:\(self.preRegisterVoiceprintItem?.voiceprintId ?? "未注册") 其他信息{uid: \(self.userId), pre: \(self.isPreEnv)}")
+            debugPrint("[voiceprint]保存当前无感注册声纹Id:\(self.autoRegisterVoiceprintItem?.voiceprintId ?? "未注册") 其他信息{uid: \(self.userId), pre: \(self.isPreEnv)}")
+            var dict: [String: AnyHashable] = [
                 "Enable": self.isEnable,
-                "Item": self.voiceprintItem?.toDict()
+                "AutoRegister": self.isAutoRegister,
             ]
+            if let preRegisterVoiceprintItem = self.preRegisterVoiceprintItem {
+                dict["Item"] = preRegisterVoiceprintItem.toDict()
+            }
+            if let autoRegisterVoiceprintItem = self.autoRegisterVoiceprintItem {
+                dict["AutoItem"] = autoRegisterVoiceprintItem.toDict()
+            }
             
             let data = dict.aicall_jsonString.data(using: .utf8)
             try data?.write(to: fileURL)
@@ -119,6 +159,9 @@ import AliyunOSSiOS
         }
     }
 
+    private var appserver: AUIAICallAppServer? = nil
+    private var client: OSSClient!
+    
     private func getOssConfig(completed:((_ config: [String: Any]?,  _ error: NSError?) -> Void)?) {
         self.appserver?.request(path: "/api/v2/aiagent/getOssConfig", body: ["user_id": self.userId]) { response, data, error in
             if error == nil {
@@ -130,7 +173,7 @@ import AliyunOSSiOS
         }
     }
 
-    var client: OSSClient!
+
     private func uploadFile(audioFileUrl: URL, info: [String: Any], completed:((_ ossUrl: String?, _ error: NSError?)->Void)?) {
         debugPrint("开始上传：\(audioFileUrl)")
         let accessKeyId = (info["access_key_id"] as? String) ?? ""
@@ -210,7 +253,8 @@ import AliyunOSSiOS
         }
     }
 
-    public func start(audioFileUrl: URL, completed:((_ error: NSError?)->Void)?) {
+    // 预注册声纹时，发起注册
+    open func startPreRester(audioFileUrl: URL, completed:((_ error: NSError?)->Void)?) {
         
         if self.userId.isEmpty == true {
             completed?(NSError.aicall_create(code: .InvalidParames, message: "userId is empty"))
@@ -221,8 +265,7 @@ import AliyunOSSiOS
             self.appserver = AUIAICallAppServer()
         }
 
-        let resultBlock: (_ error: NSError?)->Void = { [weak self] error in
-            self?.appserver = nil
+        let resultBlock: (_ error: NSError?)->Void = { error in
             completed?(error)
         }
 
@@ -252,7 +295,7 @@ import AliyunOSSiOS
                         let item = AUIAICallVoiceprintItem(voiceprintId: voiceprintId)
                         item.filePath = self.getStorePath(filePath: audioFileUrl.absoluteString)
                         item.ossUrl = ossUrl!
-                        self.voiceprintItem = item
+                        self.preRegisterVoiceprintItem = item
                         self.saveData()
                         resultBlock(nil)
                         return
@@ -260,6 +303,66 @@ import AliyunOSSiOS
                     resultBlock(NSError.aicall_create(code: -1, message: "Register voiceprint failed"))
                 }
             })
+        }
+    }
+    
+    // 生成一个声纹Id，用于自动注册
+    open func generateVoiceprintId() -> String {
+        return "\(self.userId)_\(String.aicall_random())"
+    }
+    
+    // 无感模式声纹完成注册
+    open func onAutoRegisted(voiceprintId: String) {
+        
+        if self.isAutoRegister == false {
+            return
+        }
+        
+        if let item = self.autoRegisterVoiceprintItem {
+            if item.voiceprintId != voiceprintId {
+                debugPrint("[voiceprint]⚠️⚠️⚠️ 警告：当前的声纹是无感模式，且已经注册，但注册的声纹Id与在通话中返回的声纹Id不一致，请检查调用情况")
+                debugPrint("[voiceprint]当前已无感注册的声纹Id：\(item.voiceprintId)")
+                debugPrint("[voiceprint]当前通话中返回的声纹Id：\(voiceprintId)")
+            }
+            return
+        }
+        
+        let item = AUIAICallVoiceprintItem(voiceprintId: voiceprintId)
+        self.autoRegisterVoiceprintItem = item
+        self.saveData()
+    }
+    
+    // 移除无感模式的已经注册的声纹
+    open func removeAutoRegister(completed: ((_ success: Bool) -> Void)? = nil) {
+        guard let removeItem = self.autoRegisterVoiceprintItem else {
+            return
+        }
+        self.autoRegisterVoiceprintItem = nil
+        self.saveData()
+        
+        // 调用OpenAPI
+        if self.appserver == nil {
+            self.appserver = AUIAICallAppServer()
+        }
+        
+        let voiceprintId = removeItem.voiceprintId
+        let body: [String: Any] = [
+            "user_id": self.userId,
+            "region": self.region,
+            "voiceprint_id": voiceprintId,
+            "registration_mode": "Implicit"
+        ]
+        self.appserver?.request(path: "/api/v2/aiagent/clearAIAgentVoiceprint", body: body) { response, data, error in
+            if let data = data {
+                let code = (data["code"] as? Int) ?? -1
+                let message = data.aicall_jsonString
+                debugPrint("clearAIAgentVoiceprint result: \(code) message: \(message)")
+                completed?(code == 200)
+            }
+            else {
+                debugPrint("clearAIAgentVoiceprint failed: \(data?.aicall_jsonString ?? "unknown")")
+                completed?(false)
+            }
         }
     }
 }

@@ -59,6 +59,18 @@
             android:windowSoftInputMode="adjustResize"
             android:exported="false" />
 
+        <activity
+            android:name=".AUIAICallScenarioSelectionActivity"
+            android:screenOrientation="portrait"
+            android:launchMode="singleTop"
+            android:exported="false" />
+
+        <activity
+            android:name=".AUIAICallAgentSettingActivity"
+            android:screenOrientation="portrait"
+            android:launchMode="singleTop"
+            android:exported="false" />
+
         <service android:name=".service.ForegroundAliveService" />
     </application>
 

@@ -33,6 +33,8 @@ public let AUIAIMainBundle = AUIAICallTheme("AUIAIMain")
         
         self.contentView.addSubview(self.mainTabView)
         self.contentView.addSubview(self.mainInfoView)
+        
+        self.tryToShowAgentConfigUserGuide()
 
         // 提前获取Token
         AUIAICallAuthTokenHelper.shared.fetchAuthToken(userId: AUIAICallManager.defaultManager.userId!, completed: nil)
@@ -82,17 +84,7 @@ public let AUIAIMainBundle = AUIAICallTheme("AUIAIMain")
         settingBtn.setImage(AUIAIMainBundle.getTemplateImage("ic_setting"), for: .normal)
         settingBtn.tintColor = AUIAIMainBundle.color_icon
         settingBtn.clickBlock = { [weak self] sender in
-            guard let self = self else {
-                return
-            }
-            let panel = AUIAICallAgentConfigPanel(frame: CGRect(x: 0, y: 0, width: self.view.av_width, height: 0))
-            panel.voiceprintSettingView.registerBar.tappedAction = { [weak self, weak panel] bar in
-                panel?.hide()
-                if let self = self {
-                    self.navigationController?.pushViewController(AUIAICallVoiceprintViewController(), animated: true)
-                }
-            }
-            panel.show(on: self.view, with: .clickToClose)
+            self?.navigationController?.pushViewController(AUIAICallAgentConfigViewController(), animated: true)
         }
         rightView.addSubview(settingBtn)
         
@@ -147,7 +139,6 @@ public let AUIAIMainBundle = AUIAICallTheme("AUIAIMain")
             guard let self = self else {
                 return
             }
-            
             let tabIndex = self.mainTabView.currTabItem.index
             if tabIndex == .CustomAgent {
                 self.startCustomAgent()
@@ -161,6 +152,7 @@ public let AUIAIMainBundle = AUIAICallTheme("AUIAIMain")
             }
             else if tabIndex == .ChatAgent {
                 self.startChat()
+                
             }
             else {
                 self.startCall(agentType: ARTCAICallAgentType(rawValue: Int32(tabIndex.rawValue))!)
@@ -211,28 +203,112 @@ public let AUIAIMainBundle = AUIAICallTheme("AUIAIMain")
         
     }
     
-    open func startCall(agentType: ARTCAICallAgentType, agentId: String? = nil, region: String? = nil) {
-        if agentType == .AvatarAgent || agentType == .VideoAgent {
-            let seconds: UInt32 = 5 * 60
-            AUIAICallManager.defaultManager.startCall(agentType: agentType, agentId: agentId, region: region, limitSecond: seconds, viewController: self)
-            return
+    open func startCall(agentType: ARTCAICallAgentType) {
+        let sceneVC = AUIAICallSceneViewController(tabIndex: AUIAICallMainTabIndex(rawValue: agentType.rawValue)!)
+        sceneVC.onEnterBtnClicked = { scene in
+            AUIAICallManager.defaultManager.startCall(agentType: agentType, scene: scene, viewController: self)
         }
-        
-        AUIAICallManager.defaultManager.startCall(agentType: agentType, agentId: agentId, region: region, viewController: self)
+        self.navigationController?.pushViewController(sceneVC, animated: true)
     }
     
-    open func startChat(agentId: String? = nil) {
-        AUIAICallManager.defaultManager.startChat(agentId: agentId, viewController: self)
+    open func startChat() {
+        let scenes = AUIAICallAgentManager.shared.getScenes("ChatAgent")
+        if scenes.count > 1 {
+            let sceneVC = AUIAICallSceneViewController(tabIndex: .ChatAgent)
+            sceneVC.onEnterBtnClicked = { [weak self] scene in
+                AUIAICallManager.defaultManager.startChat(scene: scene, viewController: self)
+            }
+            self.navigationController?.pushViewController(sceneVC, animated: true)
+        }
+        else if scenes.count == 1 {
+            AUIAICallManager.defaultManager.startChat(scene: scenes[0], viewController: self)
+        }
+        else {
+            AVAlertController.show("缺少智能体配置，请在agent_scenes.json配置！")
+        }
     }
     
     open func startOutbound() {
-        let vc = AUIAICallOutboundViewController()
-        self.navigationController?.pushViewController(vc, animated: true)
+        let scenes = AUIAICallAgentManager.shared.getScenes("OutboundCall")
+        if scenes.count > 1 {
+            let sceneVC = AUIAICallSceneViewController(tabIndex: .OutboundCall)
+            sceneVC.onEnterBtnClicked = { [weak self] scene in
+                let vc = AUIAICallOutboundViewController(scene: scene)
+                self!.navigationController?.pushViewController(vc, animated: true)
+            }
+            self.navigationController?.pushViewController(sceneVC, animated: true)
+        }
+        else if scenes.count == 1 {
+            let vc = AUIAICallOutboundViewController(scene: scenes[0])
+            self.navigationController?.pushViewController(vc, animated: true)
+        }
+        else {
+            AVAlertController.show("缺少智能体配置，请在agent_scenes.json配置！")
+        }
     }
     
     open func startInbound() {
-        let vc = AUIAICallInboundViewController()
-        self.navigationController?.pushViewController(vc, animated: true)
+        let scenes = AUIAICallAgentManager.shared.getScenes("InboundCall")
+        if scenes.count > 1 {
+            let sceneVC = AUIAICallSceneViewController(tabIndex: .InboundCall)
+            sceneVC.onEnterBtnClicked = { [weak self] scene in
+                let vc = AUIAICallInboundViewController(scene: scene)
+                self!.navigationController?.pushViewController(vc, animated: true)
+            }
+            self.navigationController?.pushViewController(sceneVC, animated: true)
+        }
+        else if scenes.count == 1 {
+            let vc = AUIAICallInboundViewController(scene: scenes[0])
+            self.navigationController?.pushViewController(vc, animated: true)
+        }
+        else {
+            AVAlertController.show("缺少智能体配置，请在agent_scenes.json配置！")
+        }
+    }
+}
+
+// Agent config user guide
+extension AUIAICallMainViewController {
+    
+    func tryToShowAgentConfigUserGuide() {
+        if AUIAICallAgentManager.shared.enableUserGuide == true {
+            return
+        }
+        
+        let bg = AVBlockButton()
+        self.view.addSubview(bg)
+        bg.frame = self.view.bounds
+        bg.backgroundColor = AUIAICallBundle.color_bg_mask
+        
+        let settingBtnFrame = CGRect(x: view.av_width - 94 - 24, y: UIView.av_safeTop + 6, width: 96 / 2.0, height: 36)
+        let settingBtn = AVBlockButton(frame: settingBtnFrame)
+        bg.addSubview(settingBtn)
+        settingBtn.isUserInteractionEnabled = false
+        settingBtn.backgroundColor = AUIAIMainBundle.color_bg
+        settingBtn.setImage(AUIAIMainBundle.getTemplateImage("ic_setting"), for: .normal)
+        settingBtn.tintColor = AUIAIMainBundle.color_icon
+        settingBtn.layer.cornerRadius = 12
+        settingBtn.layer.borderWidth = 1
+        settingBtn.layer.borderColor = AUIAIMainBundle.color_icon.cgColor
+        
+        let arr = UIImageView(frame: CGRect(x: settingBtn.av_left + 4, y: settingBtn.av_bottom + 8, width: 20, height: 40))
+        bg.addSubview(arr)
+        arr.image = AUIAIMainBundle.getTemplateImage("ic_guide_arr")
+        arr.tintColor = AUIAIMainBundle.color_icon_identical
+        
+        let title = UILabel()
+        bg.addSubview(title)
+        title.text = AUIAIMainBundle.getString("Additional Agent Parameter Settings")
+        title.textColor = AUIAIMainBundle.color_text_identical
+        title.font = AVTheme.regularFont(14)
+        title.sizeToFit()
+        title.av_centerX = arr.av_left
+        title.av_top = arr.av_bottom + 8
+        
+        bg.clickBlock = { sender in
+            sender.removeFromSuperview()
+            AUIAICallAgentManager.shared.enableUserGuide = true
+        }
     }
 }
 
@@ -247,7 +323,7 @@ extension AUIAICallMainViewController {
 #endif
         let openBlock: (_ authToken: String) -> Void = { authToken in
             if let ret = AUIAICallMainViewController.checkAuthToken(authToken: authToken) {
-                if ret.agentIndex == ChatAgentTypeIndex {
+                if ret.agentIndex == .ChatAgent {
                     self.startChat(agentShareInfo: authToken)
                 }
                 else {
@@ -281,7 +357,7 @@ extension AUIAICallMainViewController {
         AUIAICallManager.defaultManager.startChat(agentShareInfo: agentShareInfo, viewController: self)
     }
     
-    static func checkAuthToken(authToken: String) -> (agentId: String, agentIndex: Int, region: String?)? {
+    static func checkAuthToken(authToken: String) -> (agentId: String, agentIndex: AUIAICallMainTabIndex, region: String?)? {
         let json = authToken.aicall_decodeBase64AndDeserialize()
         guard let json = json else {
             AVAlertController.show(AUIAIMainBundle.getString("Invalid Token"))
@@ -305,21 +381,21 @@ extension AUIAICallMainViewController {
         }
         
         let workflowType = json["WorkflowType"] as? String
-        var agentIndex: Int = VoiceAgentTypeIndex
+        var agentIndex: AUIAICallMainTabIndex = .VoiceAgent
         if workflowType == "VoiceChat" {
-            agentIndex = VoiceAgentTypeIndex
+            agentIndex = .VoiceAgent
         }
         else if workflowType == "AvatarChat3D" {
-            agentIndex = AvatarAgentTypeIndex
+            agentIndex = .AvatarAgent
         }
         else if workflowType == "VisionChat" {
-            agentIndex = VisionAgentTypeIndex
+            agentIndex = .VisionAgent
         }
         else if workflowType == "VideoChat" {
-            agentIndex = VideoAgentTypeIndex
+            agentIndex = .VideoAgent
         }
         else if workflowType == "MessageChat" {
-            agentIndex = ChatAgentTypeIndex
+            agentIndex = .ChatAgent
         }
         else {
             AVAlertController.show(AUIAIMainBundle.getString("Invalid Token"))

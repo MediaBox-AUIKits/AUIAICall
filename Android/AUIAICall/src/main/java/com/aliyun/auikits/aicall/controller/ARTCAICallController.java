@@ -567,9 +567,9 @@ public abstract class ARTCAICallController {
 
         AudioToneData audioTone = new AudioToneData(voiceId, voiceTitle);
         if(i % 2 == 0) {
-            audioTone.setIconResId(R.drawable.ic_audio_tone_3);
+            audioTone.setIconResId(R.drawable.ic_audio_tone_0);
         } else {
-            audioTone.setIconResId(R.drawable.ic_audio_tone_4);
+            audioTone.setIconResId(R.drawable.ic_audio_tone_1);
         }
         audioTone.setUsing(mARTCAiCallConfig.mAiCallAgentTemplateConfig.aiAgentVoiceId.equals(audioTone.getAudioToneId()));
         return audioTone;

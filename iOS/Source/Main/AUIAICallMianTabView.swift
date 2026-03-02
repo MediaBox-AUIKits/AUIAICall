@@ -20,7 +20,7 @@ public enum AUIAICallMainTabIndex: Int32 {
 }
 
 @objcMembers open class AUIAICallMianTabItem: NSObject {
-    
+
     init(_ index: AUIAICallMainTabIndex = .VoiceAgent, _ title: String = "", _ info: String = "") {
         self.index = index
         self.title = title
@@ -31,6 +31,9 @@ public enum AUIAICallMainTabIndex: Int32 {
     open var title: String = ""
     open var info: String = ""
     
+    
+    static let EnableOutboundCall = false
+    static let EnableInboundCall = false
     public static var tabInfoList: [AUIAICallMianTabItem] = {
         var list = [AUIAICallMianTabItem]()
         list.append(AUIAICallMianTabItem(.VoiceAgent, AUIAIMainBundle.getString("Voice Call"), AUIAIMainBundle.getString("AI_Voice_Call_Detail")))
@@ -38,25 +41,16 @@ public enum AUIAICallMainTabIndex: Int32 {
         list.append(AUIAICallMianTabItem(.VisionAgent, AUIAIMainBundle.getString("Vision Call"), AUIAIMainBundle.getString("AI_Vision_Call_Detail")))
         list.append(AUIAICallMianTabItem(.VideoAgent, AUIAIMainBundle.getString("Video Call"), AUIAIMainBundle.getString("AI_Video_Call_Detail")))
         list.append(AUIAICallMianTabItem(.ChatAgent, AUIAIMainBundle.getString("Chat"), AUIAIMainBundle.getString("AI_Chat_Detail")))
-        if AUIAICallAgentConfig.shared.enableOutboundCall {
-            list.append(AUIAICallMianTabItem(.OutboundCall, AUIAIMainBundle.getString("Call Out"), AUIAIMainBundle.getString("AI_Call_Out_Detail")))
+        if AUIAICallMianTabItem.EnableOutboundCall {
+            list.append(AUIAICallMianTabItem(.OutboundCall, AUIAIMainBundle.getString("AI Call Out"), AUIAIMainBundle.getString("AI_Call_Out_Detail")))
         }
-        if AUIAICallAgentConfig.shared.enableInboundCall {
-            list.append(AUIAICallMianTabItem(.InboundCall, AUIAIMainBundle.getString("Call In"), AUIAIMainBundle.getString("AI_Call_In_Detail")))
+        if AUIAICallMianTabItem.EnableInboundCall {
+            list.append(AUIAICallMianTabItem(.InboundCall, AUIAIMainBundle.getString("AI Call In"), AUIAIMainBundle.getString("AI_Call_In_Detail")))
         }
         list.append(AUIAICallMianTabItem(.CustomAgent, AUIAIMainBundle.getString("Custom Agent"), AUIAIMainBundle.getString("Custom_Agent_Detail")))
         return list
     }()
 }
-
-// TODO: remove
-let VoiceAgentTypeIndex: Int = 0
-let AvatarAgentTypeIndex: Int = 1
-let VisionAgentTypeIndex: Int = 2
-let VideoAgentTypeIndex: Int = 3
-let ChatAgentTypeIndex: Int = 100
-let OutboundCallTypeIndex: Int = 101
-let InboundCallTypeIndex: Int = 102
 
 @objcMembers open class AUIAICallMianTabView: UIScrollView {
     

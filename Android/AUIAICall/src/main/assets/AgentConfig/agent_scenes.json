@@ -1,0 +1,117 @@
+{
+  "version": 2,
+  "agents": [
+    {
+      "agent_type": "VoiceAgent",
+      "scenes": [
+        {
+          "agent_id": "<Your Agent Id for Voice Agent>",
+          "region": "<Your Agent's region>",
+          "title": "Voice Call",
+          "tags": [],
+          "limit_seconds": 1800,
+          "description": "",
+          "asr_model_id": "xxx",
+          "tts_model_id": "xxx",
+          "voice_styles": []
+        }
+      ]
+    },
+    {
+      "agent_type": "AvatarAgent",
+      "scenes": [
+        {
+          "agent_id": "<Your Agent Id for Avatar Agent>",
+          "region": "<Your Agent's region>",
+          "title": "Avatar Call",
+          "tags": [],
+          "limit_seconds": 300,
+          "description": "",
+          "asr_model_id": "xxx",
+          "tts_model_id": "xxx",
+          "voice_styles": []
+        }
+      ]
+    },
+    {
+      "agent_type": "VisionAgent",
+      "scenes": [
+        {
+          "agent_id": "<Your Agent Id for Vision Agent>",
+          "region": "<Your Agent's region>",
+          "title": "Vision Call",
+          "tags": [],
+          "limit_seconds": 1800,
+          "description": "",
+          "asr_model_id": "xxx",
+          "tts_model_id": "xxx",
+          "voice_styles": []
+        }
+      ]
+    },
+    {
+      "agent_type": "VideoAgent",
+      "scenes": [
+        {
+          "agent_id": "<Your Agent Id for Video Agent>",
+          "region": "<Your Agent's region>",
+          "title": "Video Call",
+          "tags": [],
+          "limit_seconds": 300,
+          "description": "",
+          "asr_model_id": "xxx",
+          "tts_model_id": "xxx",
+          "voice_styles": []
+        }
+      ]
+    },
+    {
+      "agent_type": "ChatAgent",
+      "scenes": [
+        {
+          "agent_id": "<Your Agent Id for Chat Agent>",
+          "region": "<Your Agent's region>",
+          "title": "Message Chat",
+          "tags": [],
+          "limit_seconds": -1,
+          "description": "",
+          "asr_model_id": "xxx",
+          "tts_model_id": "xxx",
+          "voice_styles": []
+        }
+      ]
+    },
+    {
+      "agent_type": "OutboundCall",
+      "scenes": [
+        {
+          "agent_id": "<Your Agent Id for Outbound Call>",
+          "region": "<Your Agent's region>",
+          "title": "Outbound Call",
+          "tags": [],
+          "limit_seconds": -1,
+          "description": "",
+          "asr_model_id": "xxx",
+          "tts_model_id": "xxx",
+          "voice_styles": []
+        }
+      ]
+    },
+    {
+      "agent_type": "InboundCall",
+      "scenes": [
+        {
+          "agent_id": "<Your Agent Id for Inbound Call>",
+          "region": "<Your Agent's region>",
+          "title": "Inbound Call",
+          "tags": [],
+          "limit_seconds": -1,
+          "description": "",
+          "asr_model_id": "xxx",
+          "tts_model_id": "xxx",
+          "voice_styles": []
+        }
+      ]
+    }
+  ]
+}

@@ -39,7 +39,6 @@ import AUIFoundation
         view.backgroundColor = .clear
         view.dataSource = self
         view.delegate = self
-        view.register(AUIAICallSubtitleCell.self, forCellWithReuseIdentifier: "cell")
         view.showsHorizontalScrollIndicator = false
         view.register(AUIAICallLatencyRateCell.self, forCellWithReuseIdentifier: "cell")
         return view

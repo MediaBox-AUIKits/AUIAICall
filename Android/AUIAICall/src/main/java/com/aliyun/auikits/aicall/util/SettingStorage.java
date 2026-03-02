@@ -23,6 +23,7 @@ public class SettingStorage {
     public static final String KEY_USE_RTC_PRE_ENV_SWITCH = "KEY_USE_RTC_PRE_ENV_SWITCH";
     public static final String KEY_BOOT_ENABLE_PUSH_TO_TALK = "KEY_BOOT_ENABLE_PUSH_TO_TALK";
     public static final String KEY_BOOT_ENABLE_VOICE_PRINT = "KEY_BOOT_ENABLE_VOICE_PRINT";
+    public static final String KEY_BOOT_VOICE_PRIINT_AUTO_REGISTER = "KEY_BOOT_VOICE_PRIINT_AUTO_REGISTER";
     public static final String KEY_SHARE_BOOT_USE_DEMO_APP_SERVER = "KEY_SHARE_BOOT_USE_DEMO_APP_SERVER";
     public static final String KEY_CUSTOM_AGENT_TEXT_INPUT_MODE = "KEY_CUSTOM_AGENT_TEXT_INPUT_MODE";
     public static final String KEY_BOOT_USER_EXTEND_DATA = "KEY_BOOT_USER_EXTEND_DATA";
@@ -52,6 +53,9 @@ public class SettingStorage {
     public static final String KEY_GREETING = "KEY_GREETING";
     public static final String KEY_VOICE_PRINT_ID = "KEY_VOICE_PRINT_ID";
     public static final String KEY_VOICE_PRINT_RECORD_ALRAEDY = "KEY_VOICE_PRINT_RECORD_ALRAEDY";
+    // 预发环境专用声纹key，线上继续使用上面的默认key
+    public static final String KEY_VOICE_PRINT_ID_PRE = "KEY_VOICE_PRINT_ID_PRE";
+    public static final String KEY_VOICE_PRINT_RECORD_ALRAEDY_PRE = "KEY_VOICE_PRINT_RECORD_ALRAEDY_PRE";
     public static final String KEY_VOICE_PRINT_NOT_RECORD_NOT_WORK = "KEY_VOICE_PRINT_NOT_RECORD_NOT_WORK";
     public static final String KEY_VOICE_PRINT_FIRST_RECORD_TIPS = "KEY_VOICE_PRINT_FIRST_RECORD_TIPS";
     public static final String KEY_ENABLE_INTELLIGENT_SEGMENT = "KEY_ENABLE_INTELLIGENT_SEGMENT";
@@ -75,6 +79,7 @@ public class SettingStorage {
     public static final String KEY_BOOT_TTS_MODEL_ID = "KEY_BOOT_TTS_MODEL_ID";
     public static final String KEY_BOOT_OPENAI_EXTRA_QUERY = "KEY_BOOT_OPENAI_EXTRA_QUERY";
     public static final String KEY_BOOT_AMBIENT_CONFIG = "KEY_BOOT_AMBIENT_CONFIG";
+    public static final String KEY_BOOT_AMBIENT_RESOURCE_ID = "KEY_BOOT_AMBIENT_RESOURCE_ID";
     public static final String KEY_BOOT_PRE_CONNECT_AUDIO_URL = "KEY_BOOT_PRE_CONNECT_AUDIO_URL";
     public static final String KEY_BOOT_OUTPUT_MIN_LENGTH = "KEY_BOOT_OUTPUT_MIN_LENGTH";
     public static final String KEY_BOOT_OUTPUT_MAX_DELAY = "KEY_BOOT_OUTPUT_MAX_DELAY";
@@ -82,6 +87,11 @@ public class SettingStorage {
     public static final String KEY_BOOT_EXPERIMENTAL_CONFIG = "KEY_BOOT_EXPERIMENTAL_CONFIG";
     public static final String KEY_BOOT_LLMPENDING_CONFIG = "KEY_BOOT_LLMPENDING_CONFIG";
     public static final String KEY_BOOT_USERIDLE_CONFIG = "KEY_BOOT_USERIDLE_CONFIG";
+
+    public static final String KEY_BOOT_ENABLE_BACK_CHANNELING = "KEY_BOOT_ENABLE_BACK_CHANNELING";
+    public static final String KEY_BOOT_ENABLE_AGENT_AUTO_SPEECH_USER_IDLE = "KEY_BOOT_ENABLE_AGENT_AUTO_SPEECH_USER_IDLE";
+    public static final String KEY_BOOT_AUTO_SPEECH_USER_IDLE_WAIT_TIME = "KEY_BOOT_USER_IDLE_WAIT_TIME";
+    public static final String KEY_BOOT_AUTO_SPEECH_USER_IDLE_MAX_REPEATS = "KEY_BOOT_USER_IDLE_MAX_REPEATS";
     public static final String KEY_BOOT_BACKCHANNELING_CONFIG = "KEY_BOOT_BACKCHANNELING_CONFIG";
     public static final String KEY_BOOT_NOINTERRUPTMODE_CONFIG = "KEY_BOOT_NOINTERRUPTMODE_CONFIG";
     public static final String KEY_BOOT_EAGERNESS_CONFIG = "KEY_BOOT_EAGERNESS_CONFIG";
@@ -168,5 +178,31 @@ public class SettingStorage {
         editor.putBoolean(key, value);
         editor.apply();
         Log.i("SettingStorage", "setBoolean " + key + ": " + value);
+    }
+
+    public void setString(String key, String value) {
+        SharedPreferences.Editor editor = mSP.edit();
+        editor.putString(key, value);
+        editor.apply();
+        Log.i("SettingStorage", "setString " + key + ": " + value);
+    }
+
+    public String getString(String key, String defaultValue) {
+        String value = mSP.getString(key, defaultValue);
+        Log.i("SettingStorage", "getString " + key + ": " + value);
+        return value;
+    }
+
+    public void setInt(String key, int value) {
+        SharedPreferences.Editor editor = mSP.edit();
+        editor.putInt(key, value);
+        editor.apply();
+        Log.i("SettingStorage", "setInt " + key + ": " + value);
+    }
+
+    public int getInt(String key, int defaultValue) {
+        int value = mSP.getInt(key, defaultValue);
+        Log.i("SettingStorage", "getInt " + key + ": " + value);
+        return value;
     }
 }

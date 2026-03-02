@@ -44,7 +44,7 @@ public class AICallNoticeDialog {
                 .setContentHolder(viewHolder)
                 .setGravity(Gravity.CENTER)
                 .setOverlayBackgroundResource(android.R.color.transparent)
-                .setContentBackgroundResource(R.color.layout_base_dialog_background)
+                .setContentBackgroundResource(android.R.color.transparent)
                 .setOnClickListener((dialog1, v) -> {
                     if (v.getId() == R.id.btn_confirm) {
                         dialog1.dismiss();
@@ -85,7 +85,7 @@ public class AICallNoticeDialog {
                 .setContentHolder(viewHolder)
                 .setGravity(Gravity.CENTER)
                 .setOverlayBackgroundResource(android.R.color.transparent)
-                .setContentBackgroundResource(R.color.layout_base_dialog_background)
+                .setContentBackgroundResource(android.R.color.transparent)
                 .setOnClickListener((dialog1, v) -> {
                     if (v.getId() == R.id.btn_confirm || v.getId() == R.id.btn_cancel) {
                         dialog1.dismiss();
@@ -121,7 +121,7 @@ public class AICallNoticeDialog {
                 .setContentHolder(viewHolder)
                 .setGravity(Gravity.CENTER)
                 .setOverlayBackgroundResource(android.R.color.transparent)
-                .setContentBackgroundResource(R.color.layout_base_dialog_background)
+                .setContentBackgroundResource(android.R.color.transparent)
                 .setOnClickListener((dialog1, v) -> {
                     if (v.getId() == R.id.btn_confirm) {
                         dialog1.dismiss();

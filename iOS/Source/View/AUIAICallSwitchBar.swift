@@ -34,7 +34,9 @@ import AUIFoundation
         let y = (self.av_height - ch) / 2.0
         self.titleLabel.frame = CGRect(x: 0, y: y, width: self.av_width - self.switchBtn.av_width - 8, height: 24)
         self.switchBtn.center = CGPoint(x: self.av_width - self.switchBtn.av_width / 2.0, y: self.titleLabel.av_centerY)
-        self.infoLabel.frame = CGRect(x: 0, y: self.titleLabel.av_bottom + 8, width: self.av_width, height: 20)
+        
+        let size = self.infoLabel.sizeThatFits(CGSize(width: self.av_width, height: CGFloat.greatestFiniteMagnitude))
+        self.infoLabel.frame = CGRect(x: 0, y: self.titleLabel.av_bottom + 8, width: self.av_width, height: size.height)
     }
     
     open lazy var titleLabel: UILabel = {
@@ -48,6 +50,7 @@ import AUIFoundation
         let label = UILabel()
         label.font = AVTheme.regularFont(12.0)
         label.textColor = AUIAICallBundle.color_text_tertiary
+        label.numberOfLines = 2
         return label
     }()
     

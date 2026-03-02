@@ -14,7 +14,9 @@ import AUIFoundation
         super.init(frame: frame)
         
         self.addSubview(self.titleLabel)
+        self.addSubview(self.rightLabel)
         self.addSubview(self.rightImageView)
+        self.addSubview(self.infoLabel)
         
         self.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(onTapped)))
     }
@@ -27,9 +29,26 @@ import AUIFoundation
         super.layoutSubviews()
         
         self.rightImageView.sizeToFit()
-        self.rightImageView.av_centerY = self.av_height / 2.0
+        self.titleLabel.sizeToFit()
+        self.infoLabel.sizeToFit()
+        self.rightLabel.sizeToFit()
+        
+        var h = self.titleLabel.av_height
+        if self.infoLabel.isHidden == false {
+            h = h + 8 + self.infoLabel.av_height
+        }
+        let top = (self.av_height - h) / 2.0
+        
+        self.titleLabel.av_top = top
+        self.rightImageView.av_centerY = self.titleLabel.av_centerY
         self.rightImageView.av_right = self.av_width
-        self.titleLabel.frame = CGRect(x: 0, y: 0, width: self.rightImageView.av_left - 8.0, height: self.av_height)
+        self.rightLabel.av_centerY = self.rightImageView.av_centerY
+        self.rightLabel.av_width = min(self.rightLabel.av_width, self.av_width / 3.0)
+        self.rightLabel.av_right = self.rightImageView.av_left - 8.0
+        self.titleLabel.av_width = self.rightImageView.av_left - 8.0
+        
+        self.infoLabel.av_top = self.titleLabel.av_bottom + 8.0
+        self.infoLabel.av_width = self.av_width
     }
     
     open override func sizeToFit() {
@@ -45,6 +64,22 @@ import AUIFoundation
         let label = UILabel(frame: CGRect.zero)
         label.textColor = AUIAICallBundle.color_text
         label.font = AVTheme.regularFont(16)
+        return label
+    }()
+    
+    open lazy var infoLabel: UILabel = {
+        let label = UILabel(frame: CGRect.zero)
+        label.textColor = AUIAICallBundle.color_text_tertiary
+        label.font = AVTheme.regularFont(12)
+        label.isHidden = true
+        return label
+    }()
+    
+    open lazy var rightLabel: UILabel = {
+        let label = UILabel(frame: CGRect.zero)
+        label.textColor = AUIAICallBundle.color_text
+        label.font = AVTheme.regularFont(14)
+        label.isHidden = true
         return label
     }()
     

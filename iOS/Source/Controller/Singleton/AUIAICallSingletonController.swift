@@ -8,6 +8,8 @@
 import UIKit
 import ARTCAICallKit
 
+#if DEMO_FOR_RTC
+
 #if canImport(AliVCSDK_ARTC)
 import AliVCSDK_ARTC
 #elseif canImport(AliVCSDK_InteractiveLive)
@@ -58,3 +60,5 @@ import AliVCSDK_Standard
         self.state = .None
     }
 }
+
+#endif

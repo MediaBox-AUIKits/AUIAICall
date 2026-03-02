@@ -373,7 +373,9 @@ import PhotosUI
             return
         }
         let chatSyncConfig = ARTCAICallChatSyncConfig(sessionId: self.sessionId, agentId: self.engine.agentInfo?.agentId ?? "", receiverId: self.engine.userInfo?.userId ?? "")
-        AUIAICallManager.defaultManager.startCall(agentType: agentType, chatSyncConfig: chatSyncConfig)
+        if let scene = AUIAICallAgentManager.shared.getScenes(for: agentType).first {
+            AUIAICallManager.defaultManager.startCall(agentType: agentType, scene: scene, chatSyncConfig: chatSyncConfig)
+        }
     }
     
     private func deleteMessage(item: AUIAIChatMessageItem) {
@@ -612,6 +614,8 @@ import PhotosUI
     public let engine: ARTCAIChatEngineInterface
     public let sessionId: String
     private var currentVoiceId: String = ""
+    
+    open var voiceStyles: [AUIAICallAgentVoiceStyle]? = nil
     
     private var agentShareConfig: ARTCAIChatAgentShareConfig? = nil
     
@@ -887,7 +891,6 @@ extension AUIAIChatViewController: UICollectionViewDelegate, UICollectionViewDat
                 textCell.updateIsPlaying(isPlaying: self.engine.isPlayingMessage(dialogueId: item.message.dialogueId))
                 return textCell
             }
-            
         }
         
         return UICollectionViewCell()
@@ -948,8 +951,9 @@ extension AUIAIChatViewController {
         
     @objc open func onSettingBtnClicked() {
         let panel = AUIAIChatSettingPanel(frame: CGRect(x: 0, y: 0, width: self.view.av_width, height: 0))
-        panel.setup(voiceIdList: self.engine.voiceIdList, selectItemId: self.currentVoiceId)
-        panel.applyPlayBlock = { [weak self] item in
+        var voiceStyleList = self.voiceStyles ?? []
+        panel.setup(voiceStyles: voiceStyleList, selectedId: self.currentVoiceId)
+        panel.onVoiceStyleSelectedBlock = { [weak self] item in
             self?.currentVoiceId = item.voiceId
         }
         panel.clickIssueReportBlock = { [weak self] panel in

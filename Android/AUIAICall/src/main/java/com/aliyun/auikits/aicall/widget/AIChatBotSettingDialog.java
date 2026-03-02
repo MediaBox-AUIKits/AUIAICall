@@ -176,7 +176,7 @@ public class AIChatBotSettingDialog {
         boolean couldSwitch = audioToneList.size() == 0 ? false:true;
         if(audioToneList.size() == 0) {
             AudioToneData audioTone = new AudioToneData("", mDefaultTitle);
-            audioTone.setIconResId(R.drawable.ic_audio_tone_3);
+            audioTone.setIconResId(R.drawable.ic_audio_tone_0);
             audioTone.setUsing(true);
             audioToneList.add(audioTone);
         }

@@ -3,12 +3,9 @@ package com.aliyun.auikits.aicall;
 import static com.aliyun.auikits.aiagent.ARTCAICallEngine.ARTCAICallTurnDetectionMode.ARTCAICallTurnDetectionNormalMode;
 import static com.aliyun.auikits.aiagent.ARTCAICallEngine.ARTCAICallTurnDetectionMode.ARTCAICallTurnDetectionSemanticMode;
 
-import android.content.ClipData;
-import android.content.ClipboardManager;
-import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Base64;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -20,8 +17,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.aliyun.auikits.aiagent.ARTCAICallEngine;
 import com.aliyun.auikits.aiagent.service.ARTCAICallServiceImpl;
 import com.aliyun.auikits.aiagent.util.Logger;
+import com.aliyun.auikits.aicall.bean.AUIAICallAgentScenario;
 import com.aliyun.auikits.aicall.util.AUIAICallAgentDebug;
-import com.aliyun.auikits.aicall.util.AUIAICallAgentIdConfig;
+import com.aliyun.auikits.aicall.util.AUIAICallAgentScenarioConfig;
 import com.aliyun.auikits.aicall.util.AUIAICallClipboardUtils;
 import com.aliyun.auikits.aicall.util.AUIAIConstStrKey;
 import com.aliyun.auikits.aicall.util.AppServiceConst;
@@ -67,6 +65,9 @@ public class AUIAICallInPhoneCallActivity extends AppCompatActivity {
         findViewById(R.id.btn_back).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Intent intent = new Intent(AUIAICallInPhoneCallActivity.this, AUIAICallEntranceActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                startActivity(intent);
                 finish();
             }
         });
@@ -133,7 +134,24 @@ public class AUIAICallInPhoneCallActivity extends AppCompatActivity {
 
         if(TextUtils.isEmpty(mAgentRegion)) {
             if(!mIsSharedAgent) {
-                mAgentRegion = AUIAICallAgentIdConfig.getRegion();
+                // 从配置文件读取 Region（电话外呼场景，使用OutboundCall配置）
+                List<AUIAICallAgentScenario> scenarios = AUIAICallAgentScenarioConfig.getScenariosByAgentType(
+                    this,
+                    ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent,
+                    false,
+                    true,
+                    false  // 默认使用电话外呼配置
+                );
+                if (scenarios != null && !scenarios.isEmpty()) {
+                    String region = scenarios.get(0).getRegion();
+                    if (!TextUtils.isEmpty(region)) {
+                        mAgentRegion = region;
+                    }
+                }
+                // 如果配置文件中也没有，使用默认值
+                if (TextUtils.isEmpty(mAgentRegion)) {
+                    mAgentRegion = "cn-shanghai";
+                }
             }
         }
 
@@ -279,7 +297,7 @@ public class AUIAICallInPhoneCallActivity extends AppCompatActivity {
                             ARTCAICallEngine.ARTCAICallAgentBackChanneling backChannelingConfig = new ARTCAICallEngine.ARTCAICallAgentBackChanneling(backChannelingJsonObject);
                             backChannelingConfigList.add(backChannelingConfig);
                         }
-                        agentConfig.backChannelingConfig = backChannelingConfigList;
+                        agentConfig.backChannelingConfigs = backChannelingConfigList;
                     }
                 }
                 String noInterruptModeStr = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_NOINTERRUPTMODE_CONFIG, "");
@@ -398,6 +416,15 @@ public class AUIAICallInPhoneCallActivity extends AppCompatActivity {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        // 系统返回键也直接返回首页
+        Intent intent = new Intent(this, AUIAICallEntranceActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(intent);
+        finish();
     }
 
 }

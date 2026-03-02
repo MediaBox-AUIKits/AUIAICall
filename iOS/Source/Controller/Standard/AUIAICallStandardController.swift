@@ -43,7 +43,6 @@ import ARTCAICallKit
                 ARTCAICallEngineDebuger.Debug_UpdateExtendInfo(key: "InstanceId", value: agent.instanceId)
                 
                 self.delegate?.onAICallAIAgentStarted?(agentInfo: agent, elapsedTime: Date().timeIntervalSince1970 - self.startTime)
-                self.fetchVoiceIdList(instanceId: agent.instanceId)
 
                 _ = self.engine.muteLocalCamera(mute: self.config.muteLocalCamera)
                 _ = self.engine.muteMicrophone(mute: self.config.muteMicrophone)

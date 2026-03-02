@@ -12,6 +12,16 @@ import ARTCAICallKit
 
 @objcMembers open class AUIAICallOutboundViewController: UIViewController {
     
+    public init(scene: AUIAICallAgentScene) {
+        self.scene = scene
+
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    public required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     open override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -29,7 +39,7 @@ import ARTCAICallKit
         self.view.addSubview(self.callTipsBtn)
         self.view.addSubview(self.aiGenTipsLabel)
         self.view.addSubview(self.startCallBtn)
-        self.updateVoiceId()
+        self.onSelectedVoiceStyleUpdated()
         
         self.view.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(onBgTap)))
     }
@@ -117,7 +127,7 @@ import ARTCAICallKit
         view.titleLabel.text = AUIAIMainBundle.getString("Smart Interrupt")
         view.infoLabel.text = AUIAIMainBundle.getString("Interrupt Agent Based on Sound and Environment")
         view.frame = CGRect(x: 24, y: self.numberTipsLabel.av_bottom + 12, width: self.view.av_width - 48, height: 76)
-        view.switchBtn.isOn = true
+        view.switchBtn.isOn = AUIAICallAgentManager.shared.enableVoiceInterrupt
         view.onSwitchValueChangedBlock = { [weak self] bar in
             self?.inputField.resignFirstResponder()
         }
@@ -146,14 +156,17 @@ import ARTCAICallKit
         btn.titleLabel?.font = AVTheme.regularFont(14)
         btn.clickBlock = { [weak self] btn in
             self?.inputField.resignFirstResponder()
+            
             let top = UIViewController.av_top()
             let panel = AUIAIChatSettingPanel(frame: CGRect(x: 0, y: 0, width: top.view.av_width, height: 0))
-            panel.setup(voiceIdList: self!.voiceIdList, selectItemId: self!.voiceItem?.voiceId ?? "")
+            var voiceStyles = self!.scene.voiceStyles
+            voiceStyles.insert(AUIAICallAgentVoiceStyle(voiceId: "", name: AUIAIChatBundle.getString("Default")), at: 0)
+            panel.setup(voiceStyles: voiceStyles, selectedId: self!.selectedVoiceStyle?.voiceId ?? "")
             panel.titleView.text = AUIAIMainBundle.getString("Choose Voice Tone")
             panel.voiceIdSwitch.isHidden = true
             panel.issueReportView.isHidden = true
-            panel.applyPlayBlock = { [weak panel] item in
-                self?.voiceItem = item
+            panel.onVoiceStyleSelectedBlock = { [weak panel] item in
+                self?.selectedVoiceStyle = item
                 panel?.hide()
             }
             panel.show(on: top.view, with: .clickToClose)
@@ -210,7 +223,7 @@ import ARTCAICallKit
                 return
             }
             guard let phoneNumber = self.phoneNumber else { return }
-            AUIAICallManager.defaultManager.startOutboundCall(phoneNumber: phoneNumber, voiceId: self.voiceItem?.voiceId ?? "", enableVoiceInterrupt: self.isVoiceInterrupted, viewController: self)
+            AUIAICallManager.defaultManager.startOutboundCall(phoneNumber: phoneNumber, scene: self.scene, voiceId: self.selectedVoiceStyle?.voiceId ?? "", enableVoiceInterrupt: self.isVoiceInterrupted, viewController: self)
         }
         return btn
     }()
@@ -237,6 +250,8 @@ import ARTCAICallKit
         self.startCallBtn.isEnabled = enable
     }
     
+    private let scene: AUIAICallAgentScene
+    
     open var phoneNumber: String? {
         get {
             return self.inputField.text
@@ -247,19 +262,14 @@ import ARTCAICallKit
         return self.interruptSwitch.switchBtn.isOn
     }
     
-    public let voiceIdList = ["1185:云峰", "11:云穹", "1397:云薇", "1151:云玲"]
-    open var voiceItem: AUIAICallVoiceItem? = nil {
+    open var selectedVoiceStyle: AUIAICallAgentVoiceStyle? = nil {
         didSet {
-            self.updateVoiceId()
+            self.onSelectedVoiceStyleUpdated()
         }
     }
     
-    open func updateVoiceId() {
-        var title = self.voiceItem?.voiceName
-        if title?.isEmpty != false {
-            title = AUIAIChatBundle.getString("Default")
-        }
-        self.selectVoiceIdBtn.setTitle(title, for: .normal)
+    open func onSelectedVoiceStyleUpdated() {
+        self.selectVoiceIdBtn.setTitle(self.selectedVoiceStyle?.name ?? AUIAIChatBundle.getString("Default"), for: .normal)
         self.updateSelectVoiceBtnLayout()
     }
 }

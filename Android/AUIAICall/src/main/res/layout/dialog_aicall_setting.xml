@@ -192,13 +192,13 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"/>
                 </LinearLayout>
-                <Switch
+                <androidx.appcompat.widget.SwitchCompat
                     android:id="@+id/sv_voiceprint"
                     android:shadowColor="@color/color_fill"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:thumb="@drawable/bg_switch_thumb"
-                    android:track="@drawable/bg_switch_track"
+                    app:track="@drawable/bg_switch_track"
                     app:layout_constraintRight_toRightOf="parent"
                     app:layout_constraintTop_toTopOf="@id/ll_voiceprint_title"
                     app:layout_constraintBottom_toTopOf="@id/ll_voiceprint_status"
@@ -268,12 +268,12 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"/>
                 </LinearLayout>
-                <Switch
+                <androidx.appcompat.widget.SwitchCompat
                     android:id="@+id/sv_interrupt_config"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:thumb="@drawable/bg_switch_thumb"
-                    android:track="@drawable/bg_switch_track"
+                    app:track="@drawable/bg_switch_track"
                     app:layout_constraintRight_toRightOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"

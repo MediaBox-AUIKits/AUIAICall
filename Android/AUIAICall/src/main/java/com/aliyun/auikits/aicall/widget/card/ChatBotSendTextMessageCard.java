@@ -36,6 +36,7 @@ import com.aliyun.auikits.aicall.bean.ChatBotSelectedFileAttachment;
 import com.aliyun.auikits.aicall.model.ChatBotSelectImagesContentModel;
 import com.aliyun.auikits.aicall.util.AUIAIConstStrKey;
 import com.aliyun.auikits.aicall.util.markwon.AUIAIMarkwonManager;
+import com.aliyun.auikits.aicall.util.MessageBubbleHelper;
 import com.aliyun.auikits.aicall.widget.PlayMessageAnimationView;
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.listener.OnItemClickListener;
@@ -79,6 +80,8 @@ public class ChatBotSendTextMessageCard extends BaseCard {
         mSendMessageLayout = root.findViewById(R.id.chatbot_send_message_item);
         mSendImagesListView.addItemDecoration(new ItemSpacingDecoration((int) TypedValue.applyDimension(
                 TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics())));
+        
+        MessageBubbleHelper.applyMaxWidth(context, mSendTextMessageContentTextView);
     }
 
     @Override

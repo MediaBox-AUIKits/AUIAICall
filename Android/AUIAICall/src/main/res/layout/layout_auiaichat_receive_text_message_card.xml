@@ -2,10 +2,9 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="20dp"
-    android:layout_marginTop="6dp"
+    android:layout_marginTop="16dp"
     android:layout_marginBottom="6dp"
     android:id="@+id/chat_msg_receive_message_item_ai">
 
@@ -18,93 +17,6 @@
         android:visibility="gone"  />
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/chat_msg_message_item_ai_thinking_layout"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="@color/color_fill_tertiary"
-        android:paddingHorizontal="16dp"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/chat_msg_message_item_ai_text_layout"
-        android:visibility="gone" >
-        <LinearLayout
-            android:id="@+id/chat_msg_message_item_ai_thinking_title_layout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toTopOf="@id/chat_msg_message_item_ai_thinking_desc_layout"
-            android:paddingVertical="4dp"
-            android:gravity="center_vertical" >
-            <ImageView
-                android:id="@+id/chat_msg_message_item_ai_thinking_finish_img"
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:src="@drawable/ic_chatbot_think_finish"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintLeft_toLeftOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"
-                android:layout_marginEnd="8dp" />
-
-            <TextView
-                android:id="@+id/chat_msg_message_item_ai_thinking_title"
-                style="@style/text_style_16"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="思考中..."
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintLeft_toRightOf="@id/chat_msg_message_item_ai_thinking_finish_img"
-                app:layout_constraintBottom_toBottomOf="parent"
-                />
-
-            <ImageView
-                android:id="@+id/chat_msg_message_item_ai_thinking_title_button"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:scaleType="center"
-                android:src="@drawable/ic_chatbot_think_open"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintLeft_toRightOf="@id/chat_msg_message_item_ai_thinking_title"
-                app:layout_constraintBottom_toBottomOf="parent"
-                />
-
-        </LinearLayout>
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/chat_msg_message_item_ai_thinking_desc_layout"
-            android:layout_width="8dp"
-            android:layout_height="19dp"
-            android:layout_marginBottom="12dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/chat_msg_message_item_ai_thinking_title_layout">
-
-            <View
-                android:id="@+id/chat_msg_message_item_ai_thinking_desc_line"
-                android:layout_width="1dp"
-                android:layout_height="0dp"
-                android:background="@color/color_border_secondary"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintLeft_toLeftOf="parent"
-                app:layout_constraintRight_toLeftOf="@id/chat_msg_message_item_ai_thinking_desc"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <TextView
-                android:id="@+id/chat_msg_message_item_ai_thinking_desc"
-                style="@style/text_style_tertiary_16"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:text=""
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintLeft_toRightOf="@id/chat_msg_message_item_ai_thinking_desc_line"
-                app:layout_constraintTop_toTopOf="parent" />
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-    <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/chat_msg_message_item_ai_text_layout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -112,19 +24,99 @@
         android:paddingHorizontal="16dp"
         android:paddingVertical="8dp"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/chat_msg_message_item_ai_thinking_layout"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@id/chat_msg_message_item_ai_button_layout"
         android:visibility="visible">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/chat_msg_message_item_ai_thinking_layout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="280dp"
+            android:maxWidth="280dp"
+            android:background="@color/color_fill_tertiary"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:visibility="gone" >
+
+            <LinearLayout
+                android:id="@+id/chat_msg_message_item_ai_thinking_title_layout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                android:paddingVertical="4dp"
+                android:gravity="center_vertical" >
+
+                <ImageView
+                    android:id="@+id/chat_msg_message_item_ai_thinking_finish_img"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_chatbot_think_finish"
+                    android:layout_marginEnd="8dp"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/chat_msg_message_item_ai_thinking_title"
+                    style="@style/text_style_16"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="思考中..." />
+
+                <ImageView
+                    android:id="@+id/chat_msg_message_item_ai_thinking_title_button"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:scaleType="center"
+                    android:src="@drawable/ic_chatbot_think_open" />
+
+            </LinearLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/chat_msg_message_item_ai_thinking_desc_layout"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="12dp"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/chat_msg_message_item_ai_thinking_title_layout"
+                android:visibility="visible">
+
+                <View
+                    android:id="@+id/chat_msg_message_item_ai_thinking_desc_line"
+                    android:layout_width="1dp"
+                    android:layout_height="0dp"
+                    android:background="@color/color_border_secondary"
+                    app:layout_constraintBottom_toBottomOf="@id/chat_msg_message_item_ai_thinking_desc"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintTop_toTopOf="@id/chat_msg_message_item_ai_thinking_desc" />
+
+                <TextView
+                    android:id="@+id/chat_msg_message_item_ai_thinking_desc"
+                    style="@style/text_style_tertiary_16"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:text=""
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintLeft_toRightOf="@id/chat_msg_message_item_ai_thinking_desc_line"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
         <TextView
             android:id="@+id/chat_message_text"
             style="@style/text_style_16"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:maxWidth="280dp"
             android:text=""
             android:textIsSelectable="true"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintBottom_toTopOf="@id/chat_message_text_interruption_tips" />
+            app:layout_constraintTop_toBottomOf="@id/chat_msg_message_item_ai_thinking_layout"
+            app:layout_constraintLeft_toLeftOf="parent" />
 
         <TextView
             android:id="@+id/chat_message_text_interruption_tips"
@@ -132,11 +124,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:layout_marginBottom="4dp"
             android:text="@string/chat_bot_user_interruption_tips"
             app:layout_constraintTop_toBottomOf="@id/chat_message_text"
             app:layout_constraintLeft_toLeftOf="parent"
-            android:visibility="visible" />
+            android:visibility="gone" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

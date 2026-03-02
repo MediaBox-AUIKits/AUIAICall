@@ -12,7 +12,6 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -21,12 +20,11 @@ import androidx.appcompat.widget.SwitchCompat;
 
 import com.aliyun.auikits.aiagent.ARTCAICallEngine;
 import com.aliyun.auikits.aicall.bean.AudioToneData;
-import com.aliyun.auikits.aicall.util.AUIAICallAgentDebug;
-import com.aliyun.auikits.aicall.util.AUIAICallAgentIdConfig;
+import com.aliyun.auikits.aicall.bean.AUIAICallAgentScenario;
+import com.aliyun.auikits.aicall.util.AUIAICallAgentScenarioConfig;
 import com.aliyun.auikits.aicall.util.AUIAICallClipboardUtils;
 import com.aliyun.auikits.aicall.util.AUIAICallManager;
 import com.aliyun.auikits.aicall.util.AUIAIConstStrKey;
-import com.aliyun.auikits.aicall.util.SettingStorage;
 import com.aliyun.auikits.aicall.util.ToastHelper;
 import com.aliyun.auikits.aicall.widget.AICallPSTNSettingDialog;
 
@@ -51,6 +49,9 @@ public class AUIAICallPhoneCallInputActivity extends AppCompatActivity {
     private String mUserId;
     private String mAuth;
     private boolean isInboundCall = false;
+    
+    private String mSelectedAgentId;
+    private String mSelectedAgentRegion;
 
 
     @Override
@@ -63,6 +64,9 @@ public class AUIAICallPhoneCallInputActivity extends AppCompatActivity {
             mUserId = getIntent().getExtras().getString(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_USER_ID);
             mAuth = getIntent().getExtras().getString(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_AUTHORIZATION);
             isInboundCall = getIntent().getExtras().getBoolean(AUIAIConstStrKey.BUNDLE_KEY_IS_PSTN_IN, false);
+            // 接收场景选择页面传来的智能体ID和region
+            mSelectedAgentId = getIntent().getExtras().getString(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_ID);
+            mSelectedAgentRegion = getIntent().getExtras().getString(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_REGION);
         }
 
         // 初始化界面
@@ -72,7 +76,12 @@ public class AUIAICallPhoneCallInputActivity extends AppCompatActivity {
     private void initViews() {
         mTitleTextView = findViewById(R.id.tv_ai_call_title);
         mIvBtnBack = findViewById(R.id.btn_back);
-        mIvBtnBack.setOnClickListener(v -> finish());
+        mIvBtnBack.setOnClickListener(v -> {
+            Intent intent = new Intent(this, AUIAICallEntranceActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(intent);
+            finish();
+        });
         mStartCallBtn = findViewById(R.id.tv_start_call);
         mStartCallBtn.setOnClickListener(v -> jumpToIncallActivity());
 
@@ -159,7 +168,9 @@ public class AUIAICallPhoneCallInputActivity extends AppCompatActivity {
 
             mPstnVoiceSelectLayout = findViewById(R.id.ll_pstn_out_voice_select);
             mPstnVoiceSelectTextView = findViewById(R.id.tv_pstn_out_voice_value);
-            List<AudioToneData> audioToneList = AICallPSTNSettingDialog.getDefaultAudioToneList(this);
+            // 从配置文件读取音色列表
+            String agentIdForVoice = !TextUtils.isEmpty(mSelectedAgentId) ? mSelectedAgentId : getPhoneCallAgentIdFromConfig(false);
+            List<AudioToneData> audioToneList = AICallPSTNSettingDialog.getAudioToneListFromConfig(this, agentIdForVoice);
             mPstnVoiceSelectTextView.setText(AICallPSTNSettingDialog.currentVoice);
 
             mPstnVoiceSelectLayout.setOnClickListener(new View.OnClickListener() {
@@ -195,19 +206,20 @@ public class AUIAICallPhoneCallInputActivity extends AppCompatActivity {
             }
             boolean isInterlligentInterrupt = getPSTNSmartInterrupt();
             String voiceId = getPSTNVoiceSelect();
-            boolean usePreHost = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_APP_SERVER_TYPE, SettingStorage.DEFAULT_APP_SERVER_TYPE);
-            String agentId = "";
-            if(BuildConfig.TEST_ENV_MODE) {
-                agentId = usePreHost ? AUIAICallAgentDebug.getOutBoundAgentId() :  AUIAICallAgentIdConfig.getOutBoundAgentId();
-            }
-            else {
-                agentId = AUIAICallAgentIdConfig.getOutBoundAgentId();
+            
+            // 优先使用场景选择页面传来的智能体ID和region
+            String agentId = !TextUtils.isEmpty(mSelectedAgentId) ? mSelectedAgentId : getPhoneCallAgentIdFromConfig(false);
+            String region = !TextUtils.isEmpty(mSelectedAgentRegion) ? mSelectedAgentRegion : getPhoneCallRegionFromConfig(false);
+            if(TextUtils.isEmpty(agentId)) {
+                ToastHelper.showToast(AUIAICallPhoneCallInputActivity.this, "未找到电话呼出智能体配置", Toast.LENGTH_SHORT);
+                return;
             }
 
             Intent intent = new Intent(AUIAICallPhoneCallInputActivity.this, AUIAICallInPhoneCallActivity.class);
             intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_PSTN_OUT_NUMBER, pstnCallNumber);
             intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_USER_ID, mUserId);
             intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_ID, agentId);
+            intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_REGION, region);
             intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_AUTHORIZATION, mAuth);
             intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_PSTN_SMART_INTERRUPT, isInterlligentInterrupt);
             intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_PSTN_OUT_VOICE, voiceId);
@@ -217,14 +229,15 @@ public class AUIAICallPhoneCallInputActivity extends AppCompatActivity {
     }
 
     private void fetchInBoundCallerNumber(String userId, String auth) {
-        String agentId;
-        boolean usePreHost = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_APP_SERVER_TYPE, SettingStorage.DEFAULT_APP_SERVER_TYPE);
-        if(BuildConfig.TEST_ENV_MODE) {
-            agentId = usePreHost ? AUIAICallAgentDebug.getOutBoundAgentId() :  AUIAICallAgentIdConfig.getOutBoundAgentId();
-        } else {
-            agentId = AUIAICallAgentIdConfig.getOutBoundAgentId();
+        // 优先使用场景选择页面传来的智能体ID和region
+        String agentId = !TextUtils.isEmpty(mSelectedAgentId) ? mSelectedAgentId : getPhoneCallAgentIdFromConfig(true);
+        String region = !TextUtils.isEmpty(mSelectedAgentRegion) ? mSelectedAgentRegion : getPhoneCallRegionFromConfig(true);
+        if(TextUtils.isEmpty(agentId)) {
+            ToastHelper.showToast(AUIAICallPhoneCallInputActivity.this, "未找到电话呼入智能体配置", Toast.LENGTH_SHORT);
+            return;
         }
-        AUIAICallManager.getInBoundCallNumber(userId, auth, agentId, AUIAICallAgentDebug.getRegion(), new AUIAICallManager.IAUIAICallManagerBoundCallNumberCallback() {
+        
+        AUIAICallManager.getInBoundCallNumber(userId, auth, agentId, region, new AUIAICallManager.IAUIAICallManagerBoundCallNumberCallback() {
             @Override
             public void onSuccess(String data) {
                 if(data != null) {
@@ -264,5 +277,45 @@ public class AUIAICallPhoneCallInputActivity extends AppCompatActivity {
 
     public String getPSTNVoiceSelect() {
         return AICallPSTNSettingDialog.currentAudioToneId;
+    }
+    
+    private String getPhoneCallAgentIdFromConfig(boolean isInbound) {
+        List<AUIAICallAgentScenario> scenarios = AUIAICallAgentScenarioConfig.getScenariosByAgentType(
+                this,
+                ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent,
+                false,
+                true,
+                isInbound
+        );
+        
+        if (scenarios != null && !scenarios.isEmpty()) {
+            return scenarios.get(0).getAgentId();
+        }
+        return null;
+    }
+    
+    private String getPhoneCallRegionFromConfig(boolean isInbound) {
+        List<AUIAICallAgentScenario> scenarios = AUIAICallAgentScenarioConfig.getScenariosByAgentType(
+                this,
+                ARTCAICallEngine.ARTCAICallAgentType.VoiceAgent,
+                false,
+                true,
+                isInbound
+        );
+        
+        if (scenarios != null && !scenarios.isEmpty()) {
+            String region = scenarios.get(0).getRegion();
+            return !TextUtils.isEmpty(region) ? region : "cn-shanghai";
+        }
+        return "cn-shanghai";
+    }
+
+    @Override
+    public void onBackPressed() {
+        // 系统返回键也直接返回首页
+        Intent intent = new Intent(this, AUIAICallEntranceActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(intent);
+        finish();
     }
 }

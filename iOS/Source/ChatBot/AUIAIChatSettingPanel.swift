@@ -8,7 +8,7 @@
 import UIKit
 import AUIFoundation
 
-public typealias AUIAIChatSettingSelectedBlock = (_ item: AUIAICallVoiceItem) -> Void
+public typealias AUIAIChatSettingSelectedBlock = (_ item: AUIAICallAgentVoiceStyle) -> Void
 
 
 @objcMembers open class AUIAIChatSettingPanel: AVBaseCollectionControllPanel {
@@ -89,51 +89,35 @@ public typealias AUIAIChatSettingSelectedBlock = (_ item: AUIAICallVoiceItem) ->
         return view
     }()
     
-    private var voiceItemList: [AUIAICallVoiceItem] = []
+    private var voiceStyles: [AUIAICallAgentVoiceStyle] = []
     
-    private lazy var defaultVoiceItem: AUIAICallVoiceItem = {
-        let item = AUIAICallVoiceItem()
-        item.voiceId = ""
-        item.voiceName = AUIAIChatBundle.getString("Default")
-        item.icon = "ic_sound_1"
-        return item
-    }()
-    
-    public func setup(voiceIdList: [String], selectItemId: String) {
-        var selectItem: AUIAICallVoiceItem? = nil
-        
-        self.voiceItemList.removeAll()
-        self.voiceItemList.append(self.defaultVoiceItem)
-        for i in 0 ..< voiceIdList.count {
-            let vid = voiceIdList[i]
-            let item = AUIAICallVoiceItem()
-            let ret = vid.components(separatedBy: ":")
-            if ret.count == 2 {
-                item.voiceId = ret[0]
-                item.voiceName = ret[1]
-            }
-            else {
-                item.voiceId = vid
-                item.voiceName = vid
-            }
-            item.icon = "ic_sound_\(i % 2)"
-            self.voiceItemList.append(item)
-            
-            if item.voiceId == selectItemId {
-                selectItem = item
-            }
-        }
-        self.selectItem = selectItem ?? self.defaultVoiceItem
-        self.voiceIdSwitch.isHidden = self.voiceItemList.count == 0
-    }
-    
-    private var selectItem: AUIAICallVoiceItem? = nil {
+    private var selectedVoiceStyle: AUIAICallAgentVoiceStyle? = nil {
         didSet {
             self.collectionView.reloadData()
         }
     }
     
-    open var applyPlayBlock: AUIAIChatSettingSelectedBlock? = nil
+    public func setup(voiceStyles: [AUIAICallAgentVoiceStyle], selectedId: String) {
+        var selectItem: AUIAICallAgentVoiceStyle? = nil
+        
+        self.voiceStyles.removeAll()
+        self.voiceStyles.append(contentsOf: voiceStyles)
+        
+        for i in 0 ..< self.voiceStyles.count {
+            let item = self.voiceStyles[i]
+            if item.icon?.isEmpty != false {
+                item.icon = "file://ic_sound_\(i % 2)"  // 使用本地默认图片
+            }
+            
+            if item.voiceId == selectedId {
+                selectItem = item
+            }
+        }
+        self.selectedVoiceStyle = selectItem
+        self.voiceIdSwitch.isHidden = self.voiceStyles.count == 0
+    }
+    
+    open var onVoiceStyleSelectedBlock: AUIAIChatSettingSelectedBlock? = nil
     
     private func updateLayout() {
         
@@ -153,7 +137,7 @@ public typealias AUIAIChatSettingSelectedBlock = (_ item: AUIAICallVoiceItem) ->
 extension AUIAIChatSettingPanel {
     
     open override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return self.voiceItemList.count
+        return self.voiceStyles.count
     }
     
     open override func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
@@ -174,12 +158,12 @@ extension AUIAIChatSettingPanel {
     
     open override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = self.collectionView.dequeueReusableCell(withReuseIdentifier: "cell", for: indexPath) as! AUIAICallVoiceCell
-        cell.item = self.voiceItemList[indexPath.row]
-        cell.isApplied = cell.item == self.selectItem
+        cell.item = self.voiceStyles[indexPath.row]
+        cell.isApplied = cell.item == self.selectedVoiceStyle
         cell.applyBtn.clickBlock = {[weak self, weak cell] sender in
             if let item = cell?.item {
-                self?.applyPlayBlock?(item)
-                self?.selectItem = item
+                self?.onVoiceStyleSelectedBlock?(item)
+                self?.selectedVoiceStyle = item
             }
         }
         return cell

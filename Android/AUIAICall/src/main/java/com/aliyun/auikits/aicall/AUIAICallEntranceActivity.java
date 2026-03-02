@@ -34,17 +34,19 @@ import com.acker.simplezxing.activity.CaptureActivity;
 import com.alibaba.android.arouter.facade.annotation.Route;
 import com.aliyun.auikits.aiagent.ARTCAICallEngine;
 import com.aliyun.auikits.aiagent.util.ARTCAIAgentUtil;
+import com.aliyun.auikits.aicall.bean.AUIAICallAgentScenario;
 import com.aliyun.auikits.aicall.controller.ARTCAICallController;
 import com.aliyun.auikits.aicall.controller.ARTCAICallEngineSingleton;
-import com.aliyun.auikits.aicall.util.AUIAICallAgentDebug;
-import com.aliyun.auikits.aicall.util.AUIAICallAgentIdConfig;
+import com.aliyun.auikits.aicall.util.AUIAICallAgentScenarioConfig;
 import com.aliyun.auikits.aicall.util.AUIAICallAuthTokenHelper;
 import com.aliyun.auikits.aicall.util.AUIAIConstStrKey;
+import com.aliyun.auikits.aicall.util.DisplayUtil;
 import com.aliyun.auikits.aicall.util.PermissionUtils;
 import com.aliyun.auikits.aicall.util.SettingStorage;
 import com.aliyun.auikits.aicall.util.ToastHelper;
-import com.aliyun.auikits.aicall.widget.AIAgentSettingDialog;
+
 import com.aliyun.auikits.aicall.widget.GradientTextView;
+import com.aliyun.auikits.aicall.widget.EntranceGuideView;
 import com.google.android.material.tabs.TabLayout;
 import com.orhanobut.dialogplus.DialogPlus;
 import com.orhanobut.dialogplus.OnDismissListener;
@@ -97,6 +99,7 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
 
     // Debug开关
     private TextView mTvDebug;
+    private ImageView mIvMore;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -108,6 +111,9 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
 
         SettingStorage.getInstance().init(this);
 
+        // App 启动时更新配置。
+        AUIAICallAgentScenarioConfig.reloadConfigFromRemote(this);
+
         setContentView(R.layout.activity_auiaicall);
 
         if(savedInstanceState != null) {
@@ -117,6 +123,7 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
         mBtnCreateRoomLayout = findViewById(R.id.btn_create_room_layout);
         mTvCreateRoom = findViewById(R.id.tv_create_room_btn);
         mTVScanQR = findViewById(R.id.iv_scan);
+        mIvMore = findViewById(R.id.iv_more);
 
         mLayoutHolder.init(this);
 
@@ -133,16 +140,11 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
         findViewById(R.id.iv_more).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(mLayoutHolder.getOfficialLayerHolder().getAUIAICallAgentType() != AUIAICallType.AUIAICallTypeChatBot
-                        && mLayoutHolder.getOfficialLayerHolder().getAUIAICallAgentType() != AUIAICallType.AUIAICallTypeInboundCall
-                        && mLayoutHolder.getOfficialLayerHolder().getAUIAICallAgentType() != AUIAICallType.AUIAICallTypeOutboundCall) {
-                    AIAgentSettingDialog.show(AUIAICallEntranceActivity.this, new AIAgentSettingDialog.IAIVoicePrintRecordListener() {
-                        @Override
-                        public void onClick() {
-                            jumpToVoicePrintRecordActivity();
-                        }
-                    });
-                }
+                // 进入配置 Activity
+                Intent intent = new Intent(AUIAICallEntranceActivity.this, AUIAICallAgentSettingActivity.class);
+                intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_USER_ID, mLoginUserId);
+                intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_AUTHORIZATION, mLoginAuthorization);
+                startActivity(intent);
             }
         });
         mTvDebug = findViewById(R.id.tv_debug);
@@ -183,6 +185,7 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
                         finish();
                     } else {
                         onAllPermissionGranted();
+                        showFirstLaunchGuideIfNeeded();
                     }
                 });
     }
@@ -191,6 +194,26 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         featchRtcAuthToken();
+    }
+
+    private void showFirstLaunchGuideIfNeeded() {
+        boolean hasShownGuide = SettingStorage.getInstance().getBoolean("key_has_shown_entrance_guide", false);
+        if (!hasShownGuide && mIvMore != null) {
+            mIvMore.post(() -> {
+                EntranceGuideView guideView = new EntranceGuideView(AUIAICallEntranceActivity.this);
+                ViewGroup rootView = (ViewGroup) getWindow().getDecorView();
+                rootView.addView(guideView, new ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT
+                ));
+                guideView.setTargetView(mIvMore);
+                guideView.setOnTargetClickListener(() -> {
+
+                });
+
+                SettingStorage.getInstance().setBoolean("key_has_shown_entrance_guide", true);
+            });
+        }
     }
 
     @Override
@@ -296,10 +319,11 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
         return true;
     }
 
-    private void jumpToInCallActivity() {
+   private void jumpToInCallActivity() {
         AUIAICallType callType = mLayoutHolder.getOfficialLayerHolder().getAUIAICallAgentType();
+        
+        // 自定义智能体
         if(callType == AUIAICallType.AUIAICallTypeCustom) {
-            // 自定义智能体
             boolean isUseTextInputMode = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_CUSTOM_AGENT_TEXT_INPUT_MODE, false);
             if(BuildConfig.TEST_ENV_MODE && isUseTextInputMode) {
                 // 文本框输入Token体验
@@ -308,57 +332,133 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
                 // 扫码体验
                 startCaptureActivityForResult();
             }
-
             return;
         }
 
-        // Official Agent
-        if(callType != AUIAICallType.AUIAICallTypeInboundCall && callType != AUIAICallType.AUIAICallTypeOutboundCall) {
-            Intent intent = new Intent(AUIAICallEntranceActivity.this, mLayoutHolder.getOfficialLayerHolder().getAUIAICallAgentType() == AUIAICallType.AUIAICallTypeChatBot ? AUIAIChatInChatActivity.class:AUIAICallInCallActivity.class);
+        boolean useEmotional = SettingStorage.getInstance().getBoolean(
+                SettingStorage.KEY_BOOT_ENABLE_EMOTION,
+                SettingStorage.DEFAULT_BOOT_ENABLE_EMOTION
+        );
+
+        // 消息对话
+        if(callType == AUIAICallType.AUIAICallTypeChatBot) {
+            List<AUIAICallAgentScenario> scenarios =
+                    AUIAICallAgentScenarioConfig.getScenariosByAgentType(
+                            this,
+                            mLayoutHolder.getOfficialLayerHolder().getAICallAgentType(),
+                            useEmotional,
+                            false,
+                            false
+                    );
+
+            if (scenarios != null && scenarios.size() > 1) {
+                // 多场景：先进入场景选择界面
+                Intent intent = new Intent(AUIAICallEntranceActivity.this, AUIAICallScenarioSelectionActivity.class);
+                intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_USER_ID, mLoginUserId);
+                intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_AUTHORIZATION, mLoginAuthorization);
+                intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_TYPE, mLayoutHolder.getOfficialLayerHolder().getAICallAgentType());
+                intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_RTC_AUTH_TOKEN, mRtcAuthToken);
+                startActivity(intent);
+                return;
+            }
+
+            // 0 或 1 个场景：直接进入消息对话页
+            Intent intent = new Intent(AUIAICallEntranceActivity.this, AUIAIChatInChatActivity.class);
             intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_USER_ID, mLoginUserId);
             intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_AUTHORIZATION, mLoginAuthorization);
             intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_TYPE, mLayoutHolder.getOfficialLayerHolder().getAICallAgentType());
             intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_RTC_AUTH_TOKEN, mRtcAuthToken);
-            boolean useEmotional = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_EMOTION, SettingStorage.DEFAULT_BOOT_ENABLE_EMOTION);
-            boolean usePreHost = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_APP_SERVER_TYPE, SettingStorage.DEFAULT_APP_SERVER_TYPE);
+
             String agentId = "";
+            String agentRegion = "";
+            if (scenarios != null && !scenarios.isEmpty()) {
+                agentId = scenarios.get(0).getAgentId();
+                agentRegion = scenarios.get(0).getRegion();
+            }
+
             if(BuildConfig.TEST_ENV_MODE) {
-                agentId = usePreHost ? AUIAICallAgentDebug.getAIAgentId(mLayoutHolder.getOfficialLayerHolder().getAICallAgentType(), useEmotional) :  AUIAICallAgentIdConfig.getAIAgentId(mLayoutHolder.getOfficialLayerHolder().getAICallAgentType(), useEmotional);
                 String autoTestAgent = SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_AUTO_TEST_AGENT);
                 if(!TextUtils.isEmpty(autoTestAgent)) {
                     agentId = autoTestAgent;
                 }
             }
-            else {
-                agentId = AUIAICallAgentIdConfig.getAIAgentId(mLayoutHolder.getOfficialLayerHolder().getAICallAgentType(), useEmotional);
-            }
+
             if(!TextUtils.isEmpty(agentId)) {
                 intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_ID, agentId);
             }
+            if(!TextUtils.isEmpty(agentRegion)) {
+                intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_REGION, agentRegion);
+            }
             intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_IS_SHARED_AGENT, false);
             startActivity(intent);
+
+        // 2）电话呼入
         } else if(callType == AUIAICallType.AUIAICallTypeInboundCall) {
-            Intent intent = new Intent(AUIAICallEntranceActivity.this, AUIAICallPhoneCallInputActivity.class);
+            List<AUIAICallAgentScenario> scenarios =
+                    AUIAICallAgentScenarioConfig.getScenariosByAgentType(
+                            this,
+                            mLayoutHolder.getOfficialLayerHolder().getAICallAgentType(),
+                            useEmotional,
+                            true,
+                            true
+                    );
+
+            if (scenarios != null && scenarios.size() > 1) {
+                // 多场景：进入场景选择页（PSTN 呼入）
+                Intent intent = new Intent(AUIAICallEntranceActivity.this, AUIAICallScenarioSelectionActivity.class);
+                intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_USER_ID, mLoginUserId);
+                intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_AUTHORIZATION, mLoginAuthorization);
+                intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_TYPE, mLayoutHolder.getOfficialLayerHolder().getAICallAgentType());
+                intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_RTC_AUTH_TOKEN, mRtcAuthToken);
+                intent.putExtra("is_pstn_call", true);
+                intent.putExtra("is_inbound_call", true);
+                startActivity(intent);
+            } else {
+                // 单场景：保持原有逻辑，直接进入电话呼入输入页面
+                Intent intent = new Intent(AUIAICallEntranceActivity.this, AUIAICallPhoneCallInputActivity.class);
+                intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_USER_ID, mLoginUserId);
+                intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_AUTHORIZATION, mLoginAuthorization);
+                intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_IS_PSTN_IN, true);
+                startActivity(intent);
+            }
+
+        // 3）电话呼出
+        } else if(callType == AUIAICallType.AUIAICallTypeOutboundCall) {
+            List<AUIAICallAgentScenario> scenarios =
+                    AUIAICallAgentScenarioConfig.getScenariosByAgentType(
+                            this,
+                            mLayoutHolder.getOfficialLayerHolder().getAICallAgentType(),
+                            useEmotional,
+                            true,
+                            false
+                    );
+
+            if (scenarios != null && scenarios.size() > 1) {
+                // 多场景：进入场景选择页（PSTN 呼出）
+                Intent intent = new Intent(AUIAICallEntranceActivity.this, AUIAICallScenarioSelectionActivity.class);
+                intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_USER_ID, mLoginUserId);
+                intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_AUTHORIZATION, mLoginAuthorization);
+                intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_TYPE, mLayoutHolder.getOfficialLayerHolder().getAICallAgentType());
+                intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_RTC_AUTH_TOKEN, mRtcAuthToken);
+                intent.putExtra("is_pstn_call", true);
+                intent.putExtra("is_inbound_call", false);
+                startActivity(intent);
+            } else {
+                // 单场景：直接进入电话呼出输入页面
+                Intent intent = new Intent(AUIAICallEntranceActivity.this, AUIAICallPhoneCallInputActivity.class);
+                intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_USER_ID, mLoginUserId);
+                intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_AUTHORIZATION, mLoginAuthorization);
+                intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_IS_PSTN_IN, false);
+                startActivity(intent);
+            }
+
+        // 4）其他通话类型：音频 / 数字人 / 视觉理解 / 视频
+        } else {
+            Intent intent = new Intent(AUIAICallEntranceActivity.this, AUIAICallScenarioSelectionActivity.class);
             intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_USER_ID, mLoginUserId);
             intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_AUTHORIZATION, mLoginAuthorization);
-
-            intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_IS_PSTN_IN, true);
-            startActivity(intent);
-        } else  {
-            boolean usePreHost = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_APP_SERVER_TYPE, SettingStorage.DEFAULT_APP_SERVER_TYPE);
-            String agentId = "";
-            if(BuildConfig.TEST_ENV_MODE) {
-                agentId = usePreHost ? AUIAICallAgentDebug.getOutBoundAgentId() :  AUIAICallAgentIdConfig.getOutBoundAgentId();
-            }
-            else {
-                agentId = AUIAICallAgentIdConfig.getOutBoundAgentId();
-            }
-
-            Intent intent = new Intent(AUIAICallEntranceActivity.this, AUIAICallPhoneCallInputActivity.class);
-            intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_USER_ID, mLoginUserId);
-            intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_AUTHORIZATION, mLoginAuthorization);
-            intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_IS_PSTN_IN, false);
-            intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_ID, agentId);
+            intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_TYPE, mLayoutHolder.getOfficialLayerHolder().getAICallAgentType());
+            intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_RTC_AUTH_TOKEN, mRtcAuthToken);
             startActivity(intent);
         }
     }
@@ -408,7 +508,7 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
         ((Switch)view.findViewById(R.id.sv_custom_agent_text_input_mode)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_CUSTOM_AGENT_TEXT_INPUT_MODE, false));
         ((EditText)view.findViewById(R.id.et_boot_user_data)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_BOOT_USER_EXTEND_DATA));
 
-        ((EditText) view.findViewById(R.id.enable_voice_interrupt_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_ENABLE_VOICE_INTERRUPT, "1"));
+        ((Switch)view.findViewById(R.id.enable_voice_interrupt_input)).setChecked(SettingStorage.getInstance().getBoolean(SettingStorage.KEY_ENABLE_VOICE_INTERRUPT, true));
         ((EditText) view.findViewById(R.id.voice_id_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_VOICE_ID));
         ((EditText) view.findViewById(R.id.UserOfflineTimeout_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_USER_OFFLINE_TIMEOUT, "5"));
         ((EditText) view.findViewById(R.id.MaxIdleTime_input)).setText(SettingStorage.getInstance().get(SettingStorage.KEY_MAX_IDLE_TIME, "600"));
@@ -459,10 +559,17 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
         ViewHolder viewHolder = new ViewHolder(view);
         DialogPlus dialog = DialogPlus.newDialog(this)
                 .setContentHolder(viewHolder)
-                .setGravity(Gravity.CENTER)
-                .setOverlayBackgroundResource(android.R.color.transparent)
-                .setContentBackgroundResource(R.color.layout_base_dialog_background)
+                .setGravity(Gravity.BOTTOM)
+                .setExpanded(true, DisplayUtil.dip2px(600))
+                .setOverlayBackgroundResource(R.color.color_bg_mask_transparent_70)
+                .setContentBackgroundResource(android.R.color.transparent)
                 .setOnClickListener((dialog1, v) -> {
+                    // 关闭按钮处理
+                    if (v.getId() == R.id.iv_close_entrance_setting) {
+                        dialog1.dismiss();
+                        return;
+                    }
+                    
                     if (v.getId() == R.id.btn_confirm) {
                         String robotId = ((EditText)findViewById(R.id.et_robot_id)).getText().toString();
                         SettingStorage.getInstance().set(SettingStorage.KEY_ROBOT_ID, robotId);
@@ -540,8 +647,8 @@ public class AUIAICallEntranceActivity extends AppCompatActivity {
                         String bootUserExtendData = ((EditText)view.findViewById(R.id.et_boot_user_data)).getText().toString();
                         SettingStorage.getInstance().set(SettingStorage.KEY_BOOT_USER_EXTEND_DATA, bootUserExtendData);
 
-                        String bootEnableVoiceInterrupt = ((EditText)view.findViewById(R.id.enable_voice_interrupt_input)).getText().toString();
-                        SettingStorage.getInstance().set(SettingStorage.KEY_ENABLE_VOICE_INTERRUPT, bootEnableVoiceInterrupt);
+                        boolean bootEnableVoiceInterrupt = ((Switch)view.findViewById(R.id.enable_voice_interrupt_input)).isChecked();
+                        SettingStorage.getInstance().setBoolean(SettingStorage.KEY_ENABLE_VOICE_INTERRUPT, bootEnableVoiceInterrupt);
 
                         String bootVoiceId = ((EditText)view.findViewById(R.id.voice_id_input)).getText().toString();
                         SettingStorage.getInstance().set(SettingStorage.KEY_VOICE_ID, bootVoiceId);

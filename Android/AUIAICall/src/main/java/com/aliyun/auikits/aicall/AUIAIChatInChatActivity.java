@@ -16,7 +16,6 @@ import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Build;
@@ -65,19 +64,19 @@ import com.aliyun.auikits.aicall.base.card.CardEntity;
 import com.aliyun.auikits.aicall.base.card.CardListAdapter;
 import com.aliyun.auikits.aicall.base.card.DefaultCardViewFactory;
 import com.aliyun.auikits.aicall.base.feed.ContentViewModel;
+import com.aliyun.auikits.aicall.bean.AUIAICallAgentScenario;
 import com.aliyun.auikits.aicall.bean.AudioToneData;
 import com.aliyun.auikits.aicall.bean.ChatBotSelectedFileAttachment;
 import com.aliyun.auikits.aicall.model.ChatBotChatMsgContentModel;
 import com.aliyun.auikits.aicall.model.ChatBotSelectImagesContentModel;
 import com.aliyun.auikits.aicall.util.AUIAICallAgentDebug;
-import com.aliyun.auikits.aicall.util.AUIAICallAgentIdConfig;
+import com.aliyun.auikits.aicall.util.AUIAICallAgentScenarioConfig;
 import com.aliyun.auikits.aicall.util.AUIAICallAuthTokenHelper;
 import com.aliyun.auikits.aicall.util.AUIAICallClipboardUtils;
 import com.aliyun.auikits.aicall.util.AUIAIChatAuthTokenHelper;
 import com.aliyun.auikits.aicall.util.AUIAIChatFileUtil;
 import com.aliyun.auikits.aicall.util.AUIAIChatMessageCacheHelper;
 import com.aliyun.auikits.aicall.util.AUIAIConstStrKey;
-import com.aliyun.auikits.aicall.util.BizStatHelper;
 import com.aliyun.auikits.aicall.util.DisplayUtil;
 import com.aliyun.auikits.aicall.util.PermissionUtils;
 import com.aliyun.auikits.aicall.util.SettingStorage;
@@ -85,7 +84,6 @@ import com.aliyun.auikits.aicall.util.TimeUtil;
 import com.aliyun.auikits.aicall.util.ToastHelper;
 import com.aliyun.auikits.aicall.util.markwon.AUIAIMarkwonManager;
 import com.aliyun.auikits.aicall.widget.AICallNoticeDialog;
-import com.aliyun.auikits.aicall.widget.AICallReportingDialog;
 import com.aliyun.auikits.aicall.widget.AIChatBotSettingDialog;
 import com.aliyun.auikits.aicall.widget.PlayMessageAnimationView;
 import com.aliyun.auikits.aicall.widget.VoiceInputEditText;
@@ -104,6 +102,7 @@ import com.scwang.smart.refresh.layout.SmartRefreshLayout;
 import com.scwang.smart.refresh.layout.api.RefreshLayout;
 import com.scwang.smart.refresh.layout.listener.OnRefreshListener;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.lang.ref.WeakReference;
@@ -295,10 +294,7 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
         mSessionId = mUserId + "_" +mAgentId;
 
         ARTCAIChatEngine.ARTCAIChatAgentInfo agentInfo = new ARTCAIChatEngine.ARTCAIChatAgentInfo(mAgentId);
-        if(!mIsSharedAgent) {
-            mAgentRegion = AUIAICallAgentIdConfig.getRegion();
-        }
-        if(!TextUtils.isEmpty(mAgentRegion)) {
+        if(!mIsSharedAgent && !TextUtils.isEmpty(mAgentRegion)) {
             agentInfo.region = mAgentRegion;
         }
         mChatEngine = new ARTCAIChatEngineImpl(AUIAIChatInChatActivity.this);
@@ -348,17 +344,20 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
         intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_AUTHORIZATION, mUserLoginAuthorization);
         intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_TYPE, agentType);
         intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_RTC_AUTH_TOKEN, mMultiMediaHolder.mAICallAuthToken);
-        boolean useEmotional = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_BOOT_ENABLE_EMOTION, SettingStorage.DEFAULT_BOOT_ENABLE_EMOTION);
-        boolean usePreHost = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_APP_SERVER_TYPE, SettingStorage.DEFAULT_APP_SERVER_TYPE);
-        String agentId = "";
-        if(BuildConfig.TEST_ENV_MODE) {
-            agentId = usePreHost ? AUIAICallAgentDebug.getAIAgentId(agentType, useEmotional) :  AUIAICallAgentIdConfig.getAIAgentId(agentType, useEmotional);
-        }
-        else {
-            agentId = AUIAICallAgentIdConfig.getAIAgentId(agentType, useEmotional);
-        }
-        if(!TextUtils.isEmpty(agentId)) {
-            intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_ID, agentId);
+        
+        // 从配置文件读取 AgentId
+        List<AUIAICallAgentScenario> scenarios = AUIAICallAgentScenarioConfig.getScenariosByAgentType(
+            this,
+            agentType,
+            false,
+            false,
+            false
+        );
+        if (scenarios != null && !scenarios.isEmpty()) {
+            String agentId = scenarios.get(0).getAgentId();
+            if(!TextUtils.isEmpty(agentId)) {
+                intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_AI_AGENT_ID, agentId);
+            }
         }
         intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_IS_SHARED_AGENT, false);
         intent.putExtra(AUIAIConstStrKey.BUNDLE_KEY_CHAT_SYNC_CONFIG, true);
@@ -387,6 +386,11 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
             }
         }
         mLayoutHolder.saveMessage();
+        
+        // 返回首页，清除场景选择等中间页面
+        Intent intent = new Intent(this, AUIAICallEntranceActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(intent);
         finish();
     }
 
@@ -395,20 +399,64 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
     }
 
     private void getVoiceIdList() {
-        if(mChatEngine != null) {
-            List<String> voiceIdList = mChatEngine.getVoiceList();
-            for(int i = 0; i < voiceIdList.size(); i++) {
-                String voiceId = voiceIdList.get(i);
-                AudioToneData audioTone = new AudioToneData(voiceId, voiceId);
-                if(i % 2 == 0) {
-                    audioTone.setIconResId(R.drawable.ic_audio_tone_3);
-                } else if(i % 2 == 1) {
-                    audioTone.setIconResId(R.drawable.ic_audio_tone_4);
-                }
-                audioTone.setUsing(mChatEngine.getCurrentVoice().equals(audioTone.getAudioToneId()));
-                mAgentVoiceIdList.add(audioTone);
+        mAgentVoiceIdList.clear();
+        
+        // 从配置文件读取音色列表
+        List<AudioToneData> voiceListFromConfig = buildVoiceListFromConfig();
+        
+        if (voiceListFromConfig != null && !voiceListFromConfig.isEmpty()) {
+            // 使用配置文件中的音色列表
+            mAgentVoiceIdList.addAll(voiceListFromConfig);
+        } else {
+            // 如果配置文件中没有音色，添加一个默认项（voice_id 为空字符串，表示使用服务端默认配置）
+            AudioToneData defaultVoice = new AudioToneData("", "默认音色");
+            defaultVoice.setIconResId(R.drawable.ic_audio_tone_0);
+            defaultVoice.setUsing(true);
+            mAgentVoiceIdList.add(defaultVoice);
+        }
+    }
+    
+    /**
+     * 从配置文件中构建音色列表
+     */
+    private List<AudioToneData> buildVoiceListFromConfig() {
+        if (TextUtils.isEmpty(mAgentId)) {
+            return null;
+        }
+
+        // 直接使用统一管理类获取音色列表
+        List<AudioToneData> voiceList = AUIAICallAgentScenarioConfig.getVoiceStylesForAgent(
+                this,
+                mAgentId,
+                ARTCAICallEngine.ARTCAICallAgentType.ChatBot
+        );
+
+        if (voiceList == null || voiceList.isEmpty()) {
+            return null;
+        }
+
+        // 设置选中状态
+        String currentVoice = "";
+        if (mChatEngine != null) {
+            currentVoice = mChatEngine.getCurrentVoice();
+        }
+
+        boolean hasUsing = false;
+        for (AudioToneData data : voiceList) {
+            if (!TextUtils.isEmpty(currentVoice) && data.getAudioToneId().equals(currentVoice)) {
+                data.setUsing(true);
+                hasUsing = true;
+            } else {
+                data.setUsing(false);
             }
         }
+
+        // 如果没有任何一项被标记为using，则默认选中第一个
+        if (!hasUsing) {
+            voiceList.get(0).setUsing(true);
+        }
+
+        return voiceList;
     }
 
     // 检查权限
@@ -1076,18 +1124,17 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
             boolean notifyChangedInstead = false;
             if(pos >= 0 && pos < mChatMessageListAdapter.getItemCount()) {
                 if(chatMessage.messageState != ARTCAIChatEngine.ARTCAIChatMessageState.Failed) {
-                    if(!TextUtils.isEmpty(chatMessage.text) || !TextUtils.isEmpty(chatMessage.reasoningText) || chatMessage.attachmentList.size() > 0 ) {
-                        CardEntity cardEntity = (CardEntity) mChatMessageListAdapter.getItem(pos);
-                        if(cardEntity != null) {
-                            ChatBotChatMessage uiMessage = (ChatBotChatMessage) cardEntity.bizData;
-                            uiMessage.setAIResponse(isAgentResponse);
-                            uiMessage.setMessage(chatMessage);
-                            mChatBotChatMsgContentModel.updateContent(cardEntity, pos);
-                            notifyChangedInstead = true;
-                        }
+                    CardEntity cardEntity = (CardEntity) mChatMessageListAdapter.getItem(pos);
+                    if(cardEntity != null) {
+                        ChatBotChatMessage uiMessage = (ChatBotChatMessage) cardEntity.bizData;
+                        uiMessage.setAIResponse(isAgentResponse);
+                        uiMessage.setMessage(chatMessage);
+                        mChatBotChatMsgContentModel.updateContent(cardEntity, pos);
+                        notifyChangedInstead = true;
                     }
-                    else {
-                        if(chatMessage.messageState == ARTCAIChatEngine.ARTCAIChatMessageState.Finished || chatMessage.messageState == ARTCAIChatEngine.ARTCAIChatMessageState.Interrupted) {
+                    
+                    if(chatMessage.messageState == ARTCAIChatEngine.ARTCAIChatMessageState.Finished || chatMessage.messageState == ARTCAIChatEngine.ARTCAIChatMessageState.Interrupted) {
+                        if(TextUtils.isEmpty(chatMessage.text) && TextUtils.isEmpty(chatMessage.reasoningText) && chatMessage.attachmentList.size() == 0) {
                             deleteThinkingResponseMessage(chatMessage);
                         }
                     }
@@ -1100,13 +1147,12 @@ public class AUIAIChatInChatActivity extends AppCompatActivity {
             }
 
             if(notifyChangedInstead) {
-                mChatMessageListAdapter.notifyItemChanged(pos);
-                if (isAgentResponse && !mScrollListByUser) {
-                    mChatMessageListView.post(() -> {
-                        // 延迟执行以确保布局完成
+                mChatMessageListView.post(() -> {
+                    mChatMessageListAdapter.notifyItemChanged(pos);
+                    if (isAgentResponse && pos == mChatMessageListAdapter.getItemCount() - 1) {
                         mChatMessageListAdapter.smoothScrollToBottom(mChatMessageListView, true);
-                    });
-                }
+                    }
+                });
             }else {
                 mChatMessageListAdapter.notifyItemInserted(mChatMessageListAdapter.getItemCount());
             }

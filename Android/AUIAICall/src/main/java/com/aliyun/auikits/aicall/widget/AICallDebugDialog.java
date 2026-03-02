@@ -10,16 +10,11 @@ import android.widget.EditText;
 import com.aliyun.auikits.aiagent.ARTCAICallEngine;
 import com.aliyun.auikits.aicall.R;
 import com.aliyun.auikits.aicall.util.DisplayUtil;
-import com.orhanobut.dialogplus.OnDismissListener;
 import com.orhanobut.dialogplus.ViewHolder;
 import com.orhanobut.dialogplus.DialogPlus;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 
 public class AICallDebugDialog {
     public static void show(Context context, ARTCAICallEngine engine) {
@@ -37,22 +32,36 @@ public class AICallDebugDialog {
         DialogPlus dialog = DialogPlus.newDialog(context)
                 .setContentHolder(viewHolder)
                 .setGravity(Gravity.BOTTOM)
-                .setExpanded(true, DisplayUtil.dip2px(850))
-                .setOverlayBackgroundResource(android.R.color.transparent)
-                .setContentBackgroundResource(R.color.layout_base_dialog_background)
+                .setExpanded(true, DisplayUtil.dip2px(600))
+                .setOverlayBackgroundResource(R.color.color_bg_mask_transparent_70)
+                .setContentBackgroundResource(android.R.color.transparent)
                 .setOnClickListener((dialog1, v) -> {
+                    if(v.getId() == R.id.iv_close_debug_setting) {
+                        dialog1.dismiss();
+                        return;
+                    }
+                    
                     if(v.getId() == R.id.debug_send_custom_message_to_server) {
-                        engine.sendCustomMessageToServer(editTextAppServer.getText().toString());
+                        String message = editTextAppServer.getText().toString();
+                        if(!TextUtils.isEmpty(message)) {
+                            engine.sendCustomMessageToServer(message);
+                        }
                     } else if(v.getId() == R.id.debug_update_llm_prompt) {
-                        engine.updateLlmSystemPrompt(editTextllmPrompt.getText().toString());
+                        String prompt = editTextllmPrompt.getText().toString();
+                        if(!TextUtils.isEmpty(prompt)) {
+                            engine.updateLlmSystemPrompt(prompt);
+                        }
                     } else if(v.getId() == R.id.debug_send_single_custom_capture) {
-                        engine.startVisionCustomCapture(new ARTCAICallEngine.ARTCAICallVisionCustomCaptureRequest(editTextCustomCapture.getText().toString(), false, true, 5, 2, 2, ""));
+                        String text = editTextCustomCapture.getText().toString();
+                        engine.startVisionCustomCapture(new ARTCAICallEngine.ARTCAICallVisionCustomCaptureRequest(text, false, true, 5, 2, 2, ""));
                     } else if(v.getId() == R.id.debug_send_continus_custom_capture) {
-                        engine.startVisionCustomCapture(new ARTCAICallEngine.ARTCAICallVisionCustomCaptureRequest(editTextCustomCapture.getText().toString(), false, false, 5, 2, 100, ""));
+                        String text = editTextCustomCapture.getText().toString();
+                        engine.startVisionCustomCapture(new ARTCAICallEngine.ARTCAICallVisionCustomCaptureRequest(text, false, false, 5, 2, 100, ""));
                     } else if(v.getId() == R.id.debug_stop_custom_capture) {
                         engine.stopVisionCustomCapture();
                     } else if(v.getId() == R.id.debug_send_continus_custom_capture_enable_asr) {
-                        engine.startVisionCustomCapture(new ARTCAICallEngine.ARTCAICallVisionCustomCaptureRequest(editTextCustomCapture.getText().toString(), true, false, 5, 2, 100, ""));
+                        String text = editTextCustomCapture.getText().toString();
+                        engine.startVisionCustomCapture(new ARTCAICallEngine.ARTCAICallVisionCustomCaptureRequest(text, true, false, 5, 2, 100, ""));
                     } else if(v.getId() == R.id.debug_mute_agent_audio) {
                         engine.muteAgentAudioPlaying(true);
                     } else if(v.getId() == R.id.debug_unmute_agent_audio) {
@@ -78,16 +87,22 @@ public class AICallDebugDialog {
                     } else if (v.getId() == R.id.debug_update_tts_speed) {
                         String ttsSpeed = editTTSSpeed.getText().toString();
                         if(!TextUtils.isEmpty(ttsSpeed)) {
-                            engine.updateTtsSpeechRate(Double.parseDouble(ttsSpeed));
+                            try {
+                                engine.updateTtsSpeechRate(Double.parseDouble(ttsSpeed));
+                            } catch (NumberFormatException e) {
+                                e.printStackTrace();
+                            }
                         }
                     } else if (v.getId() == R.id.debug_update_asr_max_silence) {
                         String asrMaxSilence = editAsrMaxSilence.getText().toString();
                         if(!TextUtils.isEmpty(asrMaxSilence)) {
-                            engine.updateAsrMaxSilence(Integer.parseInt(asrMaxSilence));
+                            try {
+                                engine.updateAsrMaxSilence(Integer.parseInt(asrMaxSilence));
+                            } catch (NumberFormatException e) {
+                                e.printStackTrace();
+                            }
                         }
                     }
-
-                    dialog1.dismiss();
                 })
                 .create();
         dialog.show();

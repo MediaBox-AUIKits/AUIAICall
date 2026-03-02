@@ -8,7 +8,7 @@
 import UIKit
 import AUIFoundation
 
-public typealias AUIAICallSettingSelectedBlock = (_ item: AUIAICallVoiceItem) -> Void
+public typealias AUIAICallSettingSelectedBlock = (_ item: AUIAICallAgentVoiceStyle) -> Void
 public typealias AUIAICallSettingEnableBlock = (_ isOn: Bool) -> Void
 public typealias AUIAICallSettingDefaultBlock = (_ sender: AUIAICallSettingPanel) -> Void
 
@@ -70,29 +70,14 @@ public typealias AUIAICallSettingDefaultBlock = (_ sender: AUIAICallSettingPanel
         cp.bgViewOnShowing?.backgroundColor = AUIAICallBundle.color_bg_mask
     }
     
-    private var voiceItemList: [AUIAICallVoiceItem] = []
-
-    public var voiceIdList: [String] = [] {
+    public var voiceStyles: [AUIAICallAgentVoiceStyle] = [] {
         didSet {
-            self.voiceItemList.removeAll()
-            for i in 0 ..< self.voiceIdList.count {
-                let vid = self.voiceIdList[i]
-                let item = AUIAICallVoiceItem()
-                let ret = vid.components(separatedBy: ":")
-                if ret.count == 2 {
-                    item.voiceId = ret[0]
-                    item.voiceName = ret[1]
+            for i in 0 ..< self.voiceStyles.count {
+                let item = self.voiceStyles[i]
+                if item.icon?.isEmpty != false {
+                    item.icon = "file://ic_sound_\(i % 2)"  // 使用本地默认图片
                 }
-                else {
-                    item.voiceId = vid
-                    item.voiceName = vid
-                }
-                
-                item.icon = "ic_sound_\(i % 2)"
-                self.voiceItemList.append(item)
             }
-            self.voiceIdSwitch.isHidden = self.voiceItemList.count == 0
-            self.lineView.isHidden = self.voiceIdSwitch.isHidden
         }
     }
     
@@ -194,7 +179,7 @@ public typealias AUIAICallSettingDefaultBlock = (_ sender: AUIAICallSettingPanel
     }()
     
     
-    private var selectItem: AUIAICallVoiceItem? = nil {
+    private var selectItem: AUIAICallAgentVoiceStyle? = nil {
         didSet {
             self.collectionView.reloadData()
         }
@@ -222,7 +207,7 @@ public typealias AUIAICallSettingDefaultBlock = (_ sender: AUIAICallSettingPanel
         self.onPushToTalkSwitchChanged(ptt: self.config?.agentConfig.enablePushToTalk == true)
 
         self.interruptSwitch.switchBtn.isOn = self.config?.agentConfig.interruptConfig.enableVoiceInterrupt ?? true
-        self.selectItem = self.voiceItemList.first { item in
+        self.selectItem = self.voiceStyles.first { item in
             return item.voiceId == self.config?.agentConfig.ttsConfig.agentVoiceId
         }
         
@@ -270,7 +255,7 @@ public typealias AUIAICallSettingDefaultBlock = (_ sender: AUIAICallSettingPanel
 extension AUIAICallSettingPanel {
     
     open override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return self.voiceItemList.count
+        return self.voiceStyles.count
     }
     
     open override func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
@@ -291,7 +276,7 @@ extension AUIAICallSettingPanel {
     
     open override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = self.collectionView.dequeueReusableCell(withReuseIdentifier: "cell", for: indexPath) as! AUIAICallVoiceCell
-        cell.item = self.voiceItemList[indexPath.row]
+        cell.item = self.voiceStyles[indexPath.row]
         cell.isApplied = cell.item == self.selectItem
         cell.applyBtn.clickBlock = {[weak self, weak cell] sender in
             if let item = cell?.item {

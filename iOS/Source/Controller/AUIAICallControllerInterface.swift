@@ -9,6 +9,36 @@ import UIKit
 import ARTCAICallKit
 
 /**
+ * 定义音色配置
+ */
+@objcMembers open class AUIAICallAgentVoiceStyle: NSObject {
+    public let voiceId: String
+    open var name: String
+    open var icon: String?
+    open var gender: String?
+    
+    public init(voiceId: String, name: String, icon: String? = nil, gender: String? = nil) {
+        self.voiceId = voiceId
+        self.name = name
+        self.icon = icon
+        self.gender = gender
+        super.init()
+    }
+    
+    public static func fromDictionary(_ dict: [String: Any]) -> AUIAICallAgentVoiceStyle? {
+        guard let voiceId = dict["voice_id"] as? String,
+              let name = dict["name"] as? String else {
+            return nil
+        }
+        let gender = dict["gender"] as? String
+        let icon = dict["icon"] as? String
+        
+        return AUIAICallAgentVoiceStyle(voiceId: voiceId, name: name, icon: icon, gender: gender)
+    }
+}
+
+
+/**
  * 定义启动通话的配置
  */
 @objcMembers open class AUIAICallConfig: NSObject {
@@ -26,8 +56,10 @@ import ARTCAICallKit
     open var region: String? = nil                 // 智能体服务所在的区域
     open var agentConfig: ARTCAICallAgentConfig!              // 智能体启动配置，该信息最终传给智能体
     open var userData: [String: Any]? = nil                   // 用户自定义信息，该信息最终传给智能体
+    
+    open var chatSyncConfig: ARTCAICallChatSyncConfig? = nil  //
 
-    open var chatSyncConfig: ARTCAICallChatSyncConfig? = nil  // 关联的chat智能体配置，如果设置了，那么在通话过程中会把通话记录同步到chat智能体上
+    open var voiceStyles: [AUIAICallAgentVoiceStyle]? = nil  // 音色配置列表
     
     // =================== 端侧设备控制能力 ====================================
     open var enableSpeaker = true                  // 是否开启扬声器
@@ -181,7 +213,7 @@ import ARTCAICallKit
     var agentState: ARTCAICallAgentState { get }
     
     // 当前智能体音色列表
-    var agentVoiceIdList: [String] { get }
+    var agentVoiceStyles: [AUIAICallAgentVoiceStyle] { get }
     
     // 事件回调
     weak var delegate: AUIAICallControllerDelegate? { get set }

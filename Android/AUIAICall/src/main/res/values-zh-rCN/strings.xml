@@ -235,4 +235,46 @@
     <string name="pstn_in_call_number_vaild">坐席号码为空，暂不支持呼入</string>
 
     <string name="content_generate_by_ai">内容由AI生成，仅供参考</string>
+
+    <string name="aicall_scenario_selection_title">选择场景</string>
+    <string name="aicall_scenario_enter">进入</string>
+    <string name="aicall_scenario_voice_id">音色ID</string>
+
+    <string name="voiceprint_pre_register_desc">通话开始前录入并保存声纹信息</string>
+    <string name="voiceprint_auto_register_desc">无感注册会在通话过程中采集声纹信息，对话初期需要安静环境下大声、清晰的通话超过15s</string>
+    <string name="voice_print_mode_pre_register">预注册</string>
+    <string name="voice_print_mode_auto_register">无感注册</string>
+    <string name="semantic_break">语义断句</string>
+    <string name="semantic_break_tips">AI模型根据上下文语义，判断讲话是否结束</string>
+    <string name="eagerness">检测速度</string>
+    <string name="eagerness_tips">控制AI检测到停顿后，启动回应的快慢程度</string>
+    <string name="eagerness_dialog_title">检测速度</string>
+    <string name="eagerness_option_low">低</string>
+    <string name="eagerness_option_medium">中</string>
+    <string name="eagerness_option_high">高</string>
+    <string name="voice_interrupt_title">智能打断</string>
+    <string name="voice_interrupt_tips">根据声音和环境智能打断AI智能体</string>
+    <string name="auto_speech_title">主动问询</string>
+    <string name="auto_speech_user_idle_tips">当你长时间沉默时，智能体主动搭话询问</string>
+    <string name="auto_speech_user_idle_wait_time_title">等待时间</string>
+    <string name="auto_speech_user_idle_wait_time_tips">超长等待时间后，智能体将会主动问询</string>
+    <string name="auto_speech_user_idle_wait_time_dialog_title">等待时间</string>
+    <string name="auto_speech_user_idle_wait_time_dialog_desc">超长时间等待后，智能体将会主动问询</string>
+    <string name="auto_speech_user_idle_max_repeats_title">问询次数</string>
+    <string name="auto_speech_user_idle_max_repeats_tips">智能体主动问询最多次数</string>
+    <string name="auto_speech_user_idle_max_repeats_dialog_title">问询次数</string>
+    <string name="auto_speech_user_idle_max_repeats_dialog_desc">智能体主动问询最多次数</string>
+    <string name="auto_speech_user_idle_max_repeats_unit">次</string>
+    <string name="ambient_title">通话背景音</string>
+    <string name="ambient_tips">为通话设置一段背景音，在通话过程中播</string>
+    <string name="ambient_dialog_title">通话背景音</string>
+    <string name="ambient_option_none">不选择背景音</string>
+    <string name="ambient_option_conversation">人声交谈</string>
+    <string name="ambient_option_customer_service">客服场景</string>
+    <string name="ambient_option_outdoor_park">户外公园</string>
+    <string name="back_channel_title">附和语</string>
+    <string name="back_channel_tips">讲话停顿时，智能体自然回应的轻声搭话</string>
+
+    <string name="guide_setting_hint">新增通话参数设置</string>
+
 </resources>

@@ -7,7 +7,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.os.SystemClock;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -15,56 +14,29 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-
-import com.alibaba.sdk.android.oss.ClientException;
-import com.alibaba.sdk.android.oss.OSSClient;
-import com.alibaba.sdk.android.oss.ServiceException;
-import com.alibaba.sdk.android.oss.callback.OSSCompletedCallback;
-import com.alibaba.sdk.android.oss.callback.OSSProgressCallback;
-import com.alibaba.sdk.android.oss.common.auth.OSSCredentialProvider;
-import com.alibaba.sdk.android.oss.common.auth.OSSStsTokenCredentialProvider;
-import com.alibaba.sdk.android.oss.internal.OSSAsyncTask;
-import com.alibaba.sdk.android.oss.model.PutObjectRequest;
-import com.alibaba.sdk.android.oss.model.PutObjectResult;
 import com.aliyun.auikits.aiagent.ARTCAIChatStreamRecorder;
-import com.aliyun.auikits.aiagent.service.ARTCAICallServiceImpl;
-import com.aliyun.auikits.aiagent.service.IARTCAICallService;
 import com.aliyun.auikits.aiagent.util.Logger;
-import com.aliyun.auikits.aiagent.util.PCMDumpUtil;
-import com.aliyun.auikits.aicall.util.AUIAICallAgentDebug;
-import com.aliyun.auikits.aicall.util.AUIAICallAgentIdConfig;
-import com.aliyun.auikits.aicall.util.AUIAICallClipboardUtils;
 import com.aliyun.auikits.aicall.util.AUIAIConstStrKey;
-import com.aliyun.auikits.aicall.util.AppServiceConst;
 import com.aliyun.auikits.aicall.util.SettingStorage;
 import com.aliyun.auikits.aicall.util.TimeUtil;
 import com.aliyun.auikits.aicall.util.ToastHelper;
-import com.aliyun.auikits.aicall.widget.AIAgentSettingDialog;
-import com.aliyun.auikits.aicall.widget.AICallNoticeDialog;
-import com.orhanobut.dialogplus.DialogPlus;
-import com.orhanobut.dialogplus.OnDismissListener;
 
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.aliyun.auikits.aicall.widget.AICallNoticeDialog;
+import com.aliyun.auikits.aicall.voiceprint.AUIAICallVoiceprintManager;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.Random;
 
 public class AUIAICallVoicePrintRecordActivity extends AppCompatActivity {
     private static final String TAG = "AUIAICallVoicePrintRecordActivity";
     private String fileName = null;
     private String filePath = null;
     private boolean isRecording = false;
-    private static ARTCAICallServiceImpl.AppServerService mAppServerService = null;
     private String mUserId = null;
     private String mAuthorization = null;
-    private AUIAICallVoicePrintOSSPut mOSSPut = null;
     private TextView mVoicePrintInfoTipeDesc = null;
     private TextView mVoicePrintReadDesc = null;
     private TextView mVoicePrintRecognizing = null;
@@ -75,10 +47,7 @@ public class AUIAICallVoicePrintRecordActivity extends AppCompatActivity {
     private long mStartRecordMillis = 0;
     private Handler mHandler = null;
 
-    public interface IAUIAICallVoicePrintOSSPutListener {
-        void onSuccess(String filePath);
-        void onFail();
-    }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,7 +61,14 @@ public class AUIAICallVoicePrintRecordActivity extends AppCompatActivity {
             mAuthorization = getIntent().getExtras().getString(AUIAIConstStrKey.BUNDLE_KEY_LOGIN_AUTHORIZATION, null);
         }
 
-        getOssBucket();
+        // 初始化声纹管理器
+        AUIAICallVoiceprintManager mgr = AUIAICallVoiceprintManager.getInstance();
+        mgr.init(getApplicationContext());
+        mgr.setUserId(mUserId);
+        boolean usePreHost = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_APP_SERVER_TYPE, SettingStorage.DEFAULT_APP_SERVER_TYPE);
+        mgr.setPreEnv(usePreHost);
+        mgr.switchVoiceprintMode(false);
+
         mVoicePrintInfoTipeDesc = findViewById(R.id.tv_voiceprint_info_tipe_desc);
         mVoicePrintReadDesc = findViewById(R.id.tv_read_tips);
         mVoicePrintRecognizing = findViewById(R.id.tv_push_to_recognizing);
@@ -212,26 +188,27 @@ public class AUIAICallVoicePrintRecordActivity extends AppCompatActivity {
                         return;
                     }
 
-                    if(mOSSPut != null) {
-                        mOSSPut.startOSSPut(filePath, fileName, new IAUIAICallVoicePrintOSSPutListener() {
-                            @Override
-                            public void onSuccess(String filePath) {
-                                getVoicePrintRecognize(filePath);
-                            }
-
-                            @Override
-                            public void onFail() {
-                                notifyRecognizeError("oss upload file failed");
-
-                            }
-                        });
-                    }
-
                     mVoicePrintInfoTipeDesc.setVisibility(View.GONE);
                     mVoicePrintReadDesc.setVisibility(View.GONE);
                     mVoicePrintRecordTimeTips.setVisibility(View.GONE);
                     mVoicePrintRecognizing.setVisibility(View.VISIBLE);
                     mVoicePrintUploading.setVisibility(View.VISIBLE);
+
+                    // 使用声纹管理器进行预注册
+                    AUIAICallVoiceprintManager.getInstance().startPreRegister(
+                        filePath,
+                        mAuthorization,
+                        (success, errorMsg) -> {
+                            new Handler(Looper.getMainLooper()).post(() -> {
+                                if (success) {
+                                    AICallNoticeDialog.showDialog(AUIAICallVoicePrintRecordActivity.this,
+                                            0, false, R.string.voiceprint_put_success, true, dialog -> finish());
+                                } else {
+                                    notifyRecognizeError(errorMsg);
+                                }
+                            });
+                        }
+                    );
                 }
                 if (!auto) {
                     uiHandler.removeMessages(MSG_AUTO_FINISH_PUSH_TO_RECORD);
@@ -283,205 +260,6 @@ public class AUIAICallVoicePrintRecordActivity extends AppCompatActivity {
         });
     }
 
-
-
-    public String gerRandomId() {
-        Random random = new Random();
-        return String.valueOf(random.nextInt(1000000));
-    }
-
-    private void getVoicePrintRecognize(String filePath) {
-        if(mAppServerService != null) {
-            mAppServerService = null;
-        }
-
-        boolean usePreHost = SettingStorage.getInstance().getBoolean(SettingStorage.KEY_APP_SERVER_TYPE, SettingStorage.DEFAULT_APP_SERVER_TYPE);
-
-        String mAppServer = null;
-        if(usePreHost) {
-            mAppServer = AUIAICallAgentDebug.PRE_HOST;
-        } else {
-            mAppServer = AppServiceConst.HOST;
-        }
-
-        if(mAppServerService == null) {
-            mAppServerService = new ARTCAICallServiceImpl.AppServerService(mAppServer);
-        }
-
-        if(mAppServerService != null) {
-            try {
-                JSONObject jsonObject = new JSONObject();
-                jsonObject.put("user_id", mUserId);
-                jsonObject.put("region", AUIAICallAgentIdConfig.getRegion());
-                String voiceprintId = SettingStorage.getInstance().get(SettingStorage.KEY_VOICE_PRINT_ID);
-                if(TextUtils.isEmpty(voiceprintId)){
-                    voiceprintId = mUserId;
-                }
-                jsonObject.put("voiceprint_id", voiceprintId);
-                JSONObject voiceprintObject = new JSONObject();
-                voiceprintObject.put("Type", "url");
-                voiceprintObject.put("Data", filePath);
-                voiceprintObject.put("Format", "wav");
-                jsonObject.put("input", voiceprintObject.toString());
-                mAppServerService.postAsync(mAppServer, "/api/v2/aiagent/setAIAgentVoiceprint", mAuthorization, jsonObject, new IARTCAICallService.IARTCAICallServiceCallback() {
-                    @Override
-                    public void onSuccess(JSONObject jsonObject) {
-                        Logger.i("getVoicePrintRecognize onSuccess:" + jsonObject.toString());
-                        SettingStorage.getInstance().setBoolean(SettingStorage.KEY_VOICE_PRINT_RECORD_ALRAEDY, true);
-                        if(jsonObject.has("voiceprint_id")) {
-                            SettingStorage.getInstance().set(SettingStorage.KEY_VOICE_PRINT_ID, jsonObject.optString("voiceprint_id"));
-                        }
-                        new Handler(Looper.getMainLooper()).post(new Runnable() {
-                            @Override
-                            public void run() {
-                                AIAgentSettingDialog.updateDialogContent();
-                                AICallNoticeDialog.showDialog(AUIAICallVoicePrintRecordActivity.this,
-                                        0, false, R.string.voiceprint_put_success, true, new OnDismissListener() {
-                                            @Override
-                                            public void onDismiss(DialogPlus dialog) {
-                                                finish();
-                                            }
-                                        });
-                            }
-                        });
-                    }
-
-                    @Override
-                    public void onFail(int errorCode, String errorMsg) {
-                        notifyRecognizeError(errorMsg);
-                    }
-                });
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        }
-    }
-
-    private void getOssBucket() {
-
-        String mAppServer =  AppServiceConst.HOST;;
-
-        if(mAppServerService == null) {
-            mAppServerService = new ARTCAICallServiceImpl.AppServerService(mAppServer);
-        }
-
-        if(mAppServerService != null) {
-            try {
-                JSONObject jsonObject = new JSONObject();
-                jsonObject.put("user_id", mUserId);
-                mAppServerService.postAsync(mAppServer, "/api/v2/aiagent/getOssConfig", mAuthorization, jsonObject, new IARTCAICallService.IARTCAICallServiceCallback() {
-                    @Override
-                    public void onSuccess(JSONObject jsonObject) {
-                       Logger.i("getOssBucket onSuccess:" + jsonObject.toString());
-                        mOSSPut = new AUIAICallVoicePrintOSSPut(jsonObject);
-                    }
-
-                    @Override
-                    public void onFail(int errorCode, String errorMsg) {
-                        Logger.e("getOssBucket error:" + errorCode + ", msg: " + errorMsg);
-                    }
-                });
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        }
-    }
-
-    private class AUIAICallVoicePrintOSSPut {
-        private String bucket;
-        private String region;
-        private String accessKeyId;
-        private String accessKeySecret;
-        private String securityToken;
-        private String basePath;
-
-
-
-        public AUIAICallVoicePrintOSSPut(JSONObject jsonObject) {
-            try {
-                if(jsonObject.has("bucket")) {
-                    this.bucket = jsonObject.getString("bucket");
-                }
-                if(jsonObject.has("region")) {
-                    this.region = jsonObject.getString("region");
-                }
-                if(jsonObject.has("access_key_id")) {
-                    this.accessKeyId = jsonObject.getString("access_key_id");
-                }
-                if(jsonObject.has("access_key_secret")) {
-                    this.accessKeySecret = jsonObject.getString("access_key_secret");
-                }
-                if(jsonObject.has("sts_token")) {
-                    this.securityToken = jsonObject.getString("sts_token");
-                }
-                if(jsonObject.has("base_path")) {
-                    this.basePath = jsonObject.getString("base_path");
-                }
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
-
-        public String getEndPoint() {
-            return "https://" + region + ".aliyuncs.com";
-        }
-
-        public void startOSSPut(String filePath, String fileName, IAUIAICallVoicePrintOSSPutListener listener) {
-            if(!TextUtils.isEmpty(filePath)) {
-                OSSCredentialProvider credentialProvider = new OSSStsTokenCredentialProvider(accessKeyId, accessKeySecret, securityToken);
-
-                // 创建OSSClient实例。
-                OSSClient oss = new OSSClient(getApplicationContext(), getEndPoint(), credentialProvider);
-                oss.setRegion(region);
-
-                String objectKey = basePath + "/" + fileName;
-
-                PutObjectRequest put = new PutObjectRequest(bucket, objectKey, filePath);
-
-                // 异步上传时可以设置进度回调。
-                put.setProgressCallback(new OSSProgressCallback<PutObjectRequest>() {
-                    @Override
-                    public void onProgress(PutObjectRequest request, long currentSize, long totalSize) {
-                    }
-                });
-
-                OSSAsyncTask task = oss.asyncPutObject(put, new OSSCompletedCallback<PutObjectRequest, PutObjectResult>() {
-                    @Override
-                    public void onSuccess(PutObjectRequest request, PutObjectResult result) {
-
-                        try {
-                            String ossUrl = oss.presignConstrainedObjectURL(bucket, objectKey, 3600);
-                            if(listener != null) {
-                                listener.onSuccess(ossUrl);
-                            }
-                        } catch (ClientException e) {
-                            e.printStackTrace();
-                        }
-                    }
-
-                    @Override
-                    public void onFailure(PutObjectRequest request, ClientException clientExcepion, ServiceException serviceException) {
-                        // 请求异常。
-                        if (clientExcepion != null) {
-                            // 本地异常，如网络异常等。
-                            clientExcepion.printStackTrace();
-                        }
-                        if (serviceException != null) {
-                            // 服务异常。
-                            Logger.e(serviceException.getErrorCode());
-                            Logger.e( serviceException.getRequestId());
-                            Logger.e(serviceException.getHostId());
-                            Logger.e(serviceException.getRawMessage());
-                        }
-
-                        if(listener != null) {
-                            listener.onFail();
-                        }
-                    }
-                });
-            }
-        }
-    }
     private class AUIAICallVoicePrintMediaRecorder {
 
         private static final int RECORD_SAMPLATE = 16000;
@@ -523,7 +301,7 @@ public class AUIAICallVoicePrintRecordActivity extends AppCompatActivity {
                 mARTCAIChatStreamRecorder = null;
             }
 
-            fileName = "/voideprintrecording_" + gerRandomId() + ".wav";
+            fileName = "/voideprintrecording_" + System.currentTimeMillis() + ".wav";
             File outputFile = new File(AUIAICallVoicePrintRecordActivity.this.getExternalFilesDir(null), fileName);
             Logger.i("PCMDumpUtil: " + outputFile.getAbsolutePath());
             filePath = outputFile.getAbsolutePath();

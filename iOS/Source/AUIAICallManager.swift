@@ -49,9 +49,7 @@ import ARTCAICallKit
     }
     
     private func getDefaultCallAgentConfig() -> ARTCAICallAgentConfig {
-        let agentConfig = ARTCAICallAgentConfig()
-        agentConfig.voiceprintConfig.voiceprintId = AUIAICallVoiceprintManager.shared.voiceprintItem?.voiceprintId
-        agentConfig.voiceprintConfig.useVoiceprint = AUIAICallVoiceprintManager.shared.canUseVoiceprint()
+        let agentConfig = AUIAICallAgentManager.shared.generateStartupConfigs()
         return agentConfig
     }
     
@@ -72,7 +70,7 @@ import ARTCAICallKit
     }
 
     // 通过指定agentType发起通话
-    open func startCall(agentType: ARTCAICallAgentType, agentId: String? = nil, chatSyncConfig: ARTCAICallChatSyncConfig? = nil, region: String? = nil, limitSecond: UInt32 = 0, viewController: UIViewController? = nil) {
+    open func startCall(agentType: ARTCAICallAgentType,scene: AUIAICallAgentScene, chatSyncConfig: ARTCAICallChatSyncConfig? = nil, viewController: UIViewController? = nil) {
         
         self.checkDeviceAuth(agentType: agentType) { [weak self] in
             guard let self = self else {return}
@@ -83,7 +81,7 @@ import ARTCAICallKit
             let controller = AUIAICallController(userId: userId)
             
             // 设置智能体Id
-            controller.config.agentId = agentId ?? AUIAICallAgentConfig.shared.getAgentID(agentType: agentType)
+            controller.config.agentId = scene.agentId
             // 设置通话的类型（语音、数字人或视觉理解），如果设置AgentId则需要与AgentId的类型对应，否则appserver根据agentType选择对应的agentId启动通话
             controller.config.agentType = agentType
             // 关联的chat智能体配置(必须同一账号同一区域上)，如果设置了，那么在通话过程中会把通话记录同步到chat智能体上
@@ -91,9 +89,9 @@ import ARTCAICallKit
             // 通话配置
             controller.config.agentConfig = self.getDefaultCallAgentConfig()
             // agent所在的区域
-            controller.config.region = region ?? AUIAICallAgentConfig.shared.getRegion()
+            controller.config.region = scene.region
             // 通话时长限制，如无限制则无需设置
-            controller.config.limitSecond = limitSecond
+            controller.config.limitSecond = scene.limitSeconds
             
             // 创建通话ViewController
             let vc = AUIAICallViewController(controller)
@@ -106,7 +104,7 @@ import ARTCAICallKit
     }
     
     // 通过指定智能体Id，发起通话
-    open func startChat(agentId: String?, viewController: UIViewController? = nil) {
+    open func startChat(scene: AUIAICallAgentScene, viewController: UIViewController? = nil) {
         
 #if AICALL_ENABLE_CHATBOT
         
@@ -118,11 +116,13 @@ import ARTCAICallKit
         let userInfo = ARTCAIChatUserInfo(userId, deviceId)
         
         // 设置智能体，智能体Id不能为nil
-        let agentInfo = ARTCAIChatAgentInfo(agentId: agentId ?? AUIAICallAgentConfig.shared.getChatAgentId())
-        agentInfo.region = AUIAICallAgentConfig.shared.getRegion() // 设置智能体所在区域，假设是上海区域："cn-shanghai"
+        let agentInfo = ARTCAIChatAgentInfo(agentId: scene.agentId)
+        agentInfo.region = scene.region
         
         // 创建消息对话的ViewController
         let vc = AUIAIChatViewController(userInfo: userInfo, agentInfo: agentInfo)
+        // 设置音色列表
+        vc.voiceStyles = scene.voiceStyles
         // AppServer的Token失效回调
         vc.onUserTokenExpiredBlcok = self.onUserTokenExpiredBlcok
         // 打开通话界面
@@ -142,14 +142,9 @@ import ARTCAICallKit
 #endif  // define AICALL_ENABLE_CHATBOT
     }
     
-#endif  // undefine DEMO_FOR_DEBUG
-}
-
-
-#if AICALL_ENABLE_DEMO
-extension AUIAICallManager {
     
-    open func startOutboundCall(phoneNumber: String, agentId: String? = nil, region: String? = nil, voiceId: String? = nil, enableVoiceInterrupt: Bool, viewController: UIViewController? = nil) {
+    // 电话外呼
+    open func startOutboundCall(phoneNumber: String, scene: AUIAICallAgentScene, voiceId: String? = nil, enableVoiceInterrupt: Bool, viewController: UIViewController? = nil) {
         
         let config = self.getDefaultCallAgentConfig()
         if voiceId?.isEmpty == false {
@@ -159,8 +154,8 @@ extension AUIAICallManager {
         
         let model = AUIAICallOutboundCallReqModel()
         model.phoneNumber = phoneNumber
-        model.agentId = agentId ?? OutboundAgentId
-        model.region = region ?? AUIAICallAgentConfig.shared.getRegion()
+        model.agentId = scene.agentId
+        model.region = scene.region
         model.userId = self.userId!
         model.config = config
         model.userData = nil
@@ -171,6 +166,13 @@ extension AUIAICallManager {
         let topVC = viewController ?? UIViewController.av_top()
         topVC.navigationController?.pushViewController(vc, animated: true)
     }
+    
+#endif  // undefine DEMO_FOR_DEBUG
+}
+
+
+#if AICALL_ENABLE_DEMO
+extension AUIAICallManager {
     
 }
 #endif  // undefine AICALL_ENABLE_DEMO
@@ -185,15 +187,14 @@ extension AUIAICallManager {
     }
 
     // 通过指定agentType（agentId为空时，由appserver配置的）发起通话，
-    open func startCall(agentType: ARTCAICallAgentType, agentId: String? = nil, chatSyncConfig: ARTCAICallChatSyncConfig? = nil, region: String? = nil, limitSecond: UInt32 = 0, viewController: UIViewController? = nil) {
-        AUIAICallDebugManager.shared.startCall(agentType: agentType, agentId: agentId, chatSyncConfig: chatSyncConfig, region: region, limitSecond: limitSecond, viewController: viewController)
+    open func startCall(agentType: ARTCAICallAgentType, scene: AUIAICallAgentScene, chatSyncConfig: ARTCAICallChatSyncConfig? = nil, viewController: UIViewController? = nil) {
+        AUIAICallDebugManager.shared.startCall(agentType: agentType, scene: scene, chatSyncConfig: chatSyncConfig, viewController: viewController)
     }
     
     // 通过指定智能体Id，发起通话
-    open func startChat(agentId: String?, viewController: UIViewController? = nil) {
-        AUIAICallDebugManager.shared.startChat(agentId: agentId, viewController: viewController)
+    open func startChat(scene: AUIAICallAgentScene, viewController: UIViewController? = nil) {
+        AUIAICallDebugManager.shared.startChat(scene: scene, viewController: viewController)
     }
-    
     
     
     // 通过分享智能体Token，发起消息对话
@@ -201,9 +202,9 @@ extension AUIAICallManager {
         AUIAICallDebugManager.shared.startChat(agentShareInfo: agentShareInfo, viewController: viewController)
     }
     
-    // 电话外呼，
-    open func startOutboundCall(phoneNumber: String, agentId: String? = nil, region: String? = nil, voiceId: String? = nil, enableVoiceInterrupt: Bool, viewController: UIViewController? = nil) {
-        AUIAICallDebugManager.shared.startOutboundCall(phoneNumber: phoneNumber, agentId: agentId, region: region, voiceId: voiceId, enableVoiceInterrupt: enableVoiceInterrupt, viewController: viewController)
+    // 电话外呼
+    open func startOutboundCall(phoneNumber: String, scene: AUIAICallAgentScene, voiceId: String? = nil, enableVoiceInterrupt: Bool, viewController: UIViewController? = nil) {
+        AUIAICallDebugManager.shared.startOutboundCall(phoneNumber: phoneNumber, scene: scene, voiceId: voiceId, enableVoiceInterrupt: enableVoiceInterrupt, viewController: viewController)
     }
 }
 #endif

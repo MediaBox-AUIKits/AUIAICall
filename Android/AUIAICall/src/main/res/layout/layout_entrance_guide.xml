@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/guide_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:clickable="false"
+    android:focusable="false">
+
+    <ImageView
+        android:id="@+id/iv_guide_arrow"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_entrance_guide_arrow"
+        android:contentDescription="引导箭头"
+        android:clickable="false"
+        android:focusable="false" />
+
+    <TextView
+        android:id="@+id/tv_guide_hint"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/guide_setting_hint"
+        style="@style/text_style_identical_14"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="8dp"
+        android:clickable="false"
+        android:focusable="false" />
+
+</FrameLayout>

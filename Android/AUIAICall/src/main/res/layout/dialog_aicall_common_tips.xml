@@ -5,14 +5,14 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="@color/layout_base_dialog_background">
+    android:background="@drawable/bg_rounded_rectangle_share">
 
     <TextView
         android:id="@+id/tv_dialog_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/dialog_robot_title"
-        style="@style/layout_base_text_style_16"
+        style="@style/text_style_16"
         android:paddingTop="24dp"
         android:paddingLeft="24dp"
         android:paddingRight="24dp"
@@ -27,7 +27,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="test test test test test test test test test test test test test test test test test test "
-        style="@style/layout_base_text_style_14"
+        style="@style/text_style_14"
         android:paddingTop="24dp"
         android:paddingLeft="24dp"
         android:paddingRight="24dp"
@@ -41,7 +41,7 @@
         android:id="@+id/divider"
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="@color/layout_base_iv_border"
+        android:background="@color/color_border_tertiary"
         android:layout_marginTop="24dp"
         app:layout_constraintTop_toBottomOf="@id/tv_dialog_content"
         app:layout_constraintLeft_toLeftOf="parent"
@@ -67,13 +67,13 @@
             android:layout_marginStart="20dp"
             android:layout_marginEnd="20dp"
             android:gravity="center"
-            style="@style/layout_base_text_style_16"
+            style="@style/text_style_16"
             />
 
         <View
             android:layout_width="1dp"
             android:layout_height="match_parent"
-            android:background="@color/layout_base_iv_border"
+            android:background="@color/color_border_tertiary"
             />
 
 
@@ -86,8 +86,7 @@
             android:layout_marginStart="20dp"
             android:layout_marginEnd="20dp"
             android:gravity="center"
-            android:textColor="#00BCD4"
-            style="@style/layout_base_text_style_16"
+            style="@style/text_style_16"
             android:visibility="gone"
             />
     </LinearLayout>

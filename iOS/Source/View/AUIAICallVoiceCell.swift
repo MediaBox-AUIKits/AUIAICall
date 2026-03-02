@@ -7,12 +7,7 @@
 
 import UIKit
 import AUIFoundation
-
-@objcMembers open class AUIAICallVoiceItem: NSObject {
-    open var voiceId: String = ""
-    open var voiceName: String = ""
-    open var icon: String = ""
-}
+import SDWebImage
 
 @objcMembers open class AUIAICallVoiceCell: UICollectionViewCell {
     public override init(frame: CGRect) {
@@ -79,10 +74,21 @@ import AUIFoundation
         return view
     }()
     
-    open var item: AUIAICallVoiceItem? {
+    open var item: AUIAICallAgentVoiceStyle? {
         didSet {
-            self.titleLabel.text = self.item?.voiceName
-            self.iconView.image = AUIAICallBundle.getCommonImage(self.item?.icon)
+            self.titleLabel.text = self.item?.name
+            if let icon = self.item?.icon {
+                if icon.hasPrefix("file://") {
+                    let iconName = String(icon.dropFirst("file://".count))
+                    self.iconView.image = AUIAICallBundle.getCommonImage(iconName)
+                }
+                else {
+                    self.iconView.sd_setImage(with: URL(string: icon))
+                }
+            }
+            else {
+                self.iconView.image = nil
+            }
         }
     }
     

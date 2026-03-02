@@ -52,8 +52,12 @@ public class AUIAICallManager {
                                     JSONObject descriptionJson = new JSONObject(description);
                                     if(descriptionJson != null && descriptionJson.has("InboundPhoneNumbers")) {
                                         JSONArray inboundArray = descriptionJson.optJSONArray("InboundPhoneNumbers");
-                                        if(callback != null && inboundArray != null && inboundArray.length() > 0) {
-                                            callback.onSuccess((String) inboundArray.get(0));
+                                        if(callback != null) {
+                                            if(inboundArray != null && inboundArray.length() > 0) {
+                                                callback.onSuccess((String) inboundArray.get(0));
+                                            } else {
+                                                callback.onFailed(-1, "No inbound phone number available");
+                                            }
                                         }
                                     }
                                 }
